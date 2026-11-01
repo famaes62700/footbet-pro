@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro - Live Officiel</title>
+    <title>FootBet Pro - Live Scores & Gains</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -12,10 +12,10 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-5xl mx-auto flex justify-between items-center flex-wrap gap-2">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center">
-                <i class="fa-solid fa-futbol mr-2"></i>FootBet Pro <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded ml-2 shadow">VERCEL DIRECT</span>
+                <i class="fa-solid fa-futbol mr-2"></i>FootBet Pro <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded ml-2 shadow">AUTO-LIVE</span>
             </h1>
             <div class="flex items-center space-x-2">
-                <select id="leagueSelect" onchange="fetchRealMatches()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500 shadow-inner">
+                <select id="leagueSelect" onchange="fetchRealMatches(false)" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500 shadow-inner">
                     <option value="ALL">🌍 Top 5 Européen</option>
                     <option value="FL1">🇫🇷 Ligue 1</option>
                     <option value="PL">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League</option>
@@ -23,8 +23,8 @@
                     <option value="PD">🇪🇸 LaLiga</option>
                     <option value="BL1">🇩🇪 Bundesliga</option>
                 </select>
-                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500 shadow-inner" onchange="fetchRealMatches()">
-                <button onclick="fetchRealMatches()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition flex items-center shadow-lg">
+                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500 shadow-inner" onchange="fetchRealMatches(false)">
+                <button onclick="fetchRealMatches(false)" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition flex items-center shadow-lg">
                     <i class="fa-solid fa-rotate mr-1.5"></i> Sync
                 </button>
             </div>
@@ -39,7 +39,7 @@
                 <h2 class="text-xs font-bold uppercase text-indigo-400 tracking-wider flex items-center">
                     <i class="fa-solid fa-wallet mr-1.5"></i> Trésorerie & Stratégie du Jour
                 </h2>
-                <span id="apiStatus" class="text-[10px] font-mono text-zinc-400 bg-zinc-800 px-2 py-1 rounded">Chargement initial...</span>
+                <span id="apiStatus" class="text-[10px] font-mono text-zinc-400 bg-zinc-800 px-2 py-1 rounded">Démarrage...</span>
             </div>
             
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
@@ -83,15 +83,17 @@
                 </div>
             </div>
             <div id="statInvestDetails" class="text-center text-[11px] text-zinc-300 mt-4 font-semibold bg-zinc-950 py-2.5 rounded-lg border border-zinc-800 shadow-inner">
-                En attente des données pour calculer l'investissement...
+                En attente des données...
             </div>
         </div>
 
         <!-- CALENDRIER & RÉSULTATS -->
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
-                <span class="font-bold text-xs uppercase tracking-wider text-zinc-200"><i class="fa-solid fa-list-ul mr-2"></i>Matchs Officiels du Jour</span>
-                <span class="text-[9px] text-zinc-500 uppercase font-bold">Via Vercel Rewrite</span>
+                <span class="font-bold text-xs uppercase tracking-wider text-zinc-200"><i class="fa-solid fa-list-ul mr-2"></i>Matchs Officiels & Scores en Direct</span>
+                <span id="refreshTimer" class="text-[9px] text-emerald-500 uppercase font-bold border border-emerald-500/30 px-2 py-1 rounded bg-emerald-500/10">
+                    <i class="fa-solid fa-spinner fa-spin mr-1"></i> Auto-refresh actif
+                </span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
@@ -116,18 +118,25 @@
     <script>
         document.getElementById('matchDate').valueAsDate = new Date();
         const API_TOKEN = 'c42660750d784a43b51eb6a31906a777';
+        
+        let autoRefreshInterval;
 
-        async function fetchRealMatches() {
+        // Fonction principale de récupération
+        async function fetchRealMatches(isBackground = false) {
             const dateVal = document.getElementById('matchDate').value;
             const leagueFilter = document.getElementById('leagueSelect').value;
             const statusEl = document.getElementById('apiStatus');
             const tbody = document.getElementById('matchesTableBody');
             
-            statusEl.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Aspiration des matchs...</span>';
-            tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-amber-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Recherche des matchs officiels du ${dateVal}...</td></tr>`;
+            if (!isBackground) {
+                statusEl.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Aspiration des matchs...</span>';
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-amber-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Recherche des matchs officiels du ${dateVal}...</td></tr>`;
+            } else {
+                statusEl.innerHTML = '<span class="text-emerald-400"><i class="fa-solid fa-rotate fa-spin mr-1"></i> Maj en cours...</span>';
+            }
 
             try {
-                // Utilisation de la route Vercel sécurisée (via vercel.json)
+                // Requête via Vercel Rewrite
                 const response = await fetch(`/api/football/matches?date=${dateVal}`, {
                     headers: { 'X-Auth-Token': API_TOKEN }
                 });
@@ -144,20 +153,36 @@
                 }
 
                 if (matches.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-zinc-400 bg-zinc-950/50"><i class="fa-solid fa-ghost text-2xl mb-2 block text-zinc-600"></i>Aucun match majeur officiel programmé à cette date pour la sélection.</td></tr>`;
+                    if (!isBackground) {
+                        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-zinc-400 bg-zinc-950/50"><i class="fa-solid fa-ghost text-2xl mb-2 block text-zinc-600"></i>Aucun match majeur officiel programmé à cette date pour la sélection.</td></tr>`;
+                    }
                     statusEl.innerHTML = '<span class="text-zinc-400"><i class="fa-solid fa-check mr-1"></i> Aucun match trouvé</span>';
                     resetMetrics();
+                    
+                    // Stop l'auto-refresh s'il n'y a pas de match
+                    clearInterval(autoRefreshInterval);
+                    document.getElementById('refreshTimer').innerHTML = "Auto-refresh inactif";
                     return;
                 }
+
+                // On trie par heure pour que la Martingale se calcule dans l'ordre chronologique
+                matches.sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
 
                 renderTable(matches);
                 calculateMetrics(matches);
                 statusEl.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${matches.length} matchs)</span>`;
 
+                // Relance l'intervalle de rafraîchissement (toutes les 60 secondes)
+                clearInterval(autoRefreshInterval);
+                document.getElementById('refreshTimer').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Auto-refresh toutes les 60s';
+                autoRefreshInterval = setInterval(() => { fetchRealMatches(true); }, 60000);
+
             } catch (error) {
                 console.error(error);
                 statusEl.innerHTML = '<span class="text-red-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur Serveur</span>';
-                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-400 font-bold">Impossible de contacter le serveur. Assurez-vous d'avoir bien créé le fichier vercel.json.</td></tr>`;
+                if (!isBackground) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-400 font-bold">Impossible de contacter le serveur. Assurez-vous d'avoir bien créé le fichier vercel.json sur GitHub.</td></tr>`;
+                }
             }
         }
 
@@ -172,6 +197,7 @@
             return false;
         }
 
+        // Cotes générées intelligemment pour garder de la cohérence entre deux rafraîchissements
         function generateStableOdds(homeName, awayName) {
             const hash = (homeName.length * 3 + awayName.length * 7) % 10;
             if (hash < 5) return { home: 1.45 + (hash * 0.05), draw: 3.80, away: 5.50 - hash, type: 'BASE', choice: '1' };
@@ -258,13 +284,13 @@
             document.getElementById('gainPepite').innerHTML = `0.00 €`;
             document.getElementById('statComboCount').textContent = `0 / 0`;
             document.getElementById('gainCombo').innerHTML = `0.00 €`;
-            document.getElementById('statInvestDetails').innerHTML = `Aucun match enregistré à cette date.`;
+            document.getElementById('statInvestDetails').innerHTML = `En attente des données...`;
         }
 
         function calculateMetrics(matches) {
-            let baseWins = 0, baseTotal = 0, totalGainBase = 0, costBase = 0, mBase = 2;
-            let pepiteWins = 0, pepiteTotal = 0, totalGainPepite = 0, costPepite = 0;
-            let comboWins = 0, comboTotal = 0, totalGainCombo = 0, costCombo = 0;
+            let baseWins = 0, baseTotal = 0, totalGainBase = 0, costBase = 0, mBase = 2; // Départ martingale 2€
+            let pepiteWins = 0, pepiteTotal = 0, totalGainPepite = 0, costPepite = 0; // Fixe 1€
+            let comboWins = 0, comboTotal = 0, totalGainCombo = 0, costCombo = 0; // Fixe 1€
 
             matches.forEach(m => {
                 const isFinished = m.status === 'FINISHED' || m.status === 'FT' || m.status === 'AWARDED';
@@ -287,9 +313,9 @@
                     if (won) {
                         baseWins++;
                         totalGainBase += actualOdd * mBase;
-                        mBase = 2; 
+                        mBase = 2; // Retour à 2€ si gagné
                     } else {
-                        mBase *= 2; 
+                        mBase *= 2; // Double si perdu
                     }
                 } else if (oddsData.type === 'PEPITE') {
                     pepiteTotal++;
@@ -301,6 +327,7 @@
                 }
             });
 
+            // Logique Combo (1 base + 1 pépite chronologique)
             const finishedBases = matches.filter(m => m.algoData?.type === 'BASE' && (m.status === 'FINISHED' || m.status === 'FT'));
             const finishedPepites = matches.filter(m => m.algoData?.type === 'PEPITE' && (m.status === 'FINISHED' || m.status === 'FT'));
             
@@ -321,6 +348,7 @@
                 }
             }
 
+            // Affichage UI (Gains, Nets et Statistiques de réussite)
             const netBase = totalGainBase - costBase;
             document.getElementById('statBaseCount').textContent = `${baseWins} / ${baseTotal}`;
             document.getElementById('gainBase').innerHTML = `${totalGainBase.toFixed(2)} €<br><span class="${netBase >= 0 ? 'text-emerald-400' : 'text-red-400'} text-[10px] mt-1 block bg-zinc-900 py-1 rounded">Net : ${netBase >= 0 ? '+' : ''}${netBase.toFixed(2)} €</span>`;
@@ -341,6 +369,7 @@
             `;
         }
 
+        // Lancement au premier chargement de la page
         fetchRealMatches();
     </script>
 </body>
