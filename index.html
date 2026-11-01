@@ -10,11 +10,11 @@
 <body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none">
 
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
-        <div class="max-w-5xl mx-auto flex justify-between items-center flex-wrap gap-2">
+        <div class="max-w-5xl mx-auto flex justify-between items-center flex-wrap gap-3">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center">
                 <i class="fa-solid fa-futbol mr-2"></i>FootBet Pro <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded ml-2 shadow">AUTO-LIVE</span>
             </h1>
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-2 flex-wrap gap-y-2">
                 <select id="leagueSelect" onchange="fetchRealMatches(false)" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500 shadow-inner">
                     <option value="ALL">🌍 Top 5 Européen</option>
                     <option value="FL1">🇫🇷 Ligue 1</option>
@@ -24,6 +24,12 @@
                     <option value="BL1">🇩🇪 Bundesliga</option>
                 </select>
                 <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500 shadow-inner" onchange="fetchRealMatches(false)">
+                
+                <!-- NOUVEAU BOUTON LIVE EN HAUT -->
+                <button id="toggleLiveBtn" onclick="toggleLiveView()" class="bg-zinc-800 text-zinc-400 text-xs px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow-inner">
+                    <i class="fa-solid fa-satellite-dish mr-1.5"></i> Live
+                </button>
+
                 <button onclick="fetchRealMatches(false)" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition flex items-center shadow-lg">
                     <i class="fa-solid fa-rotate mr-1.5"></i> Sync
                 </button>
@@ -106,10 +112,6 @@
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50 flex-wrap gap-3">
                 <div class="flex items-center space-x-3">
                     <span class="font-bold text-xs uppercase tracking-wider text-zinc-200"><i class="fa-solid fa-list-ul mr-2"></i>Tableau des Matchs</span>
-                    <!-- BOUTON FILTRE LIVE -->
-                    <button id="toggleLiveBtn" onclick="toggleLiveView()" class="bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 border border-zinc-700 px-2.5 py-1 rounded text-[10px] font-bold transition flex items-center shadow" title="Afficher uniquement les matchs en cours">
-                        <i class="fa-solid fa-satellite-dish mr-1.5"></i> Mode Live
-                    </button>
                 </div>
                 <span id="refreshTimer" class="text-[9px] text-emerald-500 uppercase font-bold border border-emerald-500/30 px-2 py-1 rounded bg-emerald-500/10">
                     <i class="fa-solid fa-spinner fa-spin mr-1"></i> Auto-refresh actif
@@ -140,23 +142,19 @@
         const API_TOKEN = 'c42660750d784a43b51eb6a31906a777';
         
         let autoRefreshInterval;
-        let globalMatchesList = []; // Stockage global pour le filtre Live
-        let showLiveOnly = false; // Etat du filtre Live
+        let globalMatchesList = []; 
+        let showLiveOnly = false; 
 
-        // Bascule d'affichage Mode Live / Tous les matchs
+        // Fonction pour activer/désactiver le bouton LIVE
         function toggleLiveView() {
             showLiveOnly = !showLiveOnly;
             const btn = document.getElementById('toggleLiveBtn');
             if (showLiveOnly) {
                 btn.classList.replace('text-zinc-400', 'text-emerald-400');
-                btn.classList.replace('bg-zinc-800/80', 'bg-zinc-950');
-                btn.classList.replace('border-zinc-700', 'border-emerald-500/50');
-                btn.classList.add('animate-pulse');
+                btn.classList.add('border-emerald-500', 'bg-zinc-950');
             } else {
                 btn.classList.replace('text-emerald-400', 'text-zinc-400');
-                btn.classList.replace('bg-zinc-950', 'bg-zinc-800/80');
-                btn.classList.replace('border-emerald-500/50', 'border-zinc-700');
-                btn.classList.remove('animate-pulse');
+                btn.classList.remove('border-emerald-500', 'bg-zinc-950');
             }
             renderTable(globalMatchesList);
         }
@@ -256,7 +254,9 @@
             }
 
             if (matchesToRender.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-zinc-500 bg-zinc-950/30">Aucun match à afficher dans cette vue.</td></tr>`;
+                if(showLiveOnly) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-zinc-500 bg-zinc-950/30 font-bold"><i class="fa-solid fa-bed mr-2"></i>Aucun match en direct actuellement.</td></tr>`;
+                }
                 return;
             }
 
@@ -273,10 +273,14 @@
                 if (isFinished) {
                     scoreBadge = `<span class="font-black text-lg text-white tracking-widest">${hScore} - ${aScore}</span> <span class="text-[9px] text-zinc-500 uppercase ml-1">FT</span>`;
                 } else if (isInPlay) {
-                    // Récupération de la minute en cours si l'API la fournit, sinon fallback sur le statut
-                    let liveMinute = m.minute ? m.minute + "'" : 'EN COURS';
-                    if (m.status === 'PAUSED') liveMinute = 'MI-TEMPS';
-                    scoreBadge = `<span class="font-black text-lg text-emerald-400 tracking-widest animate-pulse">${hScore} - ${aScore}</span> <span class="text-[9px] text-emerald-500 uppercase font-bold ml-1">${liveMinute}</span>`;
+                    // Calcul du temps restant/minute si fourni par l'API
+                    let liveMinute = 'EN COURS';
+                    if (m.minute) {
+                        liveMinute = m.minute + "'";
+                    } else if (m.status === 'PAUSED') {
+                        liveMinute = 'MI-TEMPS';
+                    }
+                    scoreBadge = `<span class="font-black text-lg text-emerald-400 tracking-widest animate-pulse">${hScore} - ${aScore}</span> <span class="text-[9px] bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 px-1.5 py-0.5 rounded uppercase font-bold ml-2 shadow animate-pulse"><i class="fa-solid fa-circle text-[6px] mr-1"></i>${liveMinute}</span>`;
                 } else if (m.status === 'TIMED' || m.status === 'SCHEDULED') {
                     scoreBadge = `<span class="text-zinc-500 font-mono text-[11px]"><i class="fa-regular fa-clock mr-1"></i>${timeStr}</span>`;
                 }
