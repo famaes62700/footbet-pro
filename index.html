@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro - Matchs Réels en Direct</title>
+    <title>FootBet Pro - Live Officiel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -12,7 +12,7 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-5xl mx-auto flex justify-between items-center flex-wrap gap-2">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center">
-                <i class="fa-solid fa-futbol mr-2"></i>FootBet Pro <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded ml-2 shadow">LIVE OFFICIEL</span>
+                <i class="fa-solid fa-futbol mr-2"></i>FootBet Pro <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded ml-2 shadow">VERCEL DIRECT</span>
             </h1>
             <div class="flex items-center space-x-2">
                 <select id="leagueSelect" onchange="fetchRealMatches()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500 shadow-inner">
@@ -91,7 +91,7 @@
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
                 <span class="font-bold text-xs uppercase tracking-wider text-zinc-200"><i class="fa-solid fa-list-ul mr-2"></i>Matchs Officiels du Jour</span>
-                <span class="text-[9px] text-zinc-500 uppercase font-bold">Via Football-Data.org API</span>
+                <span class="text-[9px] text-zinc-500 uppercase font-bold">Via Vercel Rewrite</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
@@ -105,7 +105,7 @@
                         </tr>
                     </thead>
                     <tbody id="matchesTableBody" class="divide-y divide-zinc-800/80">
-                        <tr><td colspan="5" class="p-8 text-center text-zinc-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Connexion sécurisée à l'API en cours...</td></tr>
+                        <tr><td colspan="5" class="p-8 text-center text-zinc-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Connexion sécurisée en cours...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -114,7 +114,6 @@
     </main>
 
     <script>
-        // Initialisation à la date du jour
         document.getElementById('matchDate').valueAsDate = new Date();
         const API_TOKEN = 'c42660750d784a43b51eb6a31906a777';
 
@@ -128,23 +127,18 @@
             tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-amber-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Recherche des matchs officiels du ${dateVal}...</td></tr>`;
 
             try {
-                // Utilisation d'un Proxy CORS public pour forcer la sécurité du navigateur web et lire l'API externe
-                const targetUrl = encodeURIComponent(`https://api.football-data.org/v4/matches?date=${dateVal}`);
-                const proxyUrl = `https://corsproxy.io/?${targetUrl}`;
-
-                const response = await fetch(proxyUrl, {
+                // Utilisation de la route Vercel sécurisée (via vercel.json)
+                const response = await fetch(`/api/football/matches?date=${dateVal}`, {
                     headers: { 'X-Auth-Token': API_TOKEN }
                 });
 
-                if (!response.ok) throw new Error("Le Proxy ou l'API a refusé la connexion");
+                if (!response.ok) throw new Error("Erreur de connexion Vercel");
 
                 const data = await response.json();
                 
-                // On garde uniquement les 5 Grands Championnats
                 const targetCompetitions = ['PL', 'FL1', 'SA', 'PD', 'BL1'];
                 let matches = (data.matches || []).filter(m => targetCompetitions.includes(m.competition.code));
 
-                // Application du filtre de ligue
                 if (leagueFilter !== 'ALL') {
                     matches = matches.filter(m => m.competition.code === leagueFilter);
                 }
@@ -162,12 +156,11 @@
 
             } catch (error) {
                 console.error(error);
-                statusEl.innerHTML = '<span class="text-red-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Mode Secours Activé</span>';
-                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-400 font-bold">Échec de la connexion à l'API de scores (Le Proxy public est peut-être saturé).</td></tr>`;
+                statusEl.innerHTML = '<span class="text-red-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur Serveur</span>';
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-400 font-bold">Impossible de contacter le serveur. Assurez-vous d'avoir bien créé le fichier vercel.json.</td></tr>`;
             }
         }
 
-        // Vérifie si le pronostic est gagnant
         function isMatchWon(choice, score) {
             if (score.home === null || score.away === null) return false;
             const h = score.home, a = score.away;
@@ -179,12 +172,9 @@
             return false;
         }
 
-        // Génération d'une fausse cote réaliste basée sur le nom des équipes (pour garder les mêmes cotes à chaque refresh car l'API free ne donne pas les cotes)
         function generateStableOdds(homeName, awayName) {
             const hash = (homeName.length * 3 + awayName.length * 7) % 10;
-            // Favori à domicile (Base)
             if (hash < 5) return { home: 1.45 + (hash * 0.05), draw: 3.80, away: 5.50 - hash, type: 'BASE', choice: '1' };
-            // Match équilibré ou outsider intéressant (Pépite)
             return { home: 2.20 + (hash * 0.1), draw: 3.10, away: 2.80, type: 'PEPITE', choice: 'N' };
         }
 
@@ -207,10 +197,7 @@
                     scoreBadge = `<span class="font-black text-lg text-emerald-400 tracking-widest animate-pulse">${hScore} - ${aScore}</span> <span class="text-[9px] text-emerald-600 uppercase ml-1">LIVE</span>`;
                 }
 
-                // Génération des cotes stables
                 const oddsData = generateStableOdds(m.homeTeam.name, m.awayTeam.name);
-                
-                // Mémorisation de la stat pour le calcul
                 m.algoData = oddsData;
 
                 let won = false;
@@ -227,7 +214,6 @@
                     ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded font-black text-[10px] inline-flex items-center"><i class="fa-solid fa-shield-halved mr-1"></i> BASE (${oddsData.choice})</span>`
                     : `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded font-black text-[10px] inline-flex items-center"><i class="fa-solid fa-star mr-1"></i> PÉPITE (${oddsData.choice})</span>`;
 
-                // Drapeaux
                 let flag = '⚽';
                 if(m.competition.code === 'FL1') flag = '🇫🇷';
                 if(m.competition.code === 'PL') flag = '🏴󠁧󠁢󠁥󠁮󠁧󠁿';
@@ -276,9 +262,9 @@
         }
 
         function calculateMetrics(matches) {
-            let baseWins = 0, baseTotal = 0, totalGainBase = 0, costBase = 0, mBase = 2; // Martingale à 2€
-            let pepiteWins = 0, pepiteTotal = 0, totalGainPepite = 0, costPepite = 0; // Fixe 1€
-            let comboWins = 0, comboTotal = 0, totalGainCombo = 0, costCombo = 0; // Fixe 1€
+            let baseWins = 0, baseTotal = 0, totalGainBase = 0, costBase = 0, mBase = 2;
+            let pepiteWins = 0, pepiteTotal = 0, totalGainPepite = 0, costPepite = 0;
+            let comboWins = 0, comboTotal = 0, totalGainCombo = 0, costCombo = 0;
 
             matches.forEach(m => {
                 const isFinished = m.status === 'FINISHED' || m.status === 'FT' || m.status === 'AWARDED';
@@ -301,9 +287,9 @@
                     if (won) {
                         baseWins++;
                         totalGainBase += actualOdd * mBase;
-                        mBase = 2; // GAGNÉ = Retour à la mise de base (2€)
+                        mBase = 2; 
                     } else {
-                        mBase *= 2; // PERDU = On double
+                        mBase *= 2; 
                     }
                 } else if (oddsData.type === 'PEPITE') {
                     pepiteTotal++;
@@ -315,13 +301,12 @@
                 }
             });
 
-            // Logique du Combo (Associe Base 1 + Pépite 1, Base 2 + Pépite 2...)
             const finishedBases = matches.filter(m => m.algoData?.type === 'BASE' && (m.status === 'FINISHED' || m.status === 'FT'));
             const finishedPepites = matches.filter(m => m.algoData?.type === 'PEPITE' && (m.status === 'FINISHED' || m.status === 'FT'));
             
             comboTotal = Math.min(finishedBases.length, finishedPepites.length);
             for (let i = 0; i < comboTotal; i++) {
-                costCombo += 1; // 1€ le combo
+                costCombo += 1; 
                 let b = finishedBases[i];
                 let p = finishedPepites[i];
                 
@@ -336,7 +321,6 @@
                 }
             }
 
-            // Affichage UI (Gains et Nets)
             const netBase = totalGainBase - costBase;
             document.getElementById('statBaseCount').textContent = `${baseWins} / ${baseTotal}`;
             document.getElementById('gainBase').innerHTML = `${totalGainBase.toFixed(2)} €<br><span class="${netBase >= 0 ? 'text-emerald-400' : 'text-red-400'} text-[10px] mt-1 block bg-zinc-900 py-1 rounded">Net : ${netBase >= 0 ? '+' : ''}${netBase.toFixed(2)} €</span>`;
@@ -357,7 +341,6 @@
             `;
         }
 
-        // Initialisation de l'application
         fetchRealMatches();
     </script>
 </body>
