@@ -25,7 +25,7 @@
                 </select>
                 <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500 shadow-inner" onchange="fetchRealMatches(false)">
                 
-                <!-- NOUVEAU BOUTON LIVE EN HAUT -->
+                <!-- BOUTON MODE LIVE -->
                 <button id="toggleLiveBtn" onclick="toggleLiveView()" class="bg-zinc-800 text-zinc-400 text-xs px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow-inner">
                     <i class="fa-solid fa-satellite-dish mr-1.5"></i> Live
                 </button>
@@ -145,7 +145,6 @@
         let globalMatchesList = []; 
         let showLiveOnly = false; 
 
-        // Fonction pour activer/désactiver le bouton LIVE
         function toggleLiveView() {
             showLiveOnly = !showLiveOnly;
             const btn = document.getElementById('toggleLiveBtn');
@@ -168,61 +167,76 @@
             updateMonthlyLabel(dateVal);
 
             if (!isBackground) {
-                statusEl.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Aspiration des matchs...</span>';
+                statusEl.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Connexion...</span>';
                 tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-amber-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Recherche des matchs officiels du ${dateVal}...</td></tr>`;
             } else {
                 statusEl.innerHTML = '<span class="text-emerald-400"><i class="fa-solid fa-rotate fa-spin mr-1"></i> Maj en cours...</span>';
             }
 
+            let data;
+            
             try {
-                const response = await fetch(`/api/football/matches?date=${dateVal}`, {
+                // DOUBLE MOTEUR DE CONNEXION :
+                // 1. On essaye d'abord la route Vercel officielle
+                let res = await fetch(`/api/football/matches?date=${dateVal}`, {
                     headers: { 'X-Auth-Token': API_TOKEN }
                 });
-
-                if (!response.ok) throw new Error("Erreur de connexion Vercel");
-
-                const data = await response.json();
                 
-                const targetCompetitions = ['PL', 'FL1', 'SA', 'PD', 'BL1'];
-                let matches = (data.matches || []).filter(m => targetCompetitions.includes(m.competition.code));
-
-                if (leagueFilter !== 'ALL') {
-                    matches = matches.filter(m => m.competition.code === leagueFilter);
-                }
-
-                if (matches.length === 0) {
+                if (!res.ok) throw new Error("Vercel Route Failed");
+                data = await res.json();
+                
+            } catch (err1) {
+                // 2. Si Vercel échoue (ou si on est en local sur son PC), on bascule sur le Proxy de Secours
+                try {
+                    const proxyUrl = `https://corsproxy.io/?` + encodeURIComponent(`https://api.football-data.org/v4/matches?date=${dateVal}`);
+                    let res2 = await fetch(proxyUrl, {
+                        headers: { 'X-Auth-Token': API_TOKEN }
+                    });
+                    if (!res2.ok) throw new Error("Proxy Failed");
+                    data = await res2.json();
+                } catch (err2) {
+                    console.error("Double échec de connexion");
+                    statusEl.innerHTML = '<span class="text-red-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur de Connexion</span>';
                     if (!isBackground) {
-                        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-zinc-400 bg-zinc-950/50"><i class="fa-solid fa-ghost text-2xl mb-2 block text-zinc-600"></i>Aucun match majeur officiel programmé à cette date pour la sélection.</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-400 font-bold">Impossible de contacter les serveurs de football. Vérifiez votre connexion internet.</td></tr>`;
                     }
-                    statusEl.innerHTML = '<span class="text-zinc-400"><i class="fa-solid fa-check mr-1"></i> Aucun match trouvé</span>';
-                    globalMatchesList = [];
-                    resetMetrics();
-                    renderMonthlyStats(dateVal);
-                    
-                    clearInterval(autoRefreshInterval);
-                    document.getElementById('refreshTimer').innerHTML = "Auto-refresh inactif";
                     return;
                 }
-
-                matches.sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
-                globalMatchesList = matches;
-
-                renderTable(globalMatchesList);
-                calculateMetrics(globalMatchesList, dateVal);
-                
-                statusEl.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${matches.length} matchs)</span>`;
-
-                clearInterval(autoRefreshInterval);
-                document.getElementById('refreshTimer').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Auto-refresh toutes les 60s';
-                autoRefreshInterval = setInterval(() => { fetchRealMatches(true); }, 60000);
-
-            } catch (error) {
-                console.error(error);
-                statusEl.innerHTML = '<span class="text-red-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur Serveur</span>';
-                if (!isBackground) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-400 font-bold">Impossible de contacter le serveur. Assurez-vous d'avoir bien créé le fichier vercel.json.</td></tr>`;
-                }
             }
+
+            // Si on arrive ici, on a bien récupéré les données (via Vercel ou via Proxy)
+            const targetCompetitions = ['PL', 'FL1', 'SA', 'PD', 'BL1'];
+            let matches = (data.matches || []).filter(m => targetCompetitions.includes(m.competition.code));
+
+            if (leagueFilter !== 'ALL') {
+                matches = matches.filter(m => m.competition.code === leagueFilter);
+            }
+
+            if (matches.length === 0) {
+                if (!isBackground) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-zinc-400 bg-zinc-950/50"><i class="fa-solid fa-ghost text-2xl mb-2 block text-zinc-600"></i>Aucun match majeur officiel programmé à cette date pour la sélection.</td></tr>`;
+                }
+                statusEl.innerHTML = '<span class="text-zinc-400"><i class="fa-solid fa-check mr-1"></i> Aucun match trouvé</span>';
+                globalMatchesList = [];
+                resetMetrics();
+                renderMonthlyStats(dateVal);
+                
+                clearInterval(autoRefreshInterval);
+                document.getElementById('refreshTimer').innerHTML = "Auto-refresh inactif";
+                return;
+            }
+
+            matches.sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
+            globalMatchesList = matches;
+
+            renderTable(globalMatchesList);
+            calculateMetrics(globalMatchesList, dateVal);
+            
+            statusEl.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${matches.length} matchs)</span>`;
+
+            clearInterval(autoRefreshInterval);
+            document.getElementById('refreshTimer').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Auto-refresh toutes les 60s';
+            autoRefreshInterval = setInterval(() => { fetchRealMatches(true); }, 60000);
         }
 
         function isMatchWon(choice, score) {
@@ -231,8 +245,6 @@
             if (choice === '1') return h > a;
             if (choice === 'N') return h === a;
             if (choice === '2') return a > h;
-            if (choice === '1X') return h >= a;
-            if (choice === 'X2') return a >= h;
             return false;
         }
 
@@ -248,7 +260,6 @@
 
             let matchesToRender = matches;
             
-            // Appliquer le filtre Live
             if (showLiveOnly) {
                 matchesToRender = matchesToRender.filter(m => m.status === 'IN_PLAY' || m.status === 'PAUSED');
             }
@@ -273,7 +284,6 @@
                 if (isFinished) {
                     scoreBadge = `<span class="font-black text-lg text-white tracking-widest">${hScore} - ${aScore}</span> <span class="text-[9px] text-zinc-500 uppercase ml-1">FT</span>`;
                 } else if (isInPlay) {
-                    // Calcul du temps restant/minute si fourni par l'API
                     let liveMinute = 'EN COURS';
                     if (m.minute) {
                         liveMinute = m.minute + "'";
@@ -434,7 +444,6 @@
             renderMonthlyStats(dateVal);
         }
 
-        // --- GESTION DE LA BANKROLL MENSUELLE ---
         function updateMonthlyLabel(dateStr) {
             const dateObj = new Date(dateStr);
             const monthName = dateObj.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
