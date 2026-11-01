@@ -168,7 +168,7 @@
 
             if (!isBackground) {
                 statusEl.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Connexion...</span>';
-                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-amber-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Recherche des matchs officiels du ${dateVal}...</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-amber-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Recherche des matchs du ${dateVal}...</td></tr>`;
             } else {
                 statusEl.innerHTML = '<span class="text-emerald-400"><i class="fa-solid fa-rotate fa-spin mr-1"></i> Maj en cours...</span>';
             }
@@ -177,7 +177,6 @@
             
             try {
                 // DOUBLE MOTEUR DE CONNEXION :
-                // 1. On essaye d'abord la route Vercel officielle
                 let res = await fetch(`/api/football/matches?date=${dateVal}`, {
                     headers: { 'X-Auth-Token': API_TOKEN }
                 });
@@ -186,7 +185,6 @@
                 data = await res.json();
                 
             } catch (err1) {
-                // 2. Si Vercel échoue (ou si on est en local sur son PC), on bascule sur le Proxy de Secours
                 try {
                     const proxyUrl = `https://corsproxy.io/?` + encodeURIComponent(`https://api.football-data.org/v4/matches?date=${dateVal}`);
                     let res2 = await fetch(proxyUrl, {
@@ -198,13 +196,12 @@
                     console.error("Double échec de connexion");
                     statusEl.innerHTML = '<span class="text-red-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur de Connexion</span>';
                     if (!isBackground) {
-                        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-400 font-bold">Impossible de contacter les serveurs de football. Vérifiez votre connexion internet.</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-400 font-bold">Impossible de contacter les serveurs de football. Vérifiez votre connexion.</td></tr>`;
                     }
                     return;
                 }
             }
 
-            // Si on arrive ici, on a bien récupéré les données (via Vercel ou via Proxy)
             const targetCompetitions = ['PL', 'FL1', 'SA', 'PD', 'BL1'];
             let matches = (data.matches || []).filter(m => targetCompetitions.includes(m.competition.code));
 
@@ -261,12 +258,18 @@
             let matchesToRender = matches;
             
             if (showLiveOnly) {
-                matchesToRender = matchesToRender.filter(m => m.status === 'IN_PLAY' || m.status === 'PAUSED');
+                // CORRECTION : Élargissement du filtre pour inclure tous les statuts "Live" possibles de l'API
+                matchesToRender = matchesToRender.filter(m => 
+                    m.status === 'IN_PLAY' || 
+                    m.status === 'PAUSED' || 
+                    m.status === 'LIVE' || 
+                    m.status === 'HALFTIME'
+                );
             }
 
             if (matchesToRender.length === 0) {
                 if(showLiveOnly) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-zinc-500 bg-zinc-950/30 font-bold"><i class="fa-solid fa-bed mr-2"></i>Aucun match en direct actuellement.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-zinc-500 bg-zinc-950/30 font-bold"><i class="fa-solid fa-bed mr-2"></i>Aucun match en direct actuellement. (Attente du coup d'envoi de l'API)</td></tr>`;
                 }
                 return;
             }
@@ -274,10 +277,10 @@
             matchesToRender.forEach((m) => {
                 const timeStr = new Date(m.utcDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 const isFinished = m.status === 'FINISHED' || m.status === 'FT' || m.status === 'AWARDED';
-                const isInPlay = m.status === 'IN_PLAY' || m.status === 'LIVE' || m.status === 'PAUSED';
+                const isInPlay = m.status === 'IN_PLAY' || m.status === 'LIVE' || m.status === 'PAUSED' || m.status === 'HALFTIME';
 
-                const hScore = m.score?.fullTime?.home ?? '-';
-                const aScore = m.score?.fullTime?.away ?? '-';
+                const hScore = m.score?.fullTime?.home ?? (m.score?.halfTime?.home ?? '-');
+                const aScore = m.score?.fullTime?.away ?? (m.score?.halfTime?.away ?? '-');
                 
                 let scoreBadge = `<span class="text-zinc-500 font-mono text-[10px] uppercase bg-zinc-800 px-2 py-1 rounded">${m.status}</span>`;
                 
@@ -287,7 +290,7 @@
                     let liveMinute = 'EN COURS';
                     if (m.minute) {
                         liveMinute = m.minute + "'";
-                    } else if (m.status === 'PAUSED') {
+                    } else if (m.status === 'PAUSED' || m.status === 'HALFTIME') {
                         liveMinute = 'MI-TEMPS';
                     }
                     scoreBadge = `<span class="font-black text-lg text-emerald-400 tracking-widest animate-pulse">${hScore} - ${aScore}</span> <span class="text-[9px] bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 px-1.5 py-0.5 rounded uppercase font-bold ml-2 shadow animate-pulse"><i class="fa-solid fa-circle text-[6px] mr-1"></i>${liveMinute}</span>`;
