@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro - Live Cotes & Matchs</title>
+    <title>FootBet Pro - Manuel & Live</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -14,16 +14,13 @@
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center">
                 <i class="fa-solid fa-futbol mr-2"></i>FootBet Pro <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded ml-2">PRO</span>
             </h1>
-            <div class="flex items-center space-x-2 flex-wrap gap-y-1">
-                <select id="leagueSelect" onchange="loadMatches()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500">
-                    <option value="ALL">🌍 Tous les Championnats</option>
-                    <option value="FL1">🇫🇷 France (Ligue 1)</option>
-                    <option value="PL">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre (Premier League)</option>
-                    <option value="SA">🇮🇹 Italie (Serie A)</option>
-                    <option value="PD">🇪🇸 Espagne (LaLiga)</option>
-                    <option value="BL1">🇩🇪 Allemagne (Bundesliga)</option>
-                </select>
-                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadMatches()">
+            <div class="flex items-center space-x-2">
+                <button onclick="resetDefaultMatches()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> Réinitialiser
+                </button>
+                <button onclick="addNewMatch()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow transition flex items-center">
+                    <i class="fa-solid fa-plus mr-1.5"></i> Ajouter un match
+                </button>
             </div>
         </div>
     </header>
@@ -34,9 +31,9 @@
         <div class="bg-zinc-900 border border-indigo-500/30 rounded-2xl p-4 shadow-xl">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-indigo-400 tracking-wider flex items-center">
-                    <i class="fa-solid fa-chart-pie mr-1.5"></i> Bilan Stratégique en Temps Réel
+                    <i class="fa-solid fa-chart-pie mr-1.5"></i> Bilan Stratégique du Jour
                 </h2>
-                <span id="apiStatus" class="text-[10px] font-mono text-emerald-400">● Système Opérationnel</span>
+                <span id="apiStatus" class="text-[10px] font-mono text-emerald-400">● Mode Édition Directe Actif</span>
             </div>
             
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
@@ -75,31 +72,28 @@
                 </div>
             </div>
             <div id="statInvestDetails" class="text-center text-[10px] text-zinc-400 mt-3 font-semibold bg-zinc-800/60 py-2 rounded-xl border border-zinc-700/50">
-                Chargement...
+                Modifiez ou ajoutez vos matchs pour voir le bilan s'ajuster.
             </div>
         </div>
 
         <!-- TABLEAU DES MATCHS -->
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
             <div class="p-3.5 border-b border-zinc-800 flex justify-between items-center">
-                <span class="font-bold text-xs uppercase tracking-wider text-zinc-300">Affiches Officielles & Cotes Bookmakers</span>
-                <button onclick="addNewMatchPrompt()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] px-2.5 py-1 rounded-lg font-bold shadow transition flex items-center">
-                    <i class="fa-solid fa-plus mr-1"></i> Ajouter un match
-                </button>
+                <span class="font-bold text-xs uppercase tracking-wider text-zinc-300">Vos Matchs du Jour (Modifiables à volonté)</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
                     <thead>
                         <tr class="bg-zinc-800/60 text-zinc-400 border-b border-zinc-800">
-                            <th class="p-3">Championnat / Heure</th>
+                            <th class="p-3">Championnat</th>
                             <th class="p-3">Équipes</th>
                             <th class="p-3">Cotes (1 - N - 2)</th>
-                            <th class="p-3">Algorithme</th>
-                            <th class="p-3">Score / Statut</th>
+                            <th class="p-3">Stratégie (Type / Prono)</th>
+                            <th class="p-3">Score (FT)</th>
+                            <th class="p-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="matchesTableBody" class="divide-y divide-zinc-800/50">
-                        <tr><td colspan="5" class="p-6 text-center text-zinc-500">Chargement...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -108,30 +102,26 @@
     </main>
 
     <script>
-        document.getElementById('matchDate').valueAsDate = new Date();
-
-        // Base de données actualisée avec les affiches réelles des grands championnats européens
-        let currentMatches = [
-            // Italie (Serie A)
-            { id: 1, league: 'SA', leagueName: 'Italie (Serie A)', flag: '🇮🇹', time: '18:00', home: 'Napoli', away: 'Atalanta', cotes: [1.85, 3.50, 4.10], score: '2 - 1', status: 'FT', choice: '1', type: 'BASE' },
-            { id: 2, league: 'SA', leagueName: 'Italie (Serie A)', flag: '🇮🇹', time: '20:45', home: 'Inter Milan', away: 'Juventus', cotes: [2.05, 3.30, 3.60], score: '1 - 1', status: 'FT', choice: 'N', type: 'PEPITE' },
-            { id: 3, league: 'SA', leagueName: 'Italie (Serie A)', flag: '🇮🇹', time: '21:00', home: 'Lazio', away: 'AS Roma', cotes: [2.60, 3.10, 2.80], score: '0 - 1', status: 'FT', choice: '2', type: 'PEPITE' },
-
-            // Espagne (LaLiga)
-            { id: 4, league: 'PD', leagueName: 'Espagne (LaLiga)', flag: '🇪🇸', time: '16:15', home: 'Real Madrid', away: 'Barcelone', cotes: [2.10, 3.50, 3.20], score: '2 - 2', status: 'FT', choice: 'N', type: 'PEPITE' },
-            { id: 5, league: 'PD', leagueName: 'Espagne (LaLiga)', flag: '🇪🇸', time: '18:30', home: 'Atlético Madrid', away: 'Athletic Bilbao', cotes: [1.70, 3.60, 5.00], score: '1 - 0', status: 'FT', choice: '1', type: 'BASE' },
-
-            // France (Ligue 1)
-            { id: 6, league: 'FL1', leagueName: 'France (Ligue 1)', flag: '🇫🇷', time: '17:00', home: 'Paris SG', away: 'Marseille', cotes: [1.50, 4.20, 6.00], score: '3 - 1', status: 'FT', choice: '1', type: 'BASE' },
-            { id: 7, league: 'FL1', leagueName: 'France (Ligue 1)', flag: '🇫🇷', time: '20:45', home: 'Monaco', away: 'Lille', cotes: [2.20, 3.40, 3.10], score: '1 - 1', status: 'FT', choice: 'N', type: 'PEPITE' },
-
-            // Angleterre (Premier League)
-            { id: 8, league: 'PL', leagueName: 'Angleterre (PL)', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', time: '15:00', home: 'Liverpool', away: 'Manchester City', cotes: [2.40, 3.50, 2.80], score: '2 - 2', status: 'FT', choice: 'N', type: 'PEPITE' },
-            { id: 9, league: 'PL', leagueName: 'Angleterre (PL)', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', time: '17:30', home: 'Arsenal', away: 'Chelsea', cotes: [1.60, 4.00, 5.50], score: '2 - 0', status: 'FT', choice: '1', type: 'BASE' },
-
-            // Allemagne (Bundesliga)
-            { id: 10, league: 'BL1', leagueName: 'Allemagne (Bundesliga)', flag: '🇩🇪', time: '15:30', home: 'Bayern Munich', away: 'Dortmund', cotes: [1.40, 5.00, 7.00], score: '4 - 2', status: 'FT', choice: '1', type: 'BASE' }
+        // Liste par défaut vide ou avec quelques exemples réinitialisables
+        const defaultMatches = [
+            { id: 1, league: 'Italie (Serie A) 🇮🇹', home: 'Inter Milan', away: 'Juventus', cotes: [1.85, 3.40, 4.30], score: '1 - 0', choice: '1', type: 'BASE' },
+            { id: 2, league: 'Espagne (LaLiga) 🇪🇸', home: 'Real Madrid', away: 'Barcelone', cotes: [2.05, 3.75, 3.30], score: '2 - 3', choice: '2', type: 'PEPITE' },
+            { id: 3, league: 'France (Ligue 1) 🇫🇷', home: 'Paris SG', away: 'Marseille', cotes: [1.50, 4.20, 5.80], score: '2 - 1', choice: '1', type: 'BASE' }
         ];
+
+        let matches = JSON.parse(localStorage.getItem('footbet_matches')) || defaultMatches;
+
+        function saveAndReload() {
+            localStorage.setItem('footbet_matches', JSON.stringify(matches));
+            loadApp();
+        }
+
+        function resetDefaultMatches() {
+            if (confirm("Voulez-vous réinitialiser la liste par défaut ?")) {
+                matches = defaultMatches;
+                saveAndReload();
+            }
+        }
 
         function isMatchWon(choice, score) {
             if (!score || !score.includes('-')) return false;
@@ -143,24 +133,21 @@
             return false;
         }
 
-        function loadMatches() {
-            const selectedLeague = document.getElementById('leagueSelect').value;
-            let list = currentMatches;
-            if (selectedLeague !== 'ALL') {
-                list = currentMatches.filter(m => m.league === selectedLeague);
-            }
-            renderTable(list);
-            calculateMetrics(list);
+        function loadApp() {
+            renderTable();
+            calculateMetrics();
         }
 
-        function renderTable(list) {
+        function renderTable() {
             const tbody = document.getElementById('matchesTableBody');
             tbody.innerHTML = '';
-            if (list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-zinc-500">Aucun match disponible.</td></tr>`;
+
+            if (matches.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-zinc-500">Aucun match enregistré. Cliquez sur "Ajouter un match".</td></tr>`;
                 return;
             }
-            list.forEach(m => {
+
+            matches.forEach((m, index) => {
                 const won = isMatchWon(m.choice, m.score);
                 let badge = m.type === 'BASE' 
                     ? `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-black text-[9px]">BASE (${m.choice})</span>` 
@@ -168,22 +155,26 @@
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="p-3 text-zinc-400">${m.flag} <span class="font-bold text-zinc-200">${m.leagueName}</span><br><span class="text-[10px] text-zinc-500">${m.time}</span></td>
-                    <td class="p-3 font-semibold text-white">${m.home} <span class="text-zinc-500 font-normal">vs</span> ${m.away}</td>
+                    <td class="p-3 font-bold text-zinc-300">${m.league}</td>
+                    <td class="p-3 font-semibold text-white">${m.home} <span class="text-zinc-500">vs</span> ${m.away}</td>
                     <td class="p-3 font-mono text-[11px]"><span class="text-emerald-400">${m.cotes[0].toFixed(2)}</span> · <span class="text-zinc-400">${m.cotes[1].toFixed(2)}</span> · <span class="text-amber-400">${m.cotes[2].toFixed(2)}</span></td>
                     <td class="p-3">${badge}</td>
-                    <td class="p-3 font-bold ${won ? 'text-emerald-400' : 'text-red-400'}">${m.score} (FT)</td>
+                    <td class="p-3 font-bold ${won ? 'text-emerald-400' : 'text-red-400'}">${m.score}</td>
+                    <td class="p-3 text-right space-x-1">
+                        <button onclick="editMatch(${index})" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-1 rounded text-[10px]" title="Modifier"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteMatch(${index})" class="bg-red-950/60 hover:bg-red-900 text-red-300 px-2 py-1 rounded text-[10px]" title="Supprimer"><i class="fa-solid fa-trash"></i></button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function calculateMetrics(list) {
+        function calculateMetrics() {
             let baseWins = 0, baseTotal = 0, totalGainBase = 0, costBase = 0, mBase = 2;
             let pepiteWins = 0, pepiteTotal = 0, totalGainPepite = 0, costPepite = 0;
             let comboWins = 0, comboTotal = 0, totalGainCombo = 0, costCombo = 0;
 
-            list.forEach(m => {
+            matches.forEach(m => {
                 const won = isMatchWon(m.choice, m.score);
                 let odds = m.choice === '1' ? m.cotes[0] : (m.choice === 'N' ? m.cotes[1] : m.cotes[2]);
 
@@ -210,8 +201,8 @@
             comboTotal = Math.min(baseTotal, pepiteTotal);
             for (let i = 0; i < comboTotal; i++) {
                 costCombo += 1;
-                let b = list.filter(m => m.type === 'BASE')[i];
-                let p = list.filter(m => m.type === 'PEPITE')[i];
+                let b = matches.filter(m => m.type === 'BASE')[i];
+                let p = matches.filter(m => m.type === 'PEPITE')[i];
                 if (b && p) {
                     let w1 = isMatchWon(b.choice, b.score);
                     let w2 = isMatchWon(p.choice, p.score);
@@ -242,30 +233,56 @@
             `;
         }
 
-        function addNewMatchPrompt() {
-            let home = prompt("Équipe domicile :");
-            let away = prompt("Équipe extérieur :");
-            let score = prompt("Score final (ex: 2-1) :");
-            if (home && away && score) {
-                currentMatches.push({
+        function addNewMatch() {
+            let league = prompt("Championnat (ex: Serie A 🇮🇹) :", "Serie A 🇮🇹");
+            let home = prompt("Équipe Domicile :");
+            let away = prompt("Équipe Extérieur :");
+            let cote1 = parseFloat(prompt("Cote 1 (Domicile) :", "1.80")) || 1.80;
+            let coteN = parseFloat(prompt("Cote N (Nul) :", "3.40")) || 3.40;
+            let cote2 = parseFloat(prompt("Cote 2 (Extérieur) :", "4.00")) || 4.00;
+            let choice = prompt("Votre choix / Prono (1, N ou 2) :", "1").toUpperCase();
+            let type = prompt("Type de pari (BASE ou PEPITE) :", "BASE").toUpperCase();
+            let score = prompt("Score final (ex: 2-1) :", "2-1");
+
+            if (home && away) {
+                matches.push({
                     id: Date.now(),
-                    league: 'FL1',
-                    leagueName: 'Match Personnalisé',
-                    flag: '⚽',
-                    time: 'En direct',
+                    league: league || 'Championnat',
                     home: home,
                     away: away,
-                    cotes: [1.80, 3.40, 4.00],
-                    score: score,
-                    status: 'FT',
-                    choice: '1',
-                    type: 'BASE'
+                    cotes: [cote1, coteN, cote2],
+                    choice: choice || '1',
+                    type: type === 'PEPITE' ? 'PEPITE' : 'BASE',
+                    score: score || '0-0'
                 });
-                loadMatches();
+                saveAndReload();
             }
         }
 
-        loadMatches();
+        function editMatch(index) {
+            let m = matches[index];
+            let home = prompt("Équipe Domicile :", m.home);
+            let away = prompt("Équipe Extérieur :", m.away);
+            let score = prompt("Score final (ex: 2-1) :", m.score);
+            let choice = prompt("Prono (1, N, 2) :", m.choice);
+
+            if (home && away) {
+                m.home = home;
+                m.away = away;
+                m.score = score;
+                m.choice = choice;
+                saveAndReload();
+            }
+        }
+
+        function deleteMatch(index) {
+            if (confirm("Supprimer ce match ?")) {
+                matches.splice(index, 1);
+                saveAndReload();
+            }
+        }
+
+        loadApp();
     </script>
 </body>
 </html>
