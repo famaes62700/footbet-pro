@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro - Live Scores & Gains</title>
+    <title>FootBet Pro - Live & Bankroll Mensuelle</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -33,11 +33,25 @@
 
     <main class="flex-grow max-w-5xl w-full mx-auto p-4 space-y-5">
 
-        <!-- BILAN STRATÉGIQUE -->
+        <!-- NOUVEAU : BANKROLL & BILAN MENSUEL (Style Turf) -->
+        <div class="bg-gradient-to-r from-zinc-900 to-zinc-800 border border-emerald-500/30 rounded-2xl p-4 shadow-xl flex justify-between items-center">
+            <div>
+                <h2 class="text-xs font-bold uppercase text-zinc-400 tracking-wider mb-1 flex items-center">
+                    <i class="fa-solid fa-calendar-days mr-1.5 text-emerald-500"></i> Bilan du Mois (<span id="currentMonthLabel" class="text-emerald-400">...</span>)
+                </h2>
+                <div class="text-[11px] text-zinc-500">Jours enregistrés : <b id="daysPlayed" class="text-white ml-1">0</b></div>
+            </div>
+            <div class="text-right">
+                <span class="text-[10px] uppercase font-bold text-zinc-500 block mb-0.5">Bénéfice Net Mensuel</span>
+                <span id="monthlyTotal" class="text-xl font-black text-white">0.00 €</span>
+            </div>
+        </div>
+
+        <!-- BILAN STRATÉGIQUE DU JOUR -->
         <div class="bg-zinc-900 border border-indigo-500/30 rounded-2xl p-4 shadow-xl">
             <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
                 <h2 class="text-xs font-bold uppercase text-indigo-400 tracking-wider flex items-center">
-                    <i class="fa-solid fa-wallet mr-1.5"></i> Trésorerie & Stratégie du Jour
+                    <i class="fa-solid fa-wallet mr-1.5"></i> Stratégie & Gains du Jour
                 </h2>
                 <span id="apiStatus" class="text-[10px] font-mono text-zinc-400 bg-zinc-800 px-2 py-1 rounded">Démarrage...</span>
             </div>
@@ -51,7 +65,7 @@
                         <span id="statBaseCount" class="text-[11px] font-bold text-white bg-zinc-950 px-2 py-0.5 rounded">0 / 0</span>
                     </div>
                     <div class="bg-zinc-950/50 p-3 rounded-lg border border-zinc-700/50 text-center flex flex-col">
-                        <span class="text-[9px] text-zinc-500 uppercase font-bold mb-1">Gains cumulés</span>
+                        <span class="text-[9px] text-zinc-500 uppercase font-bold mb-1">Gains du jour</span>
                         <span id="gainBase" class="font-bold text-emerald-400 text-base">0.00 €</span>
                     </div>
                 </div>
@@ -64,7 +78,7 @@
                         <span id="statPepiteCount" class="text-[11px] font-bold text-white bg-zinc-950 px-2 py-0.5 rounded">0 / 0</span>
                     </div>
                     <div class="bg-zinc-950/50 p-3 rounded-lg border border-zinc-700/50 text-center flex flex-col">
-                        <span class="text-[9px] text-zinc-500 uppercase font-bold mb-1">Gains cumulés</span>
+                        <span class="text-[9px] text-zinc-500 uppercase font-bold mb-1">Gains du jour</span>
                         <span id="gainPepite" class="font-bold text-amber-400 text-base">0.00 €</span>
                     </div>
                 </div>
@@ -77,7 +91,7 @@
                         <span id="statComboCount" class="text-[11px] font-bold text-white bg-zinc-950 px-2 py-0.5 rounded">0 / 0</span>
                     </div>
                     <div class="bg-zinc-950/50 p-3 rounded-lg border border-zinc-700/50 text-center flex flex-col">
-                        <span class="text-[9px] text-zinc-500 uppercase font-bold mb-1">Gains cumulés</span>
+                        <span class="text-[9px] text-zinc-500 uppercase font-bold mb-1">Gains du jour</span>
                         <span id="gainCombo" class="font-bold text-blue-400 text-base">0.00 €</span>
                     </div>
                 </div>
@@ -123,11 +137,13 @@
 
         // Fonction principale de récupération
         async function fetchRealMatches(isBackground = false) {
-            const dateVal = document.getElementById('matchDate').value;
+            const dateVal = document.getElementById('matchDate').value; // Format YYYY-MM-DD
             const leagueFilter = document.getElementById('leagueSelect').value;
             const statusEl = document.getElementById('apiStatus');
             const tbody = document.getElementById('matchesTableBody');
             
+            updateMonthlyLabel(dateVal);
+
             if (!isBackground) {
                 statusEl.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Aspiration des matchs...</span>';
                 tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-amber-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Recherche des matchs officiels du ${dateVal}...</td></tr>`;
@@ -136,7 +152,6 @@
             }
 
             try {
-                // Requête via Vercel Rewrite
                 const response = await fetch(`/api/football/matches?date=${dateVal}`, {
                     headers: { 'X-Auth-Token': API_TOKEN }
                 });
@@ -158,21 +173,20 @@
                     }
                     statusEl.innerHTML = '<span class="text-zinc-400"><i class="fa-solid fa-check mr-1"></i> Aucun match trouvé</span>';
                     resetMetrics();
+                    renderMonthlyStats(dateVal);
                     
-                    // Stop l'auto-refresh s'il n'y a pas de match
                     clearInterval(autoRefreshInterval);
                     document.getElementById('refreshTimer').innerHTML = "Auto-refresh inactif";
                     return;
                 }
 
-                // On trie par heure pour que la Martingale se calcule dans l'ordre chronologique
                 matches.sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
 
                 renderTable(matches);
-                calculateMetrics(matches);
+                calculateMetrics(matches, dateVal);
+                
                 statusEl.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${matches.length} matchs)</span>`;
 
-                // Relance l'intervalle de rafraîchissement (toutes les 60 secondes)
                 clearInterval(autoRefreshInterval);
                 document.getElementById('refreshTimer').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Auto-refresh toutes les 60s';
                 autoRefreshInterval = setInterval(() => { fetchRealMatches(true); }, 60000);
@@ -181,7 +195,7 @@
                 console.error(error);
                 statusEl.innerHTML = '<span class="text-red-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur Serveur</span>';
                 if (!isBackground) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-400 font-bold">Impossible de contacter le serveur. Assurez-vous d'avoir bien créé le fichier vercel.json sur GitHub.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-400 font-bold">Impossible de contacter le serveur. Assurez-vous d'avoir bien créé le fichier vercel.json.</td></tr>`;
                 }
             }
         }
@@ -197,7 +211,6 @@
             return false;
         }
 
-        // Cotes générées intelligemment pour garder de la cohérence entre deux rafraîchissements
         function generateStableOdds(homeName, awayName) {
             const hash = (homeName.length * 3 + awayName.length * 7) % 10;
             if (hash < 5) return { home: 1.45 + (hash * 0.05), draw: 3.80, away: 5.50 - hash, type: 'BASE', choice: '1' };
@@ -284,13 +297,13 @@
             document.getElementById('gainPepite').innerHTML = `0.00 €`;
             document.getElementById('statComboCount').textContent = `0 / 0`;
             document.getElementById('gainCombo').innerHTML = `0.00 €`;
-            document.getElementById('statInvestDetails').innerHTML = `En attente des données...`;
+            document.getElementById('statInvestDetails').innerHTML = `Aucun match enregistré à cette date.`;
         }
 
-        function calculateMetrics(matches) {
-            let baseWins = 0, baseTotal = 0, totalGainBase = 0, costBase = 0, mBase = 2; // Départ martingale 2€
-            let pepiteWins = 0, pepiteTotal = 0, totalGainPepite = 0, costPepite = 0; // Fixe 1€
-            let comboWins = 0, comboTotal = 0, totalGainCombo = 0, costCombo = 0; // Fixe 1€
+        function calculateMetrics(matches, dateVal) {
+            let baseWins = 0, baseTotal = 0, totalGainBase = 0, costBase = 0, mBase = 2;
+            let pepiteWins = 0, pepiteTotal = 0, totalGainPepite = 0, costPepite = 0;
+            let comboWins = 0, comboTotal = 0, totalGainCombo = 0, costCombo = 0;
 
             matches.forEach(m => {
                 const isFinished = m.status === 'FINISHED' || m.status === 'FT' || m.status === 'AWARDED';
@@ -313,9 +326,9 @@
                     if (won) {
                         baseWins++;
                         totalGainBase += actualOdd * mBase;
-                        mBase = 2; // Retour à 2€ si gagné
+                        mBase = 2; 
                     } else {
-                        mBase *= 2; // Double si perdu
+                        mBase *= 2; 
                     }
                 } else if (oddsData.type === 'PEPITE') {
                     pepiteTotal++;
@@ -327,7 +340,6 @@
                 }
             });
 
-            // Logique Combo (1 base + 1 pépite chronologique)
             const finishedBases = matches.filter(m => m.algoData?.type === 'BASE' && (m.status === 'FINISHED' || m.status === 'FT'));
             const finishedPepites = matches.filter(m => m.algoData?.type === 'PEPITE' && (m.status === 'FINISHED' || m.status === 'FT'));
             
@@ -348,16 +360,18 @@
                 }
             }
 
-            // Affichage UI (Gains, Nets et Statistiques de réussite)
             const netBase = totalGainBase - costBase;
+            const netPepite = totalGainPepite - costPepite;
+            const netCombo = totalGainCombo - costCombo;
+            const dailyNetTotal = netBase + netPepite + netCombo;
+
+            // Mise à jour de l'UI du Jour
             document.getElementById('statBaseCount').textContent = `${baseWins} / ${baseTotal}`;
             document.getElementById('gainBase').innerHTML = `${totalGainBase.toFixed(2)} €<br><span class="${netBase >= 0 ? 'text-emerald-400' : 'text-red-400'} text-[10px] mt-1 block bg-zinc-900 py-1 rounded">Net : ${netBase >= 0 ? '+' : ''}${netBase.toFixed(2)} €</span>`;
 
-            const netPepite = totalGainPepite - costPepite;
             document.getElementById('statPepiteCount').textContent = `${pepiteWins} / ${pepiteTotal}`;
             document.getElementById('gainPepite').innerHTML = `${totalGainPepite.toFixed(2)} €<br><span class="${netPepite >= 0 ? 'text-amber-400' : 'text-red-400'} text-[10px] mt-1 block bg-zinc-900 py-1 rounded">Net : ${netPepite >= 0 ? '+' : ''}${netPepite.toFixed(2)} €</span>`;
 
-            const netCombo = totalGainCombo - costCombo;
             document.getElementById('statComboCount').textContent = `${comboWins} / ${comboTotal}`;
             document.getElementById('gainCombo').innerHTML = `${totalGainCombo.toFixed(2)} €<br><span class="${netCombo >= 0 ? 'text-blue-400' : 'text-red-400'} text-[10px] mt-1 block bg-zinc-900 py-1 rounded">Net : ${netCombo >= 0 ? '+' : ''}${netCombo.toFixed(2)} €</span>`;
 
@@ -367,9 +381,48 @@
                 <span class="mx-3 text-zinc-700">|</span>
                 <span class="text-emerald-400">Martingale en cours : <b class="text-white">${costBase} €</b> engagés (Prochain palier : <b class="text-white">${mBase} €</b>)</span>
             `;
+
+            // Enregistrement des gains dans l'historique local pour le mois
+            saveDailyToHistory(dateVal, dailyNetTotal);
+            renderMonthlyStats(dateVal);
         }
 
-        // Lancement au premier chargement de la page
+        // --- GESTION DE LA BANKROLL MENSUELLE ---
+
+        function updateMonthlyLabel(dateStr) {
+            const dateObj = new Date(dateStr);
+            const monthName = dateObj.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+            document.getElementById('currentMonthLabel').textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+        }
+
+        function saveDailyToHistory(dateStr, dailyNetTotal) {
+            // Ne sauvegarde que si la journée a généré des paris finis (différent de 0 ou si on a vraiment joué)
+            // On le sauvegarde pour construire la bankroll mois par mois.
+            let history = JSON.parse(localStorage.getItem('footbet_history')) || {};
+            history[dateStr] = dailyNetTotal;
+            localStorage.setItem('footbet_history', JSON.stringify(history));
+        }
+
+        function renderMonthlyStats(dateStr) {
+            let history = JSON.parse(localStorage.getItem('footbet_history')) || {};
+            const monthPrefix = dateStr.substring(0, 7); // Extrait "YYYY-MM"
+            
+            let monthTotal = 0;
+            let daysPlayed = 0;
+
+            for (let d in history) {
+                if (d.startsWith(monthPrefix) && history[d] !== 0) {
+                    monthTotal += history[d];
+                    daysPlayed++;
+                }
+            }
+
+            const monthlyTotalEl = document.getElementById('monthlyTotal');
+            monthlyTotalEl.textContent = `${monthTotal > 0 ? '+' : ''}${monthTotal.toFixed(2)} €`;
+            monthlyTotalEl.className = monthTotal >= 0 ? 'text-xl font-black text-emerald-400' : 'text-xl font-black text-red-400';
+            document.getElementById('daysPlayed').textContent = daysPlayed;
+        }
+
         fetchRealMatches();
     </script>
 </body>
