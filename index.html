@@ -176,14 +176,11 @@
             let data;
             
             try {
-                // DOUBLE MOTEUR DE CONNEXION :
                 let res = await fetch(`/api/football/matches?date=${dateVal}`, {
                     headers: { 'X-Auth-Token': API_TOKEN }
                 });
-                
                 if (!res.ok) throw new Error("Vercel Route Failed");
                 data = await res.json();
-                
             } catch (err1) {
                 try {
                     const proxyUrl = `https://corsproxy.io/?` + encodeURIComponent(`https://api.football-data.org/v4/matches?date=${dateVal}`);
@@ -193,7 +190,6 @@
                     if (!res2.ok) throw new Error("Proxy Failed");
                     data = await res2.json();
                 } catch (err2) {
-                    console.error("Double échec de connexion");
                     statusEl.innerHTML = '<span class="text-red-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur de Connexion</span>';
                     if (!isBackground) {
                         tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-400 font-bold">Impossible de contacter les serveurs de football. Vérifiez votre connexion.</td></tr>`;
@@ -254,47 +250,69 @@
         function renderTable(matches) {
             const tbody = document.getElementById('matchesTableBody');
             tbody.innerHTML = '';
+            const now = new Date();
 
             let matchesToRender = matches;
             
             if (showLiveOnly) {
-                // CORRECTION : Élargissement du filtre pour inclure tous les statuts "Live" possibles de l'API
-                matchesToRender = matchesToRender.filter(m => 
-                    m.status === 'IN_PLAY' || 
-                    m.status === 'PAUSED' || 
-                    m.status === 'LIVE' || 
-                    m.status === 'HALFTIME'
-                );
+                // FILTRE LIVE INTELLIGENT : Inclut les matchs dont l'heure de début est passée, même si l'API est en retard
+                matchesToRender = matchesToRender.filter(m => {
+                    const matchTime = new Date(m.utcDate);
+                    const isFinished = m.status === 'FINISHED' || m.status === 'FT' || m.status === 'AWARDED';
+                    const hasStarted = matchTime <= now;
+                    return !isFinished && hasStarted;
+                });
             }
 
             if (matchesToRender.length === 0) {
                 if(showLiveOnly) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-zinc-500 bg-zinc-950/30 font-bold"><i class="fa-solid fa-bed mr-2"></i>Aucun match en direct actuellement. (Attente du coup d'envoi de l'API)</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-zinc-500 bg-zinc-950/30 font-bold"><i class="fa-solid fa-bed mr-2"></i>Aucun match en direct actuellement.</td></tr>`;
                 }
                 return;
             }
 
             matchesToRender.forEach((m) => {
-                const timeStr = new Date(m.utcDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const matchTime = new Date(m.utcDate);
+                const timeStr = matchTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 const isFinished = m.status === 'FINISHED' || m.status === 'FT' || m.status === 'AWARDED';
-                const isInPlay = m.status === 'IN_PLAY' || m.status === 'LIVE' || m.status === 'PAUSED' || m.status === 'HALFTIME';
+                const hasStarted = matchTime <= now;
+                // SI l'API n'a pas mis à jour le statut mais que l'heure est passée, on le force en "isInPlay"
+                const isInPlay = !isFinished && hasStarted;
 
-                const hScore = m.score?.fullTime?.home ?? (m.score?.halfTime?.home ?? '-');
-                const aScore = m.score?.fullTime?.away ?? (m.score?.halfTime?.away ?? '-');
+                // On affiche 0 - 0 si l'API n'a pas encore renvoyé de score mais que le match a démarré
+                let hScore = m.score?.fullTime?.home ?? (m.score?.halfTime?.home ?? null);
+                let aScore = m.score?.fullTime?.away ?? (m.score?.halfTime?.away ?? null);
+                
+                if (isInPlay && hScore === null) {
+                    hScore = 0;
+                    aScore = 0;
+                } else {
+                    hScore = hScore ?? '-';
+                    aScore = aScore ?? '-';
+                }
                 
                 let scoreBadge = `<span class="text-zinc-500 font-mono text-[10px] uppercase bg-zinc-800 px-2 py-1 rounded">${m.status}</span>`;
                 
                 if (isFinished) {
                     scoreBadge = `<span class="font-black text-lg text-white tracking-widest">${hScore} - ${aScore}</span> <span class="text-[9px] text-zinc-500 uppercase ml-1">FT</span>`;
                 } else if (isInPlay) {
+                    // CHRONOMÈTRE INTELLIGENT
                     let liveMinute = 'EN COURS';
                     if (m.minute) {
                         liveMinute = m.minute + "'";
                     } else if (m.status === 'PAUSED' || m.status === 'HALFTIME') {
                         liveMinute = 'MI-TEMPS';
+                    } else {
+                        // L'API est en retard : on calcule la minute approximative grâce à l'horloge
+                        let diffMins = Math.floor((now - matchTime) / 60000);
+                        if (diffMins < 1) diffMins = 1;
+                        if (diffMins >= 45 && diffMins <= 60) liveMinute = 'MI-TEMPS';
+                        else if (diffMins > 60 && diffMins <= 105) liveMinute = (diffMins - 15) + "'";
+                        else if (diffMins > 105) liveMinute = "90'+";
+                        else liveMinute = diffMins + "'";
                     }
                     scoreBadge = `<span class="font-black text-lg text-emerald-400 tracking-widest animate-pulse">${hScore} - ${aScore}</span> <span class="text-[9px] bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 px-1.5 py-0.5 rounded uppercase font-bold ml-2 shadow animate-pulse"><i class="fa-solid fa-circle text-[6px] mr-1"></i>${liveMinute}</span>`;
-                } else if (m.status === 'TIMED' || m.status === 'SCHEDULED') {
+                } else {
                     scoreBadge = `<span class="text-zinc-500 font-mono text-[11px]"><i class="fa-regular fa-clock mr-1"></i>${timeStr}</span>`;
                 }
 
