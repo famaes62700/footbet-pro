@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro - Live & Bankroll Mensuelle</title>
+    <title>FootBet Pro - Live Scores & Bankroll</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -33,7 +33,7 @@
 
     <main class="flex-grow max-w-5xl w-full mx-auto p-4 space-y-5">
 
-        <!-- NOUVEAU : BANKROLL & BILAN MENSUEL (Style Turf) -->
+        <!-- BANKROLL & BILAN MENSUEL -->
         <div class="bg-gradient-to-r from-zinc-900 to-zinc-800 border border-emerald-500/30 rounded-2xl p-4 shadow-xl flex justify-between items-center">
             <div>
                 <h2 class="text-xs font-bold uppercase text-zinc-400 tracking-wider mb-1 flex items-center">
@@ -103,8 +103,14 @@
 
         <!-- CALENDRIER & RÉSULTATS -->
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
-            <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
-                <span class="font-bold text-xs uppercase tracking-wider text-zinc-200"><i class="fa-solid fa-list-ul mr-2"></i>Matchs Officiels & Scores en Direct</span>
+            <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50 flex-wrap gap-3">
+                <div class="flex items-center space-x-3">
+                    <span class="font-bold text-xs uppercase tracking-wider text-zinc-200"><i class="fa-solid fa-list-ul mr-2"></i>Tableau des Matchs</span>
+                    <!-- BOUTON FILTRE LIVE -->
+                    <button id="toggleLiveBtn" onclick="toggleLiveView()" class="bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 border border-zinc-700 px-2.5 py-1 rounded text-[10px] font-bold transition flex items-center shadow" title="Afficher uniquement les matchs en cours">
+                        <i class="fa-solid fa-satellite-dish mr-1.5"></i> Mode Live
+                    </button>
+                </div>
                 <span id="refreshTimer" class="text-[9px] text-emerald-500 uppercase font-bold border border-emerald-500/30 px-2 py-1 rounded bg-emerald-500/10">
                     <i class="fa-solid fa-spinner fa-spin mr-1"></i> Auto-refresh actif
                 </span>
@@ -117,7 +123,7 @@
                             <th class="p-4 font-semibold">Rencontre</th>
                             <th class="p-4 font-semibold">Cotes (1 - N - 2)</th>
                             <th class="p-4 font-semibold text-center">Stratégie Algo</th>
-                            <th class="p-4 font-semibold text-right">Score Final</th>
+                            <th class="p-4 font-semibold text-right">Score Final / Temps</th>
                         </tr>
                     </thead>
                     <tbody id="matchesTableBody" class="divide-y divide-zinc-800/80">
@@ -134,10 +140,29 @@
         const API_TOKEN = 'c42660750d784a43b51eb6a31906a777';
         
         let autoRefreshInterval;
+        let globalMatchesList = []; // Stockage global pour le filtre Live
+        let showLiveOnly = false; // Etat du filtre Live
 
-        // Fonction principale de récupération
+        // Bascule d'affichage Mode Live / Tous les matchs
+        function toggleLiveView() {
+            showLiveOnly = !showLiveOnly;
+            const btn = document.getElementById('toggleLiveBtn');
+            if (showLiveOnly) {
+                btn.classList.replace('text-zinc-400', 'text-emerald-400');
+                btn.classList.replace('bg-zinc-800/80', 'bg-zinc-950');
+                btn.classList.replace('border-zinc-700', 'border-emerald-500/50');
+                btn.classList.add('animate-pulse');
+            } else {
+                btn.classList.replace('text-emerald-400', 'text-zinc-400');
+                btn.classList.replace('bg-zinc-950', 'bg-zinc-800/80');
+                btn.classList.replace('border-emerald-500/50', 'border-zinc-700');
+                btn.classList.remove('animate-pulse');
+            }
+            renderTable(globalMatchesList);
+        }
+
         async function fetchRealMatches(isBackground = false) {
-            const dateVal = document.getElementById('matchDate').value; // Format YYYY-MM-DD
+            const dateVal = document.getElementById('matchDate').value; 
             const leagueFilter = document.getElementById('leagueSelect').value;
             const statusEl = document.getElementById('apiStatus');
             const tbody = document.getElementById('matchesTableBody');
@@ -172,6 +197,7 @@
                         tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-zinc-400 bg-zinc-950/50"><i class="fa-solid fa-ghost text-2xl mb-2 block text-zinc-600"></i>Aucun match majeur officiel programmé à cette date pour la sélection.</td></tr>`;
                     }
                     statusEl.innerHTML = '<span class="text-zinc-400"><i class="fa-solid fa-check mr-1"></i> Aucun match trouvé</span>';
+                    globalMatchesList = [];
                     resetMetrics();
                     renderMonthlyStats(dateVal);
                     
@@ -181,9 +207,10 @@
                 }
 
                 matches.sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
+                globalMatchesList = matches;
 
-                renderTable(matches);
-                calculateMetrics(matches, dateVal);
+                renderTable(globalMatchesList);
+                calculateMetrics(globalMatchesList, dateVal);
                 
                 statusEl.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${matches.length} matchs)</span>`;
 
@@ -221,7 +248,19 @@
             const tbody = document.getElementById('matchesTableBody');
             tbody.innerHTML = '';
 
-            matches.forEach((m) => {
+            let matchesToRender = matches;
+            
+            // Appliquer le filtre Live
+            if (showLiveOnly) {
+                matchesToRender = matchesToRender.filter(m => m.status === 'IN_PLAY' || m.status === 'PAUSED');
+            }
+
+            if (matchesToRender.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-zinc-500 bg-zinc-950/30">Aucun match à afficher dans cette vue.</td></tr>`;
+                return;
+            }
+
+            matchesToRender.forEach((m) => {
                 const timeStr = new Date(m.utcDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 const isFinished = m.status === 'FINISHED' || m.status === 'FT' || m.status === 'AWARDED';
                 const isInPlay = m.status === 'IN_PLAY' || m.status === 'LIVE' || m.status === 'PAUSED';
@@ -230,10 +269,16 @@
                 const aScore = m.score?.fullTime?.away ?? '-';
                 
                 let scoreBadge = `<span class="text-zinc-500 font-mono text-[10px] uppercase bg-zinc-800 px-2 py-1 rounded">${m.status}</span>`;
+                
                 if (isFinished) {
                     scoreBadge = `<span class="font-black text-lg text-white tracking-widest">${hScore} - ${aScore}</span> <span class="text-[9px] text-zinc-500 uppercase ml-1">FT</span>`;
                 } else if (isInPlay) {
-                    scoreBadge = `<span class="font-black text-lg text-emerald-400 tracking-widest animate-pulse">${hScore} - ${aScore}</span> <span class="text-[9px] text-emerald-600 uppercase ml-1">LIVE</span>`;
+                    // Récupération de la minute en cours si l'API la fournit, sinon fallback sur le statut
+                    let liveMinute = m.minute ? m.minute + "'" : 'EN COURS';
+                    if (m.status === 'PAUSED') liveMinute = 'MI-TEMPS';
+                    scoreBadge = `<span class="font-black text-lg text-emerald-400 tracking-widest animate-pulse">${hScore} - ${aScore}</span> <span class="text-[9px] text-emerald-500 uppercase font-bold ml-1">${liveMinute}</span>`;
+                } else if (m.status === 'TIMED' || m.status === 'SCHEDULED') {
+                    scoreBadge = `<span class="text-zinc-500 font-mono text-[11px]"><i class="fa-regular fa-clock mr-1"></i>${timeStr}</span>`;
                 }
 
                 const oddsData = generateStableOdds(m.homeTeam.name, m.awayTeam.name);
@@ -365,7 +410,6 @@
             const netCombo = totalGainCombo - costCombo;
             const dailyNetTotal = netBase + netPepite + netCombo;
 
-            // Mise à jour de l'UI du Jour
             document.getElementById('statBaseCount').textContent = `${baseWins} / ${baseTotal}`;
             document.getElementById('gainBase').innerHTML = `${totalGainBase.toFixed(2)} €<br><span class="${netBase >= 0 ? 'text-emerald-400' : 'text-red-400'} text-[10px] mt-1 block bg-zinc-900 py-1 rounded">Net : ${netBase >= 0 ? '+' : ''}${netBase.toFixed(2)} €</span>`;
 
@@ -382,13 +426,11 @@
                 <span class="text-emerald-400">Martingale en cours : <b class="text-white">${costBase} €</b> engagés (Prochain palier : <b class="text-white">${mBase} €</b>)</span>
             `;
 
-            // Enregistrement des gains dans l'historique local pour le mois
             saveDailyToHistory(dateVal, dailyNetTotal);
             renderMonthlyStats(dateVal);
         }
 
         // --- GESTION DE LA BANKROLL MENSUELLE ---
-
         function updateMonthlyLabel(dateStr) {
             const dateObj = new Date(dateStr);
             const monthName = dateObj.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
@@ -396,8 +438,6 @@
         }
 
         function saveDailyToHistory(dateStr, dailyNetTotal) {
-            // Ne sauvegarde que si la journée a généré des paris finis (différent de 0 ou si on a vraiment joué)
-            // On le sauvegarde pour construire la bankroll mois par mois.
             let history = JSON.parse(localStorage.getItem('footbet_history')) || {};
             history[dateStr] = dailyNetTotal;
             localStorage.setItem('footbet_history', JSON.stringify(history));
@@ -405,7 +445,7 @@
 
         function renderMonthlyStats(dateStr) {
             let history = JSON.parse(localStorage.getItem('footbet_history')) || {};
-            const monthPrefix = dateStr.substring(0, 7); // Extrait "YYYY-MM"
+            const monthPrefix = dateStr.substring(0, 7); 
             
             let monthTotal = 0;
             let daysPlayed = 0;
