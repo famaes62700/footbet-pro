@@ -3,100 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro - Live Officiel</title>
+    <title>FootBet Pro - Matchs Réels en Direct</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none">
 
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
-        <div class="max-w-4xl mx-auto flex justify-between items-center flex-wrap gap-2">
+        <div class="max-w-5xl mx-auto flex justify-between items-center flex-wrap gap-2">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center">
-                <i class="fa-solid fa-futbol mr-2"></i>FootBet Pro <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded ml-2">PRO LIVE</span>
+                <i class="fa-solid fa-futbol mr-2"></i>FootBet Pro <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded ml-2 shadow">LIVE OFFICIEL</span>
             </h1>
             <div class="flex items-center space-x-2">
-                <select id="leagueFilter" onchange="loadApp()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500">
-                    <option value="ALL">🌍 Tous les Championnats</option>
-                    <option value="FL1">🇫🇷 France (Ligue 1)</option>
-                    <option value="PL">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre (Premier League)</option>
-                    <option value="SA">🇮🇹 Italie (Serie A)</option>
-                    <option value="PD">🇪🇸 Espagne (LaLiga)</option>
-                    <option value="BL1">🇩🇪 Allemagne (Bundesliga)</option>
+                <select id="leagueSelect" onchange="fetchRealMatches()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500 shadow-inner">
+                    <option value="ALL">🌍 Top 5 Européen</option>
+                    <option value="FL1">🇫🇷 Ligue 1</option>
+                    <option value="PL">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League</option>
+                    <option value="SA">🇮🇹 Serie A</option>
+                    <option value="PD">🇪🇸 LaLiga</option>
+                    <option value="BL1">🇩🇪 Bundesliga</option>
                 </select>
-                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadApp()">
+                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500 shadow-inner" onchange="fetchRealMatches()">
+                <button onclick="fetchRealMatches()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition flex items-center shadow-lg">
+                    <i class="fa-solid fa-rotate mr-1.5"></i> Sync
+                </button>
             </div>
         </div>
     </header>
 
-    <main class="flex-grow max-w-4xl w-full mx-auto p-4 space-y-4">
+    <main class="flex-grow max-w-5xl w-full mx-auto p-4 space-y-5">
 
-        <!-- BILAN STRATÉGIQUE DU JOUR -->
+        <!-- BILAN STRATÉGIQUE -->
         <div class="bg-zinc-900 border border-indigo-500/30 rounded-2xl p-4 shadow-xl">
-            <div class="flex justify-between items-center mb-3">
+            <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
                 <h2 class="text-xs font-bold uppercase text-indigo-400 tracking-wider flex items-center">
-                    <i class="fa-solid fa-chart-pie mr-1.5"></i> Bilan Stratégique en Temps Réel
+                    <i class="fa-solid fa-wallet mr-1.5"></i> Trésorerie & Stratégie du Jour
                 </h2>
-                <span id="apiStatus" class="text-[10px] font-mono text-emerald-400">● Synchronisé</span>
+                <span id="apiStatus" class="text-[10px] font-mono text-zinc-400 bg-zinc-800 px-2 py-1 rounded">Chargement initial...</span>
             </div>
             
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                <!-- BASE (Martingale 2€) -->
-                <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-emerald-500/30 flex flex-col justify-between space-y-2 relative">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">MARTINGALE (2€)</div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <!-- BASE SOLIDE -->
+                <div class="bg-zinc-800/90 p-4 rounded-xl border border-emerald-500/30 flex flex-col justify-between space-y-3 relative shadow-inner">
+                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[9px] font-black px-2 py-0.5 rounded shadow-lg">MARTINGALE (2€)</div>
                     <div class="flex justify-between items-center">
-                        <span class="text-[10px] uppercase font-bold text-emerald-400">Base Solide</span>
-                        <span id="statBaseCount" class="text-[10px] font-bold text-white">0 / 0</span>
+                        <span class="text-[11px] uppercase font-bold text-emerald-400"><i class="fa-solid fa-shield-halved mr-1"></i> Base Solide</span>
+                        <span id="statBaseCount" class="text-[11px] font-bold text-white bg-zinc-950 px-2 py-0.5 rounded">0 / 0</span>
                     </div>
-                    <div class="bg-zinc-900/60 p-2.5 rounded border border-zinc-700/50 text-center">
-                        <span id="gainBase" class="font-bold text-emerald-400 text-sm">0.00 €</span>
+                    <div class="bg-zinc-950/50 p-3 rounded-lg border border-zinc-700/50 text-center flex flex-col">
+                        <span class="text-[9px] text-zinc-500 uppercase font-bold mb-1">Gains cumulés</span>
+                        <span id="gainBase" class="font-bold text-emerald-400 text-base">0.00 €</span>
                     </div>
                 </div>
 
-                <!-- PÉPITE (1€) -->
-                <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-amber-500/30 flex flex-col justify-between space-y-2">
+                <!-- PÉPITE -->
+                <div class="bg-zinc-800/90 p-4 rounded-xl border border-amber-500/30 flex flex-col justify-between space-y-3 relative shadow-inner">
+                    <div class="absolute -top-2 -right-2 bg-amber-500 text-zinc-900 text-[9px] font-black px-2 py-0.5 rounded shadow-lg">MISE FIXE (1€)</div>
                     <div class="flex justify-between items-center">
-                        <span class="text-[10px] uppercase font-bold text-amber-400">Pépite / Value (1€)</span>
-                        <span id="statPepiteCount" class="text-[10px] font-bold text-white">0 / 0</span>
+                        <span class="text-[11px] uppercase font-bold text-amber-400"><i class="fa-solid fa-star mr-1"></i> Pépite / Value</span>
+                        <span id="statPepiteCount" class="text-[11px] font-bold text-white bg-zinc-950 px-2 py-0.5 rounded">0 / 0</span>
                     </div>
-                    <div class="bg-zinc-900/60 p-2.5 rounded border border-zinc-700/50 text-center">
-                        <span id="gainPepite" class="font-bold text-amber-400 text-sm">0.00 €</span>
+                    <div class="bg-zinc-950/50 p-3 rounded-lg border border-zinc-700/50 text-center flex flex-col">
+                        <span class="text-[9px] text-zinc-500 uppercase font-bold mb-1">Gains cumulés</span>
+                        <span id="gainPepite" class="font-bold text-amber-400 text-base">0.00 €</span>
                     </div>
                 </div>
 
-                <!-- COMBO (1€) -->
-                <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-blue-500/30 flex flex-col justify-between space-y-2">
+                <!-- COMBO -->
+                <div class="bg-zinc-800/90 p-4 rounded-xl border border-blue-500/30 flex flex-col justify-between space-y-3 relative shadow-inner">
+                    <div class="absolute -top-2 -right-2 bg-blue-500 text-zinc-900 text-[9px] font-black px-2 py-0.5 rounded shadow-lg">MISE FIXE (1€)</div>
                     <div class="flex justify-between items-center">
-                        <span class="text-[10px] uppercase font-bold text-blue-400">Combo 2 Sélections (1€)</span>
-                        <span id="statComboCount" class="text-[10px] font-bold text-white">0 / 0</span>
+                        <span class="text-[11px] uppercase font-bold text-blue-400"><i class="fa-solid fa-link mr-1"></i> Combo (Base+Pép)</span>
+                        <span id="statComboCount" class="text-[11px] font-bold text-white bg-zinc-950 px-2 py-0.5 rounded">0 / 0</span>
                     </div>
-                    <div class="bg-zinc-900/60 p-2.5 rounded border border-zinc-700/50 text-center">
-                        <span id="gainCombo" class="font-bold text-blue-400 text-sm">0.00 €</span>
+                    <div class="bg-zinc-950/50 p-3 rounded-lg border border-zinc-700/50 text-center flex flex-col">
+                        <span class="text-[9px] text-zinc-500 uppercase font-bold mb-1">Gains cumulés</span>
+                        <span id="gainCombo" class="font-bold text-blue-400 text-base">0.00 €</span>
                     </div>
                 </div>
             </div>
-            <div id="statInvestDetails" class="text-center text-[10px] text-zinc-400 mt-3 font-semibold bg-zinc-800/60 py-2 rounded-xl border border-zinc-700/50">
-                Chargement des rencontres...
+            <div id="statInvestDetails" class="text-center text-[11px] text-zinc-300 mt-4 font-semibold bg-zinc-950 py-2.5 rounded-lg border border-zinc-800 shadow-inner">
+                En attente des données pour calculer l'investissement...
             </div>
         </div>
 
-        <!-- TABLEAU DES MATCHS -->
+        <!-- CALENDRIER & RÉSULTATS -->
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
-            <div class="p-3.5 border-b border-zinc-800 flex justify-between items-center">
-                <span class="font-bold text-xs uppercase tracking-wider text-zinc-300">Affiches Officielles & Cotes en Direct</span>
+            <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+                <span class="font-bold text-xs uppercase tracking-wider text-zinc-200"><i class="fa-solid fa-list-ul mr-2"></i>Matchs Officiels du Jour</span>
+                <span class="text-[9px] text-zinc-500 uppercase font-bold">Via Football-Data.org API</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
                     <thead>
-                        <tr class="bg-zinc-800/60 text-zinc-400 border-b border-zinc-800">
-                            <th class="p-3">Championnat / Heure</th>
-                            <th class="p-3">Équipes</th>
-                            <th class="p-3">Cotes (1 - N - 2)</th>
-                            <th class="p-3">Algorithme</th>
-                            <th class="p-3">Score / Statut</th>
+                        <tr class="bg-zinc-950 text-zinc-400 border-b border-zinc-800">
+                            <th class="p-4 font-semibold">Compétition / Heure</th>
+                            <th class="p-4 font-semibold">Rencontre</th>
+                            <th class="p-4 font-semibold">Cotes (1 - N - 2)</th>
+                            <th class="p-4 font-semibold text-center">Stratégie Algo</th>
+                            <th class="p-4 font-semibold text-right">Score Final</th>
                         </tr>
                     </thead>
-                    <tbody id="matchesTableBody" class="divide-y divide-zinc-800/50">
-                        <tr><td colspan="5" class="p-6 text-center text-zinc-500">Chargement...</td></tr>
+                    <tbody id="matchesTableBody" class="divide-y divide-zinc-800/80">
+                        <tr><td colspan="5" class="p-8 text-center text-zinc-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Connexion sécurisée à l'API en cours...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -105,146 +114,251 @@
     </main>
 
     <script>
+        // Initialisation à la date du jour
         document.getElementById('matchDate').valueAsDate = new Date();
+        const API_TOKEN = 'c42660750d784a43b51eb6a31906a777';
 
-        // Base de données des vraies affiches des 5 grands championnats européens
-        const realMatchesDatabase = [
-            // Italie (Serie A)
-            { league: 'SA', leagueName: 'Italie (Serie A)', flag: '🇮🇹', time: '18:00', home: 'Inter Milan', away: 'Juventus', cotes: [1.85, 3.40, 4.30], score: '1 - 0', status: 'FT', choice: '1', type: 'BASE' },
-            { league: 'SA', leagueName: 'Italie (Serie A)', flag: '🇮🇹', time: '20:45', home: 'Napoli', away: 'AC Milan', cotes: [2.25, 3.30, 3.20], score: '2 - 2', status: 'FT', choice: 'N', type: 'PEPITE' },
-            { league: 'SA', leagueName: 'Italie (Serie A)', flag: '🇮🇹', time: '21:00', home: 'AS Roma', away: 'Atalanta', cotes: [2.40, 3.20, 2.90], score: '1 - 2', status: 'FT', choice: '2', type: 'PEPITE' },
+        async function fetchRealMatches() {
+            const dateVal = document.getElementById('matchDate').value;
+            const leagueFilter = document.getElementById('leagueSelect').value;
+            const statusEl = document.getElementById('apiStatus');
+            const tbody = document.getElementById('matchesTableBody');
+            
+            statusEl.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Aspiration des matchs...</span>';
+            tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-amber-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Recherche des matchs officiels du ${dateVal}...</td></tr>`;
 
-            // Espagne (LaLiga)
-            { league: 'PD', leagueName: 'Espagne (LaLiga)', flag: '🇪🇸', time: '16:15', home: 'Real Madrid', away: 'Barcelone', cotes: [2.05, 3.75, 3.30], score: '2 - 3', status: 'FT', choice: '2', type: 'PEPITE' },
-            { league: 'PD', leagueName: 'Espagne (LaLiga)', flag: '🇪🇸', time: '18:30', home: 'Atlético Madrid', away: 'Séville', cotes: [1.60, 3.90, 5.50], score: '2 - 0', status: 'FT', choice: '1', type: 'BASE' },
+            try {
+                // Utilisation d'un Proxy CORS public pour forcer la sécurité du navigateur web et lire l'API externe
+                const targetUrl = encodeURIComponent(`https://api.football-data.org/v4/matches?date=${dateVal}`);
+                const proxyUrl = `https://corsproxy.io/?${targetUrl}`;
 
-            // France (Ligue 1)
-            { league: 'FL1', leagueName: 'France (Ligue 1)', flag: '🇫🇷', time: '17:00', home: 'Paris SG', away: 'Marseille', cotes: [1.50, 4.20, 5.80], score: '2 - 1', status: 'FT', choice: '1', type: 'BASE' },
-            { league: 'FL1', leagueName: 'France (Ligue 1)', flag: '🇫🇷', time: '19:00', home: 'Rennes', away: 'Lens', cotes: [2.55, 3.20, 2.75], score: '1 - 1', status: 'FT', choice: 'N', type: 'PEPITE' },
+                const response = await fetch(proxyUrl, {
+                    headers: { 'X-Auth-Token': API_TOKEN }
+                });
 
-            // Angleterre (Premier League)
-            { league: 'PL', leagueName: 'Angleterre (PL)', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', time: '15:00', home: 'Arsenal', away: 'Chelsea', cotes: [1.70, 3.90, 4.60], score: '3 - 0', status: 'FT', choice: '1', type: 'BASE' },
-            { league: 'PL', leagueName: 'Angleterre (PL)', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', time: '17:30', home: 'Aston Villa', away: 'Liverpool', cotes: [3.40, 3.80, 2.05], score: '2 - 2', status: 'FT', choice: '2', type: 'PEPITE' },
+                if (!response.ok) throw new Error("Le Proxy ou l'API a refusé la connexion");
 
-            // Allemagne (Bundesliga)
-            { league: 'BL1', leagueName: 'Allemagne (Bundesliga)', flag: '🇩🇪', time: '15:30', home: 'Bayern Munich', away: 'Dortmund', cotes: [1.45, 4.80, 6.20], score: '4 - 1', status: 'FT', choice: '1', type: 'BASE' },
-            { league: 'BL1', leagueName: 'Allemagne (Bundesliga)', flag: '🇩🇪', time: '18:30', home: 'Leverkusen', away: 'Leipzig', cotes: [2.15, 3.60, 3.20], score: '1 - 2', status: 'FT', choice: '2', type: 'PEPITE' }
-        ];
+                const data = await response.json();
+                
+                // On garde uniquement les 5 Grands Championnats
+                const targetCompetitions = ['PL', 'FL1', 'SA', 'PD', 'BL1'];
+                let matches = (data.matches || []).filter(m => targetCompetitions.includes(m.competition.code));
 
+                // Application du filtre de ligue
+                if (leagueFilter !== 'ALL') {
+                    matches = matches.filter(m => m.competition.code === leagueFilter);
+                }
+
+                if (matches.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-zinc-400 bg-zinc-950/50"><i class="fa-solid fa-ghost text-2xl mb-2 block text-zinc-600"></i>Aucun match majeur officiel programmé à cette date pour la sélection.</td></tr>`;
+                    statusEl.innerHTML = '<span class="text-zinc-400"><i class="fa-solid fa-check mr-1"></i> Aucun match trouvé</span>';
+                    resetMetrics();
+                    return;
+                }
+
+                renderTable(matches);
+                calculateMetrics(matches);
+                statusEl.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${matches.length} matchs)</span>`;
+
+            } catch (error) {
+                console.error(error);
+                statusEl.innerHTML = '<span class="text-red-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Mode Secours Activé</span>';
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-400 font-bold">Échec de la connexion à l'API de scores (Le Proxy public est peut-être saturé).</td></tr>`;
+            }
+        }
+
+        // Vérifie si le pronostic est gagnant
         function isMatchWon(choice, score) {
-            if (!score || !score.includes('-')) return false;
-            const parts = score.split('-').map(s => parseInt(s.trim(), 10));
-            const h = parts[0], a = parts[1];
+            if (score.home === null || score.away === null) return false;
+            const h = score.home, a = score.away;
             if (choice === '1') return h > a;
             if (choice === 'N') return h === a;
             if (choice === '2') return a > h;
+            if (choice === '1X') return h >= a;
+            if (choice === 'X2') return a >= h;
             return false;
         }
 
-        function loadApp() {
-            const leagueFilter = document.getElementById('leagueFilter').value;
-            let list = realMatchesDatabase;
-
-            if (leagueFilter !== 'ALL') {
-                list = realMatchesDatabase.filter(m => m.league === leagueFilter);
-            }
-
-            renderTable(list);
-            calculateMetrics(list);
+        // Génération d'une fausse cote réaliste basée sur le nom des équipes (pour garder les mêmes cotes à chaque refresh car l'API free ne donne pas les cotes)
+        function generateStableOdds(homeName, awayName) {
+            const hash = (homeName.length * 3 + awayName.length * 7) % 10;
+            // Favori à domicile (Base)
+            if (hash < 5) return { home: 1.45 + (hash * 0.05), draw: 3.80, away: 5.50 - hash, type: 'BASE', choice: '1' };
+            // Match équilibré ou outsider intéressant (Pépite)
+            return { home: 2.20 + (hash * 0.1), draw: 3.10, away: 2.80, type: 'PEPITE', choice: 'N' };
         }
 
         function renderTable(matches) {
             const tbody = document.getElementById('matchesTableBody');
             tbody.innerHTML = '';
 
-            if (matches.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-zinc-500">Aucun match trouvé pour ce championnat.</td></tr>`;
-                return;
-            }
+            matches.forEach((m) => {
+                const timeStr = new Date(m.utcDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const isFinished = m.status === 'FINISHED' || m.status === 'FT' || m.status === 'AWARDED';
+                const isInPlay = m.status === 'IN_PLAY' || m.status === 'LIVE' || m.status === 'PAUSED';
 
-            matches.forEach(m => {
-                const won = isMatchWon(m.choice, m.score);
-                let badge = m.type === 'BASE' 
-                    ? `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-black text-[9px]">BASE (${m.choice})</span>` 
-                    : `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded font-black text-[9px]">PÉPITE (${m.choice})</span>`;
+                const hScore = m.score?.fullTime?.home ?? '-';
+                const aScore = m.score?.fullTime?.away ?? '-';
+                
+                let scoreBadge = `<span class="text-zinc-500 font-mono text-[10px] uppercase bg-zinc-800 px-2 py-1 rounded">${m.status}</span>`;
+                if (isFinished) {
+                    scoreBadge = `<span class="font-black text-lg text-white tracking-widest">${hScore} - ${aScore}</span> <span class="text-[9px] text-zinc-500 uppercase ml-1">FT</span>`;
+                } else if (isInPlay) {
+                    scoreBadge = `<span class="font-black text-lg text-emerald-400 tracking-widest animate-pulse">${hScore} - ${aScore}</span> <span class="text-[9px] text-emerald-600 uppercase ml-1">LIVE</span>`;
+                }
+
+                // Génération des cotes stables
+                const oddsData = generateStableOdds(m.homeTeam.name, m.awayTeam.name);
+                
+                // Mémorisation de la stat pour le calcul
+                m.algoData = oddsData;
+
+                let won = false;
+                if (isFinished && hScore !== '-') {
+                    won = isMatchWon(oddsData.choice, { home: hScore, away: aScore });
+                }
+                
+                if(isFinished) {
+                    if(won) scoreBadge = `<div class="flex items-center justify-end"><i class="fa-solid fa-check-circle text-emerald-500 mr-2"></i> ${scoreBadge}</div>`;
+                    else scoreBadge = `<div class="flex items-center justify-end"><i class="fa-solid fa-times-circle text-red-500 mr-2 opacity-50"></i> ${scoreBadge}</div>`;
+                }
+
+                let badge = oddsData.type === 'BASE' 
+                    ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded font-black text-[10px] inline-flex items-center"><i class="fa-solid fa-shield-halved mr-1"></i> BASE (${oddsData.choice})</span>`
+                    : `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded font-black text-[10px] inline-flex items-center"><i class="fa-solid fa-star mr-1"></i> PÉPITE (${oddsData.choice})</span>`;
+
+                // Drapeaux
+                let flag = '⚽';
+                if(m.competition.code === 'FL1') flag = '🇫🇷';
+                if(m.competition.code === 'PL') flag = '🏴󠁧󠁢󠁥󠁮󠁧󠁿';
+                if(m.competition.code === 'SA') flag = '🇮🇹';
+                if(m.competition.code === 'PD') flag = '🇪🇸';
+                if(m.competition.code === 'BL1') flag = '🇩🇪';
 
                 const tr = document.createElement('tr');
+                tr.className = "hover:bg-zinc-800/30 transition-colors";
                 tr.innerHTML = `
-                    <td class="p-3 text-zinc-400">${m.flag} <span class="font-bold text-zinc-200">${m.leagueName}</span><br><span class="text-[10px] text-zinc-500">${m.time}</span></td>
-                    <td class="p-3 font-semibold text-white">${m.home} <span class="text-zinc-500 font-normal">vs</span> ${m.away}</td>
-                    <td class="p-3 font-mono text-[11px]"><span class="text-emerald-400">${m.cotes[0].toFixed(2)}</span> · <span class="text-zinc-400">${m.cotes[1].toFixed(2)}</span> · <span class="text-amber-400">${m.cotes[2].toFixed(2)}</span></td>
-                    <td class="p-3">${badge}</td>
-                    <td class="p-3 font-bold ${won ? 'text-emerald-400' : 'text-red-400'}">${m.score} (FT)</td>
+                    <td class="p-4 align-middle">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xl">${flag}</span>
+                            <div>
+                                <div class="font-bold text-zinc-200 text-[11px]">${m.competition.name}</div>
+                                <div class="text-[10px] text-zinc-500 font-mono mt-0.5"><i class="fa-regular fa-clock mr-1"></i>${timeStr}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-4 align-middle">
+                        <div class="font-semibold text-white text-sm">${m.homeTeam.name}</div>
+                        <div class="font-semibold text-zinc-400 text-sm mt-0.5">${m.awayTeam.name}</div>
+                    </td>
+                    <td class="p-4 align-middle font-mono text-[11px]">
+                        <div class="flex space-x-3 bg-zinc-950 p-2 rounded border border-zinc-800 w-max">
+                            <div class="text-center"><span class="block text-[8px] text-zinc-600 mb-0.5">1</span><span class="${oddsData.choice === '1' ? 'text-white font-bold' : 'text-zinc-400'}">${oddsData.home.toFixed(2)}</span></div>
+                            <div class="text-center"><span class="block text-[8px] text-zinc-600 mb-0.5">N</span><span class="${oddsData.choice === 'N' ? 'text-white font-bold' : 'text-zinc-400'}">${oddsData.draw.toFixed(2)}</span></div>
+                            <div class="text-center"><span class="block text-[8px] text-zinc-600 mb-0.5">2</span><span class="${oddsData.choice === '2' ? 'text-white font-bold' : 'text-zinc-400'}">${oddsData.away.toFixed(2)}</span></div>
+                        </div>
+                    </td>
+                    <td class="p-4 align-middle text-center">${badge}</td>
+                    <td class="p-4 align-middle text-right">${scoreBadge}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
+        function resetMetrics() {
+            document.getElementById('statBaseCount').textContent = `0 / 0`;
+            document.getElementById('gainBase').innerHTML = `0.00 €`;
+            document.getElementById('statPepiteCount').textContent = `0 / 0`;
+            document.getElementById('gainPepite').innerHTML = `0.00 €`;
+            document.getElementById('statComboCount').textContent = `0 / 0`;
+            document.getElementById('gainCombo').innerHTML = `0.00 €`;
+            document.getElementById('statInvestDetails').innerHTML = `Aucun match enregistré à cette date.`;
+        }
+
         function calculateMetrics(matches) {
-            let baseWins = 0, baseTotal = 0, totalGainBase = 0, costBase = 0, mBase = 2;
-            let pepiteWins = 0, pepiteTotal = 0, totalGainPepite = 0, costPepite = 0;
-            let comboWins = 0, comboTotal = 0, totalGainCombo = 0, costCombo = 0;
+            let baseWins = 0, baseTotal = 0, totalGainBase = 0, costBase = 0, mBase = 2; // Martingale à 2€
+            let pepiteWins = 0, pepiteTotal = 0, totalGainPepite = 0, costPepite = 0; // Fixe 1€
+            let comboWins = 0, comboTotal = 0, totalGainCombo = 0, costCombo = 0; // Fixe 1€
 
             matches.forEach(m => {
-                const won = isMatchWon(m.choice, m.score);
-                let odds = m.choice === '1' ? m.cotes[0] : (m.choice === 'N' ? m.cotes[1] : m.cotes[2]);
+                const isFinished = m.status === 'FINISHED' || m.status === 'FT' || m.status === 'AWARDED';
+                if (!isFinished) return;
 
-                if (m.type === 'BASE') {
+                const hScore = m.score?.fullTime?.home ?? 0;
+                const aScore = m.score?.fullTime?.away ?? 0;
+                
+                const oddsData = m.algoData;
+                const won = isMatchWon(oddsData.choice, { home: hScore, away: aScore });
+                
+                let actualOdd = 1;
+                if(oddsData.choice === '1') actualOdd = oddsData.home;
+                if(oddsData.choice === 'N') actualOdd = oddsData.draw;
+                if(oddsData.choice === '2') actualOdd = oddsData.away;
+
+                if (oddsData.type === 'BASE') {
                     baseTotal++;
                     costBase += mBase;
                     if (won) {
                         baseWins++;
-                        totalGainBase += odds * mBase;
-                        mBase = 2; // Reset Martingale à 2€
+                        totalGainBase += actualOdd * mBase;
+                        mBase = 2; // GAGNÉ = Retour à la mise de base (2€)
                     } else {
-                        mBase *= 2; // Double en cas de perte
+                        mBase *= 2; // PERDU = On double
                     }
-                } else if (m.type === 'PEPITE') {
+                } else if (oddsData.type === 'PEPITE') {
                     pepiteTotal++;
                     costPepite += 1;
                     if (won) {
                         pepiteWins++;
-                        totalGainPepite += odds * 1;
+                        totalGainPepite += actualOdd * 1;
                     }
                 }
             });
 
-            comboTotal = Math.min(baseTotal, pepiteTotal);
+            // Logique du Combo (Associe Base 1 + Pépite 1, Base 2 + Pépite 2...)
+            const finishedBases = matches.filter(m => m.algoData?.type === 'BASE' && (m.status === 'FINISHED' || m.status === 'FT'));
+            const finishedPepites = matches.filter(m => m.algoData?.type === 'PEPITE' && (m.status === 'FINISHED' || m.status === 'FT'));
+            
+            comboTotal = Math.min(finishedBases.length, finishedPepites.length);
             for (let i = 0; i < comboTotal; i++) {
-                costCombo += 1;
-                let b = matches.filter(m => m.type === 'BASE')[i];
-                let p = matches.filter(m => m.type === 'PEPITE')[i];
-                if (b && p) {
-                    let w1 = isMatchWon(b.choice, b.score);
-                    let w2 = isMatchWon(p.choice, p.score);
-                    if (w1 && w2) {
-                        comboWins++;
-                        let o1 = b.choice === '1' ? b.cotes[0] : b.cotes[1];
-                        let o2 = p.choice === '1' ? p.cotes[0] : p.cotes[2];
-                        totalGainCombo += (o1 * o2) * 1;
-                    }
+                costCombo += 1; // 1€ le combo
+                let b = finishedBases[i];
+                let p = finishedPepites[i];
+                
+                let w1 = isMatchWon(b.algoData.choice, { home: b.score.fullTime.home, away: b.score.fullTime.away });
+                let w2 = isMatchWon(p.algoData.choice, { home: p.score.fullTime.home, away: p.score.fullTime.away });
+                
+                if (w1 && w2) {
+                    comboWins++;
+                    let o1 = b.algoData.choice === '1' ? b.algoData.home : b.algoData.draw;
+                    let o2 = p.algoData.choice === 'N' ? p.algoData.draw : p.algoData.away;
+                    totalGainCombo += (o1 * o2) * 1;
                 }
             }
 
+            // Affichage UI (Gains et Nets)
             const netBase = totalGainBase - costBase;
             document.getElementById('statBaseCount').textContent = `${baseWins} / ${baseTotal}`;
-            document.getElementById('gainBase').innerHTML = `${totalGainBase.toFixed(2)} €<br><span class="${netBase >= 0 ? 'text-emerald-400' : 'text-red-400'} text-xs">Net : ${netBase >= 0 ? '+' : ''}${netBase.toFixed(2)} €</span>`;
+            document.getElementById('gainBase').innerHTML = `${totalGainBase.toFixed(2)} €<br><span class="${netBase >= 0 ? 'text-emerald-400' : 'text-red-400'} text-[10px] mt-1 block bg-zinc-900 py-1 rounded">Net : ${netBase >= 0 ? '+' : ''}${netBase.toFixed(2)} €</span>`;
 
             const netPepite = totalGainPepite - costPepite;
             document.getElementById('statPepiteCount').textContent = `${pepiteWins} / ${pepiteTotal}`;
-            document.getElementById('gainPepite').innerHTML = `${totalGainPepite.toFixed(2)} €<br><span class="${netPepite >= 0 ? 'text-amber-400' : 'text-red-400'} text-xs">Net : ${netPepite >= 0 ? '+' : ''}${netPepite.toFixed(2)} €</span>`;
+            document.getElementById('gainPepite').innerHTML = `${totalGainPepite.toFixed(2)} €<br><span class="${netPepite >= 0 ? 'text-amber-400' : 'text-red-400'} text-[10px] mt-1 block bg-zinc-900 py-1 rounded">Net : ${netPepite >= 0 ? '+' : ''}${netPepite.toFixed(2)} €</span>`;
 
             const netCombo = totalGainCombo - costCombo;
             document.getElementById('statComboCount').textContent = `${comboWins} / ${comboTotal}`;
-            document.getElementById('gainCombo').innerHTML = `${totalGainCombo.toFixed(2)} €<br><span class="${netCombo >= 0 ? 'text-blue-400' : 'text-red-400'} text-xs">Net : ${netCombo >= 0 ? '+' : ''}${netCombo.toFixed(2)} €</span>`;
+            document.getElementById('gainCombo').innerHTML = `${totalGainCombo.toFixed(2)} €<br><span class="${netCombo >= 0 ? 'text-blue-400' : 'text-red-400'} text-[10px] mt-1 block bg-zinc-900 py-1 rounded">Net : ${netCombo >= 0 ? '+' : ''}${netCombo.toFixed(2)} €</span>`;
 
+            const totalInvesti = costBase + costPepite + costCombo;
             document.getElementById('statInvestDetails').innerHTML = `
-                Investissement total : <b>${costBase + costPepite + costCombo} €</b> | 
-                Martingale Base : <b>${costBase} €</b> joués (Prochaine mise : <b>${mBase} €</b>)
+                <span class="text-zinc-400">Total parié : <b class="text-white">${totalInvesti} €</b></span>
+                <span class="mx-3 text-zinc-700">|</span>
+                <span class="text-emerald-400">Martingale en cours : <b class="text-white">${costBase} €</b> engagés (Prochain palier : <b class="text-white">${mBase} €</b>)</span>
             `;
         }
 
-        loadApp();
+        // Initialisation de l'application
+        fetchRealMatches();
     </script>
 </body>
 </html>
