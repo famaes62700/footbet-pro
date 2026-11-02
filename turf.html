@@ -231,14 +231,16 @@
         let autoTransitionDone = false;
         let validatedRacesCache = {}; 
 
-        // Fonction "Double Moteur" pour contourner les blocages PMU
+        // Fonction "Double Moteur" avec système Anti-Cache intégré
         async function fetchPmuData(endpoint) {
             try {
-                let res = await fetch(`/api/pmu/${endpoint}`);
-                if (!res.ok) throw new Error("Vercel route failed");
+                // Requête prioritaire vers notre Vercel (api/pmu.js)
+                let res = await fetch(`/api/pmu?target=${encodeURIComponent(endpoint)}&_t=${Date.now()}`);
+                if (!res.ok) throw new Error("Erreur de relais PMU");
                 return await res.json();
             } catch (err1) {
-                let proxyUrl = `https://corsproxy.io/?` + encodeURIComponent(`https://offline.turfinfo.api.pmu.fr/rest/client/1/programme/${endpoint}`);
+                // Requête de secours vers le proxy avec le CANAL 61 forcé
+                let proxyUrl = `https://corsproxy.io/?` + encodeURIComponent(`https://offline.turfinfo.api.pmu.fr/rest/client/61/programme/${endpoint}`);
                 let res2 = await fetch(proxyUrl);
                 if (!res2.ok) throw new Error("Proxy failed");
                 return await res2.json();
@@ -337,7 +339,7 @@
                         select.appendChild(opt);
                     });
                     
-                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Prêt (${reunions.length} réunions)</span>`;
+                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Connecté</span>`;
                     
                     if (currentVal === "") autoSelectCurrentRace();
                     else select.value = currentVal;
@@ -632,11 +634,9 @@
             let cNum = race.numOrdre || (parseInt(rIdx, 10) + 1);
 
             try {
-                // Appel API via Double Moteur
                 const data = await fetchPmuData(`${ddmmyyyy}/R${rNum}/C${cNum}`);
                 let partants = data.participants || [];
                 
-                // Securité si PMU masque les partants dans le résumé de la course
                 if (partants.length === 0) {
                     try {
                         let pData = await fetchPmuData(`${ddmmyyyy}/R${rNum}/C${cNum}/participants`);
