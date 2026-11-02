@@ -1005,4 +1005,83 @@
                         if (gPla > 0) { pepitePlaCount++; totalGainPepitePla += gPla; }
                     }
 
-                    if (baseH &&>
+                    if (baseH && nuggetH) {
+                        let cg = extractCoupleGain(raceData.rapportsList, baseH.num, nuggetH.num, 'CG');
+                        let isCG = ((baseArr === 1 && nuggetArr === 2) || (baseArr === 2 && nuggetArr === 1));
+                        if (cg === 0 && isCG) cg = baseH.cote + nuggetH.cote; 
+                        costCplGag += 1;
+                        if (cg > 0) { coupleGagCount++; totalGainCoupleGag += cg; }
+                        
+                        if (raceData.partants.length >= 8) {
+                            coursesValideesCP++;
+                            let cp = extractCoupleGain(raceData.rapportsList, baseH.num, nuggetH.num, 'CP');
+                            let isCP = (baseArr <= 3 && nuggetArr <= 3 && baseArr !== nuggetArr);
+                            if (cp === 0 && isCP) cp = Math.max(2.0, (baseH.cote + nuggetH.cote) / 3); 
+                            costCplPla += 1;
+                            if (cp > 0) { couplePlaCount++; totalGainCouplePla += cp; }
+                        }
+                    }
+
+                    if (!isAuto) {
+                        let nBG = totalGainBaseGag - costBaseGag; let nBP = totalGainBasePla - costBasePla;
+                        let nPG = totalGainPepiteGag - costPepGag; let nPP = totalGainPepitePla - costPepPla;
+                        let nCG = totalGainCoupleGag - costCplGag; let nCP = totalGainCouplePla - costCplPla; 
+
+                        statBase.textContent = `G: ${baseGagCount} | P: ${basePlaCount} / ${coursesValidees}`;
+                        statPepite.textContent = `G: ${pepiteGagCount} | P: ${pepitePlaCount} / ${coursesValidees}`;
+                        statCouple.textContent = `G: ${coupleGagCount} / ${coursesValidees} | P: ${couplePlaCount} / ${coursesValideesCP}`;
+                        
+                        gainBaseGag.innerHTML = `${totalGainBaseGag.toFixed(2)} €<br><span class="${nBG >= 0 ? 'text-emerald-400' : 'text-red-400'}">Net: ${nBG >= 0 ? '+' : ''}${nBG.toFixed(2)}€</span>`;
+                        gainBasePla.innerHTML = `${totalGainBasePla.toFixed(2)} €<br><span class="${nBP >= 0 ? 'text-emerald-400' : 'text-red-400'}">Net: ${nBP >= 0 ? '+' : ''}${nBP.toFixed(2)}€</span>`;
+                        gainPepiteGag.innerHTML = `${totalGainPepiteGag.toFixed(2)} €<br><span class="${nPG >= 0 ? 'text-amber-400' : 'text-red-400'}">Net: ${nPG >= 0 ? '+' : ''}${nPG.toFixed(2)}€</span>`;
+                        gainPepitePla.innerHTML = `${totalGainPepitePla.toFixed(2)} €<br><span class="${nPP >= 0 ? 'text-amber-400' : 'text-red-400'}">Net: ${nPP >= 0 ? '+' : ''}${nPP.toFixed(2)}€</span>`;
+                        gainCoupleGag.innerHTML = `${totalGainCoupleGag.toFixed(2)} €<br><span class="${nCG >= 0 ? 'text-blue-400' : 'text-red-400'}">Net: ${nCG >= 0 ? '+' : ''}${nCG.toFixed(2)}€</span>`;
+                        gainCouplePla.innerHTML = `${totalGainCouplePla.toFixed(2)} €<br><span class="${nCP >= 0 ? 'text-blue-400' : 'text-red-400'}">Net: ${nCP >= 0 ? '+' : ''}${nCP.toFixed(2)}€</span>`;
+
+                        let totalInvesti = costBaseGag + costBasePla + costPepGag + costPepPla + costCplGag + costCplPla;
+                        statGlobal.innerHTML = `
+                            <div class="mb-1 text-zinc-300">Investissement en cours : <b>${totalInvesti} €</b>...</div>
+                            <div class="text-emerald-400 text-[10px]">Martingale Base Placé : <b>${costBasePla}€</b> joués (Prochaine mise : ${mBasePla}€)</div>
+                        `;
+                        await new Promise(r => setTimeout(r, 20));
+                    }
+                }
+            }
+
+            if (coursesValidees > 0) {
+                let netBaseGag = totalGainBaseGag - costBaseGag; let netBasePla = totalGainBasePla - costBasePla;
+                let netPepiteGag = totalGainPepiteGag - costPepGag; let netPepitePla = totalGainPepitePla - costPepPla;
+                let netCoupleGag = totalGainCoupleGag - costCplGag; let netCouplePla = totalGainCouplePla - costCplPla; 
+
+                statBase.textContent = `G: ${baseGagCount} | P: ${basePlaCount} / ${coursesValidees}`;
+                statPepite.textContent = `G: ${pepiteGagCount} | P: ${pepitePlaCount} / ${coursesValidees}`;
+                statCouple.textContent = `G: ${coupleGagCount} / ${coursesValidees} | P: ${couplePlaCount} / ${coursesValideesCP}`;
+                
+                gainBaseGag.innerHTML = `${totalGainBaseGag.toFixed(2)} €<br><span class="${netBaseGag >= 0 ? 'text-emerald-400' : 'text-red-400'}">Net: ${netBaseGag >= 0 ? '+' : ''}${netBaseGag.toFixed(2)}€</span>`;
+                gainBasePla.innerHTML = `${totalGainBasePla.toFixed(2)} €<br><span class="${netBasePla >= 0 ? 'text-emerald-400' : 'text-red-400'}">Net: ${netBasePla >= 0 ? '+' : ''}${netBasePla.toFixed(2)}€</span>`;
+                gainPepiteGag.innerHTML = `${totalGainPepiteGag.toFixed(2)} €<br><span class="${netPepiteGag >= 0 ? 'text-amber-400' : 'text-red-400'}">Net: ${netPepiteGag >= 0 ? '+' : ''}${netPepiteGag.toFixed(2)}€</span>`;
+                gainPepitePla.innerHTML = `${totalGainPepitePla.toFixed(2)} €<br><span class="${netPepitePla >= 0 ? 'text-amber-400' : 'text-red-400'}">Net: ${netPepitePla >= 0 ? '+' : ''}${netPepitePla.toFixed(2)}€</span>`;
+                gainCoupleGag.innerHTML = `${totalGainCoupleGag.toFixed(2)} €<br><span class="${netCoupleGag >= 0 ? 'text-blue-400' : 'text-red-400'}">Net: ${netCoupleGag >= 0 ? '+' : ''}${netCoupleGag.toFixed(2)}€</span>`;
+                gainCouplePla.innerHTML = `${totalGainCouplePla.toFixed(2)} €<br><span class="${netCouplePla >= 0 ? 'text-blue-400' : 'text-red-400'}">Net: ${netCouplePla >= 0 ? '+' : ''}${netCouplePla.toFixed(2)}€</span>`;
+                
+                if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> Bilan en direct (${coursesValidees} courses)</span>`;
+
+                let totalInvesti = costBaseGag + costBasePla + costPepGag + costPepPla + costCplGag + costCplPla;
+                statGlobal.innerHTML = `
+                    <div class="mb-1 text-zinc-300">Investissement total du jour : <b>${totalInvesti} €</b></div>
+                    <div class="text-emerald-400 text-[10px]">Martingale Base Placé : <b>${costBasePla}€</b> joués (Prochaine mise : ${mBasePla}€)</div>
+                `;
+
+                localStorage.setItem(`pmu_stats_${ddmmyyyy}`, JSON.stringify({
+                    baseGag: netBaseGag, basePla: netBasePla, pepGag: netPepiteGag, 
+                    pepPla: netPepitePla, cplGag: netCoupleGag, cplPla: netCouplePla
+                }));
+                
+                if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
+            }
+        }
+
+        window.onload = loadLivePmu;
+    </script>
+</body>
+</html>
