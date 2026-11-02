@@ -3,6 +3,10 @@
     {
       "source": "/api/football/:path*",
       "destination": "https://api.football-data.org/v4/:path*"
+    },
+    {
+      "source": "/api/pmu/:path*",
+      "destination": "https://offline.turfinfo.api.pmu.fr/rest/client/1/programme/:path*"
     }
   ]
 }
