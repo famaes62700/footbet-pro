@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TennisBet Pro - Live & Proportionnelle</title>
     
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TennisBet">
+    
+    <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=TEN&background=84cc16&color=fff&size=512&font-size=0.4&v=2">
+    <link rel="icon" type="image/png" href="https://ui-avatars.com/api/?name=TEN&background=84cc16&color=fff&size=512&font-size=0.4&v=2">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -19,7 +26,7 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center mb-3">
             <h1 class="text-base sm:text-lg font-black tracking-wider text-lime-400 flex items-center">
-                <i class="fa-solid fa-table-tennis mr-2"></i>TennisBet Pro
+                <i class="fa-solid fa-trophy mr-2"></i>TennisBet Pro
             </h1>
             <div class="flex items-center space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-lime-400 font-bold">
@@ -92,13 +99,11 @@
         </div>
 
         <div id="matchesContainer" class="space-y-3">
-            <!-- Rempli dynamiquement -->
         </div>
 
     </main>
 
     <script>
-        // Utilisation d'une route API (fictive/simulation) identique à la logique Foot/NBA
         const TENNIS_API_KEY = "tennis_api_key_placeholder"; 
 
         document.getElementById('matchDate').valueAsDate = new Date();
@@ -166,13 +171,12 @@
 
             } catch (e) {
                 if (!isSilent) {
-                    statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Connexion API (Simulée)</span>';
+                    statusText.innerHTML = '<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> Mode Démonstration Actif</span>';
                     simulateTennisMatches();
                 }
             }
         }
 
-        // Simulation pour pouvoir tester l'interface
         function simulateTennisMatches() {
             currentMatches = [
                 { id: "t1", status: "IN_PLAY", utcDate: new Date().toISOString(), competition: { name: "ATP Masters 1000 Paris" }, homeTeam: { name: "C. Alcaraz" }, awayTeam: { name: "U. Humbert" }, score: { current: { home: 1, away: 0 } } },
@@ -195,7 +199,7 @@
             
             matches.forEach(m => {
                 if(m.competition && m.competition.name) {
-                    compsMap.set(m.competition.name, `🎾 ${m.competition.name}`);
+                    compsMap.set(m.competition.name, m.competition.name);
                 }
             });
             
@@ -297,7 +301,7 @@
 
                 let statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-[10px] uppercase font-bold">${time}</span>`;
                 if (isLive) {
-                    statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse">🔴 En direct</span>`;
+                    statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse">En direct</span>`;
                 }
                 if (isFinished) statusBadge = `<span class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px] uppercase font-bold">Terminé</span>`;
 
@@ -330,7 +334,7 @@
                 card.innerHTML = `
                     <div class="flex justify-between items-center border-b border-zinc-800/50 pb-2 mb-3">
                         ${statusBadge}
-                        <span class="text-[10px] text-zinc-300 font-bold tracking-wider flex items-center">🎾 ${compName}</span>
+                        <span class="text-[10px] text-zinc-300 font-bold tracking-wider flex items-center"><i class="fa-solid fa-trophy text-lime-400 mr-1.5"></i>${compName}</span>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-3 mt-1">
