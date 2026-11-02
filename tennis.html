@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TennisBet Pro - Paris Masters & Live</title>
+    <title>TennisBet Pro - Scores ESPN en Direct</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -52,8 +52,8 @@
     <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4">
         
         <div class="flex justify-between items-center">
-            <div id="statusText" class="text-xs text-lime-400 font-mono flex items-center">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Recherche des matchs (Paris Masters & Monde)...
+            <div id="statusText" class="text-xs text-lime-400 font-mono flex items-center w-3/4 truncate">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement (connexion directe sans proxy)...
             </div>
             <button onclick="loadTennisMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-lime-400 px-3 py-1.5 rounded-lg border border-lime-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
@@ -90,7 +90,7 @@
         </div>
 
         <div id="matchesContainer" class="space-y-3">
-            <!-- Rempli dynamiquement avec les vrais matchs (Livescore API) -->
+            <!-- Les matchs s'afficheront ici -->
         </div>
 
     </main>
@@ -103,14 +103,14 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02; 
 
-        // Actualisation automatique toutes les 20 secondes
+        // Actualisation toutes les 30s
         setInterval(() => {
             let today = new Date().toISOString().split('T')[0];
             let selectedDate = document.getElementById('matchDate').value;
             if (selectedDate === today || isLiveFilterActive) {
                 loadTennisMatches(true);
             }
-        }, 20000);
+        }, 30000);
 
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
@@ -128,76 +128,101 @@
 
         async function loadTennisMatches(isSilent = false) {
             const dateStr = document.getElementById('matchDate').value;
-            const apiDate = dateStr.replace(/-/g, ''); // Format YYYYMMDD
+            const apiDate = dateStr.replace(/-/g, ''); // ESPN attend le format YYYYMMDD
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération du flux mondial des matchs...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion directe à ESPN...';
                 document.getElementById('matchesContainer').innerHTML = '';
             }
             
             try {
-                // Utilisation de l'API publique non bloquante de Livescore (infaillible et complète)
-                let targetUrl = `https://prod-public-api.livescore.com/v1/api/app/date/tennis/${apiDate}/1.00?MD=1`;
-                
-                // On passe par un proxy transparent public au cas où le navigateur bloque
-                const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`);
-                const data = await response.json();
+                // CONNEXION DIRECTE SANS AUCUN PROXY - Ne sera pas bloqué par uBlock/Adblock
+                const atpUrl = `https://site.api.espn.com/apis/site/v2/sports/tennis/atp/scoreboard?dates=${apiDate}`;
+                const wtaUrl = `https://site.api.espn.com/apis/site/v2/sports/tennis/wta/scoreboard?dates=${apiDate}`;
+
+                const [atpRes, wtaRes] = await Promise.all([
+                    fetch(atpUrl).catch(e => null), // Attrape l'erreur si l'un des deux échoue
+                    fetch(wtaUrl).catch(e => null)
+                ]);
+
+                if (!atpRes && !wtaRes) {
+                    throw new Error("Impossible de joindre les serveurs");
+                }
+
+                let allEvents = [];
+
+                if (atpRes && atpRes.ok) {
+                    const atpData = await atpRes.json();
+                    if (atpData.events) allEvents = allEvents.concat(atpData.events);
+                }
+
+                if (wtaRes && wtaRes.ok) {
+                    const wtaData = await wtaRes.json();
+                    if (wtaData.events) allEvents = allEvents.concat(wtaData.events);
+                }
                 
                 let validMatches = [];
 
-                if (data.Stages) {
-                    data.Stages.forEach(stage => {
-                        const compName = stage.Snm || "Tournoi ATP/WTA";
+                allEvents.forEach(ev => {
+                    try {
+                        let match = ev.competitions[0];
+                        let p1 = match.competitors[0];
+                        let p2 = match.competitors[1];
+
+                        // Status
+                        let isFinished = match.status.type.completed;
+                        let isLive = match.status.type.state === 'in' || match.status.type.description === 'In Progress';
+                        let status = isLive ? 'IN_PLAY' : (isFinished ? 'FINISHED' : 'TIMED');
+
+                        // Noms
+                        let homeName = p1.athlete?.shortName || p1.athlete?.displayName || "Joueur 1";
+                        let awayName = p2.athlete?.shortName || p2.athlete?.displayName || "Joueur 2";
                         
-                        if (stage.Events) {
-                            stage.Events.forEach(ev => {
-                                let p1 = ev.T1 && ev.T1[0] ? ev.T1[0].Nm : "Joueur 1";
-                                let p2 = ev.T2 && ev.T2[0] ? ev.T2[0].Nm : "Joueur 2";
-                                
-                                // Eps = Statut du match (NS = Non commencé, AP/FT = Terminé, 1S/2S = En direct)
-                                let eps = ev.Eps || "NS";
-                                let isFinished = (eps === "AP" || eps === "FT" || eps === "AET" || eps === "Canc.");
-                                let isLive = (eps !== "NS" && !isFinished);
-                                let status = isLive ? "IN_PLAY" : (isFinished ? "FINISHED" : "TIMED");
-                                
-                                // Récupération des sets (Tr1C1 = Score Sets Joueur 1)
-                                let score1 = ev.Tr1C1 || 0;
-                                let score2 = ev.Tr2C1 || 0;
-                                
-                                validMatches.push({
-                                    id: ev.Eid || Math.random().toString(),
-                                    status: status,
-                                    competition: { name: compName },
-                                    homeTeam: { name: p1 },
-                                    awayTeam: { name: p2 },
-                                    score: { current: { home: score1, away: score2 }, fullTime: { home: score1, away: score2 } }
-                                });
-                            });
-                        }
-                    });
-                }
+                        // Tournoi
+                        let tournName = ev.name || match.tournament?.displayName || "Circuit ATP/WTA";
+
+                        // Score (ESPN donne souvent le score sous forme de string ou dans 'score')
+                        let score1 = p1.score || "0";
+                        let score2 = p2.score || "0";
+
+                        validMatches.push({
+                            id: ev.id.toString(),
+                            status: status,
+                            utcDate: ev.date,
+                            competition: { name: tournName },
+                            homeTeam: { name: homeName },
+                            awayTeam: { name: awayName },
+                            score: { 
+                                current: { home: score1, away: score2 }, 
+                                fullTime: { home: score1, away: score2 } 
+                            }
+                        });
+                    } catch (err) {
+                        // On ignore discrètement les matchs où il manque des données
+                    }
+                });
 
                 currentMatches = validMatches;
                 
                 if (currentMatches.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match programmé à cette date.</span>`;
+                    statusText.innerHTML = `<span class="text-zinc-400"><i class="fa-solid fa-circle-info mr-1"></i> Aucun match programmé à cette date sur ESPN.</span>`;
                     populateCompetitions([]);
                     calculateDailyBankroll();
                     return;
                 }
 
                 if (!isSilent) {
-                    statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs réels chargés</span>`;
+                    statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs réels chargés (Direct)</span>`;
                 }
                 
                 populateCompetitions(currentMatches);
                 applyFilters();
                 calculateDailyBankroll();
 
-            } catch (e) {
-                statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur de chargement des scores</span>';
-                console.error(e);
+            } catch (error) {
+                console.error("Erreur complète :", error);
+                statusText.innerHTML = `<span class="text-red-400 font-semibold text-[10px]"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur: ${error.message}</span>`;
             }
         }
 
@@ -270,7 +295,7 @@
             container.innerHTML = '';
 
             if (matchesToRender.length === 0) {
-                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match ne correspond à ce filtre (Utilisez "Tous les tournois").</div>`;
+                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match ne correspond au filtre sélectionné.</div>`;
                 return;
             }
 
@@ -284,14 +309,20 @@
                 let sHome = match.score.current.home;
                 let sAway = match.score.current.away;
 
-                let statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-[10px] uppercase font-bold">À venir</span>`;
+                let timeStr = new Date(match.utcDate).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+
+                let statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-[10px] uppercase font-bold">${timeStr}</span>`;
                 if (isLive) statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse">🔴 En direct</span>`;
                 if (isFinished) statusBadge = `<span class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px] uppercase font-bold">Terminé</span>`;
 
+                // Convertir les scores en nombres pour déterminer le gagnant
+                let numScore1 = parseInt(sHome) || 0;
+                let numScore2 = parseInt(sAway) || 0;
+
                 let winner = null;
                 if (isFinished) {
-                    if (sHome > sAway) winner = 'P1';
-                    else if (sAway > sHome) winner = 'P2';
+                    if (numScore1 > numScore2) winner = 'P1';
+                    else if (numScore2 > numScore1) winner = 'P2';
                 }
 
                 let myBet = savedBets[match.id]; 
@@ -321,12 +352,12 @@
                     <div class="grid grid-cols-2 gap-3 mt-1">
                         <button onclick="placeBet('${match.id}', 'P1')" class="${homeClass}">
                             <span class="text-[12px] font-black text-center leading-tight mb-1 w-full ${myBet === 'P1' ? 'text-white' : 'text-lime-400'} drop-shadow-md truncate px-1">${homeName}</span>
-                            <span class="text-xl font-black ${isFinished && winner === 'P1' ? 'text-lime-400' : (myBet === 'P1' ? 'text-white' : 'text-zinc-300')}">Sets: ${sHome}</span>
+                            <span class="text-xl font-black ${isFinished && winner === 'P1' ? 'text-lime-400' : (myBet === 'P1' ? 'text-white' : 'text-zinc-300')}">${sHome}</span>
                         </button>
 
                         <button onclick="placeBet('${match.id}', 'P2')" class="${awayClass}">
                             <span class="text-[12px] font-black text-center leading-tight mb-1 w-full ${myBet === 'P2' ? 'text-white' : 'text-cyan-400'} drop-shadow-md truncate px-1">${awayName}</span>
-                            <span class="text-xl font-black ${isFinished && winner === 'P2' ? 'text-lime-400' : (myBet === 'P2' ? 'text-white' : 'text-zinc-300')}">Sets: ${sAway}</span>
+                            <span class="text-xl font-black ${isFinished && winner === 'P2' ? 'text-lime-400' : (myBet === 'P2' ? 'text-white' : 'text-zinc-300')}">${sAway}</span>
                         </button>
                     </div>
                     
@@ -334,7 +365,7 @@
                     <div class="mt-3 text-center text-[10px] bg-zinc-950 rounded py-1.5 border border-zinc-800">
                         ${isFinished 
                             ? (myBet === winner ? '<span class="text-lime-400 font-bold"><i class="fa-solid fa-check"></i> Gagné</span>' : '<span class="text-red-400 font-bold"><i class="fa-solid fa-xmark"></i> Perdu</span>') 
-                            : '<span class="text-lime-400">Pari Vainqueur enregistré (Mise dynamique)</span>'
+                            : '<span class="text-lime-400">Pari Vainqueur enregistré</span>'
                         }
                     </div>` : ''}
                 `;
@@ -370,8 +401,9 @@
                     let currentStake = Math.max(0.5, currentBankroll * STAKE_PERCENT);
 
                     if (match.status === 'FINISHED' || match.status === 'AWARDED') {
-                        let sHome = match.score.current.home; let sAway = match.score.current.away;
-                        let winner = sHome > sAway ? 'P1' : (sAway > sHome ? 'P2' : null);
+                        let numScore1 = parseInt(match.score.current.home) || 0;
+                        let numScore2 = parseInt(match.score.current.away) || 0;
+                        let winner = numScore1 > numScore2 ? 'P1' : (numScore2 > numScore1 ? 'P2' : null);
                         
                         if (winner) {
                             if (myBet === winner) {
@@ -390,6 +422,16 @@
             profitEl.textContent = `${dailyProfit > 0 ? '+' : ''}${dailyProfit.toFixed(2)} €`;
             profitEl.className = `text-lg font-black ${dailyProfit > 0 ? 'text-lime-400' : (dailyProfit < 0 ? 'text-red-400' : 'text-white')}`;
             document.getElementById('headerBankroll').textContent = `${(INITIAL_BANKROLL + dailyProfit).toFixed(2)} €`;
+        }
+
+        function toggleHistoryStats() {
+            let block = document.getElementById('historyBlock');
+            if (block.classList.contains('hidden')) {
+                block.classList.remove('hidden');
+                // Code historique statique supprimé pour l'exemple
+            } else {
+                block.classList.add('hidden');
+            }
         }
 
         window.onload = loadTennisMatches;
