@@ -133,48 +133,44 @@
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
+async function loadTennisMatches(isSilent = false) {
+    const dateInput = document.getElementById('matchDate').value;
+    const statusText = document.getElementById('statusText');
+    
+    if (!isSilent) {
+        statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs officiels...';
+        document.getElementById('matchesContainer').innerHTML = '';
+    }
+    
+    try {
+        const res = await fetch(`/api/tennis/matches?date=${dateInput}&_nocache=${Date.now()}`, {
+            headers: { 'Cache-Control': 'no-cache' }
+        });
+        
+        if (!res.ok) throw new Error("Erreur API Vercel");
+        const data = await res.json();
+        
+        currentMatches = data.matches || [];
+        
+        if (currentMatches.length === 0) {
+            statusText.innerHTML = `<span class="text-zinc-400">Aucun match ce jour.</span>`;
+            populateCompetitions([]);
+            calculateDailyBankroll();
+            return;
+        }
 
-        async function loadTennisMatches(isSilent = false) {
-            const dateInput = document.getElementById('matchDate').value;
-            const statusText = document.getElementById('statusText');
-            
-            if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération des vrais matchs en direct...';
-                document.getElementById('matchesContainer').innerHTML = '';
-            }
-            
-            try {
-                // Utilisation d'une API publique ouverte de scores en direct pour le tennis
-                const response = await fetch(`https://corsproxy.io/?` + encodeURIComponent(`https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/${dateInput}`), {
-                    headers: { 'Cache-Control': 'no-cache' }
-                });
-                
-                if (!response.ok) throw new Error("Erreur réseau");
-                const data = await response.json();
-                
-                let rawEvents = data.events || [];
-                
-                currentMatches = rawEvents.map(ev => ({
-                    id: ev.id.toString(),
-                    status: ev.status.type === 'inprogress' ? 'IN_PLAY' : (ev.status.type === 'finished' ? 'FINISHED' : 'TIMED'),
-                    utcDate: new Date(ev.startTimestamp * 1000).toISOString(),
-                    competition: { name: ev.tournament?.name || "ATP / WTA Tour" },
-                    homeTeam: { name: ev.homeTeam?.name || "Joueur 1" },
-                    awayTeam: { name: ev.awayTeam?.name || "Joueur 2" },
-                    score: {
-                        current: { home: ev.homeScore?.current ?? 0, away: ev.awayScore?.current ?? 0 },
-                        fullTime: { home: ev.homeScore?.display ?? ev.homeScore?.current ?? 0, away: ev.awayScore?.display ?? ev.awayScore?.current ?? 0 }
-                    }
-                }));
+        if (!isSilent) {
+            statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs chargés</span>`;
+        }
+        
+        populateCompetitions(currentMatches);
+        applyFilters();
+        calculateDailyBankroll();
 
-                if (currentMatches.length === 0) {
-                    throw new Error("Aucun match trouvé pour cette date dans l'API");
-                }
-
-                if (!isSilent) {
-                    statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} vrais matchs chargés</span>`;
-                    showToast("Scores de tennis actualisés", "success");
-                }
+    } catch (e) {
+        statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur de chargement</span>';
+    }
+}
 
                 populateCompetitions(currentMatches);
                 applyFilters();
