@@ -232,38 +232,38 @@
             renderMatches(filtered);
         }
 
+        // L'Ancien algorithme restauré : 1 et 2 privilégiés
         function computeAlgoPick(hName, aName, hId, aId) {
             hName = String(hName || "");
             aName = String(aName || "");
             
-            const tier1 = ["Real Madrid", "Barcelona", "Man City", "Arsenal", "Liverpool", "Bayern", "Paris", "Inter"];
-            const tier2 = ["Atletico", "Chelsea", "Tottenham", "Leverkusen", "Dortmund", "Juventus", "Milan", "Napoli"];
+            const powerHouses = [
+                "Real Madrid", "Barcelona", "Atletico", "Girona",
+                "Man City", "Manchester City", "Arsenal", "Liverpool", "Chelsea", "Tottenham", "Aston Villa",
+                "Bayern", "Leverkusen", "Dortmund", "Leipzig",
+                "Paris", "PSG", "Monaco", "Marseille", "Lille",
+                "Inter", "Juventus", "Milan", "Napoli", "Atalanta",
+                "Sporting", "Benfica", "Porto", "PSV"
+            ];
             
-            let hForce = 50; 
-            let aForce = 50; 
+            let hForce = 55; // Avantage domicile
+            let aForce = 35; // Désavantage extérieur
             
-            hForce += 4; // Avantage du terrain pour l'équipe à domicile
-            
-            tier1.forEach(p => {
-                if(hName.includes(p)) hForce += 15;
-                if(aName.includes(p)) aForce += 15; 
+            powerHouses.forEach(p => {
+                if(hName.includes(p)) hForce += 45;
+                if(aName.includes(p)) aForce += 50; 
             });
-            tier2.forEach(p => {
-                if(hName.includes(p)) hForce += 8;
-                if(aName.includes(p)) aForce += 8; 
-            });
             
-            let hForm = (hId || hName.length) % 7;
-            let aForm = (aId || aName.length) % 7;
+            let hForm = (hId || hName.length) % 15;
+            let aForm = (aId || aName.length) % 15;
             
             hForce += hForm;
             aForce += aForm;
             
             let diff = hForce - aForce;
             
-            // Équilibrage parfait pour générer des Nuls sur les matchs serrés
-            if (diff > 8) return 'HOME';
-            if (diff < -3) return 'AWAY';
+            if (diff > 14) return 'HOME';
+            if (diff < -8) return 'AWAY';
             return 'DRAW';
         }
 
@@ -313,16 +313,32 @@
                 }
 
                 let myBet = savedBets[match.id]; 
-
-                // Intégration de l'Algo discrètement DANS le texte du bouton
                 let algoPick = computeAlgoPick(homeName, awayName, home.id, away.id);
-                let textHome = algoPick === 'HOME' ? `🤖 ${homeShort}` : homeShort;
-                let textDraw = algoPick === 'DRAW' ? `🤖 NUL` : 'NUL';
-                let textAway = algoPick === 'AWAY' ? `🤖 ${awayShort}` : awayShort;
+
+                // --- GESTION DES COULEURS DES CASES SELON L'ALGO ET LE CHOIX ---
+                let baseClass = "relative flex flex-col items-center justify-center p-2 rounded-xl border transition ";
+                
+                let homeClass = baseClass;
+                let drawClass = baseClass;
+                let awayClass = baseClass;
+
+                // Coloration selon l'algo (Fond très léger)
+                if (algoPick === 'HOME') homeClass += "bg-amber-900/30 border-amber-500/40 ";
+                else homeClass += "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ";
+
+                if (algoPick === 'DRAW') drawClass += "bg-emerald-900/30 border-emerald-500/40 ";
+                else drawClass += "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ";
+
+                if (algoPick === 'AWAY') awayClass += "bg-sky-900/30 border-sky-500/40 ";
+                else awayClass += "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ";
+
+                // Sur-coloration si l'utilisateur a cliqué (Fond plein)
+                if (myBet === 'HOME') homeClass = baseClass + "bg-amber-600/50 border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.3)] ";
+                if (myBet === 'DRAW') drawClass = baseClass + "bg-emerald-600/50 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)] ";
+                if (myBet === 'AWAY') awayClass = baseClass + "bg-sky-600/50 border-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.3)] ";
 
                 let card = document.createElement('div');
                 card.className = "bg-zinc-900 border border-zinc-800 rounded-xl p-3 shadow-md";
-                
                 let compName = match.competition?.name || "Compétition";
 
                 card.innerHTML = `
@@ -332,22 +348,19 @@
                     </div>
                     
                     <div class="grid grid-cols-3 gap-2 mt-1">
-                        <button onclick="placeBet('${match.id}', 'HOME')" 
-                                class="flex flex-col items-center justify-center p-2 rounded-xl border transition ${myBet === 'HOME' ? 'bg-emerald-900/30 border-emerald-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
-                            <span class="text-[11px] font-black text-center leading-tight mb-1 line-clamp-1 w-full text-amber-400 drop-shadow-md">${textHome}</span>
-                            <span class="text-lg font-black ${isFinished && winner === 'HOME' ? 'text-emerald-400' : 'text-white'}">${sHome}</span>
+                        <button onclick="placeBet('${match.id}', 'HOME')" class="${homeClass}">
+                            <span class="text-[11px] font-black text-center leading-tight mb-1 line-clamp-1 w-full ${myBet === 'HOME' ? 'text-white' : 'text-amber-400'} drop-shadow-md">${homeShort}</span>
+                            <span class="text-lg font-black ${isFinished && winner === 'HOME' ? 'text-emerald-400' : (myBet === 'HOME' ? 'text-white' : 'text-zinc-300')}">${sHome}</span>
                         </button>
 
-                        <button onclick="placeBet('${match.id}', 'DRAW')" 
-                                class="flex flex-col items-center justify-center p-2 rounded-xl border transition ${myBet === 'DRAW' ? 'bg-emerald-900/30 border-emerald-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-500 hover:bg-zinc-800'}">
-                            <span class="text-[11px] font-black text-center mb-1 text-emerald-400 drop-shadow-md">${textDraw}</span>
-                            <span class="text-xs font-black ${isFinished && winner === 'DRAW' ? 'text-emerald-400' : 'text-zinc-600'}">-</span>
+                        <button onclick="placeBet('${match.id}', 'DRAW')" class="${drawClass}">
+                            <span class="text-[11px] font-black text-center mb-1 ${myBet === 'DRAW' ? 'text-white' : 'text-emerald-400'} drop-shadow-md">NUL</span>
+                            <span class="text-xs font-black ${isFinished && winner === 'DRAW' ? 'text-emerald-400' : (myBet === 'DRAW' ? 'text-white' : 'text-zinc-500')}">-</span>
                         </button>
 
-                        <button onclick="placeBet('${match.id}', 'AWAY')" 
-                                class="flex flex-col items-center justify-center p-2 rounded-xl border transition ${myBet === 'AWAY' ? 'bg-emerald-900/30 border-emerald-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
-                            <span class="text-[11px] font-black text-center leading-tight mb-1 line-clamp-1 w-full text-sky-400 drop-shadow-md">${textAway}</span>
-                            <span class="text-lg font-black ${isFinished && winner === 'AWAY' ? 'text-emerald-400' : 'text-white'}">${sAway}</span>
+                        <button onclick="placeBet('${match.id}', 'AWAY')" class="${awayClass}">
+                            <span class="text-[11px] font-black text-center leading-tight mb-1 line-clamp-1 w-full ${myBet === 'AWAY' ? 'text-white' : 'text-sky-400'} drop-shadow-md">${awayShort}</span>
+                            <span class="text-lg font-black ${isFinished && winner === 'AWAY' ? 'text-emerald-400' : (myBet === 'AWAY' ? 'text-white' : 'text-zinc-300')}">${sAway}</span>
                         </button>
                     </div>
                     
