@@ -17,7 +17,7 @@
     <!-- BARRE DE NAVIGATION COMMUNE -->
     <nav class="bg-zinc-900 border-b border-zinc-800 p-2.5 z-50 shadow-lg flex justify-center space-x-3">
         <button onclick="switchApp('foot.html', this)" class="nav-btn bg-zinc-800 text-zinc-400 hover:text-white px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center border border-zinc-700 shadow">
-            <i class="fa-solid fa-futbol mr-2 text-emerald-500"></i> FootBet Pro
+            <i class="fa-solid fa-futbol mr-2 text-emerald-500"></i> Foot-Turf
         </button>
         <button onclick="switchApp('turf.html', this)" class="nav-btn bg-zinc-950 text-white border-emerald-500 px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center border shadow-inner">
             <i class="fa-solid fa-horse-head mr-2 text-emerald-500"></i> Fab Turf
@@ -29,15 +29,12 @@
 
     <script>
         function switchApp(page, btn) {
-            // Change l'application affichée dans la zone principale
             document.getElementById('appFrame').src = page;
             
-            // Réinitialise le style inactif pour tous les boutons
             document.querySelectorAll('.nav-btn').forEach(b => {
                 b.className = "nav-btn bg-zinc-800 text-zinc-400 hover:text-white px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center border border-zinc-700 shadow";
             });
             
-            // Applique le style actif (enfoncé et vert) au bouton cliqué
             btn.className = "nav-btn bg-zinc-950 text-white border-emerald-500 px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center border shadow-inner";
         }
     </script>
