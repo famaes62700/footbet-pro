@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TennisBet Pro - Live & Proportionnelle</title>
+    <title>TennisBet Pro - Vrais Scores en Direct</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -53,7 +53,7 @@
         
         <div class="flex justify-between items-center">
             <div id="statusText" class="text-xs text-lime-400 font-mono flex items-center">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Recherche des matchs réels sur le circuit...
             </div>
             <button onclick="loadTennisMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-lime-400 px-3 py-1.5 rounded-lg border border-lime-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
@@ -99,7 +99,7 @@
         </div>
 
         <div id="matchesContainer" class="space-y-3">
-            <!-- Rempli dynamiquement -->
+            <!-- Rempli dynamiquement avec les VRAIS matchs de l'API ESPN -->
         </div>
 
     </main>
@@ -112,6 +112,7 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02; 
 
+        // Actualisation automatique en direct
         setInterval(() => {
             let today = new Date().toISOString().split('T')[0];
             let selectedDate = document.getElementById('matchDate').value;
@@ -135,68 +136,81 @@
         }
 
         async function loadTennisMatches(isSilent = false) {
-            const dateInput = document.getElementById('matchDate').value;
+            const dateStr = document.getElementById('matchDate').value;
+            const espnDate = dateStr.replace(/-/g, ''); // Format YYYYMMDD requis par ESPN
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs en direct...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion à l\'API officielle des scores...';
                 document.getElementById('matchesContainer').innerHTML = '';
             }
             
-            setTimeout(() => {
-                generateActiveTennisMatches(dateInput);
+            try {
+                // Requête directe vers ESPN (Circuit ATP et WTA en même temps) - Ne bloque JAMAIS !
+                const [atpRes, wtaRes] = await Promise.all([
+                    fetch(`https://site.api.espn.com/apis/site/v2/sports/tennis/atp/scoreboard?dates=${espnDate}`),
+                    fetch(`https://site.api.espn.com/apis/site/v2/sports/tennis/wta/scoreboard?dates=${espnDate}`)
+                ]);
+                
+                const atpData = await atpRes.json();
+                const wtaData = await wtaRes.json();
+                
+                const allEvents = [...(atpData.events || []), ...(wtaData.events || [])];
+                let validMatches = [];
+
+                allEvents.forEach(ev => {
+                    try {
+                        let match = ev.competitions[0];
+                        let p1 = match.competitors[0];
+                        let p2 = match.competitors[1];
+
+                        let isFinished = match.status.type.completed;
+                        let isLive = match.status.type.state === 'in';
+                        let status = isLive ? 'IN_PLAY' : (isFinished ? 'FINISHED' : 'TIMED');
+
+                        let homeName = p1.athlete?.shortName || p1.athlete?.displayName || p1.team?.displayName || "Joueur 1";
+                        let awayName = p2.athlete?.shortName || p2.athlete?.displayName || p2.team?.displayName || "Joueur 2";
+                        
+                        let tournName = ev.name || match.tournament?.displayName || "Circuit ATP/WTA";
+
+                        validMatches.push({
+                            id: ev.id.toString(),
+                            status: status,
+                            utcDate: ev.date,
+                            competition: { name: tournName },
+                            homeTeam: { name: homeName },
+                            awayTeam: { name: awayName },
+                            score: { 
+                                current: { home: p1.score || 0, away: p2.score || 0 }, 
+                                fullTime: { home: p1.score || 0, away: p2.score || 0 } 
+                            }
+                        });
+                    } catch (err) {
+                        // Ignore les matchs incomplets
+                    }
+                });
+
+                currentMatches = validMatches;
+                
+                if (currentMatches.length === 0) {
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match du circuit programmé ce jour.</span>`;
+                    populateCompetitions([]);
+                    calculateDailyBankroll();
+                    return;
+                }
+
                 if (!isSilent) {
-                    statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> Matchs du ${dateInput} chargés</span>`;
+                    statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs officiels chargés</span>`;
                 }
-            }, 100);
-        }
+                
+                populateCompetitions(currentMatches);
+                applyFilters();
+                calculateDailyBankroll();
 
-        function generateActiveTennisMatches(dateStr) {
-            let todayStr = new Date().toISOString().split('T')[0];
-            let isToday = (dateStr === todayStr);
-
-            currentMatches = [
-                { 
-                    id: `active_${dateStr}_1`, 
-                    status: isToday ? "IN_PLAY" : "FINISHED", 
-                    utcDate: `${dateStr}T13:00:00Z`, 
-                    competition: { name: "ATP Circuit Principal" }, 
-                    homeTeam: { name: "J. Sinner" }, 
-                    awayTeam: { name: "A. Zverev" }, 
-                    score: isToday ? { current: { home: 1, away: 0 } } : { fullTime: { home: 2, away: 1 } } 
-                },
-                { 
-                    id: `active_${dateStr}_2`, 
-                    status: isToday ? "IN_PLAY" : "FINISHED", 
-                    utcDate: `${dateStr}T15:00:00Z`, 
-                    competition: { name: "ATP Circuit Principal" }, 
-                    homeTeam: { name: "C. Alcaraz" }, 
-                    awayTeam: { name: "D. Medvedev" }, 
-                    score: isToday ? { current: { home: 0, away: 1 } } : { fullTime: { home: 0, away: 2 } } 
-                },
-                { 
-                    id: `active_${dateStr}_3`, 
-                    status: isToday ? "TIMED" : "FINISHED", 
-                    utcDate: `${dateStr}T17:30:00Z`, 
-                    competition: { name: "WTA Tour" }, 
-                    homeTeam: { name: "I. Swiatek" }, 
-                    awayTeam: { name: "C. Gauff" }, 
-                    score: isToday ? {} : { fullTime: { home: 2, away: 0 } } 
-                },
-                { 
-                    id: `active_${dateStr}_4`, 
-                    status: isToday ? "TIMED" : "FINISHED", 
-                    utcDate: `${dateStr}T20:00:00Z`, 
-                    competition: { name: "ATP Masters" }, 
-                    homeTeam: { name: "N. Djokovic" }, 
-                    awayTeam: { name: "H. Rune" }, 
-                    score: isToday ? {} : { fullTime: { home: 2, away: 1 } } 
-                }
-            ];
-            
-            populateCompetitions(currentMatches);
-            applyFilters();
-            calculateDailyBankroll();
+            } catch (e) {
+                statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur réseau (Vérifiez votre connexion)</span>';
+                console.error("Erreur Fetch:", e);
+            }
         }
 
         function populateCompetitions(matches) {
@@ -252,30 +266,20 @@
         function computeAlgoPick(p1, p2) {
             p1 = String(p1 || "");
             p2 = String(p2 || "");
-            
-            const topTier = ["Sinner", "Alcaraz", "Djokovic", "Medvedev", "Zverev", "Swiatek", "Sabalenka", "Gauff", "Rybakina", "Rune"];
-            
-            let f1 = 50; 
-            let f2 = 50; 
-            
+            const topTier = ["Sinner", "Alcaraz", "Djokovic", "Medvedev", "Zverev", "Swiatek", "Sabalenka", "Gauff", "Rybakina", "Fritz"];
+            let f1 = 50; let f2 = 50; 
             topTier.forEach(p => {
                 if(p1.includes(p)) f1 += 20;
                 if(p2.includes(p)) f2 += 20; 
             });
-            
-            let hash1 = (p1.charCodeAt(0) + p1.length) % 10;
-            let hash2 = (p2.charCodeAt(0) + p2.length) % 10;
-            
-            f1 += hash1;
-            f2 += hash2;
-            
+            f1 += (p1.charCodeAt(0) || 0) % 10;
+            f2 += (p2.charCodeAt(0) || 0) % 10;
             return f1 >= f2 ? 'P1' : 'P2';
         }
 
         function extractScore(match, team) {
             if (!match || !match.score) return "-";
             let val = match.score?.fullTime?.[team] ?? match.score?.current?.[team];
-            
             if (val === null || val === undefined) {
                 if (match.status === 'IN_PLAY' || match.status === 'FINISHED') return 0;
                 return "-";
@@ -291,7 +295,7 @@
             container.innerHTML = '';
 
             if (matchesToRender.length === 0) {
-                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match ne correspond à vos filtres.</div>`;
+                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match ne correspond à ce filtre aujourd'hui.</div>`;
                 return;
             }
 
@@ -340,22 +344,22 @@
 
                 let card = document.createElement('div');
                 card.className = "bg-zinc-900 border border-zinc-800 rounded-xl p-3 shadow-md";
-                let compName = match.competition?.name || "Tournoi ATP/WTA";
+                let compName = match.competition?.name || "Circuit ATP/WTA";
 
                 card.innerHTML = `
                     <div class="flex justify-between items-center border-b border-zinc-800/50 pb-2 mb-3">
                         ${statusBadge}
-                        <span class="text-[10px] text-zinc-300 font-bold tracking-wider flex items-center"><i class="fa-solid fa-trophy text-lime-400 mr-1.5"></i>${compName}</span>
+                        <span class="text-[10px] text-zinc-300 font-bold tracking-wider flex items-center text-right w-2/3 truncate"><i class="fa-solid fa-trophy text-lime-400 mr-1.5"></i>${compName}</span>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-3 mt-1">
                         <button onclick="placeBet('${match.id}', 'P1')" class="${homeClass}">
-                            <span class="text-[12px] font-black text-center leading-tight mb-1 w-full ${myBet === 'P1' ? 'text-white' : 'text-lime-400'} drop-shadow-md">${homeName}</span>
+                            <span class="text-[12px] font-black text-center leading-tight mb-1 w-full ${myBet === 'P1' ? 'text-white' : 'text-lime-400'} drop-shadow-md truncate px-1">${homeName}</span>
                             <span class="text-xl font-black ${isFinished && winner === 'P1' ? 'text-lime-400' : (myBet === 'P1' ? 'text-white' : 'text-zinc-300')}">Sets: ${sHome}</span>
                         </button>
 
                         <button onclick="placeBet('${match.id}', 'P2')" class="${awayClass}">
-                            <span class="text-[12px] font-black text-center leading-tight mb-1 w-full ${myBet === 'P2' ? 'text-white' : 'text-cyan-400'} drop-shadow-md">${awayName}</span>
+                            <span class="text-[12px] font-black text-center leading-tight mb-1 w-full ${myBet === 'P2' ? 'text-white' : 'text-cyan-400'} drop-shadow-md truncate px-1">${awayName}</span>
                             <span class="text-xl font-black ${isFinished && winner === 'P2' ? 'text-lime-400' : (myBet === 'P2' ? 'text-white' : 'text-zinc-300')}">Sets: ${sAway}</span>
                         </button>
                     </div>
