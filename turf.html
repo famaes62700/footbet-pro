@@ -140,7 +140,14 @@
                     </div>
                 </div>
             </div>
-            <div class="text-center text-[10px] text-zinc-400 mt-3 font-semibold bg-zinc-800/60 py-2.5 rounded-xl border border-zinc-700/50">
+
+            <!-- LIGNE D'AFFICHAGE DU TOTAL DES MISES ENGAGÉES -->
+            <div class="mt-3 flex justify-between items-center text-[11px] bg-zinc-800/60 px-3 py-2 rounded-xl border border-zinc-700/50 text-zinc-300">
+                <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Total Mises Engagées (Base) :</span>
+                <span id="totalSpentText" class="font-bold text-white">0.00 €</span>
+            </div>
+
+            <div class="text-center text-[10px] text-zinc-400 mt-2 font-semibold">
                 Stratégie : Base Gagnant & Placé en mises proportionnelles (2% du capital). Les autres jeux restent indicatifs.
             </div>
             <div id="statGlobal" class="text-center text-[11px] text-zinc-300 mt-2 font-medium flex flex-col items-center"></div>
@@ -888,6 +895,7 @@
             let gainCoupleGag = document.getElementById('gainCoupleGag');
             let gainCouplePla = document.getElementById('gainCouplePla');
             let statGlobal = document.getElementById('statGlobal');
+            let totalSpentText = document.getElementById('totalSpentText');
 
             if (!isAuto) {
                 statBase.textContent = `G: 0 | P: 0 / 0`;
@@ -896,6 +904,7 @@
                 gainBaseGag.textContent = `--`; gainBasePla.textContent = `--`;
                 gainPepiteGag.textContent = `--`; gainPepitePla.textContent = `--`;
                 gainCoupleGag.textContent = `--`; gainCouplePla.textContent = `--`;
+                totalSpentText.textContent = `0.00 €`;
                 statGlobal.innerHTML = "";
                 statsProgress.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Analyse en cours...";
             }
@@ -933,6 +942,7 @@
             let totalGainBaseGag = 0, totalGainBasePla = 0;
             let totalGainPepiteGag = 0, totalGainPepitePla = 0;
             let totalGainCoupleGag = 0, totalGainCouplePla = 0;
+            let totalSpentBase = 0; // Cumul des mises de la base
             let coursesValidees = 0, coursesValideesCP = 0;
 
             let currentBankroll = INITIAL_BANKROLL;
@@ -965,10 +975,13 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // MISE PROPORTIONNELLE UNIQUEMENT SUR LA BASE (Gagnant et Placé)
+                    // MISE PROPORTIONNELLE SUR LA BASE (Gagnant et Placé)
                     let baseStake = Math.max(0.5, currentBankroll * STAKE_PERCENT);
 
                     if (baseH) {
+                        // On compte 2 paris par course pour la base (1 Gagnant + 1 Placé)
+                        totalSpentBase += (baseStake * 2);
+
                         // BASE GAGNANT
                         let gGag = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
                         if (gGag === 0 && baseArr === 1) gGag = baseH.cote; 
@@ -998,7 +1011,7 @@
                         currentBankroll += netBasePla;
                     }
 
-                    // PÉPITE (Mise fixe de référence 1€ pour garder un indicateur clair)
+                    // PÉPITE (Mise fixe de référence 1€)
                     let refStake = 1.0;
                     if (nuggetH) {
                         let gGag = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
@@ -1042,6 +1055,7 @@
                         gainCoupleGag.innerHTML = `<span class="${totalGainCoupleGag >= 0 ? 'text-blue-400' : 'text-red-400'}">${totalGainCoupleGag >= 0 ? '+' : ''}${totalGainCoupleGag.toFixed(2)}€</span>`;
                         gainCouplePla.innerHTML = `<span class="${totalGainCouplePla >= 0 ? 'text-blue-400' : 'text-red-400'}">${totalGainCouplePla >= 0 ? '+' : ''}${totalGainCouplePla.toFixed(2)}€</span>`;
 
+                        totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
                         document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                         await new Promise(r => setTimeout(r, 20));
                     }
@@ -1060,6 +1074,7 @@
                 gainCoupleGag.innerHTML = `<span class="${totalGainCoupleGag >= 0 ? 'text-blue-400' : 'text-red-400'}">${totalGainCoupleGag >= 0 ? '+' : ''}${totalGainCoupleGag.toFixed(2)}€</span>`;
                 gainCouplePla.innerHTML = `<span class="${totalGainCouplePla >= 0 ? 'text-blue-400' : 'text-red-400'}">${totalGainCouplePla >= 0 ? '+' : ''}${totalGainCouplePla.toFixed(2)}€</span>`;
                 
+                totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                 if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> Bilan calculé (${coursesValidees} courses)</span>`;
 
