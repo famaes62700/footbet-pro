@@ -116,6 +116,37 @@
             }
         }, 30000);
 
+        // Animation locale du chronomètre toutes les 10s pour plus de fluidité
+        setInterval(() => {
+            document.querySelectorAll('.live-timer').forEach(el => {
+                let status = el.getAttribute('data-status');
+                let apiMinute = el.getAttribute('data-minute');
+                let startUtc = el.getAttribute('data-start');
+                
+                if (status === 'PAUSED') {
+                    el.innerHTML = 'Mi-temps';
+                    return;
+                }
+                
+                if (apiMinute && apiMinute !== "null" && apiMinute !== "undefined") {
+                    el.innerHTML = `🔴 ${apiMinute}'`;
+                } else if (startUtc) {
+                    let startTime = new Date(startUtc).getTime();
+                    let diffMinutes = Math.floor((new Date().getTime() - startTime) / 60000);
+                    
+                    if (diffMinutes < 0) diffMinutes = 1;
+                    
+                    if (diffMinutes > 45 && diffMinutes <= 60) {
+                        el.innerHTML = 'Mi-temps';
+                    } else {
+                        if (diffMinutes > 60) diffMinutes = diffMinutes - 15;
+                        if (diffMinutes > 90) diffMinutes = "90+";
+                        el.innerHTML = `🔴 ${diffMinutes}'`;
+                    }
+                }
+            });
+        }, 10000);
+
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -151,8 +182,13 @@
             }
             
             try {
-                const res = await fetch(`/api/football/matches?date=${dateInput}`, {
-                    headers: { 'X-Auth-Token': FOOTBALL_API_KEY }
+                // L'ajout de &_t=... force le navigateur à ne pas utiliser le cache et à bien actualiser le score
+                const res = await fetch(`/api/football/matches?date=${dateInput}&_t=${new Date().getTime()}`, {
+                    headers: { 
+                        'X-Auth-Token': FOOTBALL_API_KEY,
+                        'Cache-Control': 'no-cache, no-store, must-revalidate'
+                    },
+                    cache: 'no-store'
                 });
                 
                 if (!res.ok) throw new Error("Erreur réseau API");
@@ -160,7 +196,6 @@
                 
                 let fetchedMatches = data.matches || [];
                 
-                // Filtre : Exclusion du Portugal et Brésil
                 currentMatches = fetchedMatches.filter(m => 
                     m.area?.name !== 'Portugal' && 
                     m.area?.name !== 'Brazil'
@@ -296,10 +331,10 @@
                 let homeShort = home.shortName || homeName;
                 let awayShort = away.shortName || awayName;
                 
-                let sHome = match.score?.fullTime?.home ?? (match.score?.current?.home ?? "-");
-                let sAway = match.score?.fullTime?.away ?? (match.score?.current?.away ?? "-");
+                // Recherche approfondie du score (gère mieux les matchs en direct de l'API)
+                let sHome = match.score?.fullTime?.home ?? match.score?.regularTime?.home ?? match.score?.halfTime?.home ?? "-";
+                let sAway = match.score?.fullTime?.away ?? match.score?.regularTime?.away ?? match.score?.halfTime?.away ?? "-";
 
-                // Badge de statut (Calcul natif du chronomètre)
                 let statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-[10px] uppercase font-bold">${time}</span>`;
                 
                 if (isLive) {
@@ -309,20 +344,19 @@
                     } else if (match.minute) {
                         liveText = `🔴 ${match.minute}'`;
                     } else {
-                        // Calcul du chrono si l'API ne le donne pas
                         let startTime = new Date(match.utcDate).getTime();
                         let diffMinutes = Math.floor((new Date().getTime() - startTime) / 60000);
                         if (diffMinutes < 0) diffMinutes = 1;
-                        
                         if (diffMinutes > 45 && diffMinutes <= 60) {
                             liveText = 'Mi-temps';
                         } else {
-                            if (diffMinutes > 60) diffMinutes -= 15; // Retrait de la mi-temps
+                            if (diffMinutes > 60) diffMinutes -= 15; 
                             if (diffMinutes > 90) diffMinutes = "90+";
                             liveText = `🔴 ${diffMinutes}'`;
                         }
                     }
-                    statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse">${liveText}</span>`;
+                    statusBadge = `<span class="live-timer bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse" 
+                        data-status="${status}" data-start="${match.utcDate}" data-minute="${match.minute || ''}">${liveText}</span>`;
                 }
                 
                 if (isFinished) statusBadge = `<span class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px] uppercase font-bold">Terminé</span>`;
@@ -434,8 +468,8 @@
                     totalSpent += currentStake;
 
                     if (isFinished) {
-                        let sHome = match.score?.fullTime?.home ?? 0;
-                        let sAway = match.score?.fullTime?.away ?? 0;
+                        let sHome = match.score?.fullTime?.home ?? match.score?.regularTime?.home ?? 0;
+                        let sAway = match.score?.fullTime?.away ?? match.score?.regularTime?.away ?? 0;
                         let winner = sHome > sAway ? 'HOME' : (sAway > sHome ? 'AWAY' : 'DRAW');
                         
                         let netMatch = 0;
