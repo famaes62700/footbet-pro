@@ -53,7 +53,7 @@
         
         <div class="flex justify-between items-center">
             <div id="statusText" class="text-xs text-lime-400 font-mono flex items-center">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion aux scores officiels en direct...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs...
             </div>
             <button onclick="loadTennisMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-lime-400 px-3 py-1.5 rounded-lg border border-lime-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
@@ -133,96 +133,44 @@
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
-async function loadTennisMatches(isSilent = false) {
-    const dateInput = document.getElementById('matchDate').value;
-    const statusText = document.getElementById('statusText');
-    
-    if (!isSilent) {
-        statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs officiels...';
-        document.getElementById('matchesContainer').innerHTML = '';
-    }
-    
-    try {
-        const res = await fetch(`/api/tennis/matches?date=${dateInput}&_nocache=${Date.now()}`, {
-            headers: { 'Cache-Control': 'no-cache' }
-        });
-        
-        if (!res.ok) throw new Error("Erreur API Vercel");
-        const data = await res.json();
-        
-        currentMatches = data.matches || [];
-        
-        if (currentMatches.length === 0) {
-            statusText.innerHTML = `<span class="text-zinc-400">Aucun match ce jour.</span>`;
-            populateCompetitions([]);
-            calculateDailyBankroll();
-            return;
-        }
 
-        if (!isSilent) {
-            statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs chargés</span>`;
-        }
-        
-        populateCompetitions(currentMatches);
-        applyFilters();
-        calculateDailyBankroll();
+        async function loadTennisMatches(isSilent = false) {
+            const dateInput = document.getElementById('matchDate').value;
+            const statusText = document.getElementById('statusText');
+            
+            if (!isSilent) {
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs...';
+                document.getElementById('matchesContainer').innerHTML = '';
+            }
+            
+            try {
+                const res = await fetch(`/api/tennis/matches?date=${dateInput}&_nocache=${Date.now()}`, {
+                    headers: { 'Cache-Control': 'no-cache' }
+                });
+                
+                if (!res.ok) throw new Error("Erreur API Vercel");
+                const data = await res.json();
+                
+                currentMatches = data.matches || [];
+                
+                if (currentMatches.length === 0) {
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match ce jour.</span>`;
+                    populateCompetitions([]);
+                    calculateDailyBankroll();
+                    return;
+                }
 
-    } catch (e) {
-        statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur de chargement</span>';
-    }
-}
-
+                if (!isSilent) {
+                    statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs chargés</span>`;
+                }
+                
                 populateCompetitions(currentMatches);
                 applyFilters();
                 calculateDailyBankroll();
 
-            } catch (err) {
-                // Si l'API publique est bloquée ou ne renvoie rien pour la date, chargement intelligent de secours
-                if (!isSilent) {
-                    statusText.innerHTML = '<span class="text-amber-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Mode direct actif (Actualisation live)</span>';
-                }
-                loadFallbackRealMatches(dateInput);
+            } catch (e) {
+                statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur de chargement API</span>';
             }
-        }
-
-        function loadFallbackRealMatches(dateStr) {
-            let todayStr = new Date().toISOString().split('T')[0];
-            let isToday = (dateStr === todayStr);
-
-            // Vrais matchs récents du circuit principal ATP / WTA
-            currentMatches = [
-                { 
-                    id: `real_${dateStr}_1`, 
-                    status: isToday ? "IN_PLAY" : "FINISHED", 
-                    utcDate: `${dateStr}T13:00:00Z`, 
-                    competition: { name: "ATP Tour" }, 
-                    homeTeam: { name: "J. Sinner" }, 
-                    awayTeam: { name: "C. Alcaraz" }, 
-                    score: isToday ? { current: { home: 1, away: 1 } } : { fullTime: { home: 2, away: 1 } } 
-                },
-                { 
-                    id: `real_${dateStr}_2`, 
-                    status: isToday ? "IN_PLAY" : "FINISHED", 
-                    utcDate: `${dateStr}T15:30:00Z`, 
-                    competition: { name: "ATP Tour" }, 
-                    homeTeam: { name: "N. Djokovic" }, 
-                    awayTeam: { name: "A. Zverev" }, 
-                    score: isToday ? { current: { home: 0, away: 1 } } : { fullTime: { home: 0, away: 2 } } 
-                },
-                { 
-                    id: `real_${dateStr}_3`, 
-                    status: isToday ? "TIMED" : "FINISHED", 
-                    utcDate: `${dateStr}T18:00:00Z`, 
-                    competition: { name: "WTA Tour" }, 
-                    homeTeam: { name: "I. Swiatek" }, 
-                    awayTeam: { name: "C. Gauff" }, 
-                    score: isToday ? {} : { fullTime: { home: 2, away: 0 } } 
-                }
-            ];
-
-            populateCompetitions(currentMatches);
-            applyFilters();
-            calculateDailyBankroll();
         }
 
         function populateCompetitions(matches) {
