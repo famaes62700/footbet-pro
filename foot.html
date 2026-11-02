@@ -117,7 +117,8 @@
             container.innerHTML = '';
             
             try {
-                const res = await fetch(`https://api.football-data.org/v4/matches?date=${dateInput}`, {
+                // Passage par le proxy Vercel pour éviter le blocage CORS
+                const res = await fetch(`/api/football/matches?date=${dateInput}`, {
                     headers: { 'X-Auth-Token': FOOTBALL_API_KEY }
                 });
                 
