@@ -3,17 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro - Mise Proportionnelle</title>
+    <title>FootBet Pro - Live & Proportionnelle</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Masquer la barre de défilement pour les filtres */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
 <body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-10">
 
     <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
+    <!-- EN-TÊTE -->
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
-        <div class="max-w-3xl mx-auto flex justify-between items-center">
+        <div class="max-w-3xl mx-auto flex justify-between items-center mb-3">
             <h1 class="text-base sm:text-lg font-black tracking-wider text-emerald-500 flex items-center">
                 <i class="fa-solid fa-futbol mr-2"></i>FootBet Pro
             </h1>
@@ -21,11 +27,21 @@
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold">
                     Bankroll: <span id="headerBankroll">100.00 €</span>
                 </div>
-                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadFootMatches()">
+                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadFootMatches()">
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative">
                     <i class="fa-solid fa-calendar-days"></i>
                 </button>
             </div>
+        </div>
+        
+        <!-- BARRE DE FILTRES (LIVE & CHAMPIONNATS) -->
+        <div class="max-w-3xl mx-auto flex items-center gap-2 overflow-x-auto scrollbar-hide">
+            <button id="btnFilterLive" onclick="toggleLiveFilter()" class="bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-500/50 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center whitespace-nowrap">
+                <i class="fa-solid fa-fire mr-1.5"></i> En Direct
+            </button>
+            <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 focus:outline-none focus:border-emerald-500 flex-grow">
+                <option value="ALL">Tous les championnats</option>
+            </select>
         </div>
     </header>
 
@@ -35,11 +51,12 @@
             <div id="statusText" class="text-xs text-emerald-400 font-mono flex items-center">
                 <i class="fa-solid fa-spinner fa-spin mr-2"></i>Recherche des matchs...
             </div>
-            <button onclick="loadFootMatches()" class="text-zinc-400 hover:text-emerald-400 transition">
+            <button onclick="loadFootMatches()" class="text-zinc-400 hover:text-emerald-400 transition" title="Actualiser">
                 <i class="fa-solid fa-rotate-right"></i>
             </button>
         </div>
 
+        <!-- BLOC HISTORIQUE -->
         <div id="historyBlock" class="hidden bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
@@ -62,6 +79,7 @@
             </div>
         </div>
 
+        <!-- STATS DU JOUR -->
         <div class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2 flex justify-between items-center">
             <div>
                 <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider mb-1">Bilan du Jour</h2>
@@ -73,11 +91,13 @@
             </div>
         </div>
 
+        <!-- TOTAL MISES ENGAGÉES -->
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex justify-between items-center text-xs text-zinc-300 shadow-md">
             <span><i class="fa-solid fa-wallet mr-1.5 text-emerald-400"></i> Total Mises Engagées (Foot) :</span>
             <span id="totalSpentText" class="font-bold text-white">0.00 €</span>
         </div>
 
+        <!-- LISTE DES MATCHES -->
         <div id="matchesContainer" class="space-y-3">
             <!-- Rempli dynamiquement -->
         </div>
@@ -85,11 +105,12 @@
     </main>
 
     <script>
-        // Clé API intégrée
+        // CLÉ API INTÉGRÉE
         const FOOTBALL_API_KEY = "c42660750d784a43b51eb6a31906a777"; 
 
         document.getElementById('matchDate').valueAsDate = new Date();
         let currentMatches = [];
+        let isLiveFilterActive = false;
 
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02; 
@@ -111,13 +132,12 @@
         async function loadFootMatches() {
             const dateInput = document.getElementById('matchDate').value;
             const statusText = document.getElementById('statusText');
-            const container = document.getElementById('matchesContainer');
             
             statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Recherche des matchs...';
-            container.innerHTML = '';
+            document.getElementById('matchesContainer').innerHTML = '';
             
             try {
-                // Passage par le proxy Vercel pour éviter le blocage CORS
+                // Requête vers le tunnel Vercel
                 const res = await fetch(`/api/football/matches?date=${dateInput}`, {
                     headers: { 'X-Auth-Token': FOOTBALL_API_KEY }
                 });
@@ -129,13 +149,15 @@
                 
                 if (currentMatches.length === 0) {
                     statusText.innerHTML = `<span class="text-zinc-400">Aucun match majeur ce jour.</span>`;
+                    populateCompetitions([]);
                     calculateDailyBankroll();
                     return;
                 }
 
                 statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs trouvés</span>`;
                 
-                renderMatches();
+                populateCompetitions(currentMatches);
+                applyFilters();
                 calculateDailyBankroll();
 
             } catch (e) {
@@ -143,12 +165,73 @@
             }
         }
 
-        function renderMatches() {
+        function populateCompetitions(matches) {
+            const select = document.getElementById('compSelect');
+            const currentSelection = select.value;
+            
+            select.innerHTML = '<option value="ALL">Tous les championnats</option>';
+            const comps = new Set();
+            
+            matches.forEach(m => {
+                if(m.competition && m.competition.name) {
+                    comps.add(m.competition.name);
+                }
+            });
+            
+            Array.from(comps).sort().forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                select.appendChild(opt);
+            });
+
+            // Garder la sélection si elle existe toujours
+            if (Array.from(comps).includes(currentSelection)) {
+                select.value = currentSelection;
+            }
+        }
+
+        function toggleLiveFilter() {
+            isLiveFilterActive = !isLiveFilterActive;
+            const btn = document.getElementById('btnFilterLive');
+            if(isLiveFilterActive) {
+                btn.classList.replace('bg-red-900/40', 'bg-red-600');
+                btn.classList.replace('text-red-400', 'text-white');
+            } else {
+                btn.classList.replace('bg-red-600', 'bg-red-900/40');
+                btn.classList.replace('text-white', 'text-red-400');
+            }
+            applyFilters();
+        }
+
+        function applyFilters() {
+            let filtered = currentMatches;
+            
+            if (isLiveFilterActive) {
+                filtered = filtered.filter(m => m.status === 'IN_PLAY' || m.status === 'PAUSED');
+            }
+            
+            const selectedComp = document.getElementById('compSelect').value;
+            if (selectedComp !== "ALL") {
+                filtered = filtered.filter(m => m.competition && m.competition.name === selectedComp);
+            }
+            
+            renderMatches(filtered);
+        }
+
+        function renderMatches(matchesToRender) {
             const container = document.getElementById('matchesContainer');
             const dateStr = document.getElementById('matchDate').value;
             let savedBets = JSON.parse(localStorage.getItem(`footbet_${dateStr}`)) || {};
 
-            currentMatches.forEach(match => {
+            container.innerHTML = '';
+
+            if (matchesToRender.length === 0) {
+                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match ne correspond à vos filtres.</div>`;
+                return;
+            }
+
+            matchesToRender.forEach(match => {
                 let status = match.status; 
                 let isFinished = status === 'FINISHED' || status === 'AWARDED';
                 let isLive = status === 'IN_PLAY' || status === 'PAUSED';
@@ -227,8 +310,7 @@
             }
             
             localStorage.setItem(`footbet_${dateStr}`, JSON.stringify(savedBets));
-            document.getElementById('matchesContainer').innerHTML = '';
-            renderMatches();
+            applyFilters(); // Re-rend uniquement les matchs filtrés
             calculateDailyBankroll();
         }
 
@@ -242,6 +324,8 @@
             let currentBankroll = INITIAL_BANKROLL;
             let assumedOdds = 1.90; 
 
+            // On boucle sur TOUS les matchs (currentMatches), pas seulement les matchs filtrés, 
+            // pour que les paris sur des matchs masqués comptent toujours dans la bankroll !
             currentMatches.forEach(match => {
                 let status = match.status;
                 let isFinished = status === 'FINISHED' || status === 'AWARDED';
