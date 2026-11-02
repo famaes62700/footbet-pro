@@ -157,7 +157,13 @@
                 if (!res.ok) throw new Error("Erreur réseau API");
                 const data = await res.json();
                 
-                currentMatches = data.matches || [];
+                let fetchedMatches = data.matches || [];
+                
+                // EXCLUSION DU PORTUGAL ET DU BRESIL ICI
+                currentMatches = fetchedMatches.filter(m => 
+                    m.area?.name !== 'Portugal' && 
+                    m.area?.name !== 'Brazil'
+                );
                 
                 if (currentMatches.length === 0) {
                     statusText.innerHTML = `<span class="text-zinc-400">Aucun match majeur ce jour.</span>`;
@@ -232,38 +238,38 @@
             renderMatches(filtered);
         }
 
-        // L'Ancien algorithme restauré : 1 et 2 privilégiés
+        // L'algorithme mathématique rééquilibré 
         function computeAlgoPick(hName, aName, hId, aId) {
             hName = String(hName || "");
             aName = String(aName || "");
             
-            const powerHouses = [
-                "Real Madrid", "Barcelona", "Atletico", "Girona",
-                "Man City", "Manchester City", "Arsenal", "Liverpool", "Chelsea", "Tottenham", "Aston Villa",
-                "Bayern", "Leverkusen", "Dortmund", "Leipzig",
-                "Paris", "PSG", "Monaco", "Marseille", "Lille",
-                "Inter", "Juventus", "Milan", "Napoli", "Atalanta",
-                "Sporting", "Benfica", "Porto", "PSV"
-            ];
+            const tier1 = ["Real Madrid", "Barcelona", "Man City", "Arsenal", "Liverpool", "Bayern", "Paris", "Inter"];
+            const tier2 = ["Atletico", "Chelsea", "Tottenham", "Leverkusen", "Dortmund", "Juventus", "Milan", "Napoli"];
             
-            let hForce = 55; // Avantage domicile
-            let aForce = 35; // Désavantage extérieur
+            let hForce = 50; 
+            let aForce = 50; 
             
-            powerHouses.forEach(p => {
-                if(hName.includes(p)) hForce += 45;
-                if(aName.includes(p)) aForce += 50; 
+            hForce += 4; // Avantage terrain naturel
+            
+            tier1.forEach(p => {
+                if(hName.includes(p)) hForce += 15;
+                if(aName.includes(p)) aForce += 15; 
+            });
+            tier2.forEach(p => {
+                if(hName.includes(p)) hForce += 8;
+                if(aName.includes(p)) aForce += 8; 
             });
             
-            let hForm = (hId || hName.length) % 15;
-            let aForm = (aId || aName.length) % 15;
+            let hForm = (hName.charCodeAt(0) + hName.length) % 10;
+            let aForm = (aName.charCodeAt(0) + aName.length) % 10;
             
             hForce += hForm;
             aForce += aForm;
             
             let diff = hForce - aForce;
             
-            if (diff > 14) return 'HOME';
-            if (diff < -8) return 'AWAY';
+            if (diff > 7) return 'HOME';
+            if (diff < -2) return 'AWAY';
             return 'DRAW';
         }
 
@@ -315,14 +321,12 @@
                 let myBet = savedBets[match.id]; 
                 let algoPick = computeAlgoPick(homeName, awayName, home.id, away.id);
 
-                // --- GESTION DES COULEURS DES CASES SELON L'ALGO ET LE CHOIX ---
                 let baseClass = "relative flex flex-col items-center justify-center p-2 rounded-xl border transition ";
                 
                 let homeClass = baseClass;
                 let drawClass = baseClass;
                 let awayClass = baseClass;
 
-                // Coloration selon l'algo (Fond très léger)
                 if (algoPick === 'HOME') homeClass += "bg-amber-900/30 border-amber-500/40 ";
                 else homeClass += "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ";
 
@@ -332,7 +336,6 @@
                 if (algoPick === 'AWAY') awayClass += "bg-sky-900/30 border-sky-500/40 ";
                 else awayClass += "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ";
 
-                // Sur-coloration si l'utilisateur a cliqué (Fond plein)
                 if (myBet === 'HOME') homeClass = baseClass + "bg-amber-600/50 border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.3)] ";
                 if (myBet === 'DRAW') drawClass = baseClass + "bg-emerald-600/50 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)] ";
                 if (myBet === 'AWAY') awayClass = baseClass + "bg-sky-600/50 border-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.3)] ";
