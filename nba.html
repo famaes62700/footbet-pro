@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBABet Pro - Live & Proportionnelle</title>
+    <title>NBABet Pro - Live & Logos</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -17,13 +17,6 @@
 <body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-10">
 
     <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
-
-    <!-- Navigation inter-applis -->
-    <nav class="bg-zinc-900 border-b border-zinc-800 p-2 flex justify-center gap-4 text-xs font-bold">
-        <a href="foot.html" class="text-zinc-500 hover:text-white transition"><i class="fa-solid fa-futbol mr-1"></i> Foot</a>
-        <a href="nba.html" class="text-orange-400 border-b-2 border-orange-400 pb-1"><i class="fa-solid fa-basketball mr-1"></i> NBA</a>
-        <a href="tennis.html" class="text-zinc-500 hover:text-white transition"><i class="fa-solid fa-table-tennis-paddle-ball mr-1"></i> Tennis</a>
-    </nav>
 
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center mb-3">
@@ -39,7 +32,6 @@
         </div>
         
         <div class="max-w-3xl mx-auto flex items-center gap-2 overflow-x-auto scrollbar-hide">
-            <!-- LE NOUVEAU BOUTON EN DIRECT -->
             <button id="btnFilterLive" onclick="toggleLiveFilter()" class="bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-500/50 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center whitespace-nowrap">
                 <i class="fa-solid fa-fire mr-1.5"></i> En Direct
             </button>
@@ -116,7 +108,6 @@
             }
             
             try {
-                // API ESPN officielle pour la NBA
                 const url = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${apiDate}`;
                 let validMatches = [];
 
@@ -126,8 +117,8 @@
                     let data = await res.json();
                     (data.events || []).forEach(ev => {
                         let match = ev.competitions[0];
-                        let p1 = match.competitors[0]; // Souvent Home
-                        let p2 = match.competitors[1]; // Souvent Away
+                        let p1 = match.competitors[0]; 
+                        let p2 = match.competitors[1]; 
                         
                         let state = match.status?.type?.state || 'pre';
                         let isCompleted = match.status?.type?.completed || state === 'post';
@@ -138,6 +129,10 @@
                         let homeName = p1.team?.displayName || p1.team?.shortDisplayName || "Équipe Domicile";
                         let awayName = p2.team?.displayName || p2.team?.shortDisplayName || "Équipe Extérieure";
                         
+                        // Récupération des logos depuis l'API ESPN
+                        let homeLogo = p1.team?.logo || "";
+                        let awayLogo = p2.team?.logo || "";
+
                         let score1 = p1.score || "0";
                         let score2 = p2.score || "0";
 
@@ -153,15 +148,14 @@
                             statusDetail: match.status?.type?.shortDetail || "",
                             utcDate: ev.date,
                             competition: { name: "NBA" },
-                            homeTeam: { name: homeName },
-                            awayTeam: { name: awayName },
+                            homeTeam: { name: homeName, logo: homeLogo },
+                            awayTeam: { name: awayName, logo: awayLogo },
                             winner: winner,
                             score: { current: { home: score1, away: score2 } }
                         });
                     });
                 }
 
-                // Tri : Live en premier, puis par date
                 validMatches.sort((a, b) => {
                     if (a.status === 'IN_PLAY' && b.status !== 'IN_PLAY') return -1;
                     if (b.status === 'IN_PLAY' && a.status !== 'IN_PLAY') return 1;
@@ -171,7 +165,6 @@
                 currentMatches = validMatches;
 
                 if (currentMatches.length === 0) {
-                    // Secours de test si l'API est vide aujourd'hui
                     currentMatches = getNBAFallback(dateStr);
                     if (!isSilent) statusText.innerHTML = `<span class="text-orange-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> Affiches générées (Secours)</span>`;
                 } else {
@@ -200,8 +193,8 @@
                     statusDetail: isToday ? "Q3 4:12" : "Final",
                     utcDate: `${dateStr}T01:30:00Z`,
                     competition: { name: "NBA" },
-                    homeTeam: { name: "Boston Celtics" },
-                    awayTeam: { name: "Los Angeles Lakers" },
+                    homeTeam: { name: "Boston Celtics", logo: "https://a.espncdn.com/i/teamlogos/nba/500/bos.png" },
+                    awayTeam: { name: "Los Angeles Lakers", logo: "https://a.espncdn.com/i/teamlogos/nba/500/lal.png" },
                     winner: isToday ? null : 'P1',
                     score: { current: { home: isToday ? "84" : "112", away: isToday ? "78" : "105" } }
                 },
@@ -211,8 +204,8 @@
                     statusDetail: "A venir",
                     utcDate: `${dateStr}T04:00:00Z`,
                     competition: { name: "NBA" },
-                    homeTeam: { name: "Golden State Warriors" },
-                    awayTeam: { name: "Denver Nuggets" },
+                    homeTeam: { name: "Golden State Warriors", logo: "https://a.espncdn.com/i/teamlogos/nba/500/gs.png" },
+                    awayTeam: { name: "Denver Nuggets", logo: "https://a.espncdn.com/i/teamlogos/nba/500/den.png" },
                     winner: null,
                     score: { current: { home: "0", away: "0" } }
                 }
@@ -221,7 +214,6 @@
 
         function populateCompetitions(matches) {
             const select = document.getElementById('compSelect');
-            const currentSelection = select.value;
             select.innerHTML = '<option value="ALL">NBA (Toutes les équipes)</option>';
         }
 
@@ -271,7 +263,9 @@
                 let isLive = match.status === 'IN_PLAY';
                 
                 let homeName = match.homeTeam.name;
+                let homeLogo = match.homeTeam.logo;
                 let awayName = match.awayTeam.name;
+                let awayLogo = match.awayTeam.logo;
                 
                 let sHome = match.score.current.home;
                 let sAway = match.score.current.away;
@@ -304,12 +298,18 @@
                     
                     <div class="grid grid-cols-2 gap-3 mt-1">
                         <button onclick="placeBet('${match.id}', 'P1')" class="${homeClass}">
-                            <span class="text-[12px] font-black text-center leading-tight mb-1 w-full ${myBet === 'P1' ? 'text-white' : 'text-orange-400'} drop-shadow-md truncate px-1">${homeName}</span>
+                            <div class="flex flex-col items-center justify-center mb-1 h-14">
+                                ${homeLogo ? `<img src="${homeLogo}" class="w-8 h-8 object-contain mb-1 drop-shadow-md">` : `<i class="fa-solid fa-basketball text-zinc-500 mb-1"></i>`}
+                                <span class="text-[11px] font-black text-center leading-tight w-full ${myBet === 'P1' ? 'text-white' : 'text-orange-400'} drop-shadow-md truncate px-1">${homeName}</span>
+                            </div>
                             <span class="text-xl font-black ${isFinished && winner === 'P1' ? 'text-orange-400' : 'text-zinc-200'}">${sHome}</span>
                         </button>
 
                         <button onclick="placeBet('${match.id}', 'P2')" class="${awayClass}">
-                            <span class="text-[12px] font-black text-center leading-tight mb-1 w-full ${myBet === 'P2' ? 'text-white' : 'text-cyan-400'} drop-shadow-md truncate px-1">${awayName}</span>
+                            <div class="flex flex-col items-center justify-center mb-1 h-14">
+                                ${awayLogo ? `<img src="${awayLogo}" class="w-8 h-8 object-contain mb-1 drop-shadow-md">` : `<i class="fa-solid fa-basketball text-zinc-500 mb-1"></i>`}
+                                <span class="text-[11px] font-black text-center leading-tight w-full ${myBet === 'P2' ? 'text-white' : 'text-cyan-400'} drop-shadow-md truncate px-1">${awayName}</span>
+                            </div>
                             <span class="text-xl font-black ${isFinished && winner === 'P2' ? 'text-orange-400' : 'text-zinc-200'}">${sAway}</span>
                         </button>
                     </div>
@@ -355,7 +355,7 @@
 
                     if (match.status === 'FINISHED' && match.winner) {
                         if (myBet === match.winner) {
-                            dailyProfit += ((1.85 * currentStake) - currentStake); // Cotes NBA standards souvent à 1.85
+                            dailyProfit += ((1.85 * currentStake) - currentStake); 
                         } else {
                             dailyProfit -= currentStake;
                         }
