@@ -129,6 +129,17 @@
             }, 3000);
         }
 
+        function getFlagEmoji(areaName) {
+            if (!areaName) return "🏳️";
+            const map = {
+                "France": "🇫🇷", "Spain": "🇪🇸", "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", 
+                "Germany": "🇩🇪", "Italy": "🇮🇹", "Portugal": "🇵🇹", 
+                "Netherlands": "🇳🇱", "Belgium": "🇧🇪", "Europe": "🇪🇺", 
+                "World": "🌍", "Brazil": "🇧🇷", "Argentina": "🇦🇷"
+            };
+            return map[areaName] || "🏳️";
+        }
+
         async function loadFootMatches(isSilent = false) {
             const dateInput = document.getElementById('matchDate').value;
             const statusText = document.getElementById('statusText');
@@ -177,20 +188,23 @@
             if (select.options.length > 1 && document.activeElement === select) return;
 
             select.innerHTML = '<option value="ALL">Tous les championnats</option>';
-            const comps = new Set();
+            const compsMap = new Map();
             
             matches.forEach(m => {
-                if(m.competition && m.competition.name) comps.add(m.competition.name);
+                if(m.competition && m.competition.name) {
+                    let emoji = getFlagEmoji(m.area?.name);
+                    compsMap.set(m.competition.name, `${emoji} ${m.competition.name}`);
+                }
             });
             
-            Array.from(comps).sort().forEach(c => {
+            Array.from(compsMap.keys()).sort().forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c;
-                opt.textContent = c;
+                opt.textContent = compsMap.get(c);
                 select.appendChild(opt);
             });
 
-            if (Array.from(comps).includes(currentSelection)) {
+            if (Array.from(compsMap.keys()).includes(currentSelection)) {
                 select.value = currentSelection;
             }
         }
@@ -222,32 +236,34 @@
             hName = String(hName || "");
             aName = String(aName || "");
             
-            const powerHouses = [
-                "Real Madrid", "Barcelona", "Atletico", "Girona",
-                "Man City", "Manchester City", "Arsenal", "Liverpool", "Chelsea", "Tottenham", "Aston Villa",
-                "Bayern", "Leverkusen", "Dortmund", "Leipzig",
-                "Paris", "PSG", "Monaco", "Marseille", "Lille",
-                "Inter", "Juventus", "Milan", "Napoli", "Atalanta",
-                "Sporting", "Benfica", "Porto", "PSV"
-            ];
+            const tier1 = ["Real Madrid", "Barcelona", "Man City", "Arsenal", "Liverpool", "Bayern", "Paris", "Inter"];
+            const tier2 = ["Atletico", "Chelsea", "Tottenham", "Leverkusen", "Dortmund", "Juventus", "Milan", "Napoli"];
             
-            let hForce = 55; 
-            let aForce = 35; 
+            let hForce = 50; 
+            let aForce = 50; 
             
-            powerHouses.forEach(p => {
-                if(hName.includes(p)) hForce += 45;
-                if(aName.includes(p)) aForce += 50; 
+            hForce += 4; // Avantage du terrain pour l'équipe à domicile
+            
+            tier1.forEach(p => {
+                if(hName.includes(p)) hForce += 15;
+                if(aName.includes(p)) aForce += 15; 
+            });
+            tier2.forEach(p => {
+                if(hName.includes(p)) hForce += 8;
+                if(aName.includes(p)) aForce += 8; 
             });
             
-            let hForm = (hId || hName.length) % 15;
-            let aForm = (aId || aName.length) % 15;
+            let hForm = (hId || hName.length) % 7;
+            let aForm = (aId || aName.length) % 7;
             
             hForce += hForm;
             aForce += aForm;
             
             let diff = hForce - aForce;
-            if (diff > 14) return 'HOME';
-            if (diff < -8) return 'AWAY';
+            
+            // Équilibrage parfait pour générer des Nuls sur les matchs serrés
+            if (diff > 8) return 'HOME';
+            if (diff < -3) return 'AWAY';
             return 'DRAW';
         }
 
@@ -270,7 +286,6 @@
                 
                 let time = new Date(match.utcDate).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
                 
-                // Sécurisation des noms d'équipes
                 let home = match.homeTeam || {};
                 let away = match.awayTeam || {};
                 let homeName = home.name || "Équipe 1";
@@ -299,12 +314,11 @@
 
                 let myBet = savedBets[match.id]; 
 
+                // Intégration de l'Algo discrètement DANS le texte du bouton
                 let algoPick = computeAlgoPick(homeName, awayName, home.id, away.id);
-                let badgeHTML = `<div class="absolute -top-2.5 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg border border-indigo-400 z-10 whitespace-nowrap"><i class="fa-solid fa-robot mr-0.5"></i> ALGO</div>`;
-                
-                let homeBadge = algoPick === 'HOME' ? badgeHTML : '';
-                let drawBadge = algoPick === 'DRAW' ? badgeHTML : '';
-                let awayBadge = algoPick === 'AWAY' ? badgeHTML : '';
+                let textHome = algoPick === 'HOME' ? `🤖 ${homeShort}` : homeShort;
+                let textDraw = algoPick === 'DRAW' ? `🤖 NUL` : 'NUL';
+                let textAway = algoPick === 'AWAY' ? `🤖 ${awayShort}` : awayShort;
 
                 let card = document.createElement('div');
                 card.className = "bg-zinc-900 border border-zinc-800 rounded-xl p-3 shadow-md";
@@ -319,23 +333,20 @@
                     
                     <div class="grid grid-cols-3 gap-2 mt-1">
                         <button onclick="placeBet('${match.id}', 'HOME')" 
-                                class="relative flex flex-col items-center justify-center p-2 rounded-xl border transition ${myBet === 'HOME' ? 'bg-emerald-900/30 border-emerald-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
-                            ${homeBadge}
-                            <span class="text-[11px] font-black text-center leading-tight mb-1 line-clamp-1 w-full text-amber-400 drop-shadow-md">${homeShort}</span>
+                                class="flex flex-col items-center justify-center p-2 rounded-xl border transition ${myBet === 'HOME' ? 'bg-emerald-900/30 border-emerald-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
+                            <span class="text-[11px] font-black text-center leading-tight mb-1 line-clamp-1 w-full text-amber-400 drop-shadow-md">${textHome}</span>
                             <span class="text-lg font-black ${isFinished && winner === 'HOME' ? 'text-emerald-400' : 'text-white'}">${sHome}</span>
                         </button>
 
                         <button onclick="placeBet('${match.id}', 'DRAW')" 
-                                class="relative flex flex-col items-center justify-center p-2 rounded-xl border transition ${myBet === 'DRAW' ? 'bg-emerald-900/30 border-emerald-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-500 hover:bg-zinc-800'}">
-                            ${drawBadge}
-                            <span class="text-[11px] font-black text-center mb-1 text-emerald-400 drop-shadow-md">NUL</span>
+                                class="flex flex-col items-center justify-center p-2 rounded-xl border transition ${myBet === 'DRAW' ? 'bg-emerald-900/30 border-emerald-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-500 hover:bg-zinc-800'}">
+                            <span class="text-[11px] font-black text-center mb-1 text-emerald-400 drop-shadow-md">${textDraw}</span>
                             <span class="text-xs font-black ${isFinished && winner === 'DRAW' ? 'text-emerald-400' : 'text-zinc-600'}">-</span>
                         </button>
 
                         <button onclick="placeBet('${match.id}', 'AWAY')" 
-                                class="relative flex flex-col items-center justify-center p-2 rounded-xl border transition ${myBet === 'AWAY' ? 'bg-emerald-900/30 border-emerald-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
-                            ${awayBadge}
-                            <span class="text-[11px] font-black text-center leading-tight mb-1 line-clamp-1 w-full text-sky-400 drop-shadow-md">${awayShort}</span>
+                                class="flex flex-col items-center justify-center p-2 rounded-xl border transition ${myBet === 'AWAY' ? 'bg-emerald-900/30 border-emerald-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
+                            <span class="text-[11px] font-black text-center leading-tight mb-1 line-clamp-1 w-full text-sky-400 drop-shadow-md">${textAway}</span>
                             <span class="text-lg font-black ${isFinished && winner === 'AWAY' ? 'text-emerald-400' : 'text-white'}">${sAway}</span>
                         </button>
                     </div>
