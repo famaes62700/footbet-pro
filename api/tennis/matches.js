@@ -5,36 +5,29 @@ export default async function handler(req, res) {
     const { date } = req.query;
     const targetDate = date || new Date().toISOString().split('T')[0];
 
-    // Vrais matchs officiels du circuit ATP / WTA
-    const realMatches = [
-        {
-            id: `atp_${targetDate}_1`,
-            status: "IN_PLAY",
-            utcDate: `${targetDate}T13:00:00Z`,
-            competition: { name: "ATP Masters / Tournoi ATP" },
-            homeTeam: { name: "J. Sinner" },
-            awayTeam: { name: "A. Zverev" },
-            score: { current: { home: 1, away: 0 } }
-        },
-        {
-            id: `atp_${targetDate}_2`,
-            status: "IN_PLAY",
-            utcDate: `${targetDate}T15:30:00Z`,
-            competition: { name: "ATP Masters / Tournoi ATP" },
-            homeTeam: { name: "C. Alcaraz" },
-            awayTeam: { name: "D. Medvedev" },
-            score: { current: { home: 0, away: 1 } }
-        },
-        {
-            id: `wta_${targetDate}_3`,
-            status: "TIMED",
-            utcDate: `${targetDate}T18:00:00Z`,
-            competition: { name: "WTA Tour" },
-            homeTeam: { name: "I. Swiatek" },
-            awayTeam: { name: "C. Gauff" },
-            score: {}
-        }
-    ];
+    try {
+        // Appel sécurisé côté serveur vers l'agrégateur de scores en direct
+        const response = await fetch(`https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/${targetDate}`);
+        if (!response.ok) throw new Error("Erreur de récupération externe");
 
-    return res.status(200).json({ matches: realMatches });
+        const data = await response.json();
+        const events = data.events || [];
+
+        const matches = events.map(ev => ({
+            id: ev.id.toString(),
+            status: ev.status.type === 'inprogress' ? 'IN_PLAY' : (ev.status.type === 'finished' ? 'FINISHED' : 'TIMED'),
+            utcDate: new Date(ev.startTimestamp * 1000).toISOString(),
+            competition: { name: ev.tournament?.name || "ATP / WTA Tour" },
+            homeTeam: { name: ev.homeTeam?.name || "Joueur 1" },
+            awayTeam: { name: ev.awayTeam?.name || "Joueur 2" },
+            score: {
+                current: { home: ev.homeScore?.current ?? 0, away: ev.awayScore?.current ?? 0 },
+                fullTime: { home: ev.homeScore?.display ?? ev.homeScore?.current ?? 0, away: ev.awayScore?.display ?? ev.awayScore?.current ?? 0 }
+            }
+        }));
+
+        return res.status(200).json({ matches });
+    } catch (error) {
+        return res.status(500).json({ error: "Impossible de charger les matchs en direct." });
+    }
 }
