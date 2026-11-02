@@ -2,8 +2,8 @@ export default async function handler(req, res) {
     const { target } = req.query;
     if (!target) return res.status(400).json({ error: "Cible manquante" });
 
-    // Cible le réseau Web (online) au lieu du réseau physique (offline)
-    const url = `https://online.turfinfo.api.pmu.fr/rest/client/1/programme/${target}`;
+    // Cible le réseau physique PMU (les 14 ou 9 vraies réunions)
+    const url = `https://offline.turfinfo.api.pmu.fr/rest/client/61/programme/${target}`;
 
     try {
         const response = await fetch(url, {
