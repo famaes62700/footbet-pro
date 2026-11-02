@@ -7,6 +7,10 @@
     {
       "source": "/api/pmu/:path*",
       "destination": "https://online.turfinfo.api.pmu.fr/rest/client/61/programme/:path*"
+    },
+    {
+      "source": "/api/nba/:path*",
+      "destination": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/:path*"
     }
   ]
 }
