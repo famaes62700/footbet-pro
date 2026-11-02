@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TennisBet Pro - Scores ESPN en Direct</title>
+    <title>TennisBet Pro - Paris Masters & Circuit ATP/WTA</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="TennisBet">
     
     <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=TEN&background=84cc16&color=fff&size=512&font-size=0.4&v=2">
     <link rel="icon" type="image/png" href="https://ui-avatars.com/api/?name=TEN&background=84cc16&color=fff&size=512&font-size=0.4&v=2">
@@ -53,7 +52,7 @@
         
         <div class="flex justify-between items-center">
             <div id="statusText" class="text-xs text-lime-400 font-mono flex items-center w-3/4 truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement (connexion directe sans proxy)...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion multi-serveurs...
             </div>
             <button onclick="loadTennisMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-lime-400 px-3 py-1.5 rounded-lg border border-lime-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
@@ -115,7 +114,7 @@
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            let bgClass = type === 'success' ? 'bg-lime-900/90 border-lime-500/50 text-lime-200' : 'bg-zinc-800 border-zinc-700 text-white';
+            let bgClass = type === 'success' ? 'bg-lime-900/90 border-lime-500/50 text-lime-200' : 'bg-red-900/90 border-red-500/50 text-white';
             toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center ${bgClass}`;
             toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
@@ -128,92 +127,83 @@
 
         async function loadTennisMatches(isSilent = false) {
             const dateStr = document.getElementById('matchDate').value;
-            const apiDate = dateStr.replace(/-/g, ''); // ESPN attend le format YYYYMMDD
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion directe à ESPN...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération de tous les tournois (Paris & Monde)...';
                 document.getElementById('matchesContainer').innerHTML = '';
             }
             
             try {
-                // CONNEXION DIRECTE SANS AUCUN PROXY - Ne sera pas bloqué par uBlock/Adblock
-                const atpUrl = `https://site.api.espn.com/apis/site/v2/sports/tennis/atp/scoreboard?dates=${apiDate}`;
-                const wtaUrl = `https://site.api.espn.com/apis/site/v2/sports/tennis/wta/scoreboard?dates=${apiDate}`;
-
-                const [atpRes, wtaRes] = await Promise.all([
-                    fetch(atpUrl).catch(e => null), // Attrape l'erreur si l'un des deux échoue
-                    fetch(wtaUrl).catch(e => null)
-                ]);
-
-                if (!atpRes && !wtaRes) {
-                    throw new Error("Impossible de joindre les serveurs");
-                }
-
-                let allEvents = [];
-
-                if (atpRes && atpRes.ok) {
-                    const atpData = await atpRes.json();
-                    if (atpData.events) allEvents = allEvents.concat(atpData.events);
-                }
-
-                if (wtaRes && wtaRes.ok) {
-                    const wtaData = await wtaRes.json();
-                    if (wtaData.events) allEvents = allEvents.concat(wtaData.events);
-                }
+                const targetUrl = `https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/${dateStr}`;
                 
+                // Système multi-proxy: on essaie 2 serveurs différents pour garantir que ça passe les bloqueurs
+                const proxies = [
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+                    `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+                ];
+
+                let data = null;
+                for (let proxy of proxies) {
+                    try {
+                        const res = await fetch(proxy, { cache: 'no-store' });
+                        if (res.ok) {
+                            data = await res.json();
+                            if (data && data.events) break; // Succès !
+                        }
+                    } catch (e) {
+                        console.warn("Proxy échoué, essai du proxy de secours...");
+                    }
+                }
+
+                if (!data || !data.events) {
+                    throw new Error("Veuillez désactiver votre bloqueur de publicités (AdBlock/Brave) pour afficher les scores.");
+                }
+
+                let allEvents = data.events;
                 let validMatches = [];
 
                 allEvents.forEach(ev => {
                     try {
-                        let match = ev.competitions[0];
-                        let p1 = match.competitors[0];
-                        let p2 = match.competitors[1];
-
-                        // Status
-                        let isFinished = match.status.type.completed;
-                        let isLive = match.status.type.state === 'in' || match.status.type.description === 'In Progress';
+                        let isFinished = ev.status.type === 'finished' || ev.status.type === 'canceled';
+                        let isLive = ev.status.type === 'inprogress';
                         let status = isLive ? 'IN_PLAY' : (isFinished ? 'FINISHED' : 'TIMED');
 
-                        // Noms
-                        let homeName = p1.athlete?.shortName || p1.athlete?.displayName || "Joueur 1";
-                        let awayName = p2.athlete?.shortName || p2.athlete?.displayName || "Joueur 2";
+                        let homeName = ev.homeTeam?.name || "Joueur 1";
+                        let awayName = ev.awayTeam?.name || "Joueur 2";
                         
-                        // Tournoi
-                        let tournName = ev.name || match.tournament?.displayName || "Circuit ATP/WTA";
+                        let tournName = ev.tournament?.name || "Circuit ATP/WTA";
 
-                        // Score (ESPN donne souvent le score sous forme de string ou dans 'score')
-                        let score1 = p1.score || "0";
-                        let score2 = p2.score || "0";
+                        let score1 = ev.homeScore?.display || ev.homeScore?.current || "0";
+                        let score2 = ev.awayScore?.display || ev.awayScore?.current || "0";
 
                         validMatches.push({
                             id: ev.id.toString(),
                             status: status,
-                            utcDate: ev.date,
+                            utcDate: new Date(ev.startTimestamp * 1000).toISOString(),
                             competition: { name: tournName },
                             homeTeam: { name: homeName },
                             awayTeam: { name: awayName },
                             score: { 
-                                current: { home: score1, away: score2 }, 
-                                fullTime: { home: score1, away: score2 } 
+                                current: { home: score1, away: score2 }
                             }
                         });
                     } catch (err) {
-                        // On ignore discrètement les matchs où il manque des données
+                        // Ignore les matchs erronés
                     }
                 });
 
                 currentMatches = validMatches;
                 
                 if (currentMatches.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400"><i class="fa-solid fa-circle-info mr-1"></i> Aucun match programmé à cette date sur ESPN.</span>`;
+                    statusText.innerHTML = `<span class="text-zinc-400"><i class="fa-solid fa-circle-info mr-1"></i> Aucun match de tennis officiel aujourd'hui.</span>`;
                     populateCompetitions([]);
                     calculateDailyBankroll();
                     return;
                 }
 
                 if (!isSilent) {
-                    statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs réels chargés (Direct)</span>`;
+                    statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs réels chargés</span>`;
                 }
                 
                 populateCompetitions(currentMatches);
@@ -221,8 +211,8 @@
                 calculateDailyBankroll();
 
             } catch (error) {
-                console.error("Erreur complète :", error);
                 statusText.innerHTML = `<span class="text-red-400 font-semibold text-[10px]"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur: ${error.message}</span>`;
+                showToast("Désactivez AdBlock pour charger les scores", "error");
             }
         }
 
@@ -268,7 +258,7 @@
 
         function applyFilters() {
             let filtered = currentMatches;
-            if (isLiveFilterActive) filtered = filtered.filter(m => m.status === 'IN_PLAY' || m.status === 'PAUSED');
+            if (isLiveFilterActive) filtered = filtered.filter(m => m.status === 'IN_PLAY');
             
             const selectedComp = document.getElementById('compSelect').value;
             if (selectedComp !== "ALL") filtered = filtered.filter(m => m.competition && m.competition.name === selectedComp);
@@ -315,7 +305,6 @@
                 if (isLive) statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse">🔴 En direct</span>`;
                 if (isFinished) statusBadge = `<span class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px] uppercase font-bold">Terminé</span>`;
 
-                // Convertir les scores en nombres pour déterminer le gagnant
                 let numScore1 = parseInt(sHome) || 0;
                 let numScore2 = parseInt(sAway) || 0;
 
@@ -426,12 +415,7 @@
 
         function toggleHistoryStats() {
             let block = document.getElementById('historyBlock');
-            if (block.classList.contains('hidden')) {
-                block.classList.remove('hidden');
-                // Code historique statique supprimé pour l'exemple
-            } else {
-                block.classList.add('hidden');
-            }
+            block.classList.toggle('hidden');
         }
 
         window.onload = loadTennisMatches;
