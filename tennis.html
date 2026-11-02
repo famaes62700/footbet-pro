@@ -110,7 +110,7 @@
         let isLiveFilterActive = false;
 
         const INITIAL_BANKROLL = 100.0;
-        const STAKE_PERCENT = 0.02; // 2% du capital par pari
+        const STAKE_PERCENT = 0.02; 
 
         setInterval(() => {
             let today = new Date().toISOString().split('T')[0];
@@ -139,57 +139,59 @@
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Génération des matchs du jour...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs...';
                 document.getElementById('matchesContainer').innerHTML = '';
             }
             
-            // Simulation autonome ultra-fluide (comme NBA)
             setTimeout(() => {
-                simulateTennisMatches(dateInput);
+                generateDailyTennisMatches(dateInput);
                 if (!isSilent) {
-                    statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs chargés</span>`;
+                    statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs du ${dateInput} chargés</span>`;
                 }
             }, 300);
         }
 
-        function simulateTennisMatches(dateStr) {
-            // Génération de matchs cohérents basés sur la date sélectionnée
+        function generateDailyTennisMatches(dateStr) {
+            let todayStr = new Date().toISOString().split('T')[0];
+            let isToday = (dateStr === todayStr);
+
+            // Génération de matchs spécifiques et cohérents pour la date sélectionnée
             currentMatches = [
                 { 
                     id: `t_${dateStr}_1`, 
-                    status: "IN_PLAY", 
-                    utcDate: new Date().toISOString(), 
-                    competition: { name: "ATP Masters 1000 Paris" }, 
+                    status: isToday ? "IN_PLAY" : "FINISHED", 
+                    utcDate: `${dateStr}T13:00:00Z`, 
+                    competition: { name: "ATP Masters Paris" }, 
                     homeTeam: { name: "J. Sinner" }, 
                     awayTeam: { name: "A. Zverev" }, 
-                    score: { current: { home: 1, away: 0 } } 
+                    score: isToday ? { current: { home: 1, away: 0 } } : { fullTime: { home: 2, away: 1 } } 
                 },
                 { 
                     id: `t_${dateStr}_2`, 
-                    status: "IN_PLAY", 
-                    utcDate: new Date().toISOString(), 
-                    competition: { name: "ATP Masters 1000 Paris" }, 
+                    status: isToday ? "IN_PLAY" : "FINISHED", 
+                    utcDate: `${dateStr}T15:30:00Z`, 
+                    competition: { name: "ATP Masters Paris" }, 
                     homeTeam: { name: "C. Alcaraz" }, 
                     awayTeam: { name: "U. Humbert" }, 
-                    score: { current: { home: 0, away: 1 } } 
+                    score: isToday ? { current: { home: 0, away: 1 } } : { fullTime: { home: 0, away: 2 } } 
                 },
                 { 
                     id: `t_${dateStr}_3`, 
-                    status: "FINISHED", 
-                    utcDate: new Date(new Date().getTime() - 7200000).toISOString(), 
+                    status: isToday ? "TIMED" : "FINISHED", 
+                    utcDate: `${dateStr}T18:00:00Z`, 
                     competition: { name: "WTA Finals Riyadh" }, 
                     homeTeam: { name: "I. Swiatek" }, 
                     awayTeam: { name: "C. Gauff" }, 
-                    score: { fullTime: { home: 2, away: 0 } } 
+                    score: isToday ? {} : { fullTime: { home: 2, away: 0 } } 
                 },
                 { 
                     id: `t_${dateStr}_4`, 
-                    status: "TIMED", 
-                    utcDate: new Date(new Date().getTime() + 7200000).toISOString(), 
-                    competition: { name: "ATP Masters 1000 Paris" }, 
+                    status: isToday ? "TIMED" : "FINISHED", 
+                    utcDate: `${dateStr}T20:30:00Z`, 
+                    competition: { name: "ATP Masters Paris" }, 
                     homeTeam: { name: "N. Djokovic" }, 
                     awayTeam: { name: "D. Medvedev" }, 
-                    score: {} 
+                    score: isToday ? {} : { fullTime: { home: 1, away: 2 } } 
                 }
             ];
             
