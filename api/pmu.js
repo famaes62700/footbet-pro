@@ -1,26 +1,53 @@
 export default async function handler(req, res) {
-    const { target } = req.query;
-    if (!target) return res.status(400).json({ error: "Cible manquante" });
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    // Cible le réseau physique PMU (les 14 ou 9 vraies réunions)
-    const url = `https://offline.turfinfo.api.pmu.fr/rest/client/61/programme/${target}`;
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
+    const { date, r, c } = req.query;
+
+    if (!date) {
+        return res.status(400).json({ error: "Date manquante" });
+    }
+
+    const headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*"
+    };
+
+    if (r && c) {
+        try {
+            const resp = await fetch(`https://online.turfinfo.api.pmu.fr/rest/client/61/programme/${date}/R${r}/C${c}/participants`, { headers });
+            let participants = [];
+            if (resp.ok) {
+                const data = await resp.json();
+                participants = data.participants || data || [];
+            }
+
+            let rapports = null;
+            try {
+                const repResp = await fetch(`https://online.turfinfo.api.pmu.fr/rest/client/61/programme/${date}/R${r}/C${c}/rapports-definitifs`, { headers });
+                if (repResp.ok) {
+                    rapports = await repResp.json();
+                }
+            } catch (e) {}
+
+            return res.status(200).json({ participants, rapports });
+        } catch (e) {
+            return res.status(500).json({ error: "Erreur partants" });
+        }
+    }
 
     try {
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'application/json',
-                'Origin': 'https://www.pmu.fr',
-                'Referer': 'https://www.pmu.fr/'
-            }
-        });
-        
-        if (!response.ok) return res.status(response.status).json({ error: "PMU bloqué" });
-        
-        const data = await response.json();
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.status(200).json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Erreur réseau PMU" });
-    }
+        const resp = await fetch(`https://online.turfinfo.api.pmu.fr/rest/client/61/programme/${date}?specialisation=INTERNET`, { headers });
+        if (resp.ok) {
+            const data = await resp.json();
+            return res.status(200).json(data);
+        }
+    } catch (e) {}
+
+    return res.status(500).json({ error: "Impossible de joindre le PMU" });
 }
