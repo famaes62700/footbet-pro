@@ -107,6 +107,7 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02; 
 
+        // Actualisation automatique toutes les 30 secondes pour les matchs en direct
         setInterval(() => {
             let today = new Date().toISOString().split('T')[0];
             let selectedDate = document.getElementById('matchDate').value;
@@ -159,7 +160,7 @@
                 
                 let fetchedMatches = data.matches || [];
                 
-                // EXCLUSION DU PORTUGAL ET DU BRÉSIL
+                // Exclusion Portugal et Brésil, l'Allemagne (Bundesliga) est incluse nativement
                 currentMatches = fetchedMatches.filter(m => 
                     m.area?.name !== 'Portugal' && 
                     m.area?.name !== 'Brazil'
@@ -238,7 +239,6 @@
             renderMatches(filtered);
         }
 
-        // --- ALGO DÉFINITIF (Garantit de la variété 1, N, 2) ---
         function computeAlgoPick(hName, aName, hId, aId) {
             hName = String(hName || "");
             aName = String(aName || "");
@@ -248,8 +248,7 @@
             
             let hForce = 50; 
             let aForce = 50; 
-            
-            hForce += 4; // Avantage terrain
+            hForce += 4; 
             
             tier1.forEach(p => {
                 if(hName.includes(p)) hForce += 15;
@@ -261,15 +260,10 @@
             });
             
             let diff = hForce - aForce;
-            
-            // Si une équipe est largement favorite
             if (diff > 12) return 'HOME';
             if (diff < -5) return 'AWAY';
             
-            // Si le match est serré, on répartit intelligemment grâce aux lettres des équipes
-            // Ça simule une prédiction fixe mais répartie : 40% Home, 30% Away, 30% Draw
             let hash = (hName.charCodeAt(0) + aName.charCodeAt(0) + hName.length) % 10;
-            
             if (hash < 4) return 'HOME';
             if (hash < 7) return 'AWAY';
             return 'DRAW';
@@ -291,6 +285,7 @@
                 let status = match.status; 
                 let isFinished = status === 'FINISHED' || status === 'AWARDED';
                 let isLive = status === 'IN_PLAY' || status === 'PAUSED';
+                let isPaused = status === 'PAUSED'; // Mi-temps
                 
                 let time = new Date(match.utcDate).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
                 
@@ -304,10 +299,11 @@
                 let sHome = match.score?.fullTime?.home ?? (match.score?.current?.home ?? "-");
                 let sAway = match.score?.fullTime?.away ?? (match.score?.current?.away ?? "-");
 
+                // Badge de statut amélioré (avec mention clair du direct ou de la mi-temps)
                 let statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-[10px] uppercase font-bold">${time}</span>`;
                 if (isLive) {
-                    let liveMinute = match.minute ? `${match.minute}'` : 'En direct';
-                    statusBadge = `<span class="bg-red-900/50 text-red-400 border border-red-500/30 px-2 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse">${liveMinute}</span>`;
+                    let liveText = isPaused ? 'Mi-temps' : '🔴 En direct';
+                    statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse">${liveText}</span>`;
                 }
                 if (isFinished) statusBadge = `<span class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px] uppercase font-bold">Terminé</span>`;
 
@@ -324,12 +320,10 @@
                 let algoPick = computeAlgoPick(homeName, awayName, home.id, away.id);
 
                 let baseClass = "relative flex flex-col items-center justify-center p-2 rounded-xl border transition ";
-                
                 let homeClass = baseClass;
                 let drawClass = baseClass;
                 let awayClass = baseClass;
 
-                // Coloration par l'algo
                 if (algoPick === 'HOME') homeClass += "bg-amber-900/30 border-amber-500/40 ";
                 else homeClass += "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ";
 
@@ -339,7 +333,6 @@
                 if (algoPick === 'AWAY') awayClass += "bg-sky-900/30 border-sky-500/40 ";
                 else awayClass += "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ";
 
-                // Surbrillance au clic
                 if (myBet === 'HOME') homeClass = baseClass + "bg-amber-600/50 border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.3)] ";
                 if (myBet === 'DRAW') drawClass = baseClass + "bg-emerald-600/50 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)] ";
                 if (myBet === 'AWAY') awayClass = baseClass + "bg-sky-600/50 border-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.3)] ";
