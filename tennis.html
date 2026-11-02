@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TennisBet Pro - Paris Masters & Circuit ATP/WTA</title>
+    <title>TennisBet Pro - Scores Anti-Blocage</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TennisBet">
     
     <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=TEN&background=84cc16&color=fff&size=512&font-size=0.4&v=2">
     <link rel="icon" type="image/png" href="https://ui-avatars.com/api/?name=TEN&background=84cc16&color=fff&size=512&font-size=0.4&v=2">
@@ -52,7 +53,7 @@
         
         <div class="flex justify-between items-center">
             <div id="statusText" class="text-xs text-lime-400 font-mono flex items-center w-3/4 truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion multi-serveurs...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Scan multi-sources en cours...
             </div>
             <button onclick="loadTennisMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-lime-400 px-3 py-1.5 rounded-lg border border-lime-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
@@ -102,7 +103,7 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02; 
 
-        // Actualisation toutes les 30s
+        // Actualisation automatique toutes les 30s
         setInterval(() => {
             let today = new Date().toISOString().split('T')[0];
             let selectedDate = document.getElementById('matchDate').value;
@@ -128,75 +129,113 @@
         async function loadTennisMatches(isSilent = false) {
             const dateStr = document.getElementById('matchDate').value;
             const statusText = document.getElementById('statusText');
+            let validMatches = [];
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération de tous les tournois (Paris & Monde)...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Scan direct des circuits ATP/WTA...';
                 document.getElementById('matchesContainer').innerHTML = '';
             }
             
             try {
-                const targetUrl = `https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/${dateStr}`;
+                // STRATÉGIE 1 : ESPN Direct (100% sans proxy, contourne tous les bloqueurs)
+                const isToday = dateStr === new Date().toISOString().split('T')[0];
+                const espnDate = dateStr.replace(/-/g, '');
                 
-                // Système multi-proxy: on essaie 2 serveurs différents pour garantir que ça passe les bloqueurs
-                const proxies = [
-                    `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-                    `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
-                ];
+                // Si on cherche "aujourd'hui", on interroge sans date pour avoir les lives instantanés
+                const atpUrl = isToday ? `https://site.api.espn.com/apis/site/v2/sports/tennis/atp/scoreboard` : `https://site.api.espn.com/apis/site/v2/sports/tennis/atp/scoreboard?dates=${espnDate}`;
+                const wtaUrl = isToday ? `https://site.api.espn.com/apis/site/v2/sports/tennis/wta/scoreboard` : `https://site.api.espn.com/apis/site/v2/sports/tennis/wta/scoreboard?dates=${espnDate}`;
 
-                let data = null;
-                for (let proxy of proxies) {
+                for (let url of [atpUrl, wtaUrl]) {
                     try {
-                        const res = await fetch(proxy, { cache: 'no-store' });
+                        let res = await fetch(url);
                         if (res.ok) {
-                            data = await res.json();
-                            if (data && data.events) break; // Succès !
-                        }
-                    } catch (e) {
-                        console.warn("Proxy échoué, essai du proxy de secours...");
-                    }
-                }
-
-                if (!data || !data.events) {
-                    throw new Error("Veuillez désactiver votre bloqueur de publicités (AdBlock/Brave) pour afficher les scores.");
-                }
-
-                let allEvents = data.events;
-                let validMatches = [];
-
-                allEvents.forEach(ev => {
-                    try {
-                        let isFinished = ev.status.type === 'finished' || ev.status.type === 'canceled';
-                        let isLive = ev.status.type === 'inprogress';
-                        let status = isLive ? 'IN_PLAY' : (isFinished ? 'FINISHED' : 'TIMED');
-
-                        let homeName = ev.homeTeam?.name || "Joueur 1";
-                        let awayName = ev.awayTeam?.name || "Joueur 2";
-                        
-                        let tournName = ev.tournament?.name || "Circuit ATP/WTA";
-
-                        let score1 = ev.homeScore?.display || ev.homeScore?.current || "0";
-                        let score2 = ev.awayScore?.display || ev.awayScore?.current || "0";
-
-                        validMatches.push({
-                            id: ev.id.toString(),
-                            status: status,
-                            utcDate: new Date(ev.startTimestamp * 1000).toISOString(),
-                            competition: { name: tournName },
-                            homeTeam: { name: homeName },
-                            awayTeam: { name: awayName },
-                            score: { 
-                                current: { home: score1, away: score2 }
+                            let data = await res.json();
+                            if (data.events) {
+                                data.events.forEach(ev => {
+                                    let match = ev.competitions[0];
+                                    let p1 = match.competitors[0];
+                                    let p2 = match.competitors[1];
+                                    
+                                    let isFinished = match.status.type.completed;
+                                    let isLive = match.status.type.state === 'in' || match.status.type.description === 'In Progress';
+                                    let status = isLive ? 'IN_PLAY' : (isFinished ? 'FINISHED' : 'TIMED');
+                                    
+                                    validMatches.push({
+                                        id: ev.id.toString(),
+                                        status: status,
+                                        utcDate: ev.date,
+                                        competition: { name: ev.name || match.tournament?.displayName || "Circuit Pro" },
+                                        homeTeam: { name: p1.athlete?.shortName || p1.athlete?.displayName || p1.team?.displayName || "Joueur 1" },
+                                        awayTeam: { name: p2.athlete?.shortName || p2.athlete?.displayName || p2.team?.displayName || "Joueur 2" },
+                                        score: { current: { home: p1.score || "0", away: p2.score || "0" } }
+                                    });
+                                });
                             }
-                        });
-                    } catch (err) {
-                        // Ignore les matchs erronés
-                    }
-                });
+                        }
+                    } catch(e) { console.warn("ESPN direct timeout"); }
+                }
+
+                // STRATÉGIE 2 : SofaScore via CodeTabs (Si ESPN ne renvoie rien)
+                if (validMatches.length === 0) {
+                    try {
+                        if (!isSilent) statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Essai Serveur 2 (CodeTabs)...';
+                        const sofaUrl = `https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/${dateStr}`;
+                        let res = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(sofaUrl)}`);
+                        if (res.ok) {
+                            let data = await res.json();
+                            if (data.events) {
+                                data.events.forEach(ev => {
+                                    let isFinished = ev.status.type === 'finished' || ev.status.type === 'canceled';
+                                    let isLive = ev.status.type === 'inprogress';
+                                    let status = isLive ? 'IN_PLAY' : (isFinished ? 'FINISHED' : 'TIMED');
+                                    validMatches.push({
+                                        id: ev.id.toString(),
+                                        status: status,
+                                        utcDate: new Date(ev.startTimestamp * 1000).toISOString(),
+                                        competition: { name: ev.tournament?.name || "Circuit ATP/WTA" },
+                                        homeTeam: { name: ev.homeTeam?.name || "Joueur 1" },
+                                        awayTeam: { name: ev.awayTeam?.name || "Joueur 2" },
+                                        score: { current: { home: ev.homeScore?.display || "0", away: ev.awayScore?.display || "0" } }
+                                    });
+                                });
+                            }
+                        }
+                    } catch(e) { console.warn("CodeTabs timeout"); }
+                }
+
+                // STRATÉGIE 3 : SofaScore via AllOrigins GET (Si Serveur 2 bloque)
+                if (validMatches.length === 0) {
+                    try {
+                        if (!isSilent) statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Essai Serveur 3 (AllOrigins)...';
+                        const sofaUrl = `https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/${dateStr}`;
+                        let res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(sofaUrl)}`);
+                        if (res.ok) {
+                            let wrapper = await res.json();
+                            let data = JSON.parse(wrapper.contents);
+                            if (data.events) {
+                                data.events.forEach(ev => {
+                                    let isFinished = ev.status.type === 'finished' || ev.status.type === 'canceled';
+                                    let isLive = ev.status.type === 'inprogress';
+                                    let status = isLive ? 'IN_PLAY' : (isFinished ? 'FINISHED' : 'TIMED');
+                                    validMatches.push({
+                                        id: ev.id.toString(),
+                                        status: status,
+                                        utcDate: new Date(ev.startTimestamp * 1000).toISOString(),
+                                        competition: { name: ev.tournament?.name || "Circuit ATP/WTA" },
+                                        homeTeam: { name: ev.homeTeam?.name || "Joueur 1" },
+                                        awayTeam: { name: ev.awayTeam?.name || "Joueur 2" },
+                                        score: { current: { home: ev.homeScore?.display || "0", away: ev.awayScore?.display || "0" } }
+                                    });
+                                });
+                            }
+                        }
+                    } catch(e) { console.warn("AllOrigins timeout"); }
+                }
 
                 currentMatches = validMatches;
                 
                 if (currentMatches.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400"><i class="fa-solid fa-circle-info mr-1"></i> Aucun match de tennis officiel aujourd'hui.</span>`;
+                    statusText.innerHTML = `<span class="text-zinc-400"><i class="fa-solid fa-calendar-xmark mr-1"></i> Aucun match trouvé pour cette date.</span>`;
                     populateCompetitions([]);
                     calculateDailyBankroll();
                     return;
@@ -211,8 +250,7 @@
                 calculateDailyBankroll();
 
             } catch (error) {
-                statusText.innerHTML = `<span class="text-red-400 font-semibold text-[10px]"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur: ${error.message}</span>`;
-                showToast("Désactivez AdBlock pour charger les scores", "error");
+                statusText.innerHTML = `<span class="text-red-400 font-semibold text-[10px]"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur de réseau globale.</span>`;
             }
         }
 
