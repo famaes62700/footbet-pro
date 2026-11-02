@@ -1,1 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Direct - Bankroll</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-10">
 
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
+        <div class="max-w-3xl mx-auto flex justify-between items-center">
+            <h1 class="text-base sm:text-lg font-black tracking-wider text-orange-500 flex items-center">
+                <i class="fa-solid fa-basketball mr-2"></i>NBA Direct
+            </h1>
+            <div class="flex items-center space-x-3">
+                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-orange-500" onchange="loadNBAMatches()">
+                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative">
+                    <i class="fa-solid fa-calendar-days"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4">
+        
+        <div class="flex justify-between items-center">
+            <div id="statusText" class="text-xs text-amber-400 font-mono flex items-center">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs...
+            </div>
+            <button onclick="loadNBAMatches()" class="text-zinc-400 hover:text-orange-400 transition">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </div>
+
+        <div id="historyBlock" class="hidden bg-zinc-900 border border-orange-500/30 rounded-2xl p-4 shadow-xl mb-2">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
+                    <i class="fa-solid fa-vault mr-1.5 text-orange-400"></i> Vos Gains Cumulés NBA
+                </h2>
+                <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
+                <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
+                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Semaine en cours</h3>
+                    <div class="flex justify-between text-xs font-bold">
+                        <span class="text-zinc-400">Bénéfice Net :</span>
+                        <span id="weekProfit" class="text-orange-400">-- €</span>
+                    </div>
+                </div>
+                <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
+                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Mois par Mois (<span id="currentYearText"></span>)</h3>
+                    <div id="monthsGrid" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-zinc-900 border border-orange-500/30 rounded-2xl p-4 shadow-xl mb-2 flex justify-between items-center">
+            <div>
+                <h2 class="text-xs font-bold uppercase text-orange-400 tracking-wider mb-1">Bilan du Jour</h2>
+                <div id="dailyProfit" class="text-lg font-black text-white">0.00 €</div>
+            </div>
+            <div class="text-right">
+                <div class="text-[10px] text-zinc-400 uppercase">Matchs pariés</div>
+                <div id="dailyBetsCount" class="text-sm font-bold text-zinc-300">0</div>
+            </div>
+        </div>
+
+        <div id="matchesContainer" class="space-y-3">
+            <!-- Rempli dynamiquement -->
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('matchDate').valueAsDate = new Date();
+        let currentMatches = [];
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            let bgClass = type === 'success' ? 'bg-emerald-900/90 border-emerald-500/50 text-emerald-200' : 'bg-zinc-800 border-zinc-700 text-white';
+            toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center ${bgClass}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('opacity-0', 'translate-y-2'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        async function loadNBAMatches() {
+            const dateInput = document.getElementById('matchDate').value;
+            const statusText = document.getElementById('statusText');
+            const container = document.getElementById('matchesContainer');
+            
+            statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion NBA...';
+            container.innerHTML = '';
+
+            const yyyymmdd = dateInput.replace(/-/g, '');
+            
+            try {
+                const res = await fetch(`/api/nba/scoreboard?dates=${yyyymmdd}`);
+                if (!res.ok) throw new Error("Erreur réseau");
+                const data = await res.json();
+                
+                currentMatches = data.events || [];
+                
+                if (currentMatches.length === 0) {
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match ce jour.</span>`;
+                    calculateDailyBankroll();
+                    return;
+                }
+
+                statusText.innerHTML = `<span class="text-orange-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs trouvés</span>`;
+                
+                renderMatches();
+                calculateDailyBankroll();
+
+            } catch (e) {
+                statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur API ESPN</span>';
+            }
+        }
+
+        function renderMatches() {
+            const container = document.getElementById('matchesContainer');
+            const dateStr = document.getElementById('matchDate').value;
+            let savedBets = JSON.parse(localStorage.getItem(`nba_bets_${dateStr}`)) || {};
+
+            currentMatches.forEach(match => {
+                let status = match.status.type.state; 
+                let comp = match.competitions[0];
+                let home = comp.competitors.find(c => c.homeAway === 'home');
+                let away = comp.competitors.find(c => c.homeAway === 'away');
+                
+                let timeStr = new Date(match.date).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+                
+                let scoreHome = home.score || "0";
+                let scoreAway = away.score || "0";
+                let isFinished = status === 'post';
+                
+                let statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-[10px] uppercase font-bold">${timeStr}</span>`;
+                if (status === 'in') statusBadge = `<span class="bg-red-900/50 text-red-400 border border-red-500/30 px-2 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse">En cours</span>`;
+                if (isFinished) statusBadge = `<span class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px] uppercase font-bold">Terminé</span>`;
+
+                let winnerId = null;
+                if (isFinished) {
+                    winnerId = parseInt(scoreHome) > parseInt(scoreAway) ? home.team.id : away.team.id;
+                }
+
+                let myBet = savedBets[match.id]; 
+                
+                let card = document.createElement('div');
+                card.className = "bg-zinc-900 border border-zinc-800 rounded-xl p-3 shadow-md";
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-zinc-800/50 pb-2 mb-2">
+                        ${statusBadge}
+                        <span class="text-[10px] text-zinc-500">${match.shortName}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <!-- AWAY TEAM -->
+                        <button onclick="placeBet('${match.id}', '${away.team.id}')" 
+                                class="flex flex-col items-center justify-center p-3 rounded-xl border transition ${myBet === away.team.id ? 'bg-orange-900/30 border-orange-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
+                            <img src="${away.team.logo}" class="h-8 w-8 mb-2 object-contain" alt="${away.team.name}">
+                            <span class="text-[11px] font-bold text-center leading-tight mb-1">${away.team.displayName}</span>
+                            <span class="text-lg font-black ${isFinished && winnerId === away.team.id ? 'text-emerald-400' : 'text-white'}">${status !== 'pre' ? scoreAway : '-'}</span>
+                        </button>
+
+                        <!-- HOME TEAM -->
+                        <button onclick="placeBet('${match.id}', '${home.team.id}')" 
+                                class="flex flex-col items-center justify-center p-3 rounded-xl border transition ${myBet === home.team.id ? 'bg-orange-900/30 border-orange-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
+                            <img src="${home.team.logo}" class="h-8 w-8 mb-2 object-contain" alt="${home.team.name}">
+                            <span class="text-[11px] font-bold text-center leading-tight mb-1">${home.team.displayName}</span>
+                            <span class="text-lg font-black ${isFinished && winnerId === home.team.id ? 'text-emerald-400' : 'text-white'}">${status !== 'pre' ? scoreHome : '-'}</span>
+                        </button>
+                    </div>
+                    
+                    ${myBet ? `
+                    <div class="mt-2 text-center text-[10px] bg-zinc-950 rounded py-1 border border-zinc-800">
+                        ${isFinished 
+                            ? (myBet === winnerId ? '<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check"></i> Pari Gagné (+0.90€ net)</span>' : '<span class="text-red-400 font-bold"><i class="fa-solid fa-xmark"></i> Pari Perdu (-1.00€)</span>') 
+                            : '<span class="text-orange-400">Pari enregistré (Mise fixe 1€)</span>'
+                        }
+                    </div>` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function placeBet(matchId, teamId) {
+            const dateStr = document.getElementById('matchDate').value;
+            let savedBets = JSON.parse(localStorage.getItem(`nba_bets_${dateStr}`)) || {};
+            
+            if(savedBets[matchId] === teamId) {
+                delete savedBets[matchId];
+                showToast("Pari annulé");
+            } else {
+                savedBets[matchId] = teamId;
+                showToast("Pari enregistré", "success");
+            }
+            
+            localStorage.setItem(`nba_bets_${dateStr}`, JSON.stringify(savedBets));
+            
+            document.getElementById('matchesContainer').innerHTML = '';
+            renderMatches();
+            calculateDailyBankroll();
+        }
+
+        function calculateDailyBankroll() {
+            const dateStr = document.getElementById('matchDate').value;
+            let savedBets = JSON.parse(localStorage.getItem(`nba_bets_${dateStr}`)) || {};
+            
+            let dailyProfit = 0;
+            let betsCount = 0;
+
+            currentMatches.forEach(match => {
+                let status = match.status.type.state;
+                let isFinished = status === 'post';
+                let myBet = savedBets[match.id];
+
+                if (myBet) {
+                    betsCount++;
+                    if (isFinished) {
+                        let comp = match.competitions[0];
+                        let home = comp.competitors.find(c => c.homeAway === 'home');
+                        let away = comp.competitors.find(c => c.homeAway === 'away');
+                        let winnerId = parseInt(home.score) > parseInt(away.score) ? home.team.id : away.team.id;
+                        
+                        if (myBet === winnerId) {
+                            dailyProfit += 0.90;
+                        } else {
+                            dailyProfit -= 1.00; 
+                        }
+                    }
+                }
+            });
+
+            document.getElementById('dailyBetsCount').textContent = betsCount;
+            let profitEl = document.getElementById('dailyProfit');
+            profitEl.textContent = `${dailyProfit > 0 ? '+' : ''}${dailyProfit.toFixed(2)} €`;
+            profitEl.className = `text-lg font-black ${dailyProfit > 0 ? 'text-emerald-400' : (dailyProfit < 0 ? 'text-red-400' : 'text-white')}`;
+
+            let globalStats = JSON.parse(localStorage.getItem('nba_global_history')) || {};
+            globalStats[dateStr] = dailyProfit;
+            localStorage.setItem('nba_global_history', JSON.stringify(globalStats));
+
+            if (!document.getElementById('historyBlock').classList.contains('hidden')) {
+                showHistoryStats();
+            }
+        }
+
+        function toggleHistoryStats() {
+            let block = document.getElementById('historyBlock');
+            if (block.classList.contains('hidden')) {
+                block.classList.remove('hidden');
+                showHistoryStats();
+            } else {
+                block.classList.add('hidden');
+            }
+        }
+
+        function showHistoryStats() {
+            let dateInput = document.getElementById('matchDate').value;
+            let currentViewDate = dateInput ? new Date(dateInput) : new Date();
+            let year = currentViewDate.getFullYear();
+            
+            document.getElementById('currentYearText').textContent = year;
+            let globalStats = JSON.parse(localStorage.getItem('nba_global_history')) || {};
+
+            let dayOfWeek = currentViewDate.getDay() || 7; 
+            let monday = new Date(currentViewDate);
+            monday.setDate(currentViewDate.getDate() - (dayOfWeek - 1)); 
+            
+            let weekProfit = 0;
+            for(let i=0; i<7; i++) {
+                let d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                let dStr = d.toISOString().split('T')[0];
+                weekProfit += globalStats[dStr] || 0;
+            }
+            
+            let wpEl = document.getElementById('weekProfit');
+            wpEl.textContent = `${weekProfit > 0 ? '+' : ''}${weekProfit.toFixed(2)} €`;
+            wpEl.className = weekProfit > 0 ? 'text-emerald-400 font-bold' : (weekProfit < 0 ? 'text-red-400 font-bold' : 'text-zinc-500');
+
+            const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
+            let monthsGrid = document.getElementById('monthsGrid');
+            monthsGrid.innerHTML = '';
+
+            for (let m = 0; m < 12; m++) {
+                let mProfit = 0;
+                let daysInMonth = new Date(year, m + 1, 0).getDate(); 
+                
+                for (let d = 1; d <= daysInMonth; d++) {
+                    let dateObj = new Date(year, m, d);
+                    let dStr = dateObj.toISOString().split('T')[0]; 
+                    mProfit += globalStats[dStr] || 0;
+                }
+
+                if (mProfit !== 0) {
+                    let div = document.createElement('div');
+                    let isCurrentViewMonth = (m === currentViewDate.getMonth());
+                    div.className = isCurrentViewMonth 
+                        ? "bg-zinc-800 p-3 rounded-xl border border-orange-500/50 mb-2 flex justify-between items-center" 
+                        : "bg-zinc-800/50 p-3 rounded-xl border border-zinc-700/50 mb-2 flex justify-between items-center";
+
+                    let colorCls = mProfit > 0 ? 'text-emerald-400' : 'text-red-400';
+                    div.innerHTML = `
+                        <span class="font-bold text-sm ${isCurrentViewMonth ? 'text-orange-400' : 'text-zinc-300'}">${monthNames[m]}</span>
+                        <span class="font-black ${colorCls}">${mProfit > 0 ? '+' : ''}${mProfit.toFixed(2)} €</span>
+                    `;
+                    monthsGrid.appendChild(div);
+                }
+            }
+            if(monthsGrid.innerHTML === '') {
+                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Aucune donnée NBA pour cette année.</div>';
+            }
+        }
+
+        window.onload = loadNBAMatches;
+    </script>
+</body>
+</html>
