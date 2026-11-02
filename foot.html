@@ -48,8 +48,9 @@
             <div id="statusText" class="text-xs text-emerald-400 font-mono flex items-center">
                 <i class="fa-solid fa-spinner fa-spin mr-2"></i>Recherche des matchs...
             </div>
-            <button onclick="loadFootMatches(false)" class="text-zinc-400 hover:text-emerald-400 transition" title="Actualiser">
-                <i class="fa-solid fa-rotate-right"></i>
+            <!-- BOUTON DE FORÇAGE DE MISE A JOUR MANUELLE -->
+            <button onclick="loadFootMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 text-xs font-bold transition flex items-center shadow">
+                <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser les scores
             </button>
         </div>
 
@@ -107,16 +108,16 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02; 
 
-        // Rafraîchissement automatique
+        // Rafraîchissement automatique toutes les 20 secondes en arrière-plan
         setInterval(() => {
             let today = new Date().toISOString().split('T')[0];
             let selectedDate = document.getElementById('matchDate').value;
             if (selectedDate === today || isLiveFilterActive) {
                 loadFootMatches(true);
             }
-        }, 30000);
+        }, 20000);
 
-        // Animation chronomètre locale
+        // Animation locale du chronomètre toutes les 10s
         setInterval(() => {
             document.querySelectorAll('.live-timer').forEach(el => {
                 let status = el.getAttribute('data-status');
@@ -139,7 +140,7 @@
                     if (diffMinutes > 45 && diffMinutes <= 60) {
                         el.innerHTML = 'Mi-temps';
                     } else {
-                        if (diffMinutes > 60) diffMinutes -= 15; 
+                        if (diffMinutes > 60) diffMinutes = diffMinutes - 15; 
                         if (diffMinutes > 90) diffMinutes = "90+";
                         el.innerHTML = `🔴 ${diffMinutes}'`;
                     }
@@ -177,14 +178,18 @@
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Recherche des matchs...';
-                document.getElementById('matchesContainer').innerHTML = '';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Actualisation des scores...';
             }
             
             try {
-                // Le paramètre &_t= force la mise à jour immédiate
-                const res = await fetch(`/api/football/matches?date=${dateInput}&_t=${new Date().getTime()}`, {
-                    headers: { 'X-Auth-Token': FOOTBALL_API_KEY, 'Cache-Control': 'no-cache' }
+                // Forçage total anti-cache avec un timestamp unique à chaque milliseconde
+                const res = await fetch(`/api/football/matches?date=${dateInput}&_nocache=${Date.now()}`, {
+                    headers: { 
+                        'X-Auth-Token': FOOTBALL_API_KEY, 
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache'
+                    },
+                    cache: 'no-store'
                 });
                 
                 if (!res.ok) throw new Error("Erreur réseau API");
@@ -205,7 +210,8 @@
                 }
 
                 if (!isSilent) {
-                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs trouvés</span>`;
+                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> Scores mis à jour (${currentMatches.length} matchs)</span>`;
+                    showToast("Scores actualisés en direct", "success");
                 }
                 
                 populateCompetitions(currentMatches);
@@ -300,10 +306,10 @@
             return 'DRAW';
         }
 
-        // Fonction blindée pour extraire le score correctement
         function extractScore(match, team) {
             if (!match || !match.score) return "-";
-            let val = match.score?.fullTime?.[team] ?? match.score?.regularTime?.[team] ?? match.score?.halfTime?.[team];
+            // Lecture multi-niveaux ultra-robuste pour attraper le score direct de l'API Foot
+            let val = match.score?.current?.[team] ?? match.score?.fullTime?.[team] ?? match.score?.regularTime?.[team] ?? match.score?.halfTime?.[team];
             
             if (val === null || val === undefined) {
                 if (match.status === 'IN_PLAY' || match.status === 'PAUSED' || match.status === 'FINISHED') {
@@ -341,7 +347,6 @@
                 let homeShort = home.shortName || homeName;
                 let awayShort = away.shortName || awayName;
                 
-                // Utilisation de la nouvelle fonction blindée
                 let sHome = extractScore(match, 'home');
                 let sAway = extractScore(match, 'away');
 
