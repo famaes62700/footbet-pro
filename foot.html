@@ -159,7 +159,7 @@
                 
                 let fetchedMatches = data.matches || [];
                 
-                // EXCLUSION DU PORTUGAL ET DU BRESIL ICI
+                // EXCLUSION DU PORTUGAL ET DU BRÉSIL
                 currentMatches = fetchedMatches.filter(m => 
                     m.area?.name !== 'Portugal' && 
                     m.area?.name !== 'Brazil'
@@ -238,18 +238,18 @@
             renderMatches(filtered);
         }
 
-        // L'algorithme mathématique rééquilibré 
+        // --- ALGO DÉFINITIF (Garantit de la variété 1, N, 2) ---
         function computeAlgoPick(hName, aName, hId, aId) {
             hName = String(hName || "");
             aName = String(aName || "");
             
             const tier1 = ["Real Madrid", "Barcelona", "Man City", "Arsenal", "Liverpool", "Bayern", "Paris", "Inter"];
-            const tier2 = ["Atletico", "Chelsea", "Tottenham", "Leverkusen", "Dortmund", "Juventus", "Milan", "Napoli"];
+            const tier2 = ["Atletico", "Chelsea", "Tottenham", "Leverkusen", "Dortmund", "Juventus", "Milan", "Napoli", "Aston Villa"];
             
             let hForce = 50; 
             let aForce = 50; 
             
-            hForce += 4; // Avantage terrain naturel
+            hForce += 4; // Avantage terrain
             
             tier1.forEach(p => {
                 if(hName.includes(p)) hForce += 15;
@@ -260,16 +260,18 @@
                 if(aName.includes(p)) aForce += 8; 
             });
             
-            let hForm = (hName.charCodeAt(0) + hName.length) % 10;
-            let aForm = (aName.charCodeAt(0) + aName.length) % 10;
-            
-            hForce += hForm;
-            aForce += aForm;
-            
             let diff = hForce - aForce;
             
-            if (diff > 7) return 'HOME';
-            if (diff < -2) return 'AWAY';
+            // Si une équipe est largement favorite
+            if (diff > 12) return 'HOME';
+            if (diff < -5) return 'AWAY';
+            
+            // Si le match est serré, on répartit intelligemment grâce aux lettres des équipes
+            // Ça simule une prédiction fixe mais répartie : 40% Home, 30% Away, 30% Draw
+            let hash = (hName.charCodeAt(0) + aName.charCodeAt(0) + hName.length) % 10;
+            
+            if (hash < 4) return 'HOME';
+            if (hash < 7) return 'AWAY';
             return 'DRAW';
         }
 
@@ -327,6 +329,7 @@
                 let drawClass = baseClass;
                 let awayClass = baseClass;
 
+                // Coloration par l'algo
                 if (algoPick === 'HOME') homeClass += "bg-amber-900/30 border-amber-500/40 ";
                 else homeClass += "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ";
 
@@ -336,6 +339,7 @@
                 if (algoPick === 'AWAY') awayClass += "bg-sky-900/30 border-sky-500/40 ";
                 else awayClass += "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ";
 
+                // Surbrillance au clic
                 if (myBet === 'HOME') homeClass = baseClass + "bg-amber-600/50 border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.3)] ";
                 if (myBet === 'DRAW') drawClass = baseClass + "bg-emerald-600/50 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)] ";
                 if (myBet === 'AWAY') awayClass = baseClass + "bg-sky-600/50 border-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.3)] ";
