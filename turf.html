@@ -91,18 +91,18 @@
             
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-emerald-500/30 flex flex-col justify-between space-y-2 relative">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">PROPORTIONNEL (2%)</div>
+                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">PLACÉ PROPORTIONNEL (2%)</div>
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] uppercase font-bold text-emerald-400">Base Solide</span>
                         <span id="statBase" class="text-[10px] font-bold text-white">G: 0 | P: 0 / 0</span>
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-[11px]">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
-                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Gagnant</span>
+                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Gagnant (1€)</span>
                             <span id="gainBaseGag" class="font-bold text-emerald-400">--</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
-                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Placé</span>
+                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Placé (2%)</span>
                             <span id="gainBasePla" class="font-bold text-emerald-400">--</span>
                         </div>
                     </div>
@@ -141,14 +141,14 @@
                 </div>
             </div>
 
-            <!-- LIGNE D'AFFICHAGE DU TOTAL DES MISES ENGAGÉES -->
+            <!-- LIGNE D'AFFICHAGE DU TOTAL DES MISES ENGAGÉES (UNIQUE PLACÉ PROPORTIONNEL) -->
             <div class="mt-3 flex justify-between items-center text-[11px] bg-zinc-800/60 px-3 py-2 rounded-xl border border-zinc-700/50 text-zinc-300">
-                <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Total Mises Engagées (Base) :</span>
+                <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Total Mises Engagées (Placé Proportionnel) :</span>
                 <span id="totalSpentText" class="font-bold text-white">0.00 €</span>
             </div>
 
             <div class="text-center text-[10px] text-zinc-400 mt-2 font-semibold">
-                Stratégie : Base Gagnant & Placé en mises proportionnelles (2% du capital). Les autres jeux restent indicatifs.
+                Stratégie : Seul le Simple Placé impacte la Bankroll (2%). Gagnant et autres jeux en mode indicatif (1€).
             </div>
             <div id="statGlobal" class="text-center text-[11px] text-zinc-300 mt-2 font-medium flex flex-col items-center"></div>
         </div>
@@ -238,7 +238,7 @@
         let validatedRacesCache = {}; 
         
         const INITIAL_BANKROLL = 100.0;
-        const STAKE_PERCENT = 0.02; // 2% du capital actuel par pari
+        const STAKE_PERCENT = 0.02; // 2% du capital actuel par pari placé
 
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
@@ -942,10 +942,11 @@
             let totalGainBaseGag = 0, totalGainBasePla = 0;
             let totalGainPepiteGag = 0, totalGainPepitePla = 0;
             let totalGainCoupleGag = 0, totalGainCouplePla = 0;
-            let totalSpentBase = 0; // Cumul des mises de la base
+            let totalSpentPla = 0; // Cumul unique des mises du Placé Proportionnel
             let coursesValidees = 0, coursesValideesCP = 0;
 
             let currentBankroll = INITIAL_BANKROLL;
+            let refStake = 1.0; // Mise fixe de référence (1€) pour les jeux indicatifs
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
@@ -975,44 +976,39 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // MISE PROPORTIONNELLE SUR LA BASE (Gagnant et Placé)
-                    let baseStake = Math.max(0.5, currentBankroll * STAKE_PERCENT);
+                    // MISE PROPORTIONNELLE UNIQUEMENT POUR LE SIMPLE PLACÉ DE LA BASE
+                    let baseStakePla = Math.max(0.5, currentBankroll * STAKE_PERCENT);
 
                     if (baseH) {
-                        // On compte 2 paris par course pour la base (1 Gagnant + 1 Placé)
-                        totalSpentBase += (baseStake * 2);
+                        // On comptabilise la mise engagée uniquement pour le Placé proportionnel
+                        totalSpentPla += baseStakePla;
 
-                        // BASE GAGNANT
+                        // 1. BASE GAGNANT (Indicatif 1€ - N'impacte PAS la bankroll)
                         let gGag = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
                         if (gGag === 0 && baseArr === 1) gGag = baseH.cote; 
-                        let netBaseGag = 0;
                         if (gGag > 0) { 
                             baseGagCount++; 
-                            netBaseGag = (gGag * baseStake) - baseStake;
-                            totalGainBaseGag += netBaseGag; 
+                            totalGainBaseGag += (gGag * refStake) - refStake; 
                         } else {
-                            totalGainBaseGag -= baseStake;
-                            netBaseGag = -baseStake;
+                            totalGainBaseGag -= refStake;
                         }
-                        currentBankroll += netBaseGag;
 
-                        // BASE PLACÉ
+                        // 2. BASE PLACÉ (Proportionnel 2% - Impacte la Bankroll)
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
                         if (gPla === 0 && baseArr >= 1 && baseArr <= 3) gPla = Math.max(1.1, baseH.cote / 3); 
                         let netBasePla = 0;
                         if (gPla > 0) {
                             basePlaCount++; 
-                            netBasePla = (gPla * baseStake) - baseStake;
+                            netBasePla = (gPla * baseStakePla) - baseStakePla;
                             totalGainBasePla += netBasePla; 
                         } else {
-                            totalGainBasePla -= baseStake;
-                            netBasePla = -baseStake;
+                            totalGainBasePla -= baseStakePla;
+                            netBasePla = -baseStakePla;
                         }
-                        currentBankroll += netBasePla;
+                        currentBankroll += netBasePla; // SEUL LE PLACÉ IMPACTE LA BANKROLL
                     }
 
-                    // PÉPITE (Mise fixe de référence 1€)
-                    let refStake = 1.0;
+                    // PÉPITE (Indicateur 1€ - N'impacte PAS la bankroll)
                     if (nuggetH) {
                         let gGag = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
                         if (gGag === 0 && nuggetArr === 1) gGag = nuggetH.cote; 
@@ -1025,7 +1021,7 @@
                         else { totalGainPepitePla -= refStake; }
                     }
 
-                    // COUPLE (Mise fixe de référence 1€)
+                    // COUPLE (Indicateur 1€ - N'impacte PAS la bankroll)
                     if (baseH && nuggetH) {
                         let cg = extractCoupleGain(raceData.rapportsList, baseH.num, nuggetH.num, 'CG');
                         let isCG = ((baseArr === 1 && nuggetArr === 2) || (baseArr === 2 && nuggetArr === 1));
@@ -1055,7 +1051,7 @@
                         gainCoupleGag.innerHTML = `<span class="${totalGainCoupleGag >= 0 ? 'text-blue-400' : 'text-red-400'}">${totalGainCoupleGag >= 0 ? '+' : ''}${totalGainCoupleGag.toFixed(2)}€</span>`;
                         gainCouplePla.innerHTML = `<span class="${totalGainCouplePla >= 0 ? 'text-blue-400' : 'text-red-400'}">${totalGainCouplePla >= 0 ? '+' : ''}${totalGainCouplePla.toFixed(2)}€</span>`;
 
-                        totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
+                        totalSpentText.textContent = `${totalSpentPla.toFixed(2)} €`;
                         document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                         await new Promise(r => setTimeout(r, 20));
                     }
@@ -1074,7 +1070,7 @@
                 gainCoupleGag.innerHTML = `<span class="${totalGainCoupleGag >= 0 ? 'text-blue-400' : 'text-red-400'}">${totalGainCoupleGag >= 0 ? '+' : ''}${totalGainCoupleGag.toFixed(2)}€</span>`;
                 gainCouplePla.innerHTML = `<span class="${totalGainCouplePla >= 0 ? 'text-blue-400' : 'text-red-400'}">${totalGainCouplePla >= 0 ? '+' : ''}${totalGainCouplePla.toFixed(2)}€</span>`;
                 
-                totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
+                totalSpentText.textContent = `${totalSpentPla.toFixed(2)} €`;
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                 if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> Bilan calculé (${coursesValidees} courses)</span>`;
 
