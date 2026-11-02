@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Mise Proportionnelle</title>
+    <title>Fab Turf - Base Gagnant & Placé</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -91,7 +91,7 @@
             
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-emerald-500/30 flex flex-col justify-between space-y-2 relative">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">MISE PROPORTIONNELLE (2%)</div>
+                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">PROPORTIONNEL (2%)</div>
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] uppercase font-bold text-emerald-400">Base Solide</span>
                         <span id="statBase" class="text-[10px] font-bold text-white">G: 0 | P: 0 / 0</span>
@@ -141,7 +141,7 @@
                 </div>
             </div>
             <div class="text-center text-[10px] text-zinc-400 mt-3 font-semibold bg-zinc-800/60 py-2.5 rounded-xl border border-zinc-700/50">
-                Gestion intelligente : Mise calculée automatiquement à 2% du capital actuel par jeu (Sécurisé & Progressif).
+                Stratégie : Base Gagnant & Placé en mises proportionnelles (2% du capital). Les autres jeux restent indicatifs.
             </div>
             <div id="statGlobal" class="text-center text-[11px] text-zinc-300 mt-2 font-medium flex flex-col items-center"></div>
         </div>
@@ -230,9 +230,8 @@
         let autoTransitionDone = false;
         let validatedRacesCache = {}; 
         
-        // Capital initial de départ (modifiable si besoin)
         const INITIAL_BANKROLL = 100.0;
-        const STAKE_PERCENT = 0.02; // 2% du capital par mise
+        const STAKE_PERCENT = 0.02; // 2% du capital actuel par pari
 
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
@@ -934,10 +933,8 @@
             let totalGainBaseGag = 0, totalGainBasePla = 0;
             let totalGainPepiteGag = 0, totalGainPepitePla = 0;
             let totalGainCoupleGag = 0, totalGainCouplePla = 0;
-            let costBaseGag = 0, costCplGag = 0, costCplPla = 0, costPepGag = 0, costPepPla = 0, costBasePla = 0;
             let coursesValidees = 0, coursesValideesCP = 0;
 
-            // Banque dynamique glissante pour la proportionnelle
             let currentBankroll = INITIAL_BANKROLL;
 
             for (let i = 0; i < pastRacesToday.length; i++) {
@@ -968,101 +965,68 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // MISE PROPORTIONNELLE AU CAPITAL ACTUEL (Ex: 2% du capital)
-                    let currentStake = Math.max(0.5, currentBankroll * STAKE_PERCENT);
+                    // MISE PROPORTIONNELLE UNIQUEMENT SUR LA BASE (Gagnant et Placé)
+                    let baseStake = Math.max(0.5, currentBankroll * STAKE_PERCENT);
 
-                    // 1. BASE GAGNANT
                     if (baseH) {
+                        // BASE GAGNANT
                         let gGag = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
                         if (gGag === 0 && baseArr === 1) gGag = baseH.cote; 
-                        costBaseGag += currentStake; 
-                        let netRaceBaseGag = 0;
+                        let netBaseGag = 0;
                         if (gGag > 0) { 
                             baseGagCount++; 
-                            netRaceBaseGag = (gGag * currentStake) - currentStake;
-                            totalGainBaseGag += netRaceBaseGag; 
+                            netBaseGag = (gGag * baseStake) - baseStake;
+                            totalGainBaseGag += netBaseGag; 
                         } else {
-                            totalGainBaseGag -= currentStake;
-                            netRaceBaseGag = -currentStake;
+                            totalGainBaseGag -= baseStake;
+                            netBaseGag = -baseStake;
                         }
-                        currentBankroll += netRaceBaseGag;
+                        currentBankroll += netBaseGag;
 
-                        // 2. BASE PLACÉ (Remplace la martingale)
+                        // BASE PLACÉ
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
                         if (gPla === 0 && baseArr >= 1 && baseArr <= 3) gPla = Math.max(1.1, baseH.cote / 3); 
-                        costBasePla += currentStake; 
-                        let netRaceBasePla = 0;
+                        let netBasePla = 0;
                         if (gPla > 0) {
                             basePlaCount++; 
-                            netRaceBasePla = (gPla * currentStake) - currentStake;
-                            totalGainBasePla += netRaceBasePla; 
+                            netBasePla = (gPla * baseStake) - baseStake;
+                            totalGainBasePla += netBasePla; 
                         } else {
-                            totalGainBasePla -= currentStake;
-                            netRaceBasePla = -currentStake;
+                            totalGainBasePla -= baseStake;
+                            netBasePla = -baseStake;
                         }
-                        currentBankroll += netRaceBasePla;
+                        currentBankroll += netBasePla;
                     }
 
-                    // 3. PÉPITE
+                    // PÉPITE (Mise fixe de référence 1€ pour garder un indicateur clair)
+                    let refStake = 1.0;
                     if (nuggetH) {
                         let gGag = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
                         if (gGag === 0 && nuggetArr === 1) gGag = nuggetH.cote; 
-                        costPepGag += currentStake;
-                        if (gGag > 0) { 
-                            pepiteGagCount++; 
-                            let net = (gGag * currentStake) - currentStake;
-                            totalGainPepiteGag += net; 
-                            currentBankroll += net;
-                        } else {
-                            totalGainPepiteGag -= currentStake;
-                            currentBankroll -= currentStake;
-                        }
+                        if (gGag > 0) { pepiteGagCount++; totalGainPepiteGag += (gGag * refStake) - refStake; }
+                        else { totalGainPepiteGag -= refStake; }
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
                         if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
-                        costPepPla += currentStake; 
-                        if (gPla > 0) { 
-                            pepitePlaCount++; 
-                            let net = (gPla * currentStake) - currentStake;
-                            totalGainPepitePla += net; 
-                            currentBankroll += net;
-                        } else {
-                            totalGainPepitePla -= currentStake;
-                            currentBankroll -= currentStake;
-                        }
+                        if (gPla > 0) { pepitePlaCount++; totalGainPepitePla += (gPla * refStake) - refStake; }
+                        else { totalGainPepitePla -= refStake; }
                     }
 
-                    // 4. COUPLES
+                    // COUPLE (Mise fixe de référence 1€)
                     if (baseH && nuggetH) {
                         let cg = extractCoupleGain(raceData.rapportsList, baseH.num, nuggetH.num, 'CG');
                         let isCG = ((baseArr === 1 && nuggetArr === 2) || (baseArr === 2 && nuggetArr === 1));
                         if (cg === 0 && isCG) cg = baseH.cote + nuggetH.cote; 
-                        costCplGag += currentStake;
-                        if (cg > 0) { 
-                            coupleGagCount++; 
-                            let net = (cg * currentStake) - currentStake;
-                            totalGainCoupleGag += net; 
-                            currentBankroll += net;
-                        } else {
-                            totalGainCoupleGag -= currentStake;
-                            currentBankroll -= currentStake;
-                        }
+                        if (cg > 0) { coupleGagCount++; totalGainCoupleGag += (cg * refStake) - refStake; }
+                        else { totalGainCoupleGag -= refStake; }
                         
                         if (raceData.partants.length >= 8) {
                             coursesValideesCP++;
                             let cp = extractCoupleGain(raceData.rapportsList, baseH.num, nuggetH.num, 'CP');
                             let isCP = (baseArr <= 3 && nuggetArr <= 3 && baseArr !== nuggetArr);
                             if (cp === 0 && isCP) cp = Math.max(2.0, (baseH.cote + nuggetH.cote) / 3); 
-                            costCplPla += currentStake;
-                            if (cp > 0) { 
-                                couplePlaCount++; 
-                                let net = (cp * currentStake) - currentStake;
-                                totalGainCouplePla += net; 
-                                currentBankroll += net;
-                            } else {
-                                totalGainCouplePla -= currentStake;
-                                currentBankroll -= currentStake;
-                            }
+                            if (cp > 0) { couplePlaCount++; totalGainCouplePla += (cp * refStake) - refStake; }
+                            else { totalGainCouplePla -= refStake; }
                         }
                     }
 
