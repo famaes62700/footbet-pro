@@ -1,0 +1,337 @@
+export default async function handler(req, res) {
+    const { target } = req.query;
+    if (!target) return res.status(400).json({ error: "Cible manquante" });
+
+    const url = `https://offline.turfinfo.api.pmu.fr/rest/client/1/programme/${target}`;  try { const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36', 'Accept': 'application/json', 'Origin': 'https://www.pmu.fr', 'Referer': 'https://www.pmu.fr/' } });  if (!response.ok) return res.status(response.status).json({ error: "PMU bloqué" });  const data = await response.json(); res.setHeader('Access-Control-Allow-Origin', '*'); res.status(200).json(data); } catch (error) { res.status(500).json({ error: "Erreur réseau PMU" }); } } ``` </Step> <Step subtitle="Fichier turf.html" title="Mettre à jour le logiciel Turf"> Ouvrez votre fichier **`turf.html`**, cliquez sur le crayon pour le modifier, et remplacez **TOUT** son contenu par le code ci-dessous. Il est optimisé pour se connecter instantanément à votre nouveau relais privé. *Verification:* Une fois sauvegardé, attendez environ 45 secondes que Vercel applique la mise à jour en arrière-plan, puis actualisez votre application. La connexion sera immédiate et les chevaux s'afficheront. </Step> </Steps>  **Code complet à coller dans `turf.html` :**  ```html <!DOCTYPE html> <html lang="fr"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>PMU Direct - Bankroll Mensuelle</title>  <meta name="apple-mobile-web-app-capable" content="yes"> <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> <meta name="apple-mobile-web-app-title" content="PMU Direct">  <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=PMU&background=00965e&color=fff&size=512&font-size=0.4&v=2"> <link rel="icon" type="image/png" href="https://ui-avatars.com/api/?name=PMU&background=00965e&color=fff&size=512&font-size=0.4&v=2">  <script src="https://cdn.tailwindcss.com"></script> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> </head> <body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none">  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>  <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg"> <div class="max-w-3xl mx-auto flex justify-between items-center"> <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center"> <i class="fa-solid fa-horse-head mr-2"></i>PMU Direct </h1> <div class="flex items-center space-x-3"> <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadLivePmu()"> <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Historique Mensuel"> <i class="fa-solid fa-calendar-days"></i> <span class="absolute -top-1 -right-1 flex h-3 w-3"> <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span> <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span> </span> </button> </div> </div> </header>  <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4"> <div class="flex justify-between items-center"> <div id="statusText" class="text-xs text-amber-400 font-mono flex items-center"> <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion au PMU... </div> </div>  <div id="historyBlock" class="hidden bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2"> <div class="flex justify-between items-center mb-3"> <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center"> <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés </h2> <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button> </div> <div class="space-y-4 max-h-96 overflow-y-auto pr-1"> <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700"> <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Cette Semaine (Lun - Dim)</h3> <div class="grid grid-cols-3 gap-2 text-[10px]"> <div class="bg-zinc-900/80 p-1.5 rounded border border-emerald-500/30 text-center leading-tight"> <span class="text-emerald-400 font-bold block mb-1">BASE</span> <div class="text-zinc-400">G: <span id="histWeekBaseGag">--</span></div> <div class="text-zinc-400 mt-0.5">P: <span id="histWeekBasePla">--</span></div> </div> <div class="bg-zinc-900/80 p-1.5 rounded border border-amber-500/30 text-center leading-tight"> <span class="text-amber-400 font-bold block mb-1">PÉPITE</span> <div class="text-zinc-400">G: <span id="histWeekPepiteGag">--</span></div> <div class="text-zinc-400 mt-0.5">P: <span id="histWeekPepitePla">--</span></div> </div> <div class="bg-zinc-900/80 p-1.5 rounded border border-blue-500/30 text-center leading-tight"> <span class="text-blue-400 font-bold block mb-1">COUPLÉ</span> <div class="text-zinc-400">G: <span id="histWeekCoupleGag">--</span></div> <div class="text-zinc-400 mt-0.5">P: <span id="histWeekCouplePla">--</span></div> </div> </div> </div>  <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700"> <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Mois par Mois (<span id="currentYearText"></span>)</h3> <div id="monthsGrid" class="space-y-2"></div> </div> </div> </div>  <div id="statsBlock" class="bg-zinc-900 border border-indigo-500/30 rounded-2xl p-4 shadow-xl mb-2"> <div class="flex justify-between items-center mb-3"> <h2 class="text-xs font-bold uppercase text-indigo-400 tracking-wider flex items-center"> <i class="fa-solid fa-trophy mr-1.5"></i> Bilan du Jour </h2> <div id="statsProgress" class="text-[10px] font-mono text-zinc-400 flex items-center"> <i class="fa-solid fa-spinner fa-spin mr-1"></i> Calcul en cours... </div> </div>  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs"> <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-emerald-500/30 flex flex-col justify-between space-y-2 relative"> <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">MARTINGALE PLACÉ</div> <div class="flex justify-between items-center"> <span class="text-[10px] uppercase font-bold text-emerald-400">Base Solide</span> <span id="statBase" class="text-[10px] font-bold text-white">G: 0 \vert{} P: 0 / 0</span> </div> <div class="grid grid-cols-2 gap-2 text-[11px]"> <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center"> <span class="text-[9px] text-zinc-400 block uppercase font-bold">Gagnant</span> <span id="gainBaseGag" class="font-bold text-emerald-400">--</span> </div> <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center"> <span class="text-[9px] text-zinc-400 block uppercase font-bold">Placé</span> <span id="gainBasePla" class="font-bold text-emerald-400">--</span> </div> </div> </div> <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-amber-500/30 flex flex-col justify-between space-y-2"> <div class="flex justify-between items-center"> <span class="text-[10px] uppercase font-bold text-amber-400">Pépite</span> <span id="statPepite" class="text-[10px] font-bold text-white">G: 0 \vert{} P: 0 / 0</span> </div> <div class="grid grid-cols-2 gap-2 text-[11px]"> <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center"> <span class="text-[9px] text-zinc-400 block uppercase font-bold">Gagnant</span> <span id="gainPepiteGag" class="font-bold text-amber-400">--</span> </div> <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center"> <span class="text-[9px] text-zinc-400 block uppercase font-bold">Placé</span> <span id="gainPepitePla" class="font-bold text-amber-400">--</span> </div> </div> </div> <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-blue-500/30 flex flex-col justify-between space-y-2"> <div class="flex justify-between items-center"> <span class="text-[10px] uppercase font-bold text-blue-400">Couplé (Base+Pép)</span> <span id="statCouple" class="text-[10px] font-bold text-white">G: 0 \vert{} P: 0 / 0</span> </div> <div class="grid grid-cols-2 gap-2 text-[11px]"> <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center"> <span class="text-[9px] text-zinc-400 block uppercase font-bold">Gagnant</span> <span id="gainCoupleGag" class="font-bold text-blue-400">--</span> </div> <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center"> <span class="text-[9px] text-zinc-400 block uppercase font-bold">Placé</span> <span id="gainCouplePla" class="font-bold text-blue-400">--</span> </div> </div> </div> </div> <div class="text-center text-[10px] text-zinc-400 mt-3 font-semibold bg-zinc-800/60 py-2.5 rounded-xl border border-zinc-700/50"> Mise 1€/jeu, SAUF Base Placé : Martingale (départ 2€, x2 si perte, reset à 2€ si gain). </div> <div id="statGlobal" class="text-center text-[11px] text-zinc-300 mt-2 font-medium flex flex-col items-center"></div> </div>  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3"> <select id="meetingSelect" onchange="onMeetingChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500"> <option value="">-- Réunion / Hippodrome --</option> </select> <select id="raceSelect" onchange="onRaceChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500"> <option value="">-- Course --</option> </select> </div>  <div id="arrivalBlock" class="hidden bg-blue-950/40 border border-blue-500/40 rounded-xl p-3.5 space-y-2"> <h2 class="text-xs font-bold uppercase text-blue-400 tracking-wider flex items-center"> <i class="fa-solid fa-flag-checkered mr-1.5"></i> Arrivée Officielle </h2> <div id="arrivalList" class="flex flex-wrap gap-2 text-xs font-bold text-white"></div> </div>  <div id="reportsBlock" class="hidden bg-zinc-900 border border-emerald-500/30 rounded-xl p-3.5 space-y-2"> <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center"> <i class="fa-solid fa-euro-sign mr-1.5"></i> Rapports Définitifs (pour 1 €) </h2> <div id="reportsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs"></div> </div>  <div class="bg-gradient-to-r from-emerald-950/60 via-zinc-900 to-amber-950/40 border border-emerald-500/50 rounded-2xl p-4 space-y-3 shadow-xl relative"> <div class="flex flex-wrap justify-between items-center gap-2"> <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center"> <i class="fa-solid fa-star mr-1.5"></i> Nos 2 Chevaux Clés </h2> <div class="flex items-center space-x-1.5 flex-wrap"> <a href="https://www.equidia.fr/direct?utm_source=intern&utm_medium=header_menu&utm_campaign=Home" target="_blank" class="bg-red-600 hover:bg-red-500 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold shadow transition flex items-center"> <i class="fa-solid fa-video mr-1.5"></i> Direct 🎥 </a> <button onclick="goToPrevRace()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 font-semibold transition flex items-center shadow" title="Course précédente"> <i class="fa-solid fa-backward-step"></i> </button> <button onclick="refreshCurrentRace()" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 text-xs px-2.5 py-1.5 rounded-lg border border-emerald-500/30 font-semibold transition flex items-center shadow" title="Actualiser manuellement"> <i class="fa-solid fa-rotate"></i> </button> <button onclick="goToNextRace()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 font-semibold transition flex items-center shadow" title="Course suivante"> <i class="fa-solid fa-forward-step"></i> </button> </div> </div> <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mt-3"> <div class="bg-zinc-900/90 p-3 rounded-xl border border-emerald-500/40 space-y-1"> <div class="text-[10px] uppercase font-bold text-emerald-400">Base Solide (Banquier)</div> <div id="top1Name" class="font-bold text-white text-sm">En attente...</div> <div id="top1Stats" class="text-[11px] text-zinc-400">--</div> </div> <div class="bg-zinc-900/90 p-3 rounded-xl border border-amber-500/40 space-y-1"> <div class="text-[10px] uppercase font-bold text-amber-400">Pépite / Coup de Cœur</div> <div id="top2Name" class="font-bold text-white text-sm">En attente...</div> <div id="top2Stats" class="text-[11px] text-zinc-400">--</div> </div> </div> </div>  <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden text-xs shadow-xl"> <div id="raceInfoDetails" class="p-3.5 border-b border-zinc-800 font-bold text-zinc-300 flex justify-between items-center"> </div> <div class="overflow-x-auto"> <table class="w-full text-left"> <thead> <tr class="bg-zinc-800/60 text-zinc-400 border-b border-zinc-800"> <th class="p-3">N° / Nom</th> <th class="p-3">Musique</th> <th class="p-3">Cote</th> <th class="p-3">Score</th> </tr> </thead> <tbody id="runnersTableBody" class="divide-y divide-zinc-800/50"> <tr><td colspan="4" class="p-6 text-center text-zinc-500">Sélectionnez une course.</td></tr> </tbody> </table> </div> </div> </main>  <script> document.getElementById('raceDate').valueAsDate = new Date(); let liveMeetingsData = []; let autoTransitionDone = false; let validatedRacesCache = {};  // Fonction de connexion directe au nouveau relais API Vercel async function fetchPmuData(endpoint) { let res = await fetch(`/api/pmu?target=${encodeURIComponent(endpoint)}`);
+        if (!res.ok) throw new Error("Erreur de relais PMU");
+        return await res.json();
+    }
+
+    setInterval(() => {
+        let mIdx = document.getElementById('meetingSelect').value;
+        let cIdx = document.getElementById('raceSelect').value;
+        if (mIdx !== "" && cIdx !== "") fetchRaceData(true); 
+        calculateDailyStats(true);
+    }, 20000);
+
+    function toggleHistoryStats() {
+        let historyBlock = document.getElementById('historyBlock');
+        if (historyBlock.classList.contains('hidden')) {
+            historyBlock.classList.remove('hidden');
+            showHistoryStats();
+        } else {
+            historyBlock.classList.add('hidden');
+        }
+    }
+
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        let bgClass = type === 'success' ? 'bg-emerald-900/90 border-emerald-500/50 text-emerald-200' : 'bg-zinc-800 border-zinc-700 text-white';
+        if (type === 'error') bgClass = 'bg-red-900/90 border-red-500/50 text-red-200';
+        
+        toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center space-x-2 ${bgClass}`;
+        toast.innerHTML = `<span>${message}</span>`; container.appendChild(toast); setTimeout(() => { toast.classList.remove('opacity-0', 'translate-y-2'); }, 10); setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-2'); setTimeout(() => toast.remove(), 300); }, 3500); }  function formatTime(timeValue) { if (!timeValue) return ''; if (typeof timeValue === 'number') { const date = new Date(timeValue); const h = String(date.getHours()).padStart(2, '0'); const m = String(date.getMinutes()).padStart(2, '0'); return `${h}h${m}`; } return String(timeValue); }  function getDisciplineBadge(discipline) { let d = String(discipline \vert{}\vert{} 'PLAT').toUpperCase(); if (d.includes('TROT') \vert{}\vert{} d.includes('ATTEL') \vert{}\vert{} d.includes('MONTE')) { return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">TROT</span>'; } if (d.includes('HAIES') \vert{}\vert{} d.includes('STEEPLE') \vert{}\vert{} d.includes('OBSTACLE') \vert{}\vert{} d.includes('CROSS')) { return '<span class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">OBSTACLE</span>'; } return '<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">PLAT</span>'; }  async function loadLivePmu() { const dateInput = document.getElementById('raceDate').value; const statusText = document.getElementById('statusText'); statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement...';  if (!document.getElementById('historyBlock').classList.contains('hidden')) { showHistoryStats(); }  const parts = dateInput.split('-'); const ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
+
+        try {
+            const data = await fetchPmuData(ddmmyyyy);
+            let reunions = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
+            
+            if (reunions.length > 0) {
+                liveMeetingsData = reunions;
+                let select = document.getElementById('meetingSelect');
+                let currentVal = select.value;
+                select.innerHTML = '<option value="">-- Choisissez un hippodrome --</option>';
+                
+                reunions.forEach((r, idx) => {
+                    let opt = document.createElement('option');
+                    opt.value = idx;
+                    let coursesList = r.courses || r.races || r.lesCourses || [];
+                    let timeStr = "";
+                    if (r.heurereunion || r.heurePremierDepart) {
+                        timeStr = ` 🕒 [${formatTime(r.heurereunion \vert{}\vert{} r.heurePremierDepart)}]`; } else if (coursesList[0] && coursesList[0].heureDepart) { timeStr = ` 🕒 [${formatTime(coursesList[0].heureDepart)}]`;
+                    }
+                    let hipName = r.hippodrome ? (r.hippodrome.libelleLong || r.hippodrome.libelleCourt || r.hippodrome.nom) : 'Hippodrome';
+                    opt.textContent = `R${r.numOfficiel || (idx+1)} - ${hipName}${timeStr} (${coursesList.length} courses)`;
+                    select.appendChild(opt);
+                });
+                
+                statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Connecté</span>`;
+                
+                if (currentVal === "") autoSelectCurrentRace();
+                else select.value = currentVal;
+                
+                calculateDailyStats(true);
+            } else {
+                throw new Error("Aucune réunion");
+            }
+        } catch (e) {
+            statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur réseau</span>';
+        }
+    }
+
+    function autoSelectCurrentRace() {
+        let now = new Date().getTime();
+        let bestMIdx = 0, bestCIdx = 0;
+        let minDiff = Infinity, minPastDiff = Infinity;
+        let pastMIdx = 0, pastCIdx = 0;
+        let bufferTemps = 20 * 60 * 1000; 
+
+        liveMeetingsData.forEach((m, mIdx) => {
+            let courses = m.courses || m.races || m.lesCourses || [];
+            courses.forEach((c, cIdx) => {
+                if (c.heureDepart) {
+                    let diff = (new Date(c.heureDepart).getTime() + bufferTemps) - now;
+                    if (diff > 0 && diff < minDiff) { 
+                        minDiff = diff; bestMIdx = mIdx; bestCIdx = cIdx;
+                    } else if (diff <= 0 && Math.abs(diff) < minPastDiff) {
+                        minPastDiff = Math.abs(diff); pastMIdx = mIdx; pastCIdx = cIdx;
+                    }
+                }
+            });
+        });
+
+        if (minDiff === Infinity) { bestMIdx = pastMIdx; bestCIdx = pastCIdx; }
+        if (liveMeetingsData[bestMIdx]) {
+            document.getElementById('meetingSelect').value = bestMIdx;
+            onMeetingChange();
+            document.getElementById('raceSelect').value = bestCIdx;
+            autoTransitionDone = false;
+            fetchRaceData();
+        }
+    }
+
+    function getSortedRacesList() {
+        let list = [];
+        liveMeetingsData.forEach((m, mIdx) => {
+            let courses = m.courses || m.races || m.lesCourses || [];
+            courses.forEach((c, cIdx) => {
+                if (c.heureDepart) list.push({ mIdx: mIdx, cIdx: cIdx, time: new Date(c.heureDepart).getTime() });
+            });
+        });
+        return list.sort((a, b) => a.time - b.time);
+    }
+
+    function navigateAdjacentRace(direction) { 
+        let mIdx = parseInt(document.getElementById('meetingSelect').value, 10);
+        let cIdx = parseInt(document.getElementById('raceSelect').value, 10);
+        if (isNaN(mIdx) || isNaN(cIdx)) return;
+
+        let sortedRaces = getSortedRacesList();
+        let currentIndex = sortedRaces.findIndex(r => r.mIdx === mIdx && r.cIdx === cIdx);
+
+        if (currentIndex !== -1) {
+            let targetIndex = currentIndex + direction;
+            if (targetIndex >= 0 && targetIndex < sortedRaces.length) {
+                let targetRace = sortedRaces[targetIndex];
+                document.getElementById('meetingSelect').value = targetRace.mIdx;
+                onMeetingChange();
+                document.getElementById('raceSelect').value = targetRace.cIdx;
+                autoTransitionDone = false;
+                fetchRaceData();
+            } else {
+                showToast(direction === 1 ? "Dernière course atteinte" : "Première course atteinte", 'error');
+            }
+        }
+    }
+
+    function goToNextRace() { navigateAdjacentRace(1); }
+    function goToPrevRace() { navigateAdjacentRace(-1); }
+
+    function onMeetingChange() {
+        let mIdx = document.getElementById('meetingSelect').value;
+        let raceSelect = document.getElementById('raceSelect');
+        let currentRaceVal = raceSelect.value;
+        raceSelect.innerHTML = '<option value="">-- Choisissez une course --</option>';
+        if (mIdx === "") return;
+
+        let meeting = liveMeetingsData[mIdx];
+        let courses = meeting.courses || meeting.races || meeting.lesCourses || [];
+
+        if (courses.length > 0) {
+            courses.forEach((c, cIdx) => {
+                let opt = document.createElement('option');
+                opt.value = cIdx;
+                let courseTime = c.heureDepart ? `[${formatTime(c.heureDepart)}] ` : ''; let libelleCourse = c.libelle \vert{}\vert{} c.nom \vert{}\vert{} c.libelleCourt \vert{}\vert{} 'Prix';  let d = String(c.discipline \vert{}\vert{} "PLAT").toUpperCase(); let shortDisc = "PLAT"; if (d.includes('TROT') \vert{}\vert{} d.includes('ATTEL') \vert{}\vert{} d.includes('MONTE')) shortDisc = "TROT"; else if (d.includes('HAIES') \vert{}\vert{} d.includes('STEEPLE') \vert{}\vert{} d.includes('OBSTACLE') \vert{}\vert{} d.includes('CROSS')) shortDisc = "OBSTACLE";  opt.textContent = `${courseTime}C${c.numOrdre || (cIdx+1)} - ${libelleCourse} [${shortDisc}]`; raceSelect.appendChild(opt); }); } else { raceSelect.innerHTML = '<option value="">Aucune course</option>'; } if (currentRaceVal !== "") raceSelect.value = currentRaceVal; }  function onRaceChange() { autoTransitionDone = false; fetchRaceData(); }  async function refreshCurrentRace() { let mIdx = document.getElementById('meetingSelect').value; let rIdx = document.getElementById('raceSelect').value; await loadLivePmu(); if (mIdx !== "") { document.getElementById('meetingSelect').value = mIdx; onMeetingChange(); if (rIdx !== "") { document.getElementById('raceSelect').value = rIdx; await fetchRaceData(); } } showToast('Données actualisées', 'success'); }  function computeAlgorithm(partants) { let processed = partants.map((p, idx) => { let musique = p.musique \vert{}\vert{} p.form \vert{}\vert{} "0p"; let rawCote = (p.dernierRapportDirect && p.dernierRapportDirect.rapport) ? p.dernierRapportDirect.rapport : (p.probabiliteEvolution ? p.probabiliteEvolution : "15.0"); let cote = parseFloat(String(rawCote).replace(',', '.')) \vert{}\vert{} 15.0;  let coteScore = cote <= 3 ? 90 : (cote <= 6 ? 75 : (cote <= 12 ? 60 : (cote <= 25 ? 35 : 15))); let musiqueScore = evaluateMusique(musique);  let baseScore = Math.round((coteScore * 0.6) + (musiqueScore * 0.4)); let nuggetRaw = (cote >= 5 && cote <= 20) ? Math.round((coteScore * 0.3) + (musiqueScore * 0.7)) : musiqueScore;  return { num: p.numPmu \vert{}\vert{} p.numOrdre \vert{}\vert{} (idx+1), nom: p.nom \vert{}\vert{} "Cheval", musique: musique, coteDisplay: rawCote, cote: cote, baseScore: Math.min(100, Math.max(5, baseScore)), nuggetScore: Math.min(100, Math.max(5, nuggetRaw)), ordreArrivee: p.ordreArrivee }; }); let sortedByBase = [...processed].sort((a, b) => b.baseScore - a.baseScore); let baseHorse = sortedByBase[0]; let remaining = processed.filter(p => p.num !== baseHorse?.num); let nuggetHorse = remaining.sort((a, b) => b.nuggetScore - a.nuggetScore)[0]; return { processed, baseHorse, nuggetHorse }; }  function extractGainFromRapports(listeRapports, horseNum, targetType) { let foundGain = 0; if (!listeRapports \vert{}\vert{} !Array.isArray(listeRapports)) return 0;  listeRapports.forEach(group => { let pType = (group.typePari \vert{}\vert{} group.libellePari \vert{}\vert{} group.codePari \vert{}\vert{} "").toUpperCase(); let famille = (group.famillePari \vert{}\vert{} "").toUpperCase(); let details = group.rapports \vert{}\vert{} group.dividendes \vert{}\vert{} group.lesRapports \vert{}\vert{} [];  if (pType.includes('SIMPLE') \vert{}\vert{} pType.includes('SG') \vert{}\vert{} pType.includes('SP') \vert{}\vert{} famille.includes('SIMPLE')) { if (Array.isArray(details)) { details.forEach(item => { let combo = String(item.combinaison \vert{}\vert{} item.cheval \vert{}\vert{} item.numeroCheval \vert{}\vert{} item.partant \vert{}\vert{} "").trim(); let lib = (item.libelleRapport \vert{}\vert{} item.libelle \vert{}\vert{} item.typeRapport \vert{}\vert{} item.nomRapport \vert{}\vert{} "").toUpperCase();  if (combo === String(horseNum).trim()) { let isMatch = false; if (targetType === 'GAGNANT') { if (lib.includes('GAGNANT') \vert{}\vert{} lib === 'G' \vert{}\vert{} lib.includes('SG') \vert{}\vert{} lib.includes('WIN')) { if (!lib.includes('PLACE')) isMatch = true; } else if (pType.includes('GAGNANT') \vert{}\vert{} pType === 'SG') { isMatch = true; } else if (lib === '' && !pType.includes('PLACE')) { isMatch = true; } } else if (targetType === 'PLACE') { if (lib.includes('PLACE') \vert{}\vert{} lib === 'P' \vert{}\vert{} lib.includes('SP') \vert{}\vert{} lib.includes('SHOW')) isMatch = true; else if (pType.includes('PLACE') \vert{}\vert{} pType === 'SP') isMatch = true; else if (lib === '' && pType.includes('PLACE')) isMatch = true; }  if (isMatch) { let val = 0; if (item.dividendePourUnEuro !== undefined) val = item.dividendePourUnEuro / 100; else if (item.dividendeEuro !== undefined) val = item.dividendeEuro; else if (item.gainEuro !== undefined) val = item.gainEuro; else { let rawM = item.rapport \vert{}\vert{} item.dividende \vert{}\vert{} item.montant; if (rawM !== undefined && rawM !== null) { val = parseFloat(String(rawM).replace(',', '.')); if (val > 100) val = val / 100; } } if (val > 0 && val > foundGain) foundGain = val; } } }); } } }); return foundGain; }  function extractCoupleGain(listeRapports, num1, num2, targetType) { let foundGain = 0; if (!listeRapports \vert{}\vert{} !Array.isArray(listeRapports)) return 0;  listeRapports.forEach(group => { let pType = (group.typePari \vert{}\vert{} group.libellePari \vert{}\vert{} group.codePari \vert{}\vert{} "").toUpperCase(); let famille = (group.famillePari \vert{}\vert{} "").toUpperCase(); let details = group.rapports \vert{}\vert{} group.dividendes \vert{}\vert{} group.lesRapports \vert{}\vert{} [];  if (pType.includes('COUPLE') \vert{}\vert{} pType.includes('CG') \vert{}\vert{} pType.includes('CP') \vert{}\vert{} famille.includes('COUPLE') \vert{}\vert{} pType.includes('JUMELE')) { if (Array.isArray(details)) { details.forEach(item => { let strCombo = ""; if (Array.isArray(item.chevaux)) strCombo = item.chevaux.join('-'); else if (Array.isArray(item.combinaison)) strCombo = item.combinaison.join('-'); else strCombo = String(item.combinaison \vert{}\vert{} item.cheval \vert{}\vert{} item.partants \vert{}\vert{} "").trim();  let matchCombo = false; let nums = strCombo.match(/\d+/g); if (nums && nums.length >= 2) { let p1 = parseInt(nums[0], 10); let p2 = parseInt(nums[1], 10); if ((p1 == num1 && p2 == num2) \vert{}\vert{} (p1 == num2 && p2 == num1)) matchCombo = true; }  if (matchCombo) { let lib = (item.libelleRapport \vert{}\vert{} item.libelle \vert{}\vert{} item.typeRapport \vert{}\vert{} item.nomRapport \vert{}\vert{} "").toUpperCase(); let isMatch = false;  if (targetType === 'CG') { if (lib.includes('GAGNANT') \vert{}\vert{} lib === 'G' \vert{}\vert{} lib === 'CG' \vert{}\vert{} pType.includes('GAGNANT') \vert{}\vert{} pType === 'CG') { if (!lib.includes('PLACE') && !lib.includes('P')) isMatch = true; } else if (lib === '' && !pType.includes('PLACE')) isMatch = true; } else if (targetType === 'CP') { if (lib.includes('PLACE') \vert{}\vert{} lib === 'P' \vert{}\vert{} lib === 'CP' \vert{}\vert{} pType.includes('PLACE') \vert{}\vert{} pType === 'CP') isMatch = true; else if (lib === '' && pType.includes('PLACE')) isMatch = true; }  if (isMatch) { let val = 0; if (item.dividendePourUnEuro !== undefined) val = item.dividendePourUnEuro / 100; else if (item.dividendeEuro !== undefined) val = item.dividendeEuro; else if (item.gainEuro !== undefined) val = item.gainEuro; else { let rawM = item.rapport \vert{}\vert{} item.dividende \vert{}\vert{} item.montant; if (rawM !== undefined && rawM !== null) { val = parseFloat(String(rawM).replace(',', '.')); if (val > 100) val = val / 100; } } if (val > 0 && val > foundGain) foundGain = val; } } }); } } }); return foundGain; }  async function fetchRaceData(isBackground = false) { let mIdx = document.getElementById('meetingSelect').value; let rIdx = document.getElementById('raceSelect').value; if (mIdx === "" \vert{}\vert{} rIdx === "") return;  let meeting = liveMeetingsData[mIdx]; let courses = meeting.courses \vert{}\vert{} meeting.races \vert{}\vert{} meeting.lesCourses \vert{}\vert{} []; let race = courses[rIdx]; if (!race) return;  let dateInput = document.getElementById('raceDate').value; let parts = dateInput.split('-'); let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
+        let rNum = meeting.numOfficiel || (parseInt(mIdx, 10) + 1);
+        let cNum = race.numOrdre || (parseInt(rIdx, 10) + 1);
+
+        try {
+            const data = await fetchPmuData(`${ddmmyyyy}/R${rNum}/C${cNum}`); let partants = data.participants \vert{}\vert{} [];  if (partants.length === 0) { try { let pData = await fetchPmuData(`${ddmmyyyy}/R${rNum}/C${cNum}/participants`);
+                    if (Array.isArray(pData)) partants = pData;
+                    else if (pData && pData.participants) partants = pData.participants;
+                } catch(e) {}
+            }
+
+            let rapportsData = data.rapports || [];
+
+            let arrivalBlock = document.getElementById('arrivalBlock');
+            let arrivalList = document.getElementById('arrivalList');
+            arrivalList.innerHTML = '';
+            let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0).sort((a, b) => a.ordreArrivee - b.ordreArrivee);
+
+            if (arrivees.length > 0) {
+                arrivalBlock.classList.remove('hidden');
+                arrivees.slice(0, 5).forEach((p) => {
+                    let div = document.createElement('div');
+                    div.className = "bg-blue-900/60 px-2.5 py-1 rounded-lg border border-blue-500/40";
+                    div.innerHTML = `<span class="text-blue-300">${p.ordreArrivee}e:</span> N°${p.numPmu || p.numOrdre} ${p.nom}`; arrivalList.appendChild(div); });  if (!autoTransitionDone) { autoTransitionDone = true; setTimeout(() => { goToNextRace(); }, 30000); } } else { arrivalBlock.classList.add('hidden'); }  let reportsBlock = document.getElementById('reportsBlock'); let reportsGrid = document.getElementById('reportsGrid'); reportsGrid.innerHTML = ''; let hasReports = false; let listeRapports = Array.isArray(rapportsData) ? rapportsData : (rapportsData?.lesRapports \vert{}\vert{} rapportsData?.rapports \vert{}\vert{} []);  listeRapports.forEach(repGroup => { let typePari = (repGroup.typePari \vert{}\vert{} repGroup.libellePari \vert{}\vert{} repGroup.codePari \vert{}\vert{} "").toUpperCase(); let famille = (repGroup.famillePari \vert{}\vert{} "").toUpperCase();  if (typePari.includes('SIMPLE') \vert{}\vert{} typePari.includes('SG') \vert{}\vert{} typePari.includes('SP') \vert{}\vert{} famille.includes('SIMPLE') \vert{}\vert{} typePari.includes('INTER') \vert{}\vert{} typePari.includes('COUPLE')) { let details = repGroup.rapports \vert{}\vert{} repGroup.dividendes \vert{}\vert{} repGroup.lesRapports \vert{}\vert{} []; details.forEach(r => { let val = 0; if (r.dividendePourUnEuro !== undefined) val = r.dividendePourUnEuro / 100; else if (r.dividendeEuro !== undefined) val = r.dividendeEuro; else if (r.gainEuro !== undefined) val = r.gainEuro; else { let m = r.rapport \vert{}\vert{} r.dividende \vert{}\vert{} r.montant; if (m !== undefined && m !== null) { val = parseFloat(String(m).replace(',', '.')); if (val > 100) val = val / 100; } }  if (val > 0) { hasReports = true; let combo = r.combinaison \vert{}\vert{} r.cheval \vert{}\vert{} r.numeroCheval ? ` (N°${r.combinaison || r.cheval || r.numeroCheval})` : '';
+                            let lib = r.libelleRapport || r.libelle || typePari;
+                            let div = document.createElement('div');
+                            div.className = "bg-zinc-800/80 p-2.5 rounded-xl border border-zinc-700 flex justify-between items-center";
+                            div.innerHTML = `<span class="text-zinc-400 font-medium">${lib}${combo} :</span> <span class="text-emerald-400 font-bold">${val.toFixed(2)} €</span>`;
+                            reportsGrid.appendChild(div);
+                        }
+                    });
+                }
+            });
+
+            if (hasReports) reportsBlock.classList.remove('hidden');
+            else reportsBlock.classList.add('hidden');
+
+            let algoResult = computeAlgorithm(partants);
+            let { processed, baseHorse, nuggetHorse } = algoResult;
+
+            if (baseHorse) {
+                document.getElementById('top1Name').textContent = `${baseHorse.num}.${baseHorse.nom}`;
+                document.getElementById('top1Stats').textContent = `Confiance : ${baseHorse.baseScore}\% \vert{} Cote :${baseHorse.coteDisplay}`;
+            } else {
+                document.getElementById('top1Name').textContent = `Attente cotes...`;
+            }
+            
+            if (nuggetHorse) {
+                document.getElementById('top2Name').textContent = `${nuggetHorse.num}.${nuggetHorse.nom}`;
+                document.getElementById('top2Stats').textContent = `Potentiel : ${nuggetHorse.nuggetScore}\% \vert{} Cote :${nuggetHorse.coteDisplay}`;
+            } else {
+                document.getElementById('top2Name').textContent = `Attente cotes...`;
+            }
+
+            processed.sort((a, b) => b.baseScore - a.baseScore);
+            let tbody = document.getElementById('runnersTableBody');
+            tbody.innerHTML = '';
+            processed.forEach(p => {
+                let tr = document.createElement('tr');
+                let tag = p.ordreArrivee ? `<span class="ml-1 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
+                if (p.num === baseHorse?.num) tag += '<span class="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">Base</span>';
+                if (p.num === nuggetHorse?.num) tag += '<span class="ml-1 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">Pépite</span>';
+
+                tr.innerHTML = `<td class="p-3 font-bold"><span class="text-emerald-400 mr-2">${p.num}</span>${p.nom}${tag}</td><td class="p-3 text-zinc-300 font-mono">${p.musique}</td><td class="p-3 text-emerald-400 font-bold">${p.coteDisplay}</td><td class="p-3 font-semibold">${p.baseScore}\%</td>`; tbody.appendChild(tr); });  let timeInfo = race.heureDepart ? `[${formatTime(race.heureDepart)}] ` : '';
+            let discBadge = getDisciplineBadge(race.discipline);
+            
+            document.getElementById('raceInfoDetails').innerHTML = `
+                <div class="flex items-center">
+                    <span class="mr-2 text-zinc-400 font-normal">${timeInfo}</span>
+                    <span>Partants & Cotes</span>
+                    ${discBadge}
+                </div>
+            `;
+        } catch (e) {}
+    }
+
+    function evaluateMusique(musique) {
+        let score = 30;
+        const numbers = musique.match(/\d+/g);
+        if (numbers && numbers.length > 0) {
+            let pts = 0;
+            let count = Math.min(numbers.length, 4);
+            for (let i = 0; i < count; i++) {
+                let val = parseInt(numbers[i], 10);
+                if (val === 1) pts += 10;
+                else if (val === 2) pts += 8;
+                else if (val === 3) pts += 6;
+                else if (val === 4 || val === 5) pts += 4;
+                else pts += 1;
+            }
+            score = (pts / count) * 10;
+        }
+        return Math.min(100, Math.max(5, Math.round(score)));
+    }
+
+    function formatMoneyHTML(val, type) {
+        if (val === 0) return `<span class="text-zinc-500">0.00 €</span>`;
+        let color = val > 0 ? (type === 'pepite' ? 'text-amber-400' : 'text-emerald-400') : 'text-red-400';
+        if (type === 'couple') color = val > 0 ? 'text-blue-400' : 'text-red-400';
+        if (type === 'total' && val > 0) color = 'text-white';
+        let sign = val > 0 ? '+' : '';
+        return `<span class="${color}">${sign}${val.toFixed(2)} €</span>`; }  function getStatForDateObj(d) { let key = `pmu_stats_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+        let saved = localStorage.getItem(key);
+        if (saved) return JSON.parse(saved);
+        return { baseGag: 0, basePla: 0, pepGag: 0, pepPla: 0, cplGag: 0, cplPla: 0 };
+    }
+
+    function showHistoryStats() {
+        let dateInput = document.getElementById('raceDate').value;
+        let currentViewDate = dateInput ? new Date(dateInput) : new Date();
+        let year = currentViewDate.getFullYear();
+        
+        document.getElementById('currentYearText').textContent = year;
+
+        let dayOfWeek = currentViewDate.getDay() || 7; 
+        let monday = new Date(currentViewDate);
+        monday.setDate(currentViewDate.getDate() - (dayOfWeek - 1)); 
+        
+        let wBaseGag = 0, wBasePla = 0, wPepGag = 0, wPepPla = 0, wCplGag = 0, wCplPla = 0;
+        
+        for(let i=0; i<7; i++) {
+            let d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            let s = getStatForDateObj(d);
+            wBaseGag += s.baseGag || 0;
+            wBasePla += s.basePla || 0;
+            wPepGag += s.pepGag || 0;
+            wPepPla += s.pepPla || 0;
+            wCplGag += s.cplGag || 0;
+            wCplPla += s.cplPla || 0;
+        }
+
+        document.getElementById('histWeekBaseGag').innerHTML = formatMoneyHTML(wBaseGag, 'base');
+        document.getElementById('histWeekBasePla').innerHTML = formatMoneyHTML(wBasePla, 'base');
+        document.getElementById('histWeekPepiteGag').innerHTML = formatMoneyHTML(wPepGag, 'pepite');
+        document.getElementById('histWeekPepitePla').innerHTML = formatMoneyHTML(wPepPla, 'pepite');
+        document.getElementById('histWeekCoupleGag').innerHTML = formatMoneyHTML(wCplGag, 'couple');
+        document.getElementById('histWeekCouplePla').innerHTML = formatMoneyHTML(wCplPla, 'couple');
+
+        const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
+        let monthsGrid = document.getElementById('monthsGrid');
+        monthsGrid.innerHTML = '';
+
+        for (let m = 0; m < 12; m++) {
+            let mBaseGag = 0, mBasePla = 0, mPepGag = 0, mPepPla = 0, mCplGag = 0, mCplPla = 0;
+            let daysInMonth = new Date(year, m + 1, 0).getDate(); 
+            
+            for (let d = 1; d <= daysInMonth; d++) {
+                let s = getStatForDateObj(new Date(year, m, d));
+                mBaseGag += s.baseGag || 0;
+                mBasePla += s.basePla || 0;
+                mPepGag += s.pepGag || 0;
+                mPepPla += s.pepPla || 0;
+                mCplGag += s.cplGag || 0;
+                mCplPla += s.cplPla || 0;
+            }
+
+            if (mBaseGag !== 0 || mBasePla !== 0 || mPepGag !== 0 || mPepPla !== 0 || mCplGag !== 0 || mCplPla !== 0) {
+                let div = document.createElement('div');
+                let isCurrentViewMonth = (m === currentViewDate.getMonth());
+                div.className = isCurrentViewMonth 
+                    ? "bg-zinc-800 p-2 rounded-xl border border-emerald-500/50 mb-2 shadow-lg" 
+                    : "bg-zinc-800/50 p-2 rounded-xl border border-zinc-700/50 mb-2";
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-1.5 px-1">
+                        <span class="font-bold ${isCurrentViewMonth ? 'text-emerald-400' : 'text-zinc-300'}">${monthNames[m]}</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-[10px]">
+                        <div class="bg-zinc-900/80 p-1.5 rounded border border-emerald-500/20 text-center leading-tight">
+                            <span class="text-emerald-400 font-bold block mb-1 uppercase text-[9px]">Base</span>
+                            <div class="text-zinc-400">G: ${formatMoneyHTML(mBaseGag, 'base')}</div>
+                            <div class="text-zinc-400 mt-0.5">P: ${formatMoneyHTML(mBasePla, 'base')}</div>
+                        </div>
+                        <div class="bg-zinc-900/80 p-1.5 rounded border border-amber-500/20 text-center leading-tight">
+                            <span class="text-amber-400 font-bold block mb-1 uppercase text-[9px]">Pépite</span>
+                            <div class="text-zinc-400">G: ${formatMoneyHTML(mPepGag, 'pepite')}</div>
+                            <div class="text-zinc-400 mt-0.5">P: ${formatMoneyHTML(mPepPla, 'pepite')}</div>
+                        </div>
+                        <div class="bg-zinc-900/80 p-1.5 rounded border border-blue-500/20 text-center leading-tight">
+                            <span class="text-blue-400 font-bold block mb-1 uppercase text-[9px]">Couplé</span>
+                            <div class="text-zinc-400">G: ${formatMoneyHTML(mCplGag, 'couple')}</div>
+                            <div class="text-zinc-400 mt-0.5">P: ${format
