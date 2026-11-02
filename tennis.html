@@ -18,13 +18,6 @@
 
     <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
-    <!-- Navigation inter-applis -->
-    <nav class="bg-zinc-900 border-b border-zinc-800 p-2 flex justify-center gap-4 text-xs font-bold">
-        <a href="foot.html" class="text-zinc-500 hover:text-white transition"><i class="fa-solid fa-futbol mr-1"></i> Foot</a>
-        <a href="nba.html" class="text-zinc-500 hover:text-white transition"><i class="fa-solid fa-basketball mr-1"></i> NBA</a>
-        <a href="tennis.html" class="text-lime-400 border-b-2 border-lime-400 pb-1"><i class="fa-solid fa-table-tennis-paddle-ball mr-1"></i> Tennis</a>
-    </nav>
-
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center mb-3">
             <h1 class="text-base sm:text-lg font-black tracking-wider text-lime-400 flex items-center">
@@ -75,7 +68,6 @@
     </main>
 
     <script>
-        // Initialisation à la date locale exacte
         const now = new Date();
         const localDateStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
         document.getElementById('matchDate').value = localDateStr;
@@ -112,7 +104,6 @@
                     if (ls.winner === true) sets++;
                 });
                 if (sets > 0 || isCompleted) return sets;
-                // Si le 1er set est en cours, affiche les jeux du set actuel
                 let currentGames = competitor.linescores[competitor.linescores.length - 1]?.value;
                 if (currentGames !== undefined) return `${sets} (${currentGames}j)`;
             }
@@ -148,7 +139,6 @@
                     (data.events || []).forEach(tournament => {
                         const baseTournName = tournament.name || "Tournoi ATP/WTA";
                         
-                        // C'est ICI que se trouvait le bug : ESPN range le tennis dans groupings[] !
                         let allCompetitions = [];
                         if (tournament.groupings && Array.isArray(tournament.groupings)) {
                             tournament.groupings.forEach(group => {
@@ -168,7 +158,6 @@
                         allCompetitions.forEach(comp => {
                             if (!comp.competitors || comp.competitors.length < 2) return;
 
-                            // Filtrer uniquement les matchs du jour sélectionné (ou actuellement en direct)
                             const compDateStr = comp.date ? new Date(comp.date).toISOString().split('T')[0] : dateStr;
                             const state = comp.status?.type?.state || 'pre';
                             const isCompleted = comp.status?.type?.completed || state === 'post';
@@ -182,7 +171,6 @@
                             let homeName = p1.athlete?.shortName || p1.athlete?.displayName || p1.roster?.shortDisplayName || p1.team?.displayName || "TBD";
                             let awayName = p2.athlete?.shortName || p2.athlete?.displayName || p2.roster?.shortDisplayName || p2.team?.displayName || "TBD";
 
-                            // Ignorer les matchs dont les deux joueurs sont encore inconnus (TBD vs TBD)
                             if (homeName === "TBD" && awayName === "TBD") return;
 
                             let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
@@ -210,7 +198,6 @@
                     });
                 }
 
-                // Trier : Matchs En Direct en haut, puis par heure
                 validMatches.sort((a, b) => {
                     if (a.status === 'IN_PLAY' && b.status !== 'IN_PLAY') return -1;
                     if (b.status === 'IN_PLAY' && a.status !== 'IN_PLAY') return 1;
