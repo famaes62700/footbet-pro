@@ -231,22 +231,6 @@
         let autoTransitionDone = false;
         let validatedRacesCache = {}; 
 
-        // Fonction "Double Moteur" avec système Anti-Cache intégré
-        async function fetchPmuData(endpoint) {
-            try {
-                // Requête prioritaire vers notre Vercel (api/pmu.js)
-                let res = await fetch(`/api/pmu?target=${encodeURIComponent(endpoint)}&_t=${Date.now()}`);
-                if (!res.ok) throw new Error("Erreur de relais PMU");
-                return await res.json();
-            } catch (err1) {
-                // Requête de secours vers le proxy avec le CANAL 61 forcé
-                let proxyUrl = `https://corsproxy.io/?` + encodeURIComponent(`https://offline.turfinfo.api.pmu.fr/rest/client/61/programme/${endpoint}`);
-                let res2 = await fetch(proxyUrl);
-                if (!res2.ok) throw new Error("Proxy failed");
-                return await res2.json();
-            }
-        }
-
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
             let cIdx = document.getElementById('raceSelect').value;
@@ -315,7 +299,11 @@
             const ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
 
             try {
-                const data = await fetchPmuData(ddmmyyyy);
+                // APPEL A VOTRE SCRIPT D'ORIGINE api/courses.js
+                const res = await fetch(`/api/courses?date=${ddmmyyyy}&_t=${Date.now()}`);
+                if (!res.ok) throw new Error("Réseau");
+                const data = await res.json();
+                
                 let reunions = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
                 
                 if (reunions.length > 0) {
@@ -634,17 +622,11 @@
             let cNum = race.numOrdre || (parseInt(rIdx, 10) + 1);
 
             try {
-                const data = await fetchPmuData(`${ddmmyyyy}/R${rNum}/C${cNum}`);
-                let partants = data.participants || [];
+                // Appel de votre propre script /api/courses.js
+                const res = await fetch(`/api/courses?date=${ddmmyyyy}&r=${rNum}&c=${cNum}&_t=${Date.now()}`);
+                const data = await res.json();
                 
-                if (partants.length === 0) {
-                    try {
-                        let pData = await fetchPmuData(`${ddmmyyyy}/R${rNum}/C${cNum}/participants`);
-                        if (Array.isArray(pData)) partants = pData;
-                        else if (pData && pData.participants) partants = pData.participants;
-                    } catch(e) {}
-                }
-
+                let partants = data.participants || [];
                 let rapportsData = data.rapports || [];
 
                 let arrivalBlock = document.getElementById('arrivalBlock');
@@ -950,21 +932,16 @@
                     raceData = validatedRacesCache[cacheKey];
                 } else {
                     try {
-                        const data = await fetchPmuData(`${ddmmyyyy}/R${r.rNum}/C${r.cNum}`);
-                        let partants = data.participants || [];
-                        if (partants.length === 0) {
-                            try {
-                                let pData = await fetchPmuData(`${ddmmyyyy}/R${r.rNum}/C${r.cNum}/participants`);
-                                if (Array.isArray(pData)) partants = pData;
-                                else if (pData && pData.participants) partants = pData.participants;
-                            } catch(e) {}
+                        const res = await fetch(`/api/courses?date=${ddmmyyyy}&r=${r.rNum}&c=${r.cNum}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            let partants = data.participants || [];
+                            let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0);
+                            let rapportsList = Array.isArray(data.rapports) ? data.rapports : (data.rapports?.lesRapports || data.rapports?.rapports || []);
+                            
+                            raceData = { partants, arrivees, rapportsList, isComplete: rapportsList.length > 0 };
+                            if (raceData.isComplete) validatedRacesCache[cacheKey] = raceData;
                         }
-                        
-                        let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0);
-                        let rapportsList = Array.isArray(data.rapports) ? data.rapports : (data.rapports?.lesRapports || data.rapports?.rapports || []);
-                        
-                        raceData = { partants, arrivees, rapportsList, isComplete: rapportsList.length > 0 };
-                        if (raceData.isComplete) validatedRacesCache[cacheKey] = raceData;
                     } catch (e) { }
                 }
 
