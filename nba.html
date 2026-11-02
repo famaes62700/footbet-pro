@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBA Direct - Bankroll</title>
+    <title>NBA Direct - Pronostics & Bankroll</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -30,7 +30,7 @@
         
         <div class="flex justify-between items-center">
             <div id="statusText" class="text-xs text-amber-400 font-mono flex items-center">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Analyse des matchs en cours...
             </div>
             <button onclick="loadNBAMatches()" class="text-zinc-400 hover:text-orange-400 transition">
                 <i class="fa-solid fa-rotate-right"></i>
@@ -98,7 +98,7 @@
             const statusText = document.getElementById('statusText');
             const container = document.getElementById('matchesContainer');
             
-            statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion NBA...';
+            statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Analyse NBA...';
             container.innerHTML = '';
 
             const yyyymmdd = dateInput.replace(/-/g, '');
@@ -116,7 +116,7 @@
                     return;
                 }
 
-                statusText.innerHTML = `<span class="text-orange-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs trouvés</span>`;
+                statusText.innerHTML = `<span class="text-orange-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs analysés</span>`;
                 
                 renderMatches();
                 calculateDailyBankroll();
@@ -124,6 +124,36 @@
             } catch (e) {
                 statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur API ESPN</span>';
             }
+        }
+
+        // ALGORITHME DE PRONOSTIC
+        function getPrediction(home, away) {
+            // Fonction interne pour extraire le % de victoire (Win Rate)
+            const getWinPct = (team) => {
+                if (!team.records || !team.records[0] || !team.records[0].summary) return 50; 
+                let parts = team.records[0].summary.split('-');
+                let wins = parseInt(parts[0]) || 0;
+                let losses = parseInt(parts[1]) || 0;
+                let total = wins + losses;
+                return total === 0 ? 50 : (wins / total) * 100;
+            };
+
+            // Bonus Domicile de +5% pour rééquilibrer
+            let homePct = getWinPct(home) + 5; 
+            let awayPct = getWinPct(away);
+
+            let total = homePct + awayPct;
+            if (total === 0) return { homeProb: 50, awayProb: 50, favorite: null };
+
+            let homeProb = Math.round((homePct / total) * 100);
+            let awayProb = 100 - homeProb;
+
+            // Détermine le favori si l'écart est supérieur à 5% (52/48 est trop juste)
+            let favoriteId = null;
+            if (homeProb >= 53) favoriteId = home.team.id;
+            else if (awayProb >= 53) favoriteId = away.team.id;
+
+            return { homeProb, awayProb, favoriteId };
         }
 
         function renderMatches() {
@@ -152,40 +182,57 @@
                     winnerId = parseInt(scoreHome) > parseInt(scoreAway) ? home.team.id : away.team.id;
                 }
 
+                // Calcul Algorithmique
+                let prediction = getPrediction(home, away);
+
+                // Extraction des bilans victoires-défaites pour affichage (Ex: "45-20")
+                let homeRecord = home.records ? home.records[0].summary : "0-0";
+                let awayRecord = away.records ? away.records[0].summary : "0-0";
+
                 let myBet = savedBets[match.id]; 
                 
                 let card = document.createElement('div');
                 card.className = "bg-zinc-900 border border-zinc-800 rounded-xl p-3 shadow-md";
                 
+                // Préparation des badges de Pronostic
+                let awayBadge = prediction.favoriteId === away.team.id 
+                    ? `<div class="bg-orange-500 text-zinc-950 text-[9px] font-black px-1.5 py-0.5 rounded absolute -top-2">🔥 PRONO ${prediction.awayProb}%</div>` : '';
+                let homeBadge = prediction.favoriteId === home.team.id 
+                    ? `<div class="bg-orange-500 text-zinc-950 text-[9px] font-black px-1.5 py-0.5 rounded absolute -top-2">🔥 PRONO ${prediction.homeProb}%</div>` : '';
+
                 card.innerHTML = `
-                    <div class="flex justify-between items-center border-b border-zinc-800/50 pb-2 mb-2">
+                    <div class="flex justify-between items-center border-b border-zinc-800/50 pb-2 mb-3">
                         ${statusBadge}
-                        <span class="text-[10px] text-zinc-500">${match.shortName}</span>
+                        <span class="text-[10px] text-zinc-500 font-bold">${match.shortName}</span>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-2 gap-3">
                         <!-- AWAY TEAM -->
                         <button onclick="placeBet('${match.id}', '${away.team.id}')" 
-                                class="flex flex-col items-center justify-center p-3 rounded-xl border transition ${myBet === away.team.id ? 'bg-orange-900/30 border-orange-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
-                            <img src="${away.team.logo}" class="h-8 w-8 mb-2 object-contain" alt="${away.team.name}">
-                            <span class="text-[11px] font-bold text-center leading-tight mb-1">${away.team.displayName}</span>
-                            <span class="text-lg font-black ${isFinished && winnerId === away.team.id ? 'text-emerald-400' : 'text-white'}">${status !== 'pre' ? scoreAway : '-'}</span>
+                                class="relative flex flex-col items-center justify-center p-3 rounded-xl border transition ${myBet === away.team.id ? 'bg-orange-900/30 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.2)]' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
+                            ${awayBadge}
+                            <img src="${away.team.logo}" class="h-8 w-8 mb-1 object-contain" alt="${away.team.name}">
+                            <span class="text-[11px] font-bold text-center leading-tight mb-0.5">${away.team.displayName}</span>
+                            <span class="text-[9px] text-zinc-500 font-mono mb-1">Bilan: ${awayRecord}</span>
+                            <span class="text-xl font-black ${isFinished && winnerId === away.team.id ? 'text-emerald-400' : 'text-white'}">${status !== 'pre' ? scoreAway : '-'}</span>
                         </button>
 
                         <!-- HOME TEAM -->
                         <button onclick="placeBet('${match.id}', '${home.team.id}')" 
-                                class="flex flex-col items-center justify-center p-3 rounded-xl border transition ${myBet === home.team.id ? 'bg-orange-900/30 border-orange-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
-                            <img src="${home.team.logo}" class="h-8 w-8 mb-2 object-contain" alt="${home.team.name}">
-                            <span class="text-[11px] font-bold text-center leading-tight mb-1">${home.team.displayName}</span>
-                            <span class="text-lg font-black ${isFinished && winnerId === home.team.id ? 'text-emerald-400' : 'text-white'}">${status !== 'pre' ? scoreHome : '-'}</span>
+                                class="relative flex flex-col items-center justify-center p-3 rounded-xl border transition ${myBet === home.team.id ? 'bg-orange-900/30 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.2)]' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
+                            ${homeBadge}
+                            <img src="${home.team.logo}" class="h-8 w-8 mb-1 object-contain" alt="${home.team.name}">
+                            <span class="text-[11px] font-bold text-center leading-tight mb-0.5">${home.team.displayName}</span>
+                            <span class="text-[9px] text-zinc-500 font-mono mb-1">Bilan: ${homeRecord}</span>
+                            <span class="text-xl font-black ${isFinished && winnerId === home.team.id ? 'text-emerald-400' : 'text-white'}">${status !== 'pre' ? scoreHome : '-'}</span>
                         </button>
                     </div>
                     
                     ${myBet ? `
-                    <div class="mt-2 text-center text-[10px] bg-zinc-950 rounded py-1 border border-zinc-800">
+                    <div class="mt-3 text-center text-[10px] bg-zinc-950 rounded py-1.5 border border-zinc-800/80">
                         ${isFinished 
-                            ? (myBet === winnerId ? '<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check"></i> Pari Gagné (+0.90€ net)</span>' : '<span class="text-red-400 font-bold"><i class="fa-solid fa-xmark"></i> Pari Perdu (-1.00€)</span>') 
-                            : '<span class="text-orange-400">Pari enregistré (Mise fixe 1€)</span>'
+                            ? (myBet === winnerId ? '<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1"></i>Pari Gagné (+0.90€ net)</span>' : '<span class="text-red-400 font-bold"><i class="fa-solid fa-xmark mr-1"></i>Pari Perdu (-1.00€)</span>') 
+                            : '<span class="text-orange-400 font-semibold"><i class="fa-solid fa-ticket mr-1"></i> Pari enregistré (Mise 1€)</span>'
                         }
                     </div>` : ''}
                 `;
@@ -233,9 +280,9 @@
                         let winnerId = parseInt(home.score) > parseInt(away.score) ? home.team.id : away.team.id;
                         
                         if (myBet === winnerId) {
-                            dailyProfit += 0.90;
+                            dailyProfit += 0.90; // Gain Net (Cote simulée @1.90)
                         } else {
-                            dailyProfit -= 1.00; 
+                            dailyProfit -= 1.00; // Perte Mise
                         }
                     }
                 }
