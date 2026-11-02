@@ -107,7 +107,7 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02; 
 
-        // Rafraîchissement automatique toutes les 30s
+        // Rafraîchissement automatique
         setInterval(() => {
             let today = new Date().toISOString().split('T')[0];
             let selectedDate = document.getElementById('matchDate').value;
@@ -116,7 +116,7 @@
             }
         }, 30000);
 
-        // Animation locale du chronomètre toutes les 10s pour plus de fluidité
+        // Animation chronomètre locale
         setInterval(() => {
             document.querySelectorAll('.live-timer').forEach(el => {
                 let status = el.getAttribute('data-status');
@@ -128,7 +128,7 @@
                     return;
                 }
                 
-                if (apiMinute && apiMinute !== "null" && apiMinute !== "undefined") {
+                if (apiMinute && apiMinute !== "null" && apiMinute !== "undefined" && apiMinute !== "") {
                     el.innerHTML = `🔴 ${apiMinute}'`;
                 } else if (startUtc) {
                     let startTime = new Date(startUtc).getTime();
@@ -139,7 +139,7 @@
                     if (diffMinutes > 45 && diffMinutes <= 60) {
                         el.innerHTML = 'Mi-temps';
                     } else {
-                        if (diffMinutes > 60) diffMinutes = diffMinutes - 15;
+                        if (diffMinutes > 60) diffMinutes -= 15; 
                         if (diffMinutes > 90) diffMinutes = "90+";
                         el.innerHTML = `🔴 ${diffMinutes}'`;
                     }
@@ -182,13 +182,9 @@
             }
             
             try {
-                // L'ajout de &_t=... force le navigateur à ne pas utiliser le cache et à bien actualiser le score
+                // Le paramètre &_t= force la mise à jour immédiate
                 const res = await fetch(`/api/football/matches?date=${dateInput}&_t=${new Date().getTime()}`, {
-                    headers: { 
-                        'X-Auth-Token': FOOTBALL_API_KEY,
-                        'Cache-Control': 'no-cache, no-store, must-revalidate'
-                    },
-                    cache: 'no-store'
+                    headers: { 'X-Auth-Token': FOOTBALL_API_KEY, 'Cache-Control': 'no-cache' }
                 });
                 
                 if (!res.ok) throw new Error("Erreur réseau API");
@@ -304,6 +300,20 @@
             return 'DRAW';
         }
 
+        // Fonction blindée pour extraire le score correctement
+        function extractScore(match, team) {
+            if (!match || !match.score) return "-";
+            let val = match.score?.fullTime?.[team] ?? match.score?.regularTime?.[team] ?? match.score?.halfTime?.[team];
+            
+            if (val === null || val === undefined) {
+                if (match.status === 'IN_PLAY' || match.status === 'PAUSED' || match.status === 'FINISHED') {
+                    return 0;
+                }
+                return "-";
+            }
+            return val;
+        }
+
         function renderMatches(matchesToRender) {
             const container = document.getElementById('matchesContainer');
             const dateStr = document.getElementById('matchDate').value;
@@ -331,9 +341,9 @@
                 let homeShort = home.shortName || homeName;
                 let awayShort = away.shortName || awayName;
                 
-                // Recherche approfondie du score (gère mieux les matchs en direct de l'API)
-                let sHome = match.score?.fullTime?.home ?? match.score?.regularTime?.home ?? match.score?.halfTime?.home ?? "-";
-                let sAway = match.score?.fullTime?.away ?? match.score?.regularTime?.away ?? match.score?.halfTime?.away ?? "-";
+                // Utilisation de la nouvelle fonction blindée
+                let sHome = extractScore(match, 'home');
+                let sAway = extractScore(match, 'away');
 
                 let statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-[10px] uppercase font-bold">${time}</span>`;
                 
@@ -468,8 +478,9 @@
                     totalSpent += currentStake;
 
                     if (isFinished) {
-                        let sHome = match.score?.fullTime?.home ?? match.score?.regularTime?.home ?? 0;
-                        let sAway = match.score?.fullTime?.away ?? match.score?.regularTime?.away ?? 0;
+                        let sHome = extractScore(match, 'home');
+                        let sAway = extractScore(match, 'away');
+                        
                         let winner = sHome > sAway ? 'HOME' : (sAway > sHome ? 'AWAY' : 'DRAW');
                         
                         let netMatch = 0;
