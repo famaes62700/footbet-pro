@@ -17,7 +17,6 @@
 </head>
 <body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none">
 
-    <!-- Toast Notification Container -->
     <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
@@ -29,7 +28,6 @@
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadLivePmu()">
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Historique Mensuel">
                     <i class="fa-solid fa-calendar-days"></i>
-                    <!-- Petit point vert pour indiquer que la bankroll est active -->
                     <span class="absolute -top-1 -right-1 flex h-3 w-3">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
@@ -46,7 +44,6 @@
             </div>
         </div>
 
-        <!-- BLOC HISTORIQUE -->
         <div id="historyBlock" class="hidden bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
@@ -55,7 +52,6 @@
                 <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
-                
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
                     <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Cette Semaine (Lun - Dim)</h3>
                     <div class="grid grid-cols-3 gap-2 text-[10px]">
@@ -84,7 +80,6 @@
             </div>
         </div>
 
-        <!-- BLOC STATISTIQUES DU JOUR -->
         <div id="statsBlock" class="bg-zinc-900 border border-indigo-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-indigo-400 tracking-wider flex items-center">
@@ -96,7 +91,6 @@
             </div>
             
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                <!-- BASE -->
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-emerald-500/30 flex flex-col justify-between space-y-2 relative">
                     <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">MARTINGALE PLACÉ</div>
                     <div class="flex justify-between items-center">
@@ -114,7 +108,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- PÉPITE -->
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-amber-500/30 flex flex-col justify-between space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] uppercase font-bold text-amber-400">Pépite</span>
@@ -131,7 +124,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- COUPLÉ -->
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-blue-500/30 flex flex-col justify-between space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] uppercase font-bold text-blue-400">Couplé (Base+Pép)</span>
@@ -164,7 +156,6 @@
             </select>
         </div>
 
-        <!-- BLOC ARRIVÉE OFFICIELLE -->
         <div id="arrivalBlock" class="hidden bg-blue-950/40 border border-blue-500/40 rounded-xl p-3.5 space-y-2">
             <h2 class="text-xs font-bold uppercase text-blue-400 tracking-wider flex items-center">
                 <i class="fa-solid fa-flag-checkered mr-1.5"></i> Arrivée Officielle
@@ -179,7 +170,6 @@
             <div id="reportsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs"></div>
         </div>
 
-        <!-- BLOC CHEVAUX CLÉS -->
         <div class="bg-gradient-to-r from-emerald-950/60 via-zinc-900 to-amber-950/40 border border-emerald-500/50 rounded-2xl p-4 space-y-3 shadow-xl relative">
             <div class="flex flex-wrap justify-between items-center gap-2">
                 <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center">
@@ -216,7 +206,6 @@
 
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden text-xs shadow-xl">
             <div id="raceInfoDetails" class="p-3.5 border-b border-zinc-800 font-bold text-zinc-300 flex justify-between items-center">
-                <!-- Rempli dynamiquement -->
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
@@ -240,17 +229,26 @@
         document.getElementById('raceDate').valueAsDate = new Date();
         let liveMeetingsData = [];
         let autoTransitionDone = false;
-        
         let validatedRacesCache = {}; 
 
-        // Rafraîchissement automatique toutes les 20s
+        // Fonction "Double Moteur" pour contourner les blocages PMU
+        async function fetchPmuData(endpoint) {
+            try {
+                let res = await fetch(`/api/pmu/${endpoint}`);
+                if (!res.ok) throw new Error("Vercel route failed");
+                return await res.json();
+            } catch (err1) {
+                let proxyUrl = `https://corsproxy.io/?` + encodeURIComponent(`https://offline.turfinfo.api.pmu.fr/rest/client/1/programme/${endpoint}`);
+                let res2 = await fetch(proxyUrl);
+                if (!res2.ok) throw new Error("Proxy failed");
+                return await res2.json();
+            }
+        }
+
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
             let cIdx = document.getElementById('raceSelect').value;
-            if (mIdx !== "" && cIdx !== "") {
-                fetchRaceData(true); 
-            }
-            // Recalcul en arrière-plan (met aussi à jour l'historique mensuel si le panneau est ouvert)
+            if (mIdx !== "" && cIdx !== "") fetchRaceData(true); 
             calculateDailyStats(true);
         }, 20000);
 
@@ -267,14 +265,12 @@
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            let bgClass = 'bg-zinc-800 border-zinc-700 text-white';
-            if (type === 'success') bgClass = 'bg-emerald-900/90 border-emerald-500/50 text-emerald-200';
+            let bgClass = type === 'success' ? 'bg-emerald-900/90 border-emerald-500/50 text-emerald-200' : 'bg-zinc-800 border-zinc-700 text-white';
             if (type === 'error') bgClass = 'bg-red-900/90 border-red-500/50 text-red-200';
             
             toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center space-x-2 ${bgClass}`;
             toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
-
             setTimeout(() => { toast.classList.remove('opacity-0', 'translate-y-2'); }, 10);
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-y-2');
@@ -309,7 +305,6 @@
             const statusText = document.getElementById('statusText');
             statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement...';
 
-            // Mise à jour de l'affichage de la bankroll si le panneau est ouvert quand on change la date
             if (!document.getElementById('historyBlock').classList.contains('hidden')) {
                 showHistoryStats();
             }
@@ -318,8 +313,7 @@
             const ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
 
             try {
-                const res = await fetch(`/api/courses?date=${ddmmyyyy}`);
-                const data = await res.json();
+                const data = await fetchPmuData(ddmmyyyy);
                 let reunions = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
                 
                 if (reunions.length > 0) {
@@ -345,15 +339,10 @@
                     
                     statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Prêt (${reunions.length} réunions)</span>`;
                     
-                    if (currentVal === "") {
-                        autoSelectCurrentRace();
-                    } else {
-                        select.value = currentVal;
-                    }
+                    if (currentVal === "") autoSelectCurrentRace();
+                    else select.value = currentVal;
                     
-                    // Lancer le calcul du bilan dès le chargement
                     calculateDailyStats(true);
-                    
                 } else {
                     throw new Error("Aucune réunion");
                 }
@@ -365,8 +354,7 @@
         function autoSelectCurrentRace() {
             let now = new Date().getTime();
             let bestMIdx = 0, bestCIdx = 0;
-            let minDiff = Infinity; 
-            let minPastDiff = Infinity;
+            let minDiff = Infinity, minPastDiff = Infinity;
             let pastMIdx = 0, pastCIdx = 0;
             let bufferTemps = 20 * 60 * 1000; 
 
@@ -374,26 +362,17 @@
                 let courses = m.courses || m.races || m.lesCourses || [];
                 courses.forEach((c, cIdx) => {
                     if (c.heureDepart) {
-                        let departTime = new Date(c.heureDepart).getTime();
-                        let diff = (departTime + bufferTemps) - now;
+                        let diff = (new Date(c.heureDepart).getTime() + bufferTemps) - now;
                         if (diff > 0 && diff < minDiff) { 
-                            minDiff = diff;
-                            bestMIdx = mIdx;
-                            bestCIdx = cIdx;
+                            minDiff = diff; bestMIdx = mIdx; bestCIdx = cIdx;
                         } else if (diff <= 0 && Math.abs(diff) < minPastDiff) {
-                            minPastDiff = Math.abs(diff);
-                            pastMIdx = mIdx;
-                            pastCIdx = cIdx;
+                            minPastDiff = Math.abs(diff); pastMIdx = mIdx; pastCIdx = cIdx;
                         }
                     }
                 });
             });
 
-            if (minDiff === Infinity) {
-                bestMIdx = pastMIdx;
-                bestCIdx = pastCIdx;
-            }
-
+            if (minDiff === Infinity) { bestMIdx = pastMIdx; bestCIdx = pastCIdx; }
             if (liveMeetingsData[bestMIdx]) {
                 document.getElementById('meetingSelect').value = bestMIdx;
                 onMeetingChange();
@@ -408,13 +387,7 @@
             liveMeetingsData.forEach((m, mIdx) => {
                 let courses = m.courses || m.races || m.lesCourses || [];
                 courses.forEach((c, cIdx) => {
-                    if (c.heureDepart) {
-                        list.push({
-                            mIdx: mIdx,
-                            cIdx: cIdx,
-                            time: new Date(c.heureDepart).getTime()
-                        });
-                    }
+                    if (c.heureDepart) list.push({ mIdx: mIdx, cIdx: cIdx, time: new Date(c.heureDepart).getTime() });
                 });
             });
             return list.sort((a, b) => a.time - b.time);
@@ -438,8 +411,7 @@
                     autoTransitionDone = false;
                     fetchRaceData();
                 } else {
-                    let alertMsg = direction === 1 ? "Dernière course de la journée atteinte !" : "Première course de la journée atteinte !";
-                    showToast(alertMsg, 'error');
+                    showToast(direction === 1 ? "Dernière course atteinte" : "Première course atteinte", 'error');
                 }
             }
         }
@@ -461,7 +433,6 @@
                 courses.forEach((c, cIdx) => {
                     let opt = document.createElement('option');
                     opt.value = cIdx;
-                    
                     let courseTime = c.heureDepart ? `[${formatTime(c.heureDepart)}] ` : '';
                     let libelleCourse = c.libelle || c.nom || c.libelleCourt || 'Prix';
                     
@@ -540,7 +511,7 @@
                 let famille = (group.famillePari || "").toUpperCase();
                 let details = group.rapports || group.dividendes || group.lesRapports || [];
 
-                if (pType.includes('SIMPLE') || pType.includes('SG') || pType.includes('SP') || pType.includes('INTER') || famille.includes('SIMPLE') || pType === 'PARI') {
+                if (pType.includes('SIMPLE') || pType.includes('SG') || pType.includes('SP') || famille.includes('SIMPLE')) {
                     if (Array.isArray(details)) {
                         details.forEach(item => {
                             let combo = String(item.combinaison || item.cheval || item.numeroCheval || item.partant || "").trim();
@@ -548,44 +519,33 @@
 
                             if (combo === String(horseNum).trim()) {
                                 let isMatch = false;
-
                                 if (targetType === 'GAGNANT') {
-                                    if (lib.includes('GAGNANT') || lib === 'G' || lib.includes('SG') || lib.includes('1ER') || lib.includes('WIN') || lib === 'DIRECT') {
-                                        if (!lib.includes('PLACE') && !lib.includes('SHOW')) isMatch = true;
+                                    if (lib.includes('GAGNANT') || lib === 'G' || lib.includes('SG') || lib.includes('WIN')) {
+                                        if (!lib.includes('PLACE')) isMatch = true;
                                     } else if (pType.includes('GAGNANT') || pType === 'SG') {
                                         isMatch = true;
                                     } else if (lib === '' && !pType.includes('PLACE')) { 
                                         isMatch = true;
                                     }
                                 } else if (targetType === 'PLACE') {
-                                    if (lib.includes('PLACE') || lib === 'P' || lib.includes('SP') || lib.includes('2EM') || lib.includes('3EM') || lib.includes('SHOW')) {
-                                        isMatch = true;
-                                    } else if (pType.includes('PLACE') || pType === 'SP') {
-                                        isMatch = true;
-                                    } else if (lib === '' && pType.includes('PLACE')) {
-                                        isMatch = true;
-                                    }
+                                    if (lib.includes('PLACE') || lib === 'P' || lib.includes('SP') || lib.includes('SHOW')) isMatch = true;
+                                    else if (pType.includes('PLACE') || pType === 'SP') isMatch = true;
+                                    else if (lib === '' && pType.includes('PLACE')) isMatch = true;
                                 }
 
                                 if (isMatch) {
                                     let val = 0;
-                                    if (item.dividendePourUnEuro !== undefined) {
-                                        val = item.dividendePourUnEuro / 100;
-                                    } else if (item.dividendeEuro !== undefined) {
-                                        val = item.dividendeEuro;
-                                    } else if (item.gainEuro !== undefined) {
-                                        val = item.gainEuro;
-                                    } else {
+                                    if (item.dividendePourUnEuro !== undefined) val = item.dividendePourUnEuro / 100;
+                                    else if (item.dividendeEuro !== undefined) val = item.dividendeEuro;
+                                    else if (item.gainEuro !== undefined) val = item.gainEuro;
+                                    else {
                                         let rawM = item.rapport || item.dividende || item.montant;
                                         if (rawM !== undefined && rawM !== null) {
                                             val = parseFloat(String(rawM).replace(',', '.'));
                                             if (val > 100) val = val / 100; 
                                         }
                                     }
-
-                                    if (val > 0 && val > foundGain) {
-                                        foundGain = val;
-                                    }
+                                    if (val > 0 && val > foundGain) foundGain = val;
                                 }
                             }
                         });
@@ -604,7 +564,7 @@
                 let famille = (group.famillePari || "").toUpperCase();
                 let details = group.rapports || group.dividendes || group.lesRapports || [];
 
-                if (pType.includes('COUPLE') || pType.includes('CG') || pType.includes('CP') || famille.includes('COUPLE') || pType.includes('JUMELE') || pType.includes('E-COUPLE')) {
+                if (pType.includes('COUPLE') || pType.includes('CG') || pType.includes('CP') || famille.includes('COUPLE') || pType.includes('JUMELE')) {
                     if (Array.isArray(details)) {
                         details.forEach(item => {
                             let strCombo = "";
@@ -617,9 +577,7 @@
                             if (nums && nums.length >= 2) {
                                 let p1 = parseInt(nums[0], 10);
                                 let p2 = parseInt(nums[1], 10);
-                                if ((p1 == num1 && p2 == num2) || (p1 == num2 && p2 == num1)) {
-                                    matchCombo = true;
-                                }
+                                if ((p1 == num1 && p2 == num2) || (p1 == num2 && p2 == num1)) matchCombo = true;
                             }
 
                             if (matchCombo) {
@@ -629,15 +587,10 @@
                                 if (targetType === 'CG') {
                                     if (lib.includes('GAGNANT') || lib === 'G' || lib === 'CG' || pType.includes('GAGNANT') || pType === 'CG') {
                                         if (!lib.includes('PLACE') && !lib.includes('P')) isMatch = true;
-                                    } else if (lib === '' && !pType.includes('PLACE')) {
-                                        isMatch = true;
-                                    }
+                                    } else if (lib === '' && !pType.includes('PLACE')) isMatch = true;
                                 } else if (targetType === 'CP') {
-                                    if (lib.includes('PLACE') || lib === 'P' || lib === 'CP' || pType.includes('PLACE') || pType === 'CP') {
-                                        isMatch = true;
-                                    } else if (lib === '' && pType.includes('PLACE')) {
-                                        isMatch = true;
-                                    }
+                                    if (lib.includes('PLACE') || lib === 'P' || lib === 'CP' || pType.includes('PLACE') || pType === 'CP') isMatch = true;
+                                    else if (lib === '' && pType.includes('PLACE')) isMatch = true;
                                 }
 
                                 if (isMatch) {
@@ -652,9 +605,7 @@
                                             if (val > 100) val = val / 100;
                                         }
                                     }
-                                    if (val > 0 && val > foundGain) {
-                                        foundGain = val;
-                                    }
+                                    if (val > 0 && val > foundGain) foundGain = val;
                                 }
                             }
                         });
@@ -681,19 +632,27 @@
             let cNum = race.numOrdre || (parseInt(rIdx, 10) + 1);
 
             try {
-                const res = await fetch(`/api/courses?date=${ddmmyyyy}&r=${rNum}&c=${cNum}`);
-                const data = await res.json();
+                // Appel API via Double Moteur
+                const data = await fetchPmuData(`${ddmmyyyy}/R${rNum}/C${cNum}`);
                 let partants = data.participants || [];
-                let rapportsData = data.rapports;
+                
+                // Securité si PMU masque les partants dans le résumé de la course
+                if (partants.length === 0) {
+                    try {
+                        let pData = await fetchPmuData(`${ddmmyyyy}/R${rNum}/C${cNum}/participants`);
+                        if (Array.isArray(pData)) partants = pData;
+                        else if (pData && pData.participants) partants = pData.participants;
+                    } catch(e) {}
+                }
+
+                let rapportsData = data.rapports || [];
 
                 let arrivalBlock = document.getElementById('arrivalBlock');
                 let arrivalList = document.getElementById('arrivalList');
                 arrivalList.innerHTML = '';
                 let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0).sort((a, b) => a.ordreArrivee - b.ordreArrivee);
 
-                let hasArrival = arrivees.length > 0;
-
-                if (hasArrival) {
+                if (arrivees.length > 0) {
                     arrivalBlock.classList.remove('hidden');
                     arrivees.slice(0, 5).forEach((p) => {
                         let div = document.createElement('div');
@@ -739,7 +698,6 @@
                                 hasReports = true;
                                 let combo = r.combinaison || r.cheval || r.numeroCheval ? ` (N°${r.combinaison || r.cheval || r.numeroCheval})` : '';
                                 let lib = r.libelleRapport || r.libelle || typePari;
-                                
                                 let div = document.createElement('div');
                                 div.className = "bg-zinc-800/80 p-2.5 rounded-xl border border-zinc-700 flex justify-between items-center";
                                 div.innerHTML = `<span class="text-zinc-400 font-medium">${lib}${combo} :</span> <span class="text-emerald-400 font-bold">${val.toFixed(2)} €</span>`;
@@ -758,10 +716,15 @@
                 if (baseHorse) {
                     document.getElementById('top1Name').textContent = `${baseHorse.num}. ${baseHorse.nom}`;
                     document.getElementById('top1Stats').textContent = `Confiance : ${baseHorse.baseScore}% | Cote : ${baseHorse.coteDisplay}`;
+                } else {
+                    document.getElementById('top1Name').textContent = `Attente cotes...`;
                 }
+                
                 if (nuggetHorse) {
                     document.getElementById('top2Name').textContent = `${nuggetHorse.num}. ${nuggetHorse.nom}`;
                     document.getElementById('top2Stats').textContent = `Potentiel : ${nuggetHorse.nuggetScore}% | Cote : ${nuggetHorse.coteDisplay}`;
+                } else {
+                    document.getElementById('top2Name').textContent = `Attente cotes...`;
                 }
 
                 processed.sort((a, b) => b.baseScore - a.baseScore);
@@ -861,7 +824,6 @@
             let monthsGrid = document.getElementById('monthsGrid');
             monthsGrid.innerHTML = '';
 
-            // Parcours des 12 mois de l'année sélectionnée
             for (let m = 0; m < 12; m++) {
                 let mBaseGag = 0, mBasePla = 0, mPepGag = 0, mPepPla = 0, mCplGag = 0, mCplPla = 0;
                 let daysInMonth = new Date(year, m + 1, 0).getDate(); 
@@ -878,8 +840,6 @@
 
                 if (mBaseGag !== 0 || mBasePla !== 0 || mPepGag !== 0 || mPepPla !== 0 || mCplGag !== 0 || mCplPla !== 0) {
                     let div = document.createElement('div');
-                    
-                    // Met le mois actuellement visionné en surbrillance
                     let isCurrentViewMonth = (m === currentViewDate.getMonth());
                     div.className = isCurrentViewMonth 
                         ? "bg-zinc-800 p-2 rounded-xl border border-emerald-500/50 mb-2 shadow-lg" 
@@ -917,7 +877,6 @@
 
         async function calculateDailyStats(isAuto = false) {
             let statsProgress = document.getElementById('statsProgress');
-            
             let statBase = document.getElementById('statBase');
             let statPepite = document.getElementById('statPepite');
             let statCouple = document.getElementById('statCouple');
@@ -934,12 +893,9 @@
                 statBase.textContent = `G: 0 | P: 0 / 0`;
                 statPepite.textContent = `G: 0 | P: 0 / 0`;
                 statCouple.textContent = `G: 0 | P: 0 / 0`;
-                gainBaseGag.textContent = `--`;
-                gainBasePla.textContent = `--`;
-                gainPepiteGag.textContent = `--`;
-                gainPepitePla.textContent = `--`;
-                gainCoupleGag.textContent = `--`;
-                gainCouplePla.textContent = `--`;
+                gainBaseGag.textContent = `--`; gainBasePla.textContent = `--`;
+                gainPepiteGag.textContent = `--`; gainPepitePla.textContent = `--`;
+                gainCoupleGag.textContent = `--`; gainCouplePla.textContent = `--`;
                 statGlobal.innerHTML = "";
                 statsProgress.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Analyse en cours...";
             }
@@ -974,16 +930,12 @@
             let baseGagCount = 0, basePlaCount = 0;
             let pepiteGagCount = 0, pepitePlaCount = 0;
             let coupleGagCount = 0, couplePlaCount = 0;
-            
             let totalGainBaseGag = 0, totalGainBasePla = 0;
             let totalGainPepiteGag = 0, totalGainPepitePla = 0;
             let totalGainCoupleGag = 0, totalGainCouplePla = 0;
-
             let costBaseGag = 0, costCplGag = 0, costCplPla = 0, costPepGag = 0, costPepPla = 0;
-            let costBasePla = 0, mBasePla = 2; // Martingale Base Placé
-            
-            let coursesValidees = 0;
-            let coursesValideesCP = 0;
+            let costBasePla = 0, mBasePla = 2;
+            let coursesValidees = 0, coursesValideesCP = 0;
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
@@ -998,16 +950,21 @@
                     raceData = validatedRacesCache[cacheKey];
                 } else {
                     try {
-                        const res = await fetch(`/api/courses?date=${ddmmyyyy}&r=${r.rNum}&c=${r.cNum}`);
-                        if (res.ok) {
-                            const data = await res.json();
-                            let partants = data.participants || [];
-                            let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0);
-                            let rapportsList = Array.isArray(data.rapports) ? data.rapports : (data.rapports?.lesRapports || data.rapports?.rapports || []);
-                            
-                            raceData = { partants, arrivees, rapportsList, isComplete: rapportsList.length > 0 };
-                            if (raceData.isComplete) validatedRacesCache[cacheKey] = raceData;
+                        const data = await fetchPmuData(`${ddmmyyyy}/R${r.rNum}/C${r.cNum}`);
+                        let partants = data.participants || [];
+                        if (partants.length === 0) {
+                            try {
+                                let pData = await fetchPmuData(`${ddmmyyyy}/R${r.rNum}/C${r.cNum}/participants`);
+                                if (Array.isArray(pData)) partants = pData;
+                                else if (pData && pData.participants) partants = pData.participants;
+                            } catch(e) {}
                         }
+                        
+                        let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0);
+                        let rapportsList = Array.isArray(data.rapports) ? data.rapports : (data.rapports?.lesRapports || data.rapports?.rapports || []);
+                        
+                        raceData = { partants, arrivees, rapportsList, isComplete: rapportsList.length > 0 };
+                        if (raceData.isComplete) validatedRacesCache[cacheKey] = raceData;
                     } catch (e) { }
                 }
 
@@ -1023,21 +980,14 @@
                     if (baseH) {
                         let gGag = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
                         if (gGag === 0 && baseArr === 1) gGag = baseH.cote; 
-                        
                         costBaseGag += 1; 
-                        if (gGag > 0) {
-                            baseGagCount++;
-                            totalGainBaseGag += gGag;
-                        }
+                        if (gGag > 0) { baseGagCount++; totalGainBaseGag += gGag; }
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
                         if (gPla === 0 && baseArr >= 1 && baseArr <= 3) gPla = Math.max(1.1, baseH.cote / 3); 
-                        
                         costBasePla += mBasePla; 
                         if (gPla > 0) {
-                            basePlaCount++;
-                            totalGainBasePla += gPla * mBasePla;
-                            mBasePla = 2; // Reset
+                            basePlaCount++; totalGainBasePla += gPla * mBasePla; mBasePla = 2; 
                         } else {
                             mBasePla *= 2; 
                         }
@@ -1046,55 +996,36 @@
                     if (nuggetH) {
                         let gGag = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
                         if (gGag === 0 && nuggetArr === 1) gGag = nuggetH.cote; 
-                        
                         costPepGag += 1;
-                        if (gGag > 0) {
-                            pepiteGagCount++;
-                            totalGainPepiteGag += gGag;
-                        }
+                        if (gGag > 0) { pepiteGagCount++; totalGainPepiteGag += gGag; }
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
                         if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
-                        
                         costPepPla += 1; 
-                        if (gPla > 0) {
-                            pepitePlaCount++;
-                            totalGainPepitePla += gPla;
-                        }
+                        if (gPla > 0) { pepitePlaCount++; totalGainPepitePla += gPla; }
                     }
 
                     if (baseH && nuggetH) {
                         let cg = extractCoupleGain(raceData.rapportsList, baseH.num, nuggetH.num, 'CG');
                         let isCG = ((baseArr === 1 && nuggetArr === 2) || (baseArr === 2 && nuggetArr === 1));
                         if (cg === 0 && isCG) cg = baseH.cote + nuggetH.cote; 
-
                         costCplGag += 1;
-                        if (cg > 0) {
-                            coupleGagCount++;
-                            totalGainCoupleGag += cg;
-                        }
+                        if (cg > 0) { coupleGagCount++; totalGainCoupleGag += cg; }
                         
                         if (raceData.partants.length >= 8) {
                             coursesValideesCP++;
                             let cp = extractCoupleGain(raceData.rapportsList, baseH.num, nuggetH.num, 'CP');
                             let isCP = (baseArr <= 3 && nuggetArr <= 3 && baseArr !== nuggetArr);
                             if (cp === 0 && isCP) cp = Math.max(2.0, (baseH.cote + nuggetH.cote) / 3); 
-                            
                             costCplPla += 1;
-                            if (cp > 0) {
-                                couplePlaCount++;
-                                totalGainCouplePla += cp;
-                            }
+                            if (cp > 0) { couplePlaCount++; totalGainCouplePla += cp; }
                         }
                     }
 
                     if (!isAuto) {
-                        let nBG = totalGainBaseGag - costBaseGag;
-                        let nBP = totalGainBasePla - costBasePla;
-                        let nPG = totalGainPepiteGag - costPepGag;
-                        let nPP = totalGainPepitePla - costPepPla;
-                        let nCG = totalGainCoupleGag - costCplGag;
-                        let nCP = totalGainCouplePla - costCplPla; 
+                        let nBG = totalGainBaseGag - costBaseGag; let nBP = totalGainBasePla - costBasePla;
+                        let nPG = totalGainPepiteGag - costPepGag; let nPP = totalGainPepitePla - costPepPla;
+                        let nCG = totalGainCoupleGag - costCplGag; let nCP = totalGainCouplePla - costCplPla; 
 
                         statBase.textContent = `G: ${baseGagCount} | P: ${basePlaCount} / ${coursesValidees}`;
                         statPepite.textContent = `G: ${pepiteGagCount} | P: ${pepitePlaCount} / ${coursesValidees}`;
@@ -1102,10 +1033,8 @@
                         
                         gainBaseGag.innerHTML = `${totalGainBaseGag.toFixed(2)} €<br><span class="${nBG >= 0 ? 'text-emerald-400' : 'text-red-400'}">Net: ${nBG >= 0 ? '+' : ''}${nBG.toFixed(2)}€</span>`;
                         gainBasePla.innerHTML = `${totalGainBasePla.toFixed(2)} €<br><span class="${nBP >= 0 ? 'text-emerald-400' : 'text-red-400'}">Net: ${nBP >= 0 ? '+' : ''}${nBP.toFixed(2)}€</span>`;
-                        
                         gainPepiteGag.innerHTML = `${totalGainPepiteGag.toFixed(2)} €<br><span class="${nPG >= 0 ? 'text-amber-400' : 'text-red-400'}">Net: ${nPG >= 0 ? '+' : ''}${nPG.toFixed(2)}€</span>`;
                         gainPepitePla.innerHTML = `${totalGainPepitePla.toFixed(2)} €<br><span class="${nPP >= 0 ? 'text-amber-400' : 'text-red-400'}">Net: ${nPP >= 0 ? '+' : ''}${nPP.toFixed(2)}€</span>`;
-                        
                         gainCoupleGag.innerHTML = `${totalGainCoupleGag.toFixed(2)} €<br><span class="${nCG >= 0 ? 'text-blue-400' : 'text-red-400'}">Net: ${nCG >= 0 ? '+' : ''}${nCG.toFixed(2)}€</span>`;
                         gainCouplePla.innerHTML = `${totalGainCouplePla.toFixed(2)} €<br><span class="${nCP >= 0 ? 'text-blue-400' : 'text-red-400'}">Net: ${nCP >= 0 ? '+' : ''}${nCP.toFixed(2)}€</span>`;
 
@@ -1114,19 +1043,15 @@
                             <div class="mb-1 text-zinc-300">Investissement en cours : <b>${totalInvesti} €</b>...</div>
                             <div class="text-emerald-400 text-[10px]">Martingale Base Placé : <b>${costBasePla}€</b> joués (Prochaine mise : ${mBasePla}€)</div>
                         `;
-
                         await new Promise(r => setTimeout(r, 20));
                     }
                 }
             }
 
             if (coursesValidees > 0) {
-                let netBaseGag = totalGainBaseGag - costBaseGag;
-                let netBasePla = totalGainBasePla - costBasePla;
-                let netPepiteGag = totalGainPepiteGag - costPepGag;
-                let netPepitePla = totalGainPepitePla - costPepPla;
-                let netCoupleGag = totalGainCoupleGag - costCplGag;
-                let netCouplePla = totalGainCouplePla - costCplPla; 
+                let netBaseGag = totalGainBaseGag - costBaseGag; let netBasePla = totalGainBasePla - costBasePla;
+                let netPepiteGag = totalGainPepiteGag - costPepGag; let netPepitePla = totalGainPepitePla - costPepPla;
+                let netCoupleGag = totalGainCoupleGag - costCplGag; let netCouplePla = totalGainCouplePla - costCplPla; 
 
                 statBase.textContent = `G: ${baseGagCount} | P: ${basePlaCount} / ${coursesValidees}`;
                 statPepite.textContent = `G: ${pepiteGagCount} | P: ${pepitePlaCount} / ${coursesValidees}`;
@@ -1139,9 +1064,7 @@
                 gainCoupleGag.innerHTML = `${totalGainCoupleGag.toFixed(2)} €<br><span class="${netCoupleGag >= 0 ? 'text-blue-400' : 'text-red-400'}">Net: ${netCoupleGag >= 0 ? '+' : ''}${netCoupleGag.toFixed(2)}€</span>`;
                 gainCouplePla.innerHTML = `${totalGainCouplePla.toFixed(2)} €<br><span class="${netCouplePla >= 0 ? 'text-blue-400' : 'text-red-400'}">Net: ${netCouplePla >= 0 ? '+' : ''}${netCouplePla.toFixed(2)}€</span>`;
                 
-                if (!isAuto) {
-                    statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> Bilan en direct (${coursesValidees} courses)</span>`;
-                }
+                if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> Bilan en direct (${coursesValidees} courses)</span>`;
 
                 let totalInvesti = costBaseGag + costBasePla + costPepGag + costPepPla + costCplGag + costCplPla;
                 statGlobal.innerHTML = `
@@ -1149,20 +1072,12 @@
                     <div class="text-emerald-400 text-[10px]">Martingale Base Placé : <b>${costBasePla}€</b> joués (Prochaine mise : ${mBasePla}€)</div>
                 `;
 
-                // SAUVEGARDE ET RECALCUL MENSUEL :
                 localStorage.setItem(`pmu_stats_${ddmmyyyy}`, JSON.stringify({
-                    baseGag: netBaseGag,
-                    basePla: netBasePla,
-                    pepGag: netPepiteGag,
-                    pepPla: netPepitePla,
-                    cplGag: netCoupleGag,
-                    cplPla: netCouplePla
+                    baseGag: netBaseGag, basePla: netBasePla, pepGag: netPepiteGag, 
+                    pepPla: netPepitePla, cplGag: netCoupleGag, cplPla: netCouplePla
                 }));
                 
-                // On met à jour l'affichage de l'historique seulement si le panneau est ouvert
-                if (!document.getElementById('historyBlock').classList.contains('hidden')) {
-                    showHistoryStats();
-                }
+                if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
             }
         }
 
