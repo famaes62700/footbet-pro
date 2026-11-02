@@ -286,33 +286,6 @@
             return '<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">PLAT</span>';
         }
 
-        // --- FONCTION MAGIQUE DE RECUPERATION DES CHEVAUX & COTES ---
-        async function getFullRaceData(dateStr, rNum, cNum) {
-            let partants = [];
-            let rapportsList = [];
-            
-            try {
-                // On attaque le chemin /participants de l'API PMU
-                let pRes = await fetch(`/api/pmu/${dateStr}/R${rNum}/C${cNum}/participants`);
-                if(pRes.ok) {
-                    let pData = await pRes.json();
-                    partants = pData.participants || (Array.isArray(pData) ? pData : []);
-                }
-            } catch(e) {}
-
-            try {
-                // On attaque le chemin /rapports-definitifs de l'API PMU
-                let rRes = await fetch(`/api/pmu/${dateStr}/R${rNum}/C${cNum}/rapports-definitifs`);
-                if(rRes.ok) {
-                    let rData = await rRes.json();
-                    if (Array.isArray(rData)) rapportsList = rData;
-                    else rapportsList = rData.rapports || rData.lesRapports || [];
-                }
-            } catch(e) {}
-
-            return { partants, rapportsList };
-        }
-
         async function loadLivePmu() {
             const dateInput = document.getElementById('raceDate').value;
             const statusText = document.getElementById('statusText');
@@ -326,8 +299,7 @@
             const ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
 
             try {
-                // Utilisation du filtre specialisation=INTERNET qui donne les 14/9 réunions
-                const res = await fetch(`/api/pmu/${ddmmyyyy}?specialisation=INTERNET`);
+                const res = await fetch(`/api/courses?date=${ddmmyyyy}&_t=${Date.now()}`);
                 if (!res.ok) throw new Error("Réseau");
                 const data = await res.json();
                 
@@ -354,7 +326,8 @@
                         select.appendChild(opt);
                     });
                     
-                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Connecté</span>`;
+                    // CORRECTION ICI : Ajout du nombre de réunions
+                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${reunions.length} réunions)</span>`;
                     
                     if (currentVal === "") autoSelectCurrentRace();
                     else select.value = currentVal;
@@ -649,8 +622,11 @@
             let cNum = race.numOrdre || (parseInt(rIdx, 10) + 1);
 
             try {
-                // Utilisation de la nouvelle fonction magique
-                let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, rNum, cNum);
+                const res = await fetch(`/api/courses?date=${ddmmyyyy}&r=${rNum}&c=${cNum}&_t=${Date.now()}`);
+                const data = await res.json();
+                
+                let partants = data.participants || [];
+                let rapportsData = data.rapports || [];
 
                 let arrivalBlock = document.getElementById('arrivalBlock');
                 let arrivalList = document.getElementById('arrivalList');
@@ -678,8 +654,9 @@
                 let reportsGrid = document.getElementById('reportsGrid');
                 reportsGrid.innerHTML = '';
                 let hasReports = false;
-                
-                rapportsList.forEach(repGroup => {
+                let listeRapports = Array.isArray(rapportsData) ? rapportsData : (rapportsData?.lesRapports || rapportsData?.rapports || []);
+
+                listeRapports.forEach(repGroup => {
                     let typePari = (repGroup.typePari || repGroup.libellePari || repGroup.codePari || "").toUpperCase();
                     let famille = (repGroup.famillePari || "").toUpperCase();
                     
@@ -953,11 +930,18 @@
                 if (validatedRacesCache[cacheKey]) {
                     raceData = validatedRacesCache[cacheKey];
                 } else {
-                    let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum);
-                    let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0);
-                    
-                    raceData = { partants, arrivees, rapportsList, isComplete: rapportsList.length > 0 };
-                    if (raceData.isComplete) validatedRacesCache[cacheKey] = raceData;
+                    try {
+                        const res = await fetch(`/api/courses?date=${ddmmyyyy}&r=${r.rNum}&c=${r.cNum}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            let partants = data.participants || [];
+                            let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0);
+                            let rapportsList = Array.isArray(data.rapports) ? data.rapports : (data.rapports?.lesRapports || data.rapports?.rapports || []);
+                            
+                            raceData = { partants, arrivees, rapportsList, isComplete: rapportsList.length > 0 };
+                            if (raceData.isComplete) validatedRacesCache[cacheKey] = raceData;
+                        }
+                    } catch (e) { }
                 }
 
                 if (raceData && (raceData.arrivees.length > 0 || raceData.rapportsList.length > 0)) {
