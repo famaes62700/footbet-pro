@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PMU Direct - Bankroll Mensuelle</title>
+    <title>Fab Turf - Mise Proportionnelle</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="PMU Direct">
+    <meta name="apple-mobile-web-app-title" content="Fab Turf">
     
     <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=PMU&background=00965e&color=fff&size=512&font-size=0.4&v=2">
     <link rel="icon" type="image/png" href="https://ui-avatars.com/api/?name=PMU&background=00965e&color=fff&size=512&font-size=0.4&v=2">
@@ -15,23 +15,22 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none">
+<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-10">
 
     <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center">
-                <i class="fa-solid fa-horse-head mr-2"></i>PMU Direct
+                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf
             </h1>
             <div class="flex items-center space-x-3">
+                <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold">
+                    Bankroll: <span id="headerBankroll">100.00 €</span>
+                </div>
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadLivePmu()">
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Historique Mensuel">
                     <i class="fa-solid fa-calendar-days"></i>
-                    <span class="absolute -top-1 -right-1 flex h-3 w-3">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                    </span>
                 </button>
             </div>
         </div>
@@ -92,7 +91,7 @@
             
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-emerald-500/30 flex flex-col justify-between space-y-2 relative">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">MARTINGALE PLACÉ</div>
+                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">MISE PROPORTIONNELLE (2%)</div>
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] uppercase font-bold text-emerald-400">Base Solide</span>
                         <span id="statBase" class="text-[10px] font-bold text-white">G: 0 | P: 0 / 0</span>
@@ -142,7 +141,7 @@
                 </div>
             </div>
             <div class="text-center text-[10px] text-zinc-400 mt-3 font-semibold bg-zinc-800/60 py-2.5 rounded-xl border border-zinc-700/50">
-                Mise 1€/jeu, SAUF Base Placé : Martingale (départ 2€, x2 si perte, reset à 2€ si gain).
+                Gestion intelligente : Mise calculée automatiquement à 2% du capital actuel par jeu (Sécurisé & Progressif).
             </div>
             <div id="statGlobal" class="text-center text-[11px] text-zinc-300 mt-2 font-medium flex flex-col items-center"></div>
         </div>
@@ -230,6 +229,10 @@
         let liveMeetingsData = [];
         let autoTransitionDone = false;
         let validatedRacesCache = {}; 
+        
+        // Capital initial de départ (modifiable si besoin)
+        const INITIAL_BANKROLL = 100.0;
+        const STAKE_PERCENT = 0.02; // 2% du capital par mise
 
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
@@ -286,13 +289,10 @@
             return '<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">PLAT</span>';
         }
 
-        // --- NOUVELLE FONCTION MAGIQUE SANS BACKEND ---
         async function getFullRaceData(dateStr, rNum, cNum) {
             let partants = [];
             let rapportsList = [];
-            
             try {
-                // Route directe via vercel.json vers /participants
                 let pRes = await fetch(`/api/pmu/${dateStr}/R${rNum}/C${cNum}/participants`);
                 if(pRes.ok) {
                     let pData = await pRes.json();
@@ -301,7 +301,6 @@
             } catch(e) {}
 
             try {
-                // Route directe via vercel.json vers /rapports-definitifs
                 let rRes = await fetch(`/api/pmu/${dateStr}/R${rNum}/C${cNum}/rapports-definitifs`);
                 if(rRes.ok) {
                     let rData = await rRes.json();
@@ -326,7 +325,6 @@
             const ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
 
             try {
-                // Route directe via vercel.json + paramètre magique INTERNET
                 const res = await fetch(`/api/pmu/${ddmmyyyy}?specialisation=INTERNET`);
                 if (!res.ok) throw new Error("Réseau");
                 const data = await res.json();
@@ -528,7 +526,7 @@
                 let famille = (group.famillePari || "").toUpperCase();
                 let details = group.rapports || group.dividendes || group.lesRapports || [];
 
-                if (pType.includes('SIMPLE') || pType.includes('SG') || pType.includes('SP') || famille.includes('SIMPLE') || pType.includes('INTER') || pType.includes('COUPLE')) {
+                if (pType.includes('SIMPLE') || pType.includes('SG') || pType.includes('SP') || famille.includes('SIMPLE')) {
                     if (Array.isArray(details)) {
                         details.forEach(item => {
                             let combo = String(item.combinaison || item.cheval || item.numeroCheval || item.partant || "").trim();
@@ -559,7 +557,7 @@
                                         let rawM = item.rapport || item.dividende || item.montant;
                                         if (rawM !== undefined && rawM !== null) {
                                             val = parseFloat(String(rawM).replace(',', '.'));
-                                            if (val > 100) val = val / 100;
+                                            if (val > 100) val = val / 100; 
                                         }
                                     }
                                     if (val > 0 && val > foundGain) foundGain = val;
@@ -649,7 +647,6 @@
             let cNum = race.numOrdre || (parseInt(rIdx, 10) + 1);
 
             try {
-                // Utilisation de la route directe Vercel
                 let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, rNum, cNum);
 
                 let arrivalBlock = document.getElementById('arrivalBlock');
@@ -937,9 +934,11 @@
             let totalGainBaseGag = 0, totalGainBasePla = 0;
             let totalGainPepiteGag = 0, totalGainPepitePla = 0;
             let totalGainCoupleGag = 0, totalGainCouplePla = 0;
-            let costBaseGag = 0, costCplGag = 0, costCplPla = 0, costPepGag = 0, costPepPla = 0;
-            let costBasePla = 0, mBasePla = 2;
+            let costBaseGag = 0, costCplGag = 0, costCplPla = 0, costPepGag = 0, costPepPla = 0, costBasePla = 0;
             let coursesValidees = 0, coursesValideesCP = 0;
+
+            // Banque dynamique glissante pour la proportionnelle
+            let currentBankroll = INITIAL_BANKROLL;
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
@@ -953,7 +952,6 @@
                 if (validatedRacesCache[cacheKey]) {
                     raceData = validatedRacesCache[cacheKey];
                 } else {
-                    // Utilisation de la route directe Vercel pour le recalcul massif
                     let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum);
                     let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0);
                     
@@ -970,104 +968,140 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
+                    // MISE PROPORTIONNELLE AU CAPITAL ACTUEL (Ex: 2% du capital)
+                    let currentStake = Math.max(0.5, currentBankroll * STAKE_PERCENT);
+
+                    // 1. BASE GAGNANT
                     if (baseH) {
                         let gGag = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
                         if (gGag === 0 && baseArr === 1) gGag = baseH.cote; 
-                        costBaseGag += 1; 
-                        if (gGag > 0) { baseGagCount++; totalGainBaseGag += gGag; }
+                        costBaseGag += currentStake; 
+                        let netRaceBaseGag = 0;
+                        if (gGag > 0) { 
+                            baseGagCount++; 
+                            netRaceBaseGag = (gGag * currentStake) - currentStake;
+                            totalGainBaseGag += netRaceBaseGag; 
+                        } else {
+                            totalGainBaseGag -= currentStake;
+                            netRaceBaseGag = -currentStake;
+                        }
+                        currentBankroll += netRaceBaseGag;
 
+                        // 2. BASE PLACÉ (Remplace la martingale)
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
                         if (gPla === 0 && baseArr >= 1 && baseArr <= 3) gPla = Math.max(1.1, baseH.cote / 3); 
-                        costBasePla += mBasePla; 
+                        costBasePla += currentStake; 
+                        let netRaceBasePla = 0;
                         if (gPla > 0) {
-                            basePlaCount++; totalGainBasePla += gPla * mBasePla; mBasePla = 2; 
+                            basePlaCount++; 
+                            netRaceBasePla = (gPla * currentStake) - currentStake;
+                            totalGainBasePla += netRaceBasePla; 
                         } else {
-                            mBasePla *= 2; 
+                            totalGainBasePla -= currentStake;
+                            netRaceBasePla = -currentStake;
                         }
+                        currentBankroll += netRaceBasePla;
                     }
 
+                    // 3. PÉPITE
                     if (nuggetH) {
                         let gGag = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
                         if (gGag === 0 && nuggetArr === 1) gGag = nuggetH.cote; 
-                        costPepGag += 1;
-                        if (gGag > 0) { pepiteGagCount++; totalGainPepiteGag += gGag; }
+                        costPepGag += currentStake;
+                        if (gGag > 0) { 
+                            pepiteGagCount++; 
+                            let net = (gGag * currentStake) - currentStake;
+                            totalGainPepiteGag += net; 
+                            currentBankroll += net;
+                        } else {
+                            totalGainPepiteGag -= currentStake;
+                            currentBankroll -= currentStake;
+                        }
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
                         if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
-                        costPepPla += 1; 
-                        if (gPla > 0) { pepitePlaCount++; totalGainPepitePla += gPla; }
+                        costPepPla += currentStake; 
+                        if (gPla > 0) { 
+                            pepitePlaCount++; 
+                            let net = (gPla * currentStake) - currentStake;
+                            totalGainPepitePla += net; 
+                            currentBankroll += net;
+                        } else {
+                            totalGainPepitePla -= currentStake;
+                            currentBankroll -= currentStake;
+                        }
                     }
 
+                    // 4. COUPLES
                     if (baseH && nuggetH) {
                         let cg = extractCoupleGain(raceData.rapportsList, baseH.num, nuggetH.num, 'CG');
                         let isCG = ((baseArr === 1 && nuggetArr === 2) || (baseArr === 2 && nuggetArr === 1));
                         if (cg === 0 && isCG) cg = baseH.cote + nuggetH.cote; 
-                        costCplGag += 1;
-                        if (cg > 0) { coupleGagCount++; totalGainCoupleGag += cg; }
+                        costCplGag += currentStake;
+                        if (cg > 0) { 
+                            coupleGagCount++; 
+                            let net = (cg * currentStake) - currentStake;
+                            totalGainCoupleGag += net; 
+                            currentBankroll += net;
+                        } else {
+                            totalGainCoupleGag -= currentStake;
+                            currentBankroll -= currentStake;
+                        }
                         
                         if (raceData.partants.length >= 8) {
                             coursesValideesCP++;
                             let cp = extractCoupleGain(raceData.rapportsList, baseH.num, nuggetH.num, 'CP');
                             let isCP = (baseArr <= 3 && nuggetArr <= 3 && baseArr !== nuggetArr);
                             if (cp === 0 && isCP) cp = Math.max(2.0, (baseH.cote + nuggetH.cote) / 3); 
-                            costCplPla += 1;
-                            if (cp > 0) { couplePlaCount++; totalGainCouplePla += cp; }
+                            costCplPla += currentStake;
+                            if (cp > 0) { 
+                                couplePlaCount++; 
+                                let net = (cp * currentStake) - currentStake;
+                                totalGainCouplePla += net; 
+                                currentBankroll += net;
+                            } else {
+                                totalGainCouplePla -= currentStake;
+                                currentBankroll -= currentStake;
+                            }
                         }
                     }
 
                     if (!isAuto) {
-                        let nBG = totalGainBaseGag - costBaseGag; let nBP = totalGainBasePla - costBasePla;
-                        let nPG = totalGainPepiteGag - costPepGag; let nPP = totalGainPepitePla - costPepPla;
-                        let nCG = totalGainCoupleGag - costCplGag; let nCP = totalGainCouplePla - costCplPla; 
-
                         statBase.textContent = `G: ${baseGagCount} | P: ${basePlaCount} / ${coursesValidees}`;
                         statPepite.textContent = `G: ${pepiteGagCount} | P: ${pepitePlaCount} / ${coursesValidees}`;
                         statCouple.textContent = `G: ${coupleGagCount} / ${coursesValidees} | P: ${couplePlaCount} / ${coursesValideesCP}`;
                         
-                        gainBaseGag.innerHTML = `${totalGainBaseGag.toFixed(2)} €<br><span class="${nBG >= 0 ? 'text-emerald-400' : 'text-red-400'}">Net: ${nBG >= 0 ? '+' : ''}${nBG.toFixed(2)}€</span>`;
-                        gainBasePla.innerHTML = `${totalGainBasePla.toFixed(2)} €<br><span class="${nBP >= 0 ? 'text-emerald-400' : 'text-red-400'}">Net: ${nBP >= 0 ? '+' : ''}${nBP.toFixed(2)}€</span>`;
-                        gainPepiteGag.innerHTML = `${totalGainPepiteGag.toFixed(2)} €<br><span class="${nPG >= 0 ? 'text-amber-400' : 'text-red-400'}">Net: ${nPG >= 0 ? '+' : ''}${nPG.toFixed(2)}€</span>`;
-                        gainPepitePla.innerHTML = `${totalGainPepitePla.toFixed(2)} €<br><span class="${nPP >= 0 ? 'text-amber-400' : 'text-red-400'}">Net: ${nPP >= 0 ? '+' : ''}${nPP.toFixed(2)}€</span>`;
-                        gainCoupleGag.innerHTML = `${totalGainCoupleGag.toFixed(2)} €<br><span class="${nCG >= 0 ? 'text-blue-400' : 'text-red-400'}">Net: ${nCG >= 0 ? '+' : ''}${nCG.toFixed(2)}€</span>`;
-                        gainCouplePla.innerHTML = `${totalGainCouplePla.toFixed(2)} €<br><span class="${nCP >= 0 ? 'text-blue-400' : 'text-red-400'}">Net: ${nCP >= 0 ? '+' : ''}${nCP.toFixed(2)}€</span>`;
+                        gainBaseGag.innerHTML = `<span class="${totalGainBaseGag >= 0 ? 'text-emerald-400' : 'text-red-400'}">${totalGainBaseGag >= 0 ? '+' : ''}${totalGainBaseGag.toFixed(2)}€</span>`;
+                        gainBasePla.innerHTML = `<span class="${totalGainBasePla >= 0 ? 'text-emerald-400' : 'text-red-400'}">${totalGainBasePla >= 0 ? '+' : ''}${totalGainBasePla.toFixed(2)}€</span>`;
+                        gainPepiteGag.innerHTML = `<span class="${totalGainPepiteGag >= 0 ? 'text-amber-400' : 'text-red-400'}">${totalGainPepiteGag >= 0 ? '+' : ''}${totalGainPepiteGag.toFixed(2)}€</span>`;
+                        gainPepitePla.innerHTML = `<span class="${totalGainPepitePla >= 0 ? 'text-amber-400' : 'text-red-400'}">${totalGainPepitePla >= 0 ? '+' : ''}${totalGainPepitePla.toFixed(2)}€</span>`;
+                        gainCoupleGag.innerHTML = `<span class="${totalGainCoupleGag >= 0 ? 'text-blue-400' : 'text-red-400'}">${totalGainCoupleGag >= 0 ? '+' : ''}${totalGainCoupleGag.toFixed(2)}€</span>`;
+                        gainCouplePla.innerHTML = `<span class="${totalGainCouplePla >= 0 ? 'text-blue-400' : 'text-red-400'}">${totalGainCouplePla >= 0 ? '+' : ''}${totalGainCouplePla.toFixed(2)}€</span>`;
 
-                        let totalInvesti = costBaseGag + costBasePla + costPepGag + costPepPla + costCplGag + costCplPla;
-                        statGlobal.innerHTML = `
-                            <div class="mb-1 text-zinc-300">Investissement en cours : <b>${totalInvesti} €</b>...</div>
-                            <div class="text-emerald-400 text-[10px]">Martingale Base Placé : <b>${costBasePla}€</b> joués (Prochaine mise : ${mBasePla}€)</div>
-                        `;
+                        document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                         await new Promise(r => setTimeout(r, 20));
                     }
                 }
             }
 
             if (coursesValidees > 0) {
-                let netBaseGag = totalGainBaseGag - costBaseGag; let netBasePla = totalGainBasePla - costBasePla;
-                let netPepiteGag = totalGainPepiteGag - costPepGag; let netPepitePla = totalGainPepitePla - costPepPla;
-                let netCoupleGag = totalGainCoupleGag - costCplGag; let netCouplePla = totalGainCouplePla - costCplPla; 
-
                 statBase.textContent = `G: ${baseGagCount} | P: ${basePlaCount} / ${coursesValidees}`;
                 statPepite.textContent = `G: ${pepiteGagCount} | P: ${pepitePlaCount} / ${coursesValidees}`;
                 statCouple.textContent = `G: ${coupleGagCount} / ${coursesValidees} | P: ${couplePlaCount} / ${coursesValideesCP}`;
                 
-                gainBaseGag.innerHTML = `${totalGainBaseGag.toFixed(2)} €<br><span class="${netBaseGag >= 0 ? 'text-emerald-400' : 'text-red-400'}">Net: ${netBaseGag >= 0 ? '+' : ''}${netBaseGag.toFixed(2)}€</span>`;
-                gainBasePla.innerHTML = `${totalGainBasePla.toFixed(2)} €<br><span class="${netBasePla >= 0 ? 'text-emerald-400' : 'text-red-400'}">Net: ${netBasePla >= 0 ? '+' : ''}${netBasePla.toFixed(2)}€</span>`;
-                gainPepiteGag.innerHTML = `${totalGainPepiteGag.toFixed(2)} €<br><span class="${netPepiteGag >= 0 ? 'text-amber-400' : 'text-red-400'}">Net: ${netPepiteGag >= 0 ? '+' : ''}${netPepiteGag.toFixed(2)}€</span>`;
-                gainPepitePla.innerHTML = `${totalGainPepitePla.toFixed(2)} €<br><span class="${netPepitePla >= 0 ? 'text-amber-400' : 'text-red-400'}">Net: ${netPepitePla >= 0 ? '+' : ''}${netPepitePla.toFixed(2)}€</span>`;
-                gainCoupleGag.innerHTML = `${totalGainCoupleGag.toFixed(2)} €<br><span class="${netCoupleGag >= 0 ? 'text-blue-400' : 'text-red-400'}">Net: ${netCoupleGag >= 0 ? '+' : ''}${netCoupleGag.toFixed(2)}€</span>`;
-                gainCouplePla.innerHTML = `${totalGainCouplePla.toFixed(2)} €<br><span class="${netCouplePla >= 0 ? 'text-blue-400' : 'text-red-400'}">Net: ${netCouplePla >= 0 ? '+' : ''}${netCouplePla.toFixed(2)}€</span>`;
+                gainBaseGag.innerHTML = `<span class="${totalGainBaseGag >= 0 ? 'text-emerald-400' : 'text-red-400'}">${totalGainBaseGag >= 0 ? '+' : ''}${totalGainBaseGag.toFixed(2)}€</span>`;
+                gainBasePla.innerHTML = `<span class="${totalGainBasePla >= 0 ? 'text-emerald-400' : 'text-red-400'}">${totalGainBasePla >= 0 ? '+' : ''}${totalGainBasePla.toFixed(2)}€</span>`;
+                gainPepiteGag.innerHTML = `<span class="${totalGainPepiteGag >= 0 ? 'text-amber-400' : 'text-red-400'}">${totalGainPepiteGag >= 0 ? '+' : ''}${totalGainPepiteGag.toFixed(2)}€</span>`;
+                gainPepitePla.innerHTML = `<span class="${totalGainPepitePla >= 0 ? 'text-amber-400' : 'text-red-400'}">${totalGainPepitePla >= 0 ? '+' : ''}${totalGainPepitePla.toFixed(2)}€</span>`;
+                gainCoupleGag.innerHTML = `<span class="${totalGainCoupleGag >= 0 ? 'text-blue-400' : 'text-red-400'}">${totalGainCoupleGag >= 0 ? '+' : ''}${totalGainCoupleGag.toFixed(2)}€</span>`;
+                gainCouplePla.innerHTML = `<span class="${totalGainCouplePla >= 0 ? 'text-blue-400' : 'text-red-400'}">${totalGainCouplePla >= 0 ? '+' : ''}${totalGainCouplePla.toFixed(2)}€</span>`;
                 
-                if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> Bilan en direct (${coursesValidees} courses)</span>`;
-
-                let totalInvesti = costBaseGag + costBasePla + costPepGag + costPepPla + costCplGag + costCplPla;
-                statGlobal.innerHTML = `
-                    <div class="mb-1 text-zinc-300">Investissement total du jour : <b>${totalInvesti} €</b></div>
-                    <div class="text-emerald-400 text-[10px]">Martingale Base Placé : <b>${costBasePla}€</b> joués (Prochaine mise : ${mBasePla}€)</div>
-                `;
+                document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
+                if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> Bilan calculé (${coursesValidees} courses)</span>`;
 
                 localStorage.setItem(`pmu_stats_${ddmmyyyy}`, JSON.stringify({
-                    baseGag: netBaseGag, basePla: netBasePla, pepGag: netPepiteGag, 
-                    pepPla: netPepitePla, cplGag: netCoupleGag, cplPla: netCouplePla
+                    baseGag: totalGainBaseGag, basePla: totalGainBasePla, pepGag: totalGainPepiteGag, 
+                    pepPla: totalGainPepitePla, cplGag: totalGainCoupleGag, cplPla: totalGainCouplePla
                 }));
                 
                 if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
