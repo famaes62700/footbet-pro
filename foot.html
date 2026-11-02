@@ -87,7 +87,7 @@
         </div>
 
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex justify-between items-center text-xs text-zinc-300 shadow-md">
-            <span><i class="fa-solid fa-wallet mr-1.5 text-emerald-400"></i> Total Mises Engagées (Foot) :</span>
+            <span><i class="fa-solid fa-wallet mr-1.5 text-emerald-400"></i> Total Mises (Foot) :</span>
             <span id="totalSpentText" class="font-bold text-white">0.00 €</span>
         </div>
 
@@ -107,7 +107,6 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02; 
 
-        // Actualisation automatique toutes les 30 secondes
         setInterval(() => {
             let today = new Date().toISOString().split('T')[0];
             let selectedDate = document.getElementById('matchDate').value;
@@ -144,7 +143,7 @@
                     headers: { 'X-Auth-Token': FOOTBALL_API_KEY }
                 });
                 
-                if (!res.ok) throw new Error("Erreur réseau API Football");
+                if (!res.ok) throw new Error("Erreur réseau API");
                 const data = await res.json();
                 
                 currentMatches = data.matches || [];
@@ -181,9 +180,7 @@
             const comps = new Set();
             
             matches.forEach(m => {
-                if(m.competition && m.competition.name) {
-                    comps.add(m.competition.name);
-                }
+                if(m.competition && m.competition.name) comps.add(m.competition.name);
             });
             
             Array.from(comps).sort().forEach(c => {
@@ -213,21 +210,18 @@
 
         function applyFilters() {
             let filtered = currentMatches;
-            
-            if (isLiveFilterActive) {
-                filtered = filtered.filter(m => m.status === 'IN_PLAY' || m.status === 'PAUSED');
-            }
+            if (isLiveFilterActive) filtered = filtered.filter(m => m.status === 'IN_PLAY' || m.status === 'PAUSED');
             
             const selectedComp = document.getElementById('compSelect').value;
-            if (selectedComp !== "ALL") {
-                filtered = filtered.filter(m => m.competition && m.competition.name === selectedComp);
-            }
+            if (selectedComp !== "ALL") filtered = filtered.filter(m => m.competition && m.competition.name === selectedComp);
             
             renderMatches(filtered);
         }
 
-        // --- ALGORITHME DE PRÉDICTION MAISON ---
-        function computeAlgoPick(homeName, awayName, homeId, awayId) {
+        function computeAlgoPick(hName, aName, hId, aId) {
+            hName = String(hName || "");
+            aName = String(aName || "");
+            
             const powerHouses = [
                 "Real Madrid", "Barcelona", "Atletico", "Girona",
                 "Man City", "Manchester City", "Arsenal", "Liverpool", "Chelsea", "Tottenham", "Aston Villa",
@@ -237,27 +231,24 @@
                 "Sporting", "Benfica", "Porto", "PSV"
             ];
             
-            let hForce = 55; // Avantage domicile (+ fort)
-            let aForce = 35; // Désavantage extérieur
+            let hForce = 55; 
+            let aForce = 35; 
             
-            // Boost pour les grosses équipes
             powerHouses.forEach(p => {
-                if(homeName.includes(p)) hForce += 45;
-                if(awayName.includes(p)) aForce += 50; // Plus fort bonus si une grosse équipe joue à l'extérieur
+                if(hName.includes(p)) hForce += 45;
+                if(aName.includes(p)) aForce += 50; 
             });
             
-            // Facteur pseudo-aléatoire basé sur l'ID de l'équipe (pour simuler la forme du moment sur les petites équipes)
-            let hForm = (homeId || homeName.length) % 15;
-            let aForm = (awayId || awayName.length) % 15;
+            let hForm = (hId || hName.length) % 15;
+            let aForm = (aId || aName.length) % 15;
             
             hForce += hForm;
             aForce += aForm;
             
             let diff = hForce - aForce;
-            
-            if (diff > 14) return 'HOME'; // Victoire Domicile
-            if (diff < -8) return 'AWAY'; // Victoire Extérieur
-            return 'DRAW'; // Match Nul
+            if (diff > 14) return 'HOME';
+            if (diff < -8) return 'AWAY';
+            return 'DRAW';
         }
 
         function renderMatches(matchesToRender) {
@@ -278,13 +269,18 @@
                 let isLive = status === 'IN_PLAY' || status === 'PAUSED';
                 
                 let time = new Date(match.utcDate).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
-                let home = match.homeTeam;
-                let away = match.awayTeam;
+                
+                // Sécurisation des noms d'équipes
+                let home = match.homeTeam || {};
+                let away = match.awayTeam || {};
+                let homeName = home.name || "Équipe 1";
+                let awayName = away.name || "Équipe 2";
+                let homeShort = home.shortName || homeName;
+                let awayShort = away.shortName || awayName;
                 
                 let sHome = match.score?.fullTime?.home ?? (match.score?.current?.home ?? "-");
                 let sAway = match.score?.fullTime?.away ?? (match.score?.current?.away ?? "-");
 
-                // CHRONO LIVE
                 let statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-[10px] uppercase font-bold">${time}</span>`;
                 if (isLive) {
                     let liveMinute = match.minute ? `${match.minute}'` : 'En direct';
@@ -292,7 +288,6 @@
                 }
                 if (isFinished) statusBadge = `<span class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px] uppercase font-bold">Terminé</span>`;
 
-                // DRAPEAU
                 let flagImg = match.area?.flag ? `<img src="${match.area.flag}" class="w-4 h-3 object-cover rounded-[2px] opacity-90 inline-block mr-1.5 shadow-sm">` : '';
 
                 let winner = null;
@@ -304,8 +299,7 @@
 
                 let myBet = savedBets[match.id]; 
 
-                // CALCUL ALGO
-                let algoPick = computeAlgoPick(home.name, away.name, home.id, away.id);
+                let algoPick = computeAlgoPick(homeName, awayName, home.id, away.id);
                 let badgeHTML = `<div class="absolute -top-2.5 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg border border-indigo-400 z-10 whitespace-nowrap"><i class="fa-solid fa-robot mr-0.5"></i> ALGO</div>`;
                 
                 let homeBadge = algoPick === 'HOME' ? badgeHTML : '';
@@ -315,17 +309,19 @@
                 let card = document.createElement('div');
                 card.className = "bg-zinc-900 border border-zinc-800 rounded-xl p-3 shadow-md";
                 
+                let compName = match.competition?.name || "Compétition";
+
                 card.innerHTML = `
                     <div class="flex justify-between items-center border-b border-zinc-800/50 pb-2 mb-3">
                         ${statusBadge}
-                        <span class="text-[10px] text-zinc-300 font-bold tracking-wider flex items-center">${flagImg}${match.competition.name}</span>
+                        <span class="text-[10px] text-zinc-300 font-bold tracking-wider flex items-center">${flagImg}${compName}</span>
                     </div>
                     
                     <div class="grid grid-cols-3 gap-2 mt-1">
                         <button onclick="placeBet('${match.id}', 'HOME')" 
                                 class="relative flex flex-col items-center justify-center p-2 rounded-xl border transition ${myBet === 'HOME' ? 'bg-emerald-900/30 border-emerald-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
                             ${homeBadge}
-                            <span class="text-[11px] font-black text-center leading-tight mb-1 line-clamp-1 w-full text-amber-400 drop-shadow-md">${home.shortName || home.name}</span>
+                            <span class="text-[11px] font-black text-center leading-tight mb-1 line-clamp-1 w-full text-amber-400 drop-shadow-md">${homeShort}</span>
                             <span class="text-lg font-black ${isFinished && winner === 'HOME' ? 'text-emerald-400' : 'text-white'}">${sHome}</span>
                         </button>
 
@@ -339,7 +335,7 @@
                         <button onclick="placeBet('${match.id}', 'AWAY')" 
                                 class="relative flex flex-col items-center justify-center p-2 rounded-xl border transition ${myBet === 'AWAY' ? 'bg-emerald-900/30 border-emerald-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
                             ${awayBadge}
-                            <span class="text-[11px] font-black text-center leading-tight mb-1 line-clamp-1 w-full text-sky-400 drop-shadow-md">${away.shortName || away.name}</span>
+                            <span class="text-[11px] font-black text-center leading-tight mb-1 line-clamp-1 w-full text-sky-400 drop-shadow-md">${awayShort}</span>
                             <span class="text-lg font-black ${isFinished && winner === 'AWAY' ? 'text-emerald-400' : 'text-white'}">${sAway}</span>
                         </button>
                     </div>
@@ -394,8 +390,8 @@
                     totalSpent += currentStake;
 
                     if (isFinished) {
-                        let sHome = match.score.fullTime.home;
-                        let sAway = match.score.fullTime.away;
+                        let sHome = match.score?.fullTime?.home ?? 0;
+                        let sAway = match.score?.fullTime?.away ?? 0;
                         let winner = sHome > sAway ? 'HOME' : (sAway > sHome ? 'AWAY' : 'DRAW');
                         
                         let netMatch = 0;
