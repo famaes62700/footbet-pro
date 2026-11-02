@@ -19,11 +19,7 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center mb-3">
             <h1 class="text-base sm:text-lg font-black tracking-wider text-lime-400 flex items-center">
-    <svg class="w-5 h-5 mr-2 fill-current" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-        <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-464c45.3 0 87.1 16.5 119.5 44-32.9 44-51.5 98.7-51.5 156s18.6 112 51.5 156c-32.4 27.5-74.2 44-119.5 44s-87.1-16.5-119.5-44c32.9-44 51.5-98.7 51.5-156s-18.6-112-51.5-156C168.9 64.5 210.7 48 256 48z"/>
-    </svg>
-    TennisBet Pro
-</h1>
+                <i class="fa-solid fa-baseball mr-2"></i>TennisBet Pro
             </h1>
             <div class="flex items-center space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-lime-400 font-bold">
@@ -102,7 +98,7 @@
     </main>
 
     <script>
-        // Utilisation d'une route API fictive identique à la logique Foot/NBA
+        // Utilisation d'une route API (fictive/simulation) identique à la logique Foot/NBA
         const TENNIS_API_KEY = "tennis_api_key_placeholder"; 
 
         document.getElementById('matchDate').valueAsDate = new Date();
@@ -112,7 +108,6 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02; 
 
-        // Rafraîchissement automatique toutes les 30s
         setInterval(() => {
             let today = new Date().toISOString().split('T')[0];
             let selectedDate = document.getElementById('matchDate').value;
@@ -145,7 +140,6 @@
             }
             
             try {
-                // Remplacer par l'URL de l'API Tennis réelle de votre serveur
                 const res = await fetch(`/api/tennis/matches?date=${dateInput}&_t=${new Date().getTime()}`, {
                     headers: { 'X-Auth-Token': TENNIS_API_KEY, 'Cache-Control': 'no-cache' }
                 });
@@ -172,14 +166,13 @@
 
             } catch (e) {
                 if (!isSilent) {
-                    statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Connexion API (Simulée pour le moment)</span>';
-                    // Simulation pour la démonstration si l'API n'est pas encore créée côté serveur
+                    statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Connexion API (Simulée)</span>';
                     simulateTennisMatches();
                 }
             }
         }
 
-        // Fonction de simulation pour pouvoir tester l'interface immédiatement
+        // Simulation pour pouvoir tester l'interface
         function simulateTennisMatches() {
             currentMatches = [
                 { id: "t1", status: "IN_PLAY", utcDate: new Date().toISOString(), competition: { name: "ATP Masters 1000 Paris" }, homeTeam: { name: "C. Alcaraz" }, awayTeam: { name: "U. Humbert" }, score: { current: { home: 1, away: 0 } } },
@@ -255,7 +248,6 @@
                 if(p2.includes(p)) f2 += 20; 
             });
             
-            // Logique de départage basée sur le nom pour garantir un choix constant
             let hash1 = (p1.charCodeAt(0) + p1.length) % 10;
             let hash2 = (p2.charCodeAt(0) + p2.length) % 10;
             
@@ -322,14 +314,12 @@
                 let homeClass = baseClass;
                 let awayClass = baseClass;
 
-                // Coloration de l'Algo (Jaune pour Joueur 1, Cyan pour Joueur 2)
                 if (algoPick === 'P1') homeClass += "bg-lime-900/20 border-lime-500/40 ";
                 else homeClass += "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ";
 
                 if (algoPick === 'P2') awayClass += "bg-cyan-900/20 border-cyan-500/40 ";
                 else awayClass += "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ";
 
-                // Surbrillance au clic
                 if (myBet === 'P1') homeClass = baseClass + "bg-lime-600/40 border-lime-400 shadow-[0_0_10px_rgba(163,230,53,0.3)] ";
                 if (myBet === 'P2') awayClass = baseClass + "bg-cyan-600/40 border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.3)] ";
 
@@ -392,7 +382,7 @@
             let betsCount = 0;
             let totalSpent = 0;
             let currentBankroll = INITIAL_BANKROLL;
-            let assumedOdds = 1.75; // Cote moyenne lissée pour le tennis
+            let assumedOdds = 1.75; 
 
             currentMatches.forEach(match => {
                 let status = match.status;
