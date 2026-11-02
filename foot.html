@@ -12,7 +12,6 @@
 
     <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
-    <!-- EN-TÊTE -->
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <h1 class="text-base sm:text-lg font-black tracking-wider text-emerald-500 flex items-center">
@@ -41,7 +40,6 @@
             </button>
         </div>
 
-        <!-- BLOC HISTORIQUE -->
         <div id="historyBlock" class="hidden bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
@@ -64,7 +62,6 @@
             </div>
         </div>
 
-        <!-- STATS DU JOUR -->
         <div class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2 flex justify-between items-center">
             <div>
                 <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider mb-1">Bilan du Jour</h2>
@@ -76,13 +73,11 @@
             </div>
         </div>
 
-        <!-- TOTAL MISES ENGAGÉES -->
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex justify-between items-center text-xs text-zinc-300 shadow-md">
             <span><i class="fa-solid fa-wallet mr-1.5 text-emerald-400"></i> Total Mises Engagées (Foot) :</span>
             <span id="totalSpentText" class="font-bold text-white">0.00 €</span>
         </div>
 
-        <!-- LISTE DES MATCHES -->
         <div id="matchesContainer" class="space-y-3">
             <!-- Rempli dynamiquement -->
         </div>
@@ -90,14 +85,14 @@
     </main>
 
     <script>
-        // METTEZ VOTRE CLÉ API FOOTBALL-DATA.ORG ICI (Si requise)
-        const FOOTBALL_API_KEY = "VOTRE_CLE_API_FOOTBALL_DATA_ICI"; 
+        // Clé API intégrée
+        const FOOTBALL_API_KEY = "c42660750d784a43b51eb6a31906a777"; 
 
         document.getElementById('matchDate').valueAsDate = new Date();
         let currentMatches = [];
 
         const INITIAL_BANKROLL = 100.0;
-        const STAKE_PERCENT = 0.02; // 2% du capital actuel par pari foot
+        const STAKE_PERCENT = 0.02; 
 
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
@@ -122,7 +117,7 @@
             container.innerHTML = '';
             
             try {
-                const res = await fetch(`/api/football/matches?date=${dateInput}`, {
+                const res = await fetch(`https://api.football-data.org/v4/matches?date=${dateInput}`, {
                     headers: { 'X-Auth-Token': FOOTBALL_API_KEY }
                 });
                 
@@ -187,21 +182,18 @@
                     </div>
                     
                     <div class="grid grid-cols-3 gap-2">
-                        <!-- DOMICILE (HOME) -->
                         <button onclick="placeBet('${match.id}', 'HOME')" 
                                 class="flex flex-col items-center justify-center p-2 rounded-xl border transition ${myBet === 'HOME' ? 'bg-emerald-900/30 border-emerald-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
                             <span class="text-[10px] font-bold text-center leading-tight mb-1 line-clamp-1 w-full">${home.shortName || home.name}</span>
                             <span class="text-lg font-black ${isFinished && winner === 'HOME' ? 'text-emerald-400' : 'text-white'}">${sHome}</span>
                         </button>
 
-                        <!-- MATCH NUL (DRAW) -->
                         <button onclick="placeBet('${match.id}', 'DRAW')" 
                                 class="flex flex-col items-center justify-center p-2 rounded-xl border transition ${myBet === 'DRAW' ? 'bg-emerald-900/30 border-emerald-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-500 hover:bg-zinc-800'}">
                             <span class="text-[10px] font-bold text-center mb-1">NUL</span>
                             <span class="text-xs font-black ${isFinished && winner === 'DRAW' ? 'text-emerald-400' : 'text-zinc-600'}">-</span>
                         </button>
 
-                        <!-- EXTERIEUR (AWAY) -->
                         <button onclick="placeBet('${match.id}', 'AWAY')" 
                                 class="flex flex-col items-center justify-center p-2 rounded-xl border transition ${myBet === 'AWAY' ? 'bg-emerald-900/30 border-emerald-500 text-white' : 'bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800'}">
                             <span class="text-[10px] font-bold text-center leading-tight mb-1 line-clamp-1 w-full">${away.shortName || away.name}</span>
@@ -212,7 +204,7 @@
                     ${myBet ? `
                     <div class="mt-2 text-center text-[10px] bg-zinc-950 rounded py-1 border border-zinc-800">
                         ${isFinished 
-                            ? (myBet === winner ? '<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check"></i> Gagné (Proportionnel)</span>' : '<span class="text-red-400 font-bold"><i class="fa-solid fa-xmark"></i> Perdu</span>') 
+                            ? (myBet === winner ? '<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check"></i> Gagné</span>' : '<span class="text-red-400 font-bold"><i class="fa-solid fa-xmark"></i> Perdu</span>') 
                             : '<span class="text-emerald-400">Pari 1N2 enregistré (Mise dynamique)</span>'
                         }
                     </div>` : ''}
@@ -247,7 +239,7 @@
             let betsCount = 0;
             let totalSpent = 0;
             let currentBankroll = INITIAL_BANKROLL;
-            let assumedOdds = 1.90; // Cote moyenne simulée sur le 1N2 choisi
+            let assumedOdds = 1.90; 
 
             currentMatches.forEach(match => {
                 let status = match.status;
