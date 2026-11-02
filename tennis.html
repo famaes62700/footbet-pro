@@ -53,10 +53,10 @@
         
         <div class="flex justify-between items-center">
             <div id="statusText" class="text-xs text-lime-400 font-mono flex items-center">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion au direct en cours...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs en direct...
             </div>
             <button onclick="loadTennisMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-lime-400 px-3 py-1.5 rounded-lg border border-lime-500/30 text-xs font-bold transition flex items-center shadow">
-                <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser les scores
+                <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
             </button>
         </div>
 
@@ -112,14 +112,14 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02; 
 
-        // Actualisation automatique toutes les 20 secondes en arrière-plan
+        // Actualisation automatique toutes les 30 secondes
         setInterval(() => {
             let today = new Date().toISOString().split('T')[0];
             let selectedDate = document.getElementById('matchDate').value;
             if (selectedDate === today || isLiveFilterActive) {
                 loadTennisMatches(true);
             }
-        }, 20000);
+        }, 30000);
 
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
@@ -140,95 +140,36 @@
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération des matchs en direct...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération des matchs via Vercel...';
                 document.getElementById('matchesContainer').innerHTML = '';
             }
             
             try {
-                // Interrogation directe de l'API de scores en direct via un proxy CORS sécurisé
-                const apiUrl = `https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/${dateInput}`;
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
-
-                const response = await fetch(proxyUrl, { cache: 'no-store' });
-                if (!response.ok) throw new Error("Erreur réseau");
+                const res = await fetch(`/api/tennis?date=${dateInput}&_nocache=${Date.now()}`);
+                if (!res.ok) throw new Error("Erreur de l'API Vercel");
                 
-                const wrappedData = await response.json();
-                const data = JSON.parse(wrappedData.contents);
+                const data = await res.json();
+                currentMatches = data.matches || [];
                 
-                let rawEvents = data.events || [];
-                
-                currentMatches = rawEvents.map(ev => ({
-                    id: ev.id.toString(),
-                    status: ev.status.type === 'inprogress' ? 'IN_PLAY' : (ev.status.type === 'finished' ? 'FINISHED' : 'TIMED'),
-                    utcDate: new Date(ev.startTimestamp * 1000).toISOString(),
-                    competition: { name: ev.tournament?.name || "ATP / WTA Tour" },
-                    homeTeam: { name: ev.homeTeam?.name || "Joueur 1" },
-                    awayTeam: { name: ev.awayTeam?.name || "Joueur 2" },
-                    score: {
-                        current: { home: ev.homeScore?.current ?? 0, away: ev.awayScore?.current ?? 0 },
-                        fullTime: { home: ev.homeScore?.display ?? ev.homeScore?.current ?? 0, away: ev.awayScore?.display ?? ev.awayScore?.current ?? 0 }
-                    }
-                }));
-
                 if (currentMatches.length === 0) {
-                    throw new Error("Aucun match trouvé pour cette date");
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match trouvé pour cette date.</span>`;
+                    populateCompetitions([]);
+                    calculateDailyBankroll();
+                    return;
                 }
 
                 if (!isSilent) {
-                    statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs en direct chargés</span>`;
+                    statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs chargés</span>`;
                     showToast("Scores actualisés", "success");
                 }
-
+                
                 populateCompetitions(currentMatches);
                 applyFilters();
                 calculateDailyBankroll();
 
-            } catch (err) {
-                // Si le flux direct rencontre un ralentissement, bascule immédiate sur les tournois du jour actifs
-                if (!isSilent) {
-                    statusText.innerHTML = '<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> Tournois du jour chargés (Live)</span>';
-                }
-                loadFallbackLiveMatches(dateInput);
+            } catch (e) {
+                statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur de chargement</span>';
             }
-        }
-
-        function loadFallbackLiveMatches(dateStr) {
-            let todayStr = new Date().toISOString().split('T')[0];
-            let isToday = (dateStr === todayStr);
-
-            currentMatches = [
-                { 
-                    id: `live_${dateStr}_1`, 
-                    status: isToday ? "IN_PLAY" : "FINISHED", 
-                    utcDate: `${dateStr}T14:00:00Z`, 
-                    competition: { name: "ATP Finals / Tournoi en cours" }, 
-                    homeTeam: { name: "J. Sinner" }, 
-                    awayTeam: { name: "A. Zverev" }, 
-                    score: isToday ? { current: { home: 1, away: 0 } } : { fullTime: { home: 2, away: 1 } } 
-                },
-                { 
-                    id: `live_${dateStr}_2`, 
-                    status: isToday ? "IN_PLAY" : "FINISHED", 
-                    utcDate: `${dateStr}T16:30:00Z`, 
-                    competition: { name: "ATP Finals / Tournoi en cours" }, 
-                    homeTeam: { name: "C. Alcaraz" }, 
-                    awayTeam: { name: "D. Medvedev" }, 
-                    score: isToday ? { current: { home: 0, away: 1 } } : { fullTime: { home: 0, away: 2 } } 
-                },
-                { 
-                    id: `live_${dateStr}_3`, 
-                    status: isToday ? "TIMED" : "FINISHED", 
-                    utcDate: `${dateStr}T19:00:00Z`, 
-                    competition: { name: "WTA Tour" }, 
-                    homeTeam: { name: "I. Swiatek" }, 
-                    awayTeam: { name: "C. Gauff" }, 
-                    score: isToday ? {} : { fullTime: { home: 2, away: 0 } } 
-                }
-            ];
-
-            populateCompetitions(currentMatches);
-            applyFilters();
-            calculateDailyBankroll();
         }
 
         function populateCompetitions(matches) {
@@ -323,7 +264,7 @@
             container.innerHTML = '';
 
             if (matchesToRender.length === 0) {
-                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match en direct pour ce filtre.</div>`;
+                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match ne correspond à vos filtres.</div>`;
                 return;
             }
 
