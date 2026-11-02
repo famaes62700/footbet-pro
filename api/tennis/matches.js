@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     const { date } = req.query;
     const targetDate = date || new Date().toISOString().split('T')[0];
 
-    // Vrais matchs officiels du circuit ATP / WTA mis à jour
+    // Vrais matchs officiels du circuit ATP / WTA
     const realMatches = [
         {
             id: `atp_${targetDate}_1`,
