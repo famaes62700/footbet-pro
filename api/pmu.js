@@ -2,8 +2,8 @@ export default async function handler(req, res) {
     const { target } = req.query;
     if (!target) return res.status(400).json({ error: "Cible manquante" });
 
-    // Canal 61 = Programme "Point de Vente" (Filtre uniquement les réunions principales)
-    const url = `https://offline.turfinfo.api.pmu.fr/rest/client/61/programme/${target}`;
+    // Cible le réseau Web (online) au lieu du réseau physique (offline)
+    const url = `https://online.turfinfo.api.pmu.fr/rest/client/1/programme/${target}`;
 
     try {
         const response = await fetch(url, {
