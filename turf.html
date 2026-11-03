@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Montante Placé (Cote Mini 2.5)</title>
+    <title>Fab Turf - Base & Pépite (Montante Placé & Cote Mini 2.5)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -867,7 +867,6 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // Plancher de mise de sécurité (0.50 € min)
                     let stakeBase = Math.max(0.5, parseFloat(baseMontanteStake.toFixed(2)));
                     let stakePepite = Math.max(0.5, parseFloat(pepiteMontanteStake.toFixed(2)));
 
@@ -881,12 +880,10 @@
                             basePlaCount++; 
                             netBasePla = (gPla * stakeBase) - stakeBase;
                             totalGainBasePla += netBasePla; 
-                            // MONTANTE : Si gagné, on réinjecte le gain ou on augmente la mise pour l'étape suivante (ex: +50% du profit ou progression)
                             baseMontanteStake = stakeBase + (netBasePla * 0.5); 
                         } else {
                             totalGainBasePla -= stakeBase;
                             netBasePla = -stakeBase;
-                            // MONTANTE : Si perdu, on revient à la mise de base (2% du capital actuel)
                             baseMontanteStake = Math.max(0.5, currentBankroll * BASE_RISK_PERCENT);
                         }
                         currentBankroll += netBasePla; 
