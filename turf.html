@@ -70,7 +70,7 @@
         <div class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
-                    <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider">Bilan du Jour (Trot Uniquement)</h2>
+                    <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider">Bilan du Jour (Toutes Disciplines)</h2>
                     <p class="text-[10px] text-zinc-400">Rendement : Obj +10€/cycle • <strong class="text-emerald-400">Stop-Win: +50€</strong> • <strong class="text-red-400">Stop-Loss: -80€</strong></p>
                 </div>
             </div>
@@ -319,6 +319,7 @@
 
             const parts = dateInput.split('-');
             const ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
+            const now = new Date().getTime();
 
             try {
                 const data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
@@ -331,12 +332,19 @@
                     select.innerHTML = '<option value="">-- Choisissez un hippodrome --</option>';
                     
                     let totalCourses = 0;
+                    let racesRunCount = 0;
 
                     reunions.forEach((r, idx) => {
                         let opt = document.createElement('option');
                         opt.value = idx;
                         let coursesList = r.courses || r.races || r.lesCourses || [];
                         totalCourses += coursesList.length;
+
+                        coursesList.forEach(c => {
+                            if (c.heureDepart && (new Date(c.heureDepart).getTime() < now)) {
+                                racesRunCount++;
+                            }
+                        });
 
                         let timeStr = "";
                         if (r.heurereunion || r.heurePremierDepart) {
@@ -350,7 +358,7 @@
                         select.appendChild(opt);
                     });
                     
-                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${reunions.length} réunions / ${totalCourses} courses)</span>`;
+                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${reunions.length} réunions | ${racesRunCount}/${totalCourses} courses)</span>`;
                     
                     if (currentVal === "") autoSelectCurrentRace();
                     else select.value = currentVal;
@@ -726,7 +734,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_rendpro_v1_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_rendpro_v2_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -872,7 +880,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `world_rendpro_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `world_rendpro_v2_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -925,13 +933,12 @@
                         }
                     }
 
-                    // LE PLACÉ RÉEL (Filtre Trot & Cote)
-                    let isTrot = r.discipline && (String(r.discipline).toUpperCase().includes('TROT') || String(r.discipline).toUpperCase().includes('ATTEL') || String(r.discipline).toUpperCase().includes('MONTE'));
+                    // LE PLACÉ RÉEL
                     let estCotePlaBase = baseH ? Math.max(1.1, baseH.cote / 3) : 0;
                     let estCotePlaPepite = nuggetH ? Math.max(1.1, nuggetH.cote / 3) : 0;
 
                     // Exécution Base Placé
-                    if (baseH && isTrot && estCotePlaBase >= 1.4 && !blockBetsBase) {
+                    if (baseH && estCotePlaBase >= 1.4 && !blockBetsBase) {
                         coursesValidees++;
                         
                         let targetStakeBase = (cycleLossBase + MICRO_OBJECTIF) / (estCotePlaBase - 1);
@@ -962,7 +969,7 @@
                     }
 
                     // Exécution Pépite Placé Virtuel
-                    if (nuggetH && isTrot && estCotePlaPepite >= 1.4 && !blockBetsPepite) {
+                    if (nuggetH && estCotePlaPepite >= 1.4 && !blockBetsPepite) {
                         let simStakePepite = (cycleLossPepite + MICRO_OBJECTIF) / (estCotePlaPepite - 1);
                         simStakePepite = Math.max(1.0, Math.min(simStakePepite, MISE_MAX)); 
 
@@ -1044,7 +1051,7 @@
                 
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
 
-                localStorage.setItem(`pmu_stats_rendpro_v1_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_rendpro_v2_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
                 
