@@ -75,22 +75,16 @@
             </div>
         </div>
 
-        <!-- BILAN DU JOUR & TOTAL MISES -->
+        <!-- BILAN DU JOUR -->
         <div class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2 flex justify-between items-center">
             <div>
                 <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider mb-1">Bilan du Jour</h2>
                 <div id="dailyProfit" class="text-lg font-black text-white">0.00 €</div>
             </div>
-            <div class="text-right space-y-0.5">
-                <div class="text-[10px] text-zinc-400 uppercase">Matchs pariés: <strong id="dailyBetsCount" class="text-white">0</strong></div>
-                <div class="text-[10px] text-zinc-400 uppercase">Total Mises: <strong id="dailyTotalStake" class="text-emerald-400">0.00 €</strong></div>
+            <div class="text-right">
+                <div class="text-[10px] text-zinc-400 uppercase">Matchs pariés</div>
+                <div id="dailyBetsCount" class="text-sm font-black text-white">0</div>
             </div>
-        </div>
-
-        <!-- LIGNE RÉCAPITULATIVE TOTALE DES MISES JOUÉES -->
-        <div class="flex justify-between items-center text-[11px] bg-zinc-900/90 px-3.5 py-2.5 rounded-xl border border-zinc-800 text-zinc-300 shadow">
-            <span><i class="fa-solid fa-wallet mr-1.5 text-emerald-400"></i> Somme Totale des Mises Engagées (Jour) :</span>
-            <span id="totalSpentText" class="font-black text-white text-xs">0.00 €</span>
         </div>
 
         <div id="matchesContainer" class="space-y-3"></div>
@@ -161,6 +155,8 @@
 
                     let homeName = home.team?.shortDisplayName || home.team?.displayName || "Domicile";
                     let awayName = away.team?.shortDisplayName || away.team?.displayName || "Extérieur";
+                    let homeLogo = home.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(homeName)}&background=18181b&color=34d399&size=64`;
+                    let awayLogo = away.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(awayName)}&background=18181b&color=34d399&size=64`;
 
                     let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
                     let sHome = parseInt(home.score) || 0;
@@ -179,8 +175,8 @@
                         statusDetail: comp.status?.type?.shortDetail || "",
                         utcDate: event.date,
                         competition: { name: compName },
-                        homeTeam: { name: homeName, score: sHome },
-                        awayTeam: { name: awayName, score: sAway },
+                        homeTeam: { name: homeName, logo: homeLogo, score: sHome },
+                        awayTeam: { name: awayName, logo: awayLogo, score: sAway },
                         winner: winner
                     });
                 });
@@ -283,6 +279,8 @@
                 
                 let homeName = match.homeTeam.name;
                 let awayName = match.awayTeam.name;
+                let homeLogo = match.homeTeam.logo;
+                let awayLogo = match.awayTeam.logo;
                 let sHome = match.homeTeam.score;
                 let sAway = match.awayTeam.score;
 
@@ -316,9 +314,15 @@
                     </div>
                     
                     <div class="flex justify-between items-center px-2">
-                        <span class="text-xs font-black text-white w-1/3 truncate">${homeName}</span>
+                        <div class="flex items-center space-x-2 w-1/3 overflow-hidden">
+                            <img src="${homeLogo}" class="w-5 h-5 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=H&background=18181b&color=34d399'">
+                            <span class="text-xs font-black text-white truncate">${homeName}</span>
+                        </div>
                         <span class="text-sm font-black text-emerald-400 px-2 bg-zinc-950 py-1 rounded border border-zinc-800">${sHome} - ${sAway}</span>
-                        <span class="text-xs font-black text-white w-1/3 text-right truncate">${awayName}</span>
+                        <div class="flex items-center justify-end space-x-2 w-1/3 overflow-hidden">
+                            <span class="text-xs font-black text-white truncate text-right">${awayName}</span>
+                            <img src="${awayLogo}" class="w-5 h-5 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=A&background=18181b&color=34d399'">
+                        </div>
                     </div>
 
                     <div class="flex gap-2">
@@ -369,7 +373,6 @@
             
             let dailyProfit = 0; 
             let betsCount = 0; 
-            let totalStake = 0;
             let currentBankroll = INITIAL_BANKROLL;
 
             currentMatches.forEach(match => {
@@ -377,7 +380,6 @@
                 if (myBet) {
                     betsCount++;
                     let currentStake = Math.max(0.5, currentBankroll * STAKE_PERCENT);
-                    totalStake += currentStake;
 
                     if (match.status === 'FINISHED' && match.winner) {
                         if (myBet === match.winner) {
@@ -393,9 +395,6 @@
             });
 
             document.getElementById('dailyBetsCount').textContent = betsCount;
-            document.getElementById('dailyTotalStake').textContent = `${totalStake.toFixed(2)} €`;
-            document.getElementById('totalSpentText').textContent = `${totalStake.toFixed(2)} €`;
-
             let profitEl = document.getElementById('dailyProfit');
             profitEl.textContent = `${dailyProfit > 0 ? '+' : ''}${dailyProfit.toFixed(2)} €`;
             profitEl.className = `text-lg font-black ${dailyProfit > 0 ? 'text-emerald-400' : (dailyProfit < 0 ? 'text-red-400' : 'text-white')}`;
