@@ -167,52 +167,33 @@
             } catch (e) {}
         }
 
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            let bgClass = type === 'success' ? 'bg-emerald-900/90 border-emerald-500/50 text-emerald-200' : 'bg-zinc-800 border-zinc-700 text-white';
-            toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center ${bgClass}`;
-            toast.innerHTML = `<span>${message}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => toast.classList.remove('opacity-0', 'translate-y-2'), 10);
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-2');
-                setTimeout(() => toast.remove(), 300);
-            }, 2500);
-        }
-
-        // MOTEUR RÉSEAU ULTRA-RÉSISTANT (Exécution simultanée via Promise.any pour zéro blocage)
+        // MOTEUR RÉSEAU ULTRA-RÉSISTANT AVEC PROMISE.ANY (ZÉRO BLOCAGE)
         async function fetchPMU(endpoint) {
             const url = `https://online.turfinfo.api.pmu.fr/rest/client/61/${endpoint}${endpoint.includes('?') ? '&' : '?'}specialisation=INTERNET`;
+            
             const proxies = [
-                `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-                `https://corsproxy.io/?${encodeURIComponent(url)}`
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
             ];
 
-            const fetchAndParse = async (proxyUrl) => {
-                const ctrl = new AbortController();
-                const id = setTimeout(() => ctrl.abort(), 8000);
-                try {
+            try {
+                // On lance les 3 proxys en même temps, le plus rapide répond.
+                return await Promise.any(proxies.map(async (proxyUrl) => {
+                    const ctrl = new AbortController();
+                    const id = setTimeout(() => ctrl.abort(), 6000);
                     const res = await fetch(proxyUrl, { signal: ctrl.signal });
                     clearTimeout(id);
-                    if (!res.ok) throw new Error("Bad status");
-                    const text = await res.text();
-                    let json = JSON.parse(text);
-                    if (json && json.contents) json = JSON.parse(json.contents);
-                    if (json && (json.programme || json.participants || Array.isArray(json))) {
-                        return json;
-                    }
-                    throw new Error("Bad format");
-                } catch (e) {
-                    clearTimeout(id);
-                    throw e;
-                }
-            };
-
-            try {
-                return await Promise.any(proxies.map(p => fetchAndParse(p)));
+                    if (!res.ok) throw new Error("HTTP error");
+                    const json = await res.json();
+                    if (json && (json.programme || json.participants || Array.isArray(json))) return json;
+                    throw new Error("Invalid format");
+                }));
             } catch (e) {
+                // Si les 3 proxys sur online.turfinfo échouent, on tente l'API offline.
+                const url2 = `https://offline.pmu.fr/api/client/1/${endpoint}${endpoint.includes('?') ? '&' : '?'}specialisation=INTERNET`;
+                const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url2)}`);
+                if (res.ok) return await res.json();
                 throw new Error("Réseau inaccessible");
             }
         }
@@ -351,7 +332,7 @@
                 await loadCurrentReunionDetails(forceRefresh);
 
             } catch (error) {
-                statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-rotate mr-1"></i> Connexion bloquée (Désactivez Adblock si persistant)</span>`;
+                statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-rotate mr-1"></i> Connexion encombrée. Veuillez actualiser.</span>`;
             }
         }
 
