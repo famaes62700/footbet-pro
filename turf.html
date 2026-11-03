@@ -71,7 +71,7 @@
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider mb-0.5">Bilan du Jour (FR & BE)</h2>
-                    <p class="text-[10px] text-zinc-400">Martingale Dynamique : 1.8 à 2.5 = <strong>x3</strong> | > 2.5 = <strong>x2</strong></p>
+                    <p class="text-[10px] text-zinc-400">Départ <strong>3.00 €</strong> • Cotes 1.8 à 2.5 = <strong>x3</strong> | > 2.5 = <strong>x2</strong></p>
                 </div>
             </div>
 
@@ -717,7 +717,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_dyn_v1_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_dyn_v2_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -834,7 +834,9 @@
             let coursesValidees = 0;
 
             let currentBankroll = INITIAL_BANKROLL;
-            let baseMiseLimit = 2.0; 
+            
+            // LA MISE DE DÉPART PASSE À 3 €
+            let baseMiseLimit = 3.0; 
             
             // Variables de suivi pour la Base
             let isRecoveringBase = false;
@@ -846,7 +848,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `fr_be_dyn_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `fr_be_dyn_v2_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -875,7 +877,7 @@
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
                     // 1. BASE PLACÉ (MARTINGALE DYNAMIQUE)
-                    // On ne joue QUE SI la cote est >= 1.8 pour éviter de se ruiner sur des 1.20 Placé.
+                    // On ne joue QUE SI la cote est >= 1.8
                     if (baseH && baseH.cote >= 1.8) {
                         let multiplier = (baseH.cote > 2.5) ? 2 : 3;
                         let targetStakeBase = isRecoveringBase ? (lastStakeBase * multiplier) : baseMiseLimit;
@@ -899,7 +901,7 @@
                             isRecoveringBase = true;
                             lastStakeBase = actualStakeBase;
                             
-                            // Stop-Loss de Sécurité
+                            // Stop-Loss de Sécurité (50€)
                             if (lastStakeBase >= 50) {
                                 isRecoveringBase = false;
                                 lastStakeBase = baseMiseLimit;
@@ -929,7 +931,7 @@
                             isRecoveringPepite = true;
                             lastStakePepite = simStakePepite;
                             
-                            // Stop-Loss de Sécurité
+                            // Stop-Loss de Sécurité (50€)
                             if (lastStakePepite >= 50) {
                                 isRecoveringPepite = false;
                                 lastStakePepite = baseMiseLimit;
@@ -960,7 +962,7 @@
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                 if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> ${coursesValidees} courses analysées</span>`;
 
-                localStorage.setItem(`pmu_stats_dyn_v1_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_dyn_v2_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBase, pepiteProfit: totalProfitPepite
                 }));
                 
