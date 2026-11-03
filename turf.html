@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Monde (Martingale Dynamique)</title>
+    <title>Fab Turf - Progression Douce</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -26,7 +26,7 @@
             </h1>
             <div class="flex items-center space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
-                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll (Base Dynamique)</span>
+                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll (Base Placé)</span>
                     <span id="headerBankroll">200.00 €</span>
                 </div>
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadLivePmu()">
@@ -71,7 +71,7 @@
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider mb-0.5">Bilan du Jour (Toutes Réunions)</h2>
-                    <p class="text-[10px] text-zinc-400">Départ <strong>3.00 €</strong> • Cotes 1.8 à 2.5 = <strong>x3</strong> | > 2.5 = <strong>x2</strong></p>
+                    <p class="text-[10px] text-zinc-400">Séquence : <strong>2, 5, 9, 14, 20, 27, 35 €</strong> • (Cote Min: 1.80)</p>
                 </div>
             </div>
 
@@ -183,8 +183,11 @@
         let autoTransitionDone = false;
         let validatedRacesCache = {}; 
         
-        // --- NOUVELLE BANKROLL À 200€ ---
+        // --- BANKROLL À 200€ ---
         const INITIAL_BANKROLL = 200.0;
+
+        // --- PROGRESSION DOUCE ---
+        const STAKES_PROGRESSION = [2.0, 5.0, 9.0, 14.0, 20.0, 27.0, 35.0];
 
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
@@ -298,7 +301,6 @@
 
             try {
                 const data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
-                // AUCUN FILTRE GEOGRAPHIQUE : ON PREND TOUT
                 let reunions = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
                 
                 if (reunions.length > 0) {
@@ -699,7 +701,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_world_dyn_v2_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_prog_v1_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -817,19 +819,15 @@
 
             let currentBankroll = INITIAL_BANKROLL;
             
-            // LA MISE DE DÉPART EST À 3 €
-            let baseMiseLimit = 3.0; 
+            // LA PROGRESSION DOUCE
+            const PROGRESSION = [2.0, 5.0, 9.0, 14.0, 20.0, 27.0, 35.0];
             
-            // Variables de suivi
-            let isRecoveringBase = false;
-            let lastStakeBase = baseMiseLimit;
-
-            let isRecoveringPepite = false;
-            let lastStakePepite = baseMiseLimit;
+            let stepBase = 0;
+            let stepPepite = 0;
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `world_dyn_v2_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `world_prog_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -846,7 +844,6 @@
                     if (raceData.isComplete) validatedRacesCache[cacheKey] = raceData;
                 }
 
-                // SÉCURITÉ : On attend obligatoirement les vrais rapports publiés (même en retard) pour calculer
                 if (raceData && raceData.arrivees.length > 0) {
                     if (raceData.rapportsList.length === 0) continue; 
 
@@ -858,10 +855,9 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // 1. BASE PLACÉ (MARTINGALE DYNAMIQUE)
+                    // 1. BASE PLACÉ (PROGRESSION DOUCE)
                     if (baseH && baseH.cote >= 1.8) {
-                        let multiplier = (baseH.cote > 2.5) ? 2 : 3;
-                        let targetStakeBase = isRecoveringBase ? (lastStakeBase * multiplier) : baseMiseLimit;
+                        let targetStakeBase = PROGRESSION[stepBase];
                         let actualStakeBase = currentBankroll > 0 ? Math.min(targetStakeBase, currentBankroll) : 0;
                         
                         totalSpentBase += actualStakeBase;
@@ -874,27 +870,22 @@
                             baseWins++; 
                             netBasePla = (gPla * actualStakeBase) - actualStakeBase;
                             totalProfitBase += netBasePla; 
-                            isRecoveringBase = false;
-                            lastStakeBase = baseMiseLimit;
+                            stepBase = 0; // GAGNÉ -> Retour au palier 1 (2€)
                         } else {
                             totalProfitBase -= actualStakeBase;
                             netBasePla = -actualStakeBase;
-                            isRecoveringBase = true;
-                            lastStakeBase = actualStakeBase;
                             
-                            // Stop-Loss de Sécurité (50€)
-                            if (lastStakeBase >= 50) {
-                                isRecoveringBase = false;
-                                lastStakeBase = baseMiseLimit;
+                            stepBase++; // PERDU -> Palier suivant
+                            if (stepBase >= PROGRESSION.length) {
+                                stepBase = 0; // STOP-LOSS ATTEINT -> Retour au palier 1
                             }
                         }
                         currentBankroll += netBasePla; 
                     }
 
-                    // 2. PÉPITE PLACÉ (MARTINGALE DYNAMIQUE)
+                    // 2. PÉPITE PLACÉ (PROGRESSION DOUCE)
                     if (nuggetH && nuggetH.cote >= 1.8) {
-                        let multiplier = (nuggetH.cote > 2.5) ? 2 : 3;
-                        let simStakePepite = isRecoveringPepite ? (lastStakePepite * multiplier) : baseMiseLimit;
+                        let simStakePepite = PROGRESSION[stepPepite];
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
                         if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
@@ -904,18 +895,14 @@
                             pepiteWins++; 
                             netPepitePla = (gPla * simStakePepite) - simStakePepite;
                             totalProfitPepite += netPepitePla; 
-                            isRecoveringPepite = false;
-                            lastStakePepite = baseMiseLimit; 
+                            stepPepite = 0; // GAGNÉ -> Retour au palier 1
                         } else { 
                             netPepitePla = -simStakePepite; 
                             totalProfitPepite += netPepitePla; 
-                            isRecoveringPepite = true;
-                            lastStakePepite = simStakePepite;
                             
-                            // Stop-Loss de Sécurité (50€)
-                            if (lastStakePepite >= 50) {
-                                isRecoveringPepite = false;
-                                lastStakePepite = baseMiseLimit;
+                            stepPepite++; // PERDU -> Palier suivant
+                            if (stepPepite >= PROGRESSION.length) {
+                                stepPepite = 0; // STOP-LOSS ATTEINT -> Retour au palier 1
                             }
                         }
                     }
@@ -943,13 +930,13 @@
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                 if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> ${coursesValidees} courses analysées</span>`;
 
-                localStorage.setItem(`pmu_stats_world_dyn_v2_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_prog_v1_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBase, pepiteProfit: totalProfitPepite
                 }));
                 
                 if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
             } else if (!isAuto) {
-                statsProgress.textContent = "Aucune course avec rapports officiels terminée aujourd'hui.";
+                statsProgress.textContent = "Aucune course qualifiée terminée aujourd'hui.";
             }
         }
 
