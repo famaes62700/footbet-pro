@@ -293,10 +293,12 @@
                 let winner = match.winner;
                 let myBet = savedBets[match.id]; 
 
-                let baseBtn = "flex-1 py-2 px-1 rounded-lg font-black text-xs transition border text-center truncate ";
-                let homeClass = baseBtn + (myBet === 'HOME' ? "bg-blue-600 text-white border-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.3)]" : "bg-zinc-800/80 text-blue-400 border-zinc-700 hover:bg-zinc-800");
-                let drawClass = baseBtn + (myBet === 'DRAW' ? "bg-amber-600 text-white border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.3)]" : "bg-zinc-800/80 text-amber-400 border-zinc-700 hover:bg-zinc-800");
-                let awayClass = baseBtn + (myBet === 'AWAY' ? "bg-emerald-600 text-white border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]" : "bg-zinc-800/80 text-emerald-400 border-zinc-700 hover:bg-zinc-800");
+                // Carrés de couleurs distincts pour 1 (Bleu), N (Ambre), 2 (Vert)
+                let baseBtn = "flex-1 py-2 px-1 rounded-xl font-black text-xs transition border text-center flex flex-col items-center justify-center ";
+                
+                let homeClass = baseBtn + (myBet === 'HOME' ? "bg-blue-600 text-white border-blue-400 shadow-[0_0_12px_rgba(37,99,235,0.4)]" : "bg-blue-950/40 text-blue-400 border-blue-500/30 hover:bg-blue-900/40");
+                let drawClass = baseBtn + (myBet === 'DRAW' ? "bg-amber-600 text-white border-amber-400 shadow-[0_0_12px_rgba(217,119,6,0.4)]" : "bg-amber-950/40 text-amber-400 border-amber-500/30 hover:bg-amber-900/40");
+                let awayClass = baseBtn + (myBet === 'AWAY' ? "bg-emerald-600 text-white border-emerald-400 shadow-[0_0_12px_rgba(5,150,105,0.4)]" : "bg-emerald-950/40 text-emerald-400 border-emerald-500/30 hover:bg-emerald-900/40");
 
                 if (isFinished) {
                     homeClass += ' cursor-not-allowed opacity-80';
@@ -305,34 +307,43 @@
                 }
 
                 let card = document.createElement('div');
-                card.className = "bg-zinc-900 border border-zinc-800 rounded-xl p-3 shadow-md space-y-3";
+                card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-xl space-y-3";
 
                 card.innerHTML = `
-                    <div class="flex justify-between items-center border-b border-zinc-800/50 pb-2">
+                    <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                         ${statusBadge}
                         <span class="text-[10px] text-zinc-300 font-bold tracking-wider flex items-center text-right w-2/3 truncate justify-end"><i class="fa-solid fa-trophy text-blue-400 mr-1.5"></i>${match.competition.name}</span>
                     </div>
                     
-                    <div class="flex justify-between items-center px-2">
-                        <div class="flex items-center space-x-2 w-1/3 overflow-hidden">
-                            <img src="${homeLogo}" class="w-5 h-5 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=H&background=18181b&color=60a5fa'">
+                    <div class="flex justify-between items-center px-1">
+                        <div class="flex items-center space-x-2.5 w-1/3 overflow-hidden">
+                            <img src="${homeLogo}" class="w-6 h-6 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=H&background=18181b&color=60a5fa'">
                             <span class="text-xs font-black text-white truncate">${homeName}</span>
                         </div>
-                        <span class="text-sm font-black text-blue-400 px-2 bg-zinc-950 py-1 rounded border border-zinc-800">${sHome} - ${sAway}</span>
-                        <div class="flex items-center justify-end space-x-2 w-1/3 overflow-hidden">
+                        <span class="text-sm font-black text-blue-400 px-3 py-1 bg-zinc-950 rounded-lg border border-zinc-800">${sHome} - ${sAway}</span>
+                        <div class="flex items-center justify-end space-x-2.5 w-1/3 overflow-hidden">
                             <span class="text-xs font-black text-white truncate text-right">${awayName}</span>
-                            <img src="${awayLogo}" class="w-5 h-5 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=A&background=18181b&color=60a5fa'">
+                            <img src="${awayLogo}" class="w-6 h-6 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=A&background=18181b&color=60a5fa'">
                         </div>
                     </div>
 
                     <div class="flex gap-2">
-                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'HOME')"`} class="${homeClass}">${homeName}</button>
-                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'DRAW')"`} class="${drawClass}">Nul</button>
-                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'AWAY')"`} class="${awayClass}">${awayName}</button>
+                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'HOME')"`} class="${homeClass}">
+                            <span class="text-[9px] uppercase tracking-wider opacity-80 font-normal">1 (Domicile)</span>
+                            <span class="truncate w-full">${homeName}</span>
+                        </button>
+                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'DRAW')"`} class="${drawClass}">
+                            <span class="text-[9px] uppercase tracking-wider opacity-80 font-normal">N</span>
+                            <span>Match Nul</span>
+                        </button>
+                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'AWAY')"`} class="${awayClass}">
+                            <span class="text-[9px] uppercase tracking-wider opacity-80 font-normal">2 (Extérieur)</span>
+                            <span class="truncate w-full">${awayName}</span>
+                        </button>
                     </div>
                     
                     ${myBet ? `
-                    <div class="flex justify-between items-center text-[11px] bg-zinc-950 rounded px-3 py-1.5 border border-zinc-800">
+                    <div class="flex justify-between items-center text-[11px] bg-zinc-950 rounded-xl px-3 py-2 border border-zinc-800">
                         <span class="text-zinc-400">Mise engagée : <strong class="text-blue-400">${currentStake.toFixed(2)} €</strong></span>
                         <div>
                             ${isFinished 
