@@ -379,7 +379,7 @@
 
                 const select = document.getElementById('compSelect');
                 if (select.value === 'ALL' && select.options.length > 1) {
-                    select.selectedIndex = 1; // Sélectionne la R1 par défaut pour ne pas surcharger
+                    select.selectedIndex = 1;
                 }
 
                 await loadCurrentReunionDetails(forceRefresh);
@@ -394,7 +394,6 @@
             await loadCurrentReunionDetails(false);
         }
 
-        // Charge uniquement la réunion sélectionnée dans le menu (Zéro surcharge serveur)
         async function loadCurrentReunionDetails(forceRefresh = false) {
             const dateStr = document.getElementById('matchDate').value;
             const [yyyy, mm, dd] = dateStr.split('-');
@@ -618,7 +617,7 @@
                 const picks = cached.picks;
                 const rap = cached.rapports;
 
-                // 1. VALEUR SÛRE : Bankroll Proportionnelle 2% (Mise et perte comptabilisées sur la bankroll)
+                // 1. VALEUR SÛRE : Bankroll Proportionnelle 2%
                 let stakeVS = Math.max(1.0, bankrollVS * STAKE_PERCENT);
                 if (rap.sp[picks.vs.num]) {
                     hitsVS++;
@@ -627,7 +626,7 @@
                     bankrollVS -= stakeVS;
                 }
 
-                // 2. SIMPLE G/P (1€ Gagnant + 1€ Placé = 2€ de mise fixe totale par course, déduite du bénéfice)
+                // 2. SIMPLE G/P (1€ Gagnant + 1€ Placé = 2€ de mise fixe)
                 let miseFixeSimple = 1.0;
                 let gainSimpleCourse = -(miseFixeSimple * 2);
                 let simpleTouche = false;
@@ -656,7 +655,7 @@
                 if (pepiteTouche) hitsPepite++;
                 profitPepite += gainPepiteCourse;
 
-                // 4. COUPLÉ G/P (1€ Couplé Gagnant + 1€ Couplé Placé = 2€ de mise fixe sur la paire VS + Base2)
+                // 4. COUPLÉ G/P (1€ CG + 1€ CP = 2€ de mise fixe)
                 let pairMain = [picks.vs.num, picks.base2.num].sort((a,b)=>a-b).join('-');
                 let gainCoupleCourse = -(miseFixeSimple * 2);
                 let coupleTouche = false;
