@@ -18,7 +18,6 @@
 
     <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
-    <!-- Navigation inter-applis -->
     <nav class="bg-zinc-900 border-b border-zinc-800 p-2 flex justify-center gap-4 text-xs font-bold">
         <a href="foot.html" class="text-zinc-500 hover:text-white transition"><i class="fa-solid fa-futbol mr-1"></i> Foot</a>
         <a href="nba.html" class="text-zinc-500 hover:text-white transition"><i class="fa-solid fa-basketball mr-1"></i> NBA</a>
@@ -107,27 +106,43 @@
             }, 3000);
         }
 
+        // Fonction anti-blocage (Multi-Proxys)
+        async function fetchWithProxy(targetUrl) {
+            const proxies = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+                `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+            ];
+            
+            for (let proxy of proxies) {
+                try {
+                    let res = await fetch(proxy);
+                    if (res.ok) return res;
+                } catch (e) {
+                    console.warn("Proxy échoué, essai du suivant...");
+                }
+            }
+            throw new Error("Tous les proxys ont échoué");
+        }
+
         async function fetchExactRapport(apiDate, R, C) {
             const cacheKey = `${apiDate}_R${R}C${C}`;
             if (fetchedRapports[cacheKey]) return fetchedRapports[cacheKey];
 
             try {
-                let res = await fetch(`https://offline.pmu.fr/api/client/1/programme/${apiDate}/R${R}/C${C}/rapports-definitifs?specialisation=INTERNET`);
-                if (!res.ok) return null; // API pas prête (Chili en attente, etc.)
+                const targetUrl = `https://offline.pmu.fr/api/client/1/programme/${apiDate}/R${R}/C${C}/rapports-definitifs?specialisation=INTERNET`;
+                let res = await fetchWithProxy(targetUrl);
                 
                 let data = await res.json();
                 let rapportE_SG = null;
 
-                // On cherche le rapport Simple Gagnant (e-SG ou SG)
                 data.forEach(typePari => {
                     if (typePari.typePari === 'E_SG' || typePari.typePari === 'SG') {
                         if (typePari.rapports && typePari.rapports.length > 0) {
-                            // On stocke le mapping { "numeroCheval": dividende }
                             rapportE_SG = {};
                             typePari.rapports.forEach(r => {
-                                // r.combinaisons contient souvent [3] (le cheval 3)
                                 let chevalGagnant = r.combinaisons[0]; 
-                                rapportE_SG[chevalGagnant] = r.dividende / 100; // PMU donne le dividende pour 100 centimes (soit 1€)
+                                rapportE_SG[chevalGagnant] = r.dividende / 100;
                             });
                         }
                     }
@@ -142,20 +157,17 @@
 
         async function loadTurfRaces(isSilent = false) {
             const dateStr = document.getElementById('matchDate').value;
-            const apiDate = dateStr.replace(/-/g, ''); // Format DDMMYYYY attendu par PMU : ex 03112026
             const apiDateCorrected = `${dateStr.split('-')[2]}${dateStr.split('-')[1]}${dateStr.split('-')[0]}`; 
-            
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération du programme officiel PMU...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération du programme via Proxy...';
                 document.getElementById('matchesContainer').innerHTML = '';
             }
             
             try {
-                const url = `https://offline.pmu.fr/api/client/1/programme/${apiDateCorrected}`;
-                let res = await fetch(url);
-                if (!res.ok) throw new Error("Programme introuvable");
+                const targetUrl = `https://offline.pmu.fr/api/client/1/programme/${apiDateCorrected}`;
+                let res = await fetchWithProxy(targetUrl);
                 
                 let data = await res.json();
                 let validRaces = [];
@@ -175,10 +187,9 @@
                             let isTerminee = (course.statut === 'ARRIVEE' || course.statut === 'TERMINEE');
                             let status = isLive ? 'IN_PLAY' : (isTerminee ? 'FINISHED' : 'TIMED');
 
-                            // Extraction de l'arrivée si disponible
                             let gagnantsArrivee = [];
                             if (isTerminee && course.ordreArrivee) {
-                                gagnantsArrivee = course.ordreArrivee.map(arr => arr[0]); // ex: [5, 2, 8]
+                                gagnantsArrivee = course.ordreArrivee.map(arr => arr[0]); 
                             }
 
                             validRaces.push({
@@ -190,10 +201,9 @@
                                 competition: { name: `R${R} - ${reunionName}` },
                                 raceName: `C${C} - ${course.libelleCourt || course.libelle}`,
                                 gagnants: gagnantsArrivee,
-                                isRapportsDispo: course.statut === 'TERMINEE' // TERMINEE = Rapports saisis par PMU
+                                isRapportsDispo: course.statut === 'TERMINEE' 
                             });
 
-                            // Si on a parié sur cette course et qu'elle est en ARRIVEE/TERMINEE, on va chercher le vrai rapport en fond
                             if (savedBets[courseId] && isTerminee) {
                                 fetchRapportsPromises.push(fetchExactRapport(apiDateCorrected, R, C));
                             }
@@ -201,7 +211,6 @@
                     });
                 }
 
-                // Attendre la récupération des vrais rapports pour les courses pariées
                 await Promise.all(fetchRapportsPromises);
 
                 validRaces.sort((a, b) => a.utcDate - b.utcDate);
@@ -222,7 +231,7 @@
 
             } catch (error) {
                 console.error(error);
-                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur réseau PMU.</span>`;
+                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur réseau. Désactivez votre Adblock si le problème persiste.</span>`;
             }
         }
 
@@ -326,15 +335,14 @@
                         const cacheKey = `${apiDateCorrected}_R${race.r}C${race.c}`;
                         let vraisRapports = fetchedRapports[cacheKey];
 
-                        if (vraisRapports) { // PMU a fourni les rapports finaux
-                            if (race.gagnants[0] === myBet) { // Victoire
+                        if (vraisRapports) { 
+                            if (race.gagnants[0] === myBet) {
                                 let coteReelle = vraisRapports[myBet] || 1.10;
                                 betMessage = `<div class="mt-3 text-center text-[10px] bg-zinc-950 rounded py-1.5 border border-emerald-800 text-emerald-400 font-bold"><i class="fa-solid fa-check"></i> Gagné (Rapport PMU : ${coteReelle.toFixed(2)}€)</div>`;
                             } else {
                                 betMessage = `<div class="mt-3 text-center text-[10px] bg-zinc-950 rounded py-1.5 border border-red-800 text-red-400 font-bold"><i class="fa-solid fa-xmark"></i> Perdu</div>`;
                             }
                         } else {
-                            // Sécurité pour les courses étrangères ou en cours de calcul
                             betMessage = `<div class="mt-3 text-center text-[10px] bg-zinc-950 rounded py-1.5 border border-amber-800 text-amber-400 font-bold"><i class="fa-solid fa-hourglass-half"></i> En attente des rapports officiels...</div>`;
                         }
                     } else {
@@ -389,7 +397,6 @@
                         const cacheKey = `${apiDateCorrected}_R${race.r}C${race.c}`;
                         let vraisRapports = fetchedRapports[cacheKey];
 
-                        // ON NE TOUCHE À LA BANKROLL QUE SI LES RAPPORTS SONT PUBLIÉS (Sécurité Chili/Etranger)
                         if (vraisRapports) {
                             if (race.gagnants[0] === myBet) {
                                 let coteReelle = vraisRapports[myBet] || 1.10;
