@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Progression 54€ + Stop Win 50€</title>
+    <title>Fab Turf - Progression 54€ + Stop Win 50€ (Toutes Cotes)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -71,7 +71,7 @@
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider">Bilan du Jour (Toutes Réunions)</h2>
-                    <p class="text-[10px] text-zinc-400">Séquence 54€ max • (Cote Min: 1.80) • <strong class="text-emerald-400">Stop-Win: +50€</strong></p>
+                    <p class="text-[10px] text-zinc-400">Séquence 54€ max • (Toutes Cotes) • <strong class="text-emerald-400">Stop-Win: +50€</strong></p>
                 </div>
             </div>
 
@@ -726,7 +726,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_stopwin_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_stopwin_v2_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -862,7 +862,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `world_stopwin_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `world_stopwin_v2_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -891,7 +891,8 @@
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
                     // 1. BASE
-                    if (baseH && baseH.cote >= 1.8) {
+                    // TOUTES LES COTES SONT ACCEPTÉES (Filtre supprimé)
+                    if (baseH) {
                         // Gagnant Virtuel à 1€ pur (Toujours calculé même si on a arrêté de parier)
                         let gGagBase = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
                         if (gGagBase === 0 && baseArr === 1) gGagBase = baseH.cote; 
@@ -933,7 +934,8 @@
                     }
 
                     // 2. PÉPITE
-                    if (nuggetH && nuggetH.cote >= 1.8) {
+                    // TOUTES LES COTES SONT ACCEPTÉES (Filtre supprimé)
+                    if (nuggetH) {
                         // Gagnant Virtuel à 1€ pur
                         let gGagPepite = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
                         if (gGagPepite === 0 && nuggetArr === 1) gGagPepite = nuggetH.cote; 
@@ -1012,7 +1014,7 @@
                 
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
 
-                localStorage.setItem(`pmu_stats_stopwin_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_stopwin_v2_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
                 
