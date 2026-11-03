@@ -7,6 +7,8 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TurfBet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -165,34 +167,54 @@
             } catch (e) {}
         }
 
-        // Fonction de Fetch 100% stable (Séquentielle, pas de surchauffe)
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            let bgClass = type === 'success' ? 'bg-emerald-900/90 border-emerald-500/50 text-emerald-200' : 'bg-zinc-800 border-zinc-700 text-white';
+            toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center ${bgClass}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('opacity-0', 'translate-y-2'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        // MOTEUR RÉSEAU ULTRA-RÉSISTANT (Exécution simultanée via Promise.any pour zéro blocage)
         async function fetchPMU(endpoint) {
-            const url = `https://offline.pmu.fr/api/client/1/${endpoint}`;
+            const url = `https://online.turfinfo.api.pmu.fr/rest/client/61/${endpoint}${endpoint.includes('?') ? '&' : '?'}specialisation=INTERNET`;
             const proxies = [
                 `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+                `https://corsproxy.io/?${encodeURIComponent(url)}`
             ];
 
-            for (let i = 0; i < proxies.length; i++) {
+            const fetchAndParse = async (proxyUrl) => {
+                const ctrl = new AbortController();
+                const id = setTimeout(() => ctrl.abort(), 8000);
                 try {
-                    const ctrl = new AbortController();
-                    const timeoutId = setTimeout(() => ctrl.abort(), 6000);
-                    
-                    const res = await fetch(proxies[i], { signal: ctrl.signal });
-                    clearTimeout(timeoutId);
-                    
-                    if (res.ok) {
-                        const text = await res.text();
-                        let json = JSON.parse(text);
-                        // AllOrigins imbrique le JSON dans .contents
-                        if (json && json.contents) return JSON.parse(json.contents);
+                    const res = await fetch(proxyUrl, { signal: ctrl.signal });
+                    clearTimeout(id);
+                    if (!res.ok) throw new Error("Bad status");
+                    const text = await res.text();
+                    let json = JSON.parse(text);
+                    if (json && json.contents) json = JSON.parse(json.contents);
+                    if (json && (json.programme || json.participants || Array.isArray(json))) {
                         return json;
                     }
-                } catch (err) {
-                    console.warn(`Proxy ${i+1} échoué`);
+                    throw new Error("Bad format");
+                } catch (e) {
+                    clearTimeout(id);
+                    throw e;
                 }
+            };
+
+            try {
+                return await Promise.any(proxies.map(p => fetchAndParse(p)));
+            } catch (e) {
+                throw new Error("Réseau inaccessible");
             }
-            throw new Error("Réseau inaccessible");
         }
 
         async function getRaceDetails(apiDate, race, forceRefresh = false) {
@@ -329,7 +351,7 @@
                 await loadCurrentReunionDetails(forceRefresh);
 
             } catch (error) {
-                statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-rotate mr-1"></i> Connexion lente, veuillez actualiser.</span>`;
+                statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-rotate mr-1"></i> Connexion bloquée (Désactivez Adblock si persistant)</span>`;
             }
         }
 
@@ -357,12 +379,10 @@
                 return false;
             });
 
-            // FETCH SÉQUENTIEL : LA CLÉ POUR NE JAMAIS BLOQUER LES PROXYS
             if (missing.length > 0) {
                 statusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Analyse de la réunion (${missing.length} courses)...`;
                 for (let i = 0; i < missing.length; i++) {
                     await getRaceDetails(apiDate, missing[i], forceRefresh);
-                    // On sauvegarde et on rafraîchit l'écran à chaque course récupérée !
                     saveCache();
                     applyFilters();
                     calculateDailyBankroll(apiDate);
