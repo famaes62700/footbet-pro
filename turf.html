@@ -110,9 +110,9 @@
                     </div>
                 </div>
 
-                <!-- PÉPITE (SIMULATION PURE) -->
+                <!-- PÉPITE (SIMULATION MONTANTE INTÉGRÉE) -->
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-amber-500/30 flex flex-col justify-between space-y-2 relative">
-                    <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMULATION (SANS MISE)</div>
+                    <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMULATION MONTANTE</div>
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] uppercase font-bold text-amber-400">Pépite</span>
                         <span id="statPepite" class="text-[10px] font-bold text-white">G: 0 | P: 0 / 0</span>
@@ -123,7 +123,7 @@
                             <span id="gainPepiteGag" class="font-bold text-amber-400">--</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
-                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Placé (Virtuel)</span>
+                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Placé (Simu x3)</span>
                             <span id="gainPepitePla" class="font-bold text-amber-400">--</span>
                         </div>
                     </div>
@@ -150,12 +150,12 @@
 
             <!-- LIGNE D'AFFICHAGE DU TOTAL DES MISES -->
             <div class="mt-3 flex justify-between items-center text-[11px] bg-zinc-800/60 px-3 py-2 rounded-xl border border-zinc-700/50 text-zinc-300">
-                <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Total Mises Engagées (Base Montante) :</span>
+                <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Total Mises Engagées (Base Montante Réelle) :</span>
                 <span id="totalSpentText" class="font-bold text-white">0.00 €</span>
             </div>
 
             <div class="text-center text-[10px] text-zinc-400 mt-2 font-semibold">
-                Stratégie : Base Placé = Montante x3 (Impacte la Bankroll) • Pépite Placé = Simulation brute sans mise • Reste = Virtuel (1€)
+                Stratégie : Base Placé = Vraie Montante x3 (Impacte Bankroll) • Pépite Placé = Simu Montante x3 (Sans impacter ta caisse)
             </div>
             <div id="statGlobal" class="text-center text-[11px] text-zinc-300 mt-2 font-medium flex flex-col items-center"></div>
         </div>
@@ -976,7 +976,7 @@
             
             let baseMiseLimit = 2.0; 
             let currentStakeBasePla = baseMiseLimit;
-            let currentStakePepitePla = baseMiseLimit; // Pour la simulation montante de la pépite
+            let currentStakePepitePla = baseMiseLimit; 
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
@@ -1049,7 +1049,7 @@
                         if (gGag > 0) { pepiteGagCount++; totalGainPepiteGag += (gGag * refStake) - refStake; }
                         else { totalGainPepiteGag -= refStake; }
 
-                        // PLACÉ SIMULATION MONTANTE (SANS DÉDUIRE LES MISES DU CAPITAL)
+                        // PLACÉ SIMULATION MONTANTE (DÉDUIT ET AJOUTE SES PROPRES MISES VIRTUELLES)
                         let simStakePepite = currentStakePepitePla; 
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
@@ -1059,10 +1059,10 @@
                             pepitePlaCount++; 
                             let simNet = (gPla * simStakePepite) - simStakePepite;
                             totalGainPepitePla += simNet; 
-                            currentStakePepitePla = baseMiseLimit; // Reset simu
+                            currentStakePepitePla = baseMiseLimit; // Reset de la montante pépite
                         } else { 
-                            totalGainPepitePla -= simStakePepite; // On comptabilise la perte virtuelle sans toucher à currentBankroll
-                            currentStakePepitePla = simStakePepite * 3; // Évolution simulée de la mise
+                            totalGainPepitePla -= simStakePepite; // Déduit la mise virtuelle de la simulation
+                            currentStakePepitePla = simStakePepite * 3; // La mise virtuelle grimpe x3
                         }
                     }
 
