@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Base & Pépite (Simple Placé & Mises Adaptatives)</title>
+    <title>Fab Turf - Base & Pépite (Mises Boostées sur Favoris 1.8-2.5)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,7 +22,7 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center">
-                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">Placé & Mises Adaptatives</span>
+                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">Mises Boostées (1.8 - 2.5)</span>
             </h1>
             <div class="flex items-center space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
@@ -76,7 +76,7 @@
         <div id="statsBlock" class="bg-zinc-900 border border-indigo-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-indigo-400 tracking-wider flex items-center">
-                    <i class="fa-solid fa-trophy mr-1.5"></i> Bilan du Jour (Mises Adaptatives à la Cote)
+                    <i class="fa-solid fa-trophy mr-1.5"></i> Bilan du Jour (Boost Cote 1.8 - 2.5)
                 </h2>
                 <div id="statsProgress" class="text-[10px] font-mono text-zinc-400 flex items-center">
                     <i class="fa-solid fa-spinner fa-spin mr-1"></i> Calcul en cours...
@@ -86,7 +86,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <!-- BASE -->
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-emerald-500/30 flex flex-col justify-between space-y-2 relative">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">MISE ADAPTÉE</div>
+                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">MISE BOOSTÉE (1.8-2.5)</div>
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] uppercase font-bold text-emerald-400">Base Solide (Placé)</span>
                         <span id="statBase" class="text-[10px] font-bold text-white">P: 0 / 0</span>
@@ -99,7 +99,7 @@
 
                 <!-- PÉPITE -->
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-amber-500/30 flex flex-col justify-between space-y-2 relative">
-                    <div class="absolute -top-2 -right-2 bg-amber-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">MISE ADAPTÉE (COTE 5-20)</div>
+                    <div class="absolute -top-2 -right-2 bg-amber-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">PÉPITE (COTE 5-20)</div>
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] uppercase font-bold text-amber-400">Pépite Placé</span>
                         <span id="statPepite" class="text-[10px] font-bold text-white">P: 0 / 0</span>
@@ -117,7 +117,7 @@
             </div>
 
             <div class="text-center text-[10px] text-zinc-400 mt-2 font-semibold">
-                Méthode : Mise = (Bankroll × 2%) / Cote • Lissage automatique du risque selon la cote
+                Stratégie : Multiplicateur x1.5 appliqué automatiquement sur les cotes comprises entre 1.8 et 2.5
             </div>
             <div id="statGlobal" class="text-center text-[11px] text-zinc-300 mt-2 font-medium flex flex-col items-center"></div>
         </div>
@@ -207,18 +207,23 @@
         let validatedRacesCache = {}; 
         
         const INITIAL_BANKROLL = 100.0;
-        const RISK_PERCENT = 0.02; // Risque de base fixé à 2%
+        const RISK_PERCENT = 0.02; // Risque de base à 2%
 
-        // Fonction de calcul de mise adaptative selon la cote
-        function getAdaptiveStake(currentBankroll, cote, typeCheval) {
+        // Fonction de mise boostée pour les cotes entre 1.8 et 2.5
+        function getBoostedStake(currentBankroll, cote, typeCheval) {
             let targetCote = Math.max(1.5, cote);
-            // Formule : (Bankroll * Risque) / Cote, avec un plancher de 0.50 €
             let calculatedStake = (currentBankroll * RISK_PERCENT) / targetCote;
-            
-            // Si c'est la pépite, on ajuste légèrement pour lisser le risque d'outsider
+
+            // Règle de boost : si la cote est comprise entre 1.8 et 2.5, on amplifie la mise (ex: x1.5)
+            if (cote >= 1.8 && cote <= 2.5) {
+                calculatedStake = calculatedStake * 1.5;
+            }
+
+            // Pour la pépite, on applique un léger rééquilibrage pour limiter la variance d'outsider
             if (typeCheval === 'pepite') {
                 calculatedStake = calculatedStake * 0.8;
             }
+
             return Math.max(0.5, parseFloat(calculatedStake.toFixed(2)));
         }
 
@@ -715,7 +720,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_adaptive_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_boost_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { basePla: 0, pepPla: 0 };
@@ -875,9 +880,9 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // MISES ADAPTATIVES SELON LA COTE
-                    let stakeBase = baseH ? getAdaptiveStake(currentBankroll, baseH.cote, 'base') : 0.5;
-                    let stakePepite = nuggetH ? getAdaptiveStake(currentBankroll, nuggetH.cote, 'pepite') : 0.5;
+                    // MISES AVEC BOOST SI COTE ENTRE 1.8 ET 2.5
+                    let stakeBase = baseH ? getBoostedStake(currentBankroll, baseH.cote, 'base') : 0.5;
+                    let stakePepite = nuggetH ? getBoostedStake(currentBankroll, nuggetH.cote, 'pepite') : 0.5;
 
                     if (baseH) {
                         totalSpentPla += stakeBase;
@@ -938,7 +943,7 @@
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                 if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> Bilan calculé (${coursesValidees} courses)</span>`;
 
-                localStorage.setItem(`pmu_stats_adaptive_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_boost_${ddmmyyyy}`, JSON.stringify({
                     basePla: totalGainBasePla, pepPla: totalGainPepitePla
                 }));
                 
