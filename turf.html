@@ -110,7 +110,7 @@
                     </div>
                 </div>
 
-                <!-- PÉPITE (SIMULATION MONTANTE INTÉGRÉE) -->
+                <!-- PÉPITE (SIMULATION MONTANTE INTÉGRÉE & DÉDUITE) -->
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-amber-500/30 flex flex-col justify-between space-y-2 relative">
                     <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMULATION MONTANTE</div>
                     <div class="flex justify-between items-center">
@@ -155,7 +155,7 @@
             </div>
 
             <div class="text-center text-[10px] text-zinc-400 mt-2 font-semibold">
-                Stratégie : Base Placé = Vraie Montante x3 (Impacte Bankroll) • Pépite Placé = Simu Montante x3 (Sans impacter ta caisse)
+                Stratégie : Base Placé = Vraie Montante x3 (Impacte Bankroll) • Pépite Placé = Simu Montante x3 (Mises déduites virtuellement)
             </div>
             <div id="statGlobal" class="text-center text-[11px] text-zinc-300 mt-2 font-medium flex flex-col items-center"></div>
         </div>
@@ -1011,7 +1011,6 @@
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
                     if (baseH) {
-                        // GAGNANT VIRTUEL (1€)
                         let gGag = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
                         if (gGag === 0 && baseArr === 1) gGag = baseH.cote; 
                         if (gGag > 0) { 
@@ -1021,7 +1020,6 @@
                             totalGainBaseGag -= refStake;
                         }
 
-                        // PLACÉ RÉEL (MONTANTE x3) - IMPACTE LA BANKROLL
                         let actualStakeBase = currentBankroll > 0 ? Math.min(currentStakeBasePla, currentBankroll) : 0;
                         totalSpentPla += actualStakeBase;
 
@@ -1043,13 +1041,12 @@
                     }
 
                     if (nuggetH) {
-                        // GAGNANT VIRTUEL (1€)
                         let gGag = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
                         if (gGag === 0 && nuggetArr === 1) gGag = nuggetH.cote; 
                         if (gGag > 0) { pepiteGagCount++; totalGainPepiteGag += (gGag * refStake) - refStake; }
                         else { totalGainPepiteGag -= refStake; }
 
-                        // PLACÉ SIMULATION MONTANTE (DÉDUIT ET AJOUTE SES PROPRES MISES VIRTUELLES)
+                        // SIMULATION MONTANTE PLACÉ PÉPITE (Déduction des mises virtuelles)
                         let simStakePepite = currentStakePepitePla; 
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
@@ -1059,10 +1056,10 @@
                             pepitePlaCount++; 
                             let simNet = (gPla * simStakePepite) - simStakePepite;
                             totalGainPepitePla += simNet; 
-                            currentStakePepitePla = baseMiseLimit; // Reset de la montante pépite
+                            currentStakePepitePla = baseMiseLimit; 
                         } else { 
-                            totalGainPepitePla -= simStakePepite; // Déduit la mise virtuelle de la simulation
-                            currentStakePepitePla = simStakePepite * 3; // La mise virtuelle grimpe x3
+                            totalGainPepitePla -= simStakePepite; // Déduction effective de la mise virtuelle perdue
+                            currentStakePepitePla = simStakePepite * 3; 
                         }
                     }
 
