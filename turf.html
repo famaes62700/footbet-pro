@@ -295,24 +295,51 @@
             return '<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">PLAT</span>';
         }
 
+        // ---------- NOUVEAU MOTEUR RÉSEAU 100% SÉCURISÉ ----------
+        async function smartFetchPMU(path) {
+            // Construit l'URL exacte du PMU
+            const fullPmuUrl = `https://online.turfinfo.api.pmu.fr/rest/client/61/programme/${path}`;
+            
+            // On essaie d'abord ton serveur Vercel local (au cas où il remarche)
+            try {
+                let localRes = await fetch(`/api/pmu/${path}`);
+                if (localRes.ok) return await localRes.json();
+            } catch (e) {
+                console.log("Vercel bloqué, passage aux proxys de secours...");
+            }
+
+            // Si Vercel est bloqué, on bascule sur nos relais de secours publics
+            const proxies = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(fullPmuUrl)}`,
+                `https://corsproxy.io/?${encodeURIComponent(fullPmuUrl)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(fullPmuUrl)}`
+            ];
+
+            for (let proxy of proxies) {
+                try {
+                    let res = await fetch(proxy);
+                    if (res.ok) {
+                        let json = await res.json();
+                        if(json.contents) json = JSON.parse(json.contents); // Pour certains relais
+                        return json;
+                    }
+                } catch(e) {}
+            }
+            throw new Error("Tous les accès sont bloqués par le PMU.");
+        }
+
         async function getFullRaceData(dateStr, rNum, cNum) {
             let partants = [];
             let rapportsList = [];
             try {
-                let pRes = await fetch(`/api/pmu/${dateStr}/R${rNum}/C${cNum}/participants`);
-                if(pRes.ok) {
-                    let pData = await pRes.json();
-                    partants = pData.participants || (Array.isArray(pData) ? pData : []);
-                }
+                let pData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/participants?specialisation=INTERNET`);
+                partants = pData.participants || (Array.isArray(pData) ? pData : []);
             } catch(e) {}
 
             try {
-                let rRes = await fetch(`/api/pmu/${dateStr}/R${rNum}/C${cNum}/rapports-definitifs`);
-                if(rRes.ok) {
-                    let rData = await rRes.json();
-                    if (Array.isArray(rData)) rapportsList = rData;
-                    else rapportsList = rData.rapports || rData.lesRapports || [];
-                }
+                let rData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs?specialisation=INTERNET`);
+                if (Array.isArray(rData)) rapportsList = rData;
+                else rapportsList = rData.rapports || rData.lesRapports || [];
             } catch(e) {}
 
             return { partants, rapportsList };
@@ -331,9 +358,7 @@
             const ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
 
             try {
-                const res = await fetch(`/api/pmu/${ddmmyyyy}?specialisation=INTERNET`);
-                if (!res.ok) throw new Error("Réseau");
-                const data = await res.json();
+                const data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
                 
                 let reunions = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
                 
@@ -368,9 +393,10 @@
                     throw new Error("Aucune réunion");
                 }
             } catch (e) {
-                statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur réseau</span>';
+                statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur réseau (PMU indisponible)</span>';
             }
         }
+        // ---------------------------------------------------------
 
         function autoSelectCurrentRace() {
             let now = new Date().getTime();
