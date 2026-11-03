@@ -267,30 +267,26 @@
             throw new Error("PMU bloqué");
         }
 
+        // FILTRE GÉOGRAPHIQUE ULTRA-STRICT : UNIQUEMENT FRANCE (FR) ET BELGIQUE (BE)
         function isFrenchOrBelgianMeeting(reunion) {
             let hip = reunion.hippodrome || {};
             let pays = String(hip.pays || hip.libellePays || "").toUpperCase();
             let codePays = String(hip.codePays || "").toUpperCase();
             let libelleLong = String(reunion.libelleLong || hip.libelleLong || "").toUpperCase();
 
-            if (pays.includes("CHILI") || pays.includes("ARGENTINE") || pays.includes("DUBAI") || pays.includes("SOUTH AFRICA") || pays.includes("USA")) return false;
-            if (codePays === "CL" || codePays === "AR" || codePays === "AE" || codePays === "ZA" || codePays === "US") return false;
+            // EXCLUSION TOTALE ET NETTE DE TOUT CE QUI EST ÉTRANGER HORS BELGIQUE
+            if (pays.includes("CHILI") || pays.includes("ARGENTINE") || pays.includes("DUBAI") || pays.includes("SOUTH AFRICA") || pays.includes("USA") || pays.includes("SUEDE") || pays.includes("ALLEMAGNE") || pays.includes("ANGLETERRE") || pays.includes("ITALIE") || pays.includes("ESPAGNE")) return false;
+            if (codePays === "CL" || codePays === "AR" || codePays === "AE" || codePays === "ZA" || codePays === "US" || codePays === "SE" || codePays === "DE" || codePays === "GB" || codePays === "IT" || codePays === "ES") return false;
 
+            // VALIDATION SI FRANCE OU BELGIQUE OFFICIELLES
             if (pays.includes("FRANCE") || pays.includes("BELGIQUE") || pays === "FR" || pays === "BE") return true;
-            if (codePays === "FR" || codePays === "FRA" || codePays === "BE" || codePays === "BEL") return true;
+            if (codePays === "FR" === true || codePays === "FRA" || codePays === "BE" || codePays === "BEL") return true;
 
-            const allowedKeywords = ["MONS", "WOLVEGA", "VINCENNES", "AUTEUIL", "ENGHIEN", "CHANTILLY", "LONGCHAMP", "CAGNES", "DEAUVILLE", "LYON", "MARSEILLE", "TOULOUSE", "BORDEAUX", "NANTES", "STRASBOURG", "VICHY", "PAU", "CABOURG", "LAVAL", "REIMS", "AMIENS", "ANGERS", "CAEN", "CHARTRES", "DIEPPE", "LE CROISE", "LE MANS", "LISIEUX", "MAUQUENCHY", "MONTAUBAN", "MOULINS", "NANCY", "PORNICOT", "SAINT-BRIEUC", "TARBES"];
+            // LISTE BLANCHE DES HIPPODROMES FR ET BE AUTORISÉS
+            const allowedKeywords = ["MONS", "WOLVEGA", "VINCENNES", "AUTEUIL", "ENGHIEN", "CHANTILLY", "LONGCHAMP", "CAGNES", "DEAUVILLE", "LYON", "MARSEILLE", "TOULOUSE", "BORDEAUX", "NANTES", "STRASBOURG", "VICHY", "PAU", "CABOURG", "LAVAL", "REIMS", "AMIENS", "ANGERS", "CAEN", "CHARTRES", "DIEPPE", "LE CROISE", "LE MANS", "LISIEUX", "MAUQUENCHY", "MONTAUBAN", "MOULINS", "NANCY", "PORNICOT", "SAINT-BRIEUC", "TARBES", "MARCHEFELTRIN", "MAUVENCHY"];
             for (let kw of allowedKeywords) {
                 if (libelleLong.includes(kw)) return true;
             }
-
-            const blockedKeywords = ["CHILI", "ARGENTINE", "DUBAI", "SOUTH", "AFRICA", "SUEEDE", "SWEDEN", "CHILE", "USA", "VALPARAISO", "SANTIAGO", "SAN ISIDRO", "PALERMO"];
-            for (let kw of blockedKeywords) {
-                if (libelleLong.includes(kw) || pays.includes(kw)) return false;
-            }
-
-            let numR = reunion.numOfficiel || 0;
-            if (numR <= 15 && (!pays || pays === "")) return true;
 
             return false;
         }
@@ -357,7 +353,12 @@
                     
                     calculateDailyStats(true);
                 } else {
+                    liveMeetingsData = [];
+                    document.getElementById('meetingSelect').innerHTML = '<option value="">Aucune réunion FR ou BE</option>';
+                    document.getElementById('raceSelect').innerHTML = '<option value="">-- Course --</option>';
+                    document.getElementById('runnersTableBody').innerHTML = '<tr><td colspan="4" class="p-6 text-center text-zinc-500">Aucune course française ou belge ce jour.</td></tr>';
                     statusText.innerHTML = `<span class="text-zinc-400">Aucune réunion FR ou BE à cette date.</span>`;
+                    calculateDailyStats(true);
                 }
             } catch (e) {
                 statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> PMU indisponible</span>';
@@ -365,6 +366,7 @@
         }
 
         function autoSelectCurrentRace() {
+            if (liveMeetingsData.length === 0) return;
             let now = new Date().getTime();
             let bestMIdx = 0, bestCIdx = 0;
             let minDiff = Infinity, minPastDiff = Infinity;
@@ -574,6 +576,7 @@
             if (mIdx === "" || rIdx === "") return;
 
             let meeting = liveMeetingsData[mIdx];
+            if (!meeting) return;
             let courses = meeting.courses || meeting.races || meeting.lesCourses || [];
             let race = courses[rIdx];
             if (!race) return;
@@ -719,7 +722,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_fr_be_v4_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_fr_be_v5_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -815,7 +818,6 @@
                     let cNum = c.numOrdre || (cIdx + 1);
                     if (c.heureDepart) {
                         let departTime = new Date(c.heureDepart).getTime();
-                        // SÉCURITÉ HORAIRE : On exige que la course soit passée depuis au moins 10 minutes (laissée le temps aux rapports de tomber)
                         if (departTime < (now - 10 * 60 * 1000)) {
                             pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime });
                         }
@@ -843,7 +845,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `fr_be_v4_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `fr_be_v5_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -860,7 +862,6 @@
                     if (raceData.isComplete) validatedRacesCache[cacheKey] = raceData;
                 }
 
-                // VÉRIFICATION STRICTE DE L'ARRIVÉE ET DES RAPPORTS
                 if (raceData && raceData.arrivees.length > 0) {
                     if (raceData.rapportsList.length === 0) continue; 
 
@@ -894,23 +895,21 @@
                         currentBankroll += netBasePla; 
                     }
 
-                    // 2. PÉPITE PLACÉ (MONTANTE x3 SIMULATION STRICTE AVEC DÉDUCTION DE LA MISE)
+                    // 2. PÉPITE PLACÉ (SIMULATION MONTANTE x3 STRICTEMENT DÉDUITE)
                     if (nuggetH) {
                         let simStakePepite = currentStakePepitePla; 
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
                         if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
                         
-                        let netPepitePla = 0;
                         if (gPla > 0) { 
                             pepiteWins++; 
-                            netPepitePla = (gPla * simStakePepite) - simStakePepite;
-                            totalProfitPepite += netPepitePla; 
-                            currentStakePepitePla = baseMiseLimit; 
+                            let simNet = (gPla * simStakePepite) - simStakePepite;
+                            totalProfitPepite += simNet; 
+                            currentStakePepitePla = baseMiseLimit; // Reset de la montante pépite à 2€
                         } else { 
-                            netPepitePla = -simStakePepite; // DÉDUCTION STRICTE DE LA MISE VIRTUELLE PERDUE
-                            totalProfitPepite += netPepitePla; 
-                            currentStakePepitePla = simStakePepite * 3; 
+                            totalProfitPepite -= simStakePepite; // DÉDUCTION STRICTE DE LA MISE VIRTUELLE PERDUE
+                            currentStakePepitePla = simStakePepite * 3; // La mise virtuelle passe à x3
                         }
                     }
 
@@ -937,7 +936,7 @@
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                 if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> ${coursesValidees} courses (FR & BE)</span>`;
 
-                localStorage.setItem(`pmu_stats_fr_be_v4_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_fr_be_v5_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBase, pepiteProfit: totalProfitPepite
                 }));
                 
