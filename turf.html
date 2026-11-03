@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Rattrapage Glissant Pro</title>
+    <title>Fab Turf - Spécial Trot Pro</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,15 +21,15 @@
 
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
-            <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center">
-                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf (Pro)
+            <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center">
+                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf (100% Trot)
             </h1>
             <div class="flex items-center space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
-                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll (Placé)</span>
+                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll (Trot Placé)</span>
                     <span id="headerBankroll">500.00 €</span>
                 </div>
-                <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadLivePmu()">
+                <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-amber-500" onchange="loadLivePmu()">
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Historique Mensuel">
                     <i class="fa-solid fa-calendar-days"></i>
                 </button>
@@ -48,13 +48,13 @@
         <div id="historyBlock" class="hidden bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
-                    <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés (Semaine & Mois)
+                    <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés Trot (Semaine & Mois)
                 </h2>
                 <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
-                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Cette Semaine (Placé Uniquement)</h3>
+                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Cette Semaine (Trot Placé)</h3>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="text-zinc-300">Base : <span id="weekBase" class="text-emerald-400 font-bold">0.00 €</span></div>
                         <div class="text-zinc-300">Pépite : <span id="weekPepite" class="text-amber-400 font-bold">0.00 €</span></div>
@@ -67,11 +67,11 @@
             </div>
         </div>
 
-        <!-- BILAN DU JOUR : BASE & PÉPITE -->
-        <div class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
+        <!-- BILAN DU JOUR : BASE & PÉPITE (TROT UNIQUEMENT) -->
+        <div class="bg-zinc-900 border border-amber-500/30 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
-                    <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider">Bilan du Jour (Toutes Réunions)</h2>
+                    <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (Exclusivement Trot)</h2>
                     <p class="text-[10px] text-zinc-400">Rattrapage de Série Glissant • Base 5€ • <strong class="text-emerald-400">Stop-Win: +50€</strong></p>
                 </div>
             </div>
@@ -80,7 +80,7 @@
                 <!-- BASE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
                     <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">VRAIE BANKROLL</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base</div>
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Trot)</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
                             <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant (1€ virt.)</span>
@@ -98,7 +98,7 @@
                 <!-- PÉPITE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-amber-500/40 relative flex flex-col justify-between">
                     <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMULATION PURE</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Pépite</div>
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Pépite (Trot)</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
                             <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant (1€ virt.)</span>
@@ -121,11 +121,11 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <select id="meetingSelect" onchange="onMeetingChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500">
-                <option value="">-- Réunion / Hippodrome --</option>
+            <select id="meetingSelect" onchange="onMeetingChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500">
+                <option value="">-- Réunion Trot --</option>
             </select>
-            <select id="raceSelect" onchange="onRaceChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500">
-                <option value="">-- Course --</option>
+            <select id="raceSelect" onchange="onRaceChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500">
+                <option value="">-- Course Trot --</option>
             </select>
         </div>
 
@@ -146,7 +146,7 @@
         <div class="bg-gradient-to-r from-emerald-950/60 via-zinc-900 to-zinc-900 border border-emerald-500/50 rounded-2xl p-4 space-y-3 shadow-xl relative">
             <div class="flex flex-wrap justify-between items-center gap-2">
                 <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center">
-                    <i class="fa-solid fa-star mr-1.5"></i> Nos 2 Chevaux Clés
+                    <i class="fa-solid fa-star mr-1.5"></i> Nos 2 Trotteurs Clés
                 </h2>
                 <div class="flex items-center space-x-1.5 flex-wrap">
                     <a href="https://www.equidia.fr/direct?utm_source=intern&utm_medium=header_menu&utm_campaign=Home" target="_blank" class="bg-red-600 hover:bg-red-500 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold shadow transition flex items-center">
@@ -191,7 +191,7 @@
                         </tr>
                     </thead>
                     <tbody id="runnersTableBody" class="divide-y divide-zinc-800/50">
-                        <tr><td colspan="4" class="p-6 text-center text-zinc-500">Sélectionnez une course.</td></tr>
+                        <tr><td colspan="4" class="p-6 text-center text-zinc-500">Sélectionnez une course de Trot.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -204,7 +204,7 @@
         let autoTransitionDone = false;
         let validatedRacesCache = {}; 
         
-        // --- PARAMÈTRES GESTION PAR RATTRAPAGE DE SÉRIE ---
+        // --- PARAMÈTRES SPÉCIAL TROT ---
         const INITIAL_BANKROLL = 500.0;
         const PROFIT_TARGET = 50.0; // Stop-Win quotidien (+50€)
         const BASE_STAKE = 5.0;     // Mise initiale de base
@@ -216,6 +216,14 @@
             if (mIdx !== "" && cIdx !== "") fetchRaceData(true); 
             calculateDailyStats(true);
         }, 20000);
+
+        // Détecte si une course est du Trot (Attelé ou Monté)
+        function isTrotRace(course) {
+            let d = String(course.discipline || '').toUpperCase();
+            let s = String(course.specialite || '').toUpperCase();
+            return d.includes('TROT') || d.includes('ATTEL') || d.includes('MONTE') || 
+                   s.includes('TROT') || s.includes('ATTEL') || s.includes('MONTE');
+        }
 
         function toggleHistoryStats() {
             let historyBlock = document.getElementById('historyBlock');
@@ -254,15 +262,12 @@
             return String(timeValue);
         }
 
-        function getDisciplineBadge(discipline) {
-            let d = String(discipline || 'PLAT').toUpperCase();
-            if (d.includes('TROT') || d.includes('ATTEL') || d.includes('MONTE')) {
-                return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">TROT</span>';
+        function getDisciplineBadge(course) {
+            let s = String(course.specialite || course.discipline || 'TROT').toUpperCase();
+            if (s.includes('MONTE')) {
+                return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">TROT MONTÉ</span>';
             }
-            if (d.includes('HAIES') || d.includes('STEEPLE') || d.includes('OBSTACLE') || d.includes('CROSS')) {
-                return '<span class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">OBSTACLE</span>';
-            }
-            return '<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">PLAT</span>';
+            return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">TROT ATTELÉ</span>';
         }
 
         async function smartFetchPMU(path) {
@@ -311,7 +316,7 @@
         async function loadLivePmu() {
             const dateInput = document.getElementById('raceDate').value;
             const statusText = document.getElementById('statusText');
-            statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement...';
+            statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des courses de Trot...';
 
             if (!document.getElementById('historyBlock').classList.contains('hidden')) {
                 showHistoryStats();
@@ -323,21 +328,33 @@
 
             try {
                 const data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
-                let reunions = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
+                let rawReunions = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
                 
-                if (reunions.length > 0) {
-                    liveMeetingsData = reunions;
+                // On conserve uniquement les courses de Trot dans chaque réunion
+                let trotReunions = [];
+                rawReunions.forEach(r => {
+                    let allCourses = r.courses || r.races || r.lesCourses || [];
+                    let trotCourses = allCourses.filter(c => isTrotRace(c));
+                    if (trotCourses.length > 0) {
+                        let rCopy = Object.assign({}, r);
+                        rCopy.courses = trotCourses;
+                        trotReunions.push(rCopy);
+                    }
+                });
+                
+                if (trotReunions.length > 0) {
+                    liveMeetingsData = trotReunions;
                     let select = document.getElementById('meetingSelect');
                     let currentVal = select.value;
-                    select.innerHTML = '<option value="">-- Choisissez un hippodrome --</option>';
+                    select.innerHTML = '<option value="">-- Choisissez un hippodrome (Trot) --</option>';
                     
                     let totalCourses = 0;
                     let racesRunCount = 0;
 
-                    reunions.forEach((r, idx) => {
+                    trotReunions.forEach((r, idx) => {
                         let opt = document.createElement('option');
                         opt.value = idx;
-                        let coursesList = r.courses || r.races || r.lesCourses || [];
+                        let coursesList = r.courses || [];
                         totalCourses += coursesList.length;
 
                         coursesList.forEach(c => {
@@ -347,29 +364,29 @@
                         });
 
                         let timeStr = "";
-                        if (r.heurereunion || r.heurePremierDepart) {
-                            timeStr = ` 🕒 [${formatTime(r.heurereunion || r.heurePremierDepart)}]`;
-                        } else if (coursesList[0] && coursesList[0].heureDepart) {
+                        if (coursesList[0] && coursesList[0].heureDepart) {
                             timeStr = ` 🕒 [${formatTime(coursesList[0].heureDepart)}]`;
+                        } else if (r.heurereunion || r.heurePremierDepart) {
+                            timeStr = ` 🕒 [${formatTime(r.heurereunion || r.heurePremierDepart)}]`;
                         }
                         let hipName = r.hippodrome ? (r.hippodrome.libelleLong || r.hippodrome.libelleCourt || r.hippodrome.nom) : 'Hippodrome';
                         let pays = (r.hippodrome && r.hippodrome.codePays) ? ` [${r.hippodrome.codePays}]` : "";
-                        opt.textContent = `R${r.numOfficiel || (idx+1)} - ${hipName}${pays}${timeStr} (${coursesList.length} courses)`;
+                        opt.textContent = `R${r.numOfficiel || (idx+1)} - ${hipName}${pays}${timeStr} (${coursesList.length} courses Trot)`;
                         select.appendChild(opt);
                     });
                     
-                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${reunions.length} réunions | ${racesRunCount}/${totalCourses} courses)</span>`;
+                    statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${trotReunions.length} réunions Trot | ${racesRunCount}/${totalCourses} courses)</span>`;
                     
-                    if (currentVal === "") autoSelectCurrentRace();
+                    if (currentVal === "" || !trotReunions[currentVal]) autoSelectCurrentRace();
                     else select.value = currentVal;
                     
                     calculateDailyStats(true);
                 } else {
                     liveMeetingsData = [];
-                    document.getElementById('meetingSelect').innerHTML = '<option value="">Aucune réunion</option>';
+                    document.getElementById('meetingSelect').innerHTML = '<option value="">Aucune réunion Trot</option>';
                     document.getElementById('raceSelect').innerHTML = '<option value="">-- Course --</option>';
-                    document.getElementById('runnersTableBody').innerHTML = '<tr><td colspan="4" class="p-6 text-center text-zinc-500">Aucune course ce jour.</td></tr>';
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucune réunion à cette date.</span>`;
+                    document.getElementById('runnersTableBody').innerHTML = '<tr><td colspan="4" class="p-6 text-center text-zinc-500">Aucune course de Trot ce jour.</td></tr>';
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucune réunion Trot à cette date.</span>`;
                     calculateDailyStats(true);
                 }
             } catch (e) {
@@ -386,7 +403,7 @@
             let bufferTemps = 20 * 60 * 1000; 
 
             liveMeetingsData.forEach((m, mIdx) => {
-                let courses = m.courses || m.races || m.lesCourses || [];
+                let courses = m.courses || [];
                 courses.forEach((c, cIdx) => {
                     if (c.heureDepart) {
                         let diff = (new Date(c.heureDepart).getTime() + bufferTemps) - now;
@@ -412,7 +429,7 @@
         function getSortedRacesList() {
             let list = [];
             liveMeetingsData.forEach((m, mIdx) => {
-                let courses = m.courses || m.races || m.lesCourses || [];
+                let courses = m.courses || [];
                 courses.forEach((c, cIdx) => {
                     if (c.heureDepart) list.push({ mIdx: mIdx, cIdx: cIdx, time: new Date(c.heureDepart).getTime() });
                 });
@@ -438,7 +455,7 @@
                     autoTransitionDone = false;
                     fetchRaceData();
                 } else {
-                    showToast(direction === 1 ? "Dernière course atteinte" : "Première course atteinte", 'error');
+                    showToast(direction === 1 ? "Dernière course Trot atteinte" : "Première course Trot atteinte", 'error');
                 }
             }
         }
@@ -450,11 +467,11 @@
             let mIdx = document.getElementById('meetingSelect').value;
             let raceSelect = document.getElementById('raceSelect');
             let currentRaceVal = raceSelect.value;
-            raceSelect.innerHTML = '<option value="">-- Choisissez une course --</option>';
-            if (mIdx === "") return;
+            raceSelect.innerHTML = '<option value="">-- Choisissez une course Trot --</option>';
+            if (mIdx === "" || !liveMeetingsData[mIdx]) return;
 
             let meeting = liveMeetingsData[mIdx];
-            let courses = meeting.courses || meeting.races || meeting.lesCourses || [];
+            let courses = meeting.courses || [];
 
             if (courses.length > 0) {
                 courses.forEach((c, cIdx) => {
@@ -462,19 +479,16 @@
                     opt.value = cIdx;
                     let courseTime = c.heureDepart ? `[${formatTime(c.heureDepart)}] ` : '';
                     let libelleCourse = c.libelle || c.nom || c.libelleCourt || 'Prix';
+                    let s = String(c.specialite || c.discipline || "TROT").toUpperCase();
+                    let typeTrot = s.includes('MONTE') ? 'MONTÉ' : 'ATTELÉ';
                     
-                    let d = String(c.discipline || "PLAT").toUpperCase();
-                    let shortDisc = "PLAT";
-                    if (d.includes('TROT') || d.includes('ATTEL') || d.includes('MONTE')) shortDisc = "TROT";
-                    else if (d.includes('HAIES') || d.includes('STEEPLE') || d.includes('OBSTACLE') || d.includes('CROSS')) shortDisc = "OBSTACLE";
-                    
-                    opt.textContent = `${courseTime}C${c.numOrdre || (cIdx+1)} - ${libelleCourse} [${shortDisc}]`;
+                    opt.textContent = `${courseTime}C${c.numOrdre || (cIdx+1)} - ${libelleCourse} [${typeTrot}]`;
                     raceSelect.appendChild(opt);
                 });
             } else {
-                raceSelect.innerHTML = '<option value="">Aucune course</option>';
+                raceSelect.innerHTML = '<option value="">Aucune course Trot</option>';
             }
-            if (currentRaceVal !== "") raceSelect.value = currentRaceVal;
+            if (currentRaceVal !== "" && courses[currentRaceVal]) raceSelect.value = currentRaceVal;
         }
 
         function onRaceChange() {
@@ -486,7 +500,7 @@
             let mIdx = document.getElementById('meetingSelect').value;
             let rIdx = document.getElementById('raceSelect').value;
             await loadLivePmu();
-            if (mIdx !== "") {
+            if (mIdx !== "" && liveMeetingsData[mIdx]) {
                 document.getElementById('meetingSelect').value = mIdx;
                 onMeetingChange();
                 if (rIdx !== "") {
@@ -494,22 +508,20 @@
                     await fetchRaceData();
                 }
             }
-            showToast('Données actualisées', 'success');
+            showToast('Données Trot actualisées', 'success');
         }
 
-        // --- NOUVEL ALGORITHME PURIFIÉ (IGNORE LES ANNÉES ET PÉNALISE LES DISQUALIFICATIONS) ---
+        // --- ÉVALUATION MUSIQUE SPÉCIALE TROT (PÉNALISE LES FAUTES / DISQUALIFICATIONS) ---
         function evaluateMusique(musique) {
             if (!musique) return 25;
-            // Supprime les indicateurs d'année ex: (25), (24)
             let clean = String(musique).replace(/\(\d+\)/g, '');
-            // Extrait chaque performance (ex: 1a, Da, 3p, 0m, Tg)
             let tokens = clean.match(/([0-9DATR]+)([a-zA-Z]+)/g);
             if (!tokens || tokens.length === 0) return 25;
 
             let totalPts = 0;
             let totalWeight = 0;
             let count = Math.min(tokens.length, 5);
-            const weights = [1.5, 1.3, 1.1, 0.9, 0.7]; // Surpondère les courses les plus récentes
+            const weights = [1.6, 1.3, 1.1, 0.9, 0.7];
 
             for (let i = 0; i < count; i++) {
                 let res = tokens[i].match(/^([0-9DATR]+)/i)[1].toUpperCase();
@@ -518,11 +530,12 @@
 
                 if (res === '1') pts = 100;
                 else if (res === '2') pts = 85;
-                else if (res === '3') pts = 70;
-                else if (res === '4') pts = 50;
-                else if (res === '5') pts = 35;
-                else if (res === '6' || res === '7') pts = 15;
-                else pts = 0; // D (Disqualifié), A (Arrêté), T (Tombé), 0, 8, 9 = 0 pt
+                else if (res === '3') pts = 72;
+                else if (res === '4') pts = 55;
+                else if (res === '5') pts = 40;
+                else if (res === '6' || res === '7') pts = 20;
+                else if (res.includes('D') || res.includes('A')) pts = -15; // Pénalité Trot pour cheval fautif (Disqualifié/Arrêté)
+                else pts = 0;
 
                 totalPts += pts * w;
                 totalWeight += w;
@@ -531,7 +544,6 @@
         }
 
         function computeAlgorithm(partants) {
-            // Filtre les chevaux Non-Partants pour ne jamais parier dessus
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
                 return !st.includes("NON_PARTANT") && !st.includes("NP");
@@ -539,27 +551,26 @@
             if (validPartants.length === 0) validPartants = partants;
 
             let processed = validPartants.map((p, idx) => {
-                let musique = p.musique || p.form || "0p";
+                let musique = p.musique || p.form || "0a";
                 let rawCote = (p.dernierRapportDirect && p.dernierRapportDirect.rapport) 
                             ? p.dernierRapportDirect.rapport 
                             : (p.probabiliteEvolution ? p.probabiliteEvolution : "15.0");
                 let cote = parseFloat(String(rawCote).replace(',', '.')) || 15.0;
                 
-                // Score de cote calibré pour maximiser le taux de Placé ET le rapport
+                // Cible en priorité les favoris/co-favoris solides au Trot (1.6 à 4.8) qui paient bien en Placé
                 let coteScore = 15;
-                if (cote >= 1.5 && cote <= 3.5) coteScore = 95;
-                else if (cote < 1.5) coteScore = 82;
-                else if (cote <= 6.5) coteScore = 80;
-                else if (cote <= 11) coteScore = 62;
+                if (cote >= 1.6 && cote <= 4.5) coteScore = 96;
+                else if (cote < 1.6) coteScore = 84;
+                else if (cote <= 7.0) coteScore = 82;
+                else if (cote <= 12) coteScore = 62;
                 else if (cote <= 20) coteScore = 35;
 
                 let musiqueScore = evaluateMusique(musique);
                 
-                // Base : 55% Cote / 45% Musique réelle (Ultra-régulier)
-                let baseScore = Math.round((coteScore * 0.55) + (musiqueScore * 0.45));
+                // Au Trot, la régularité de la musique compte à 50% avec la cote
+                let baseScore = Math.round((coteScore * 0.50) + (musiqueScore * 0.50));
                 
-                // Pépite : Cible le "Sweet Spot" des cotes (3.8 à 16) avec une excellente musique
-                let nuggetRaw = (cote >= 3.8 && cote <= 16) 
+                let nuggetRaw = (cote >= 4.0 && cote <= 16) 
                     ? Math.round((musiqueScore * 0.75) + (coteScore * 0.25) + 12) 
                     : Math.round(musiqueScore * 0.6);
 
@@ -634,10 +645,8 @@
             return foundGain;
         }
 
-        // Calcule la mise idéale pour effacer le déficit de la série en cours sans exploser
         function computeSmartStake(deficitSerie) {
             if (deficitSerie <= 0) return BASE_STAKE;
-            // En Placé (rapport net moyen ~0.45€ à 0.60€ par euro misé), on vise un rattrapage progressif sécurisé
             let stake = Math.ceil((deficitSerie * 1.15) + BASE_STAKE);
             return Math.min(MAX_STAKE, Math.max(BASE_STAKE + 3, stake));
         }
@@ -649,7 +658,7 @@
 
             let meeting = liveMeetingsData[mIdx];
             if (!meeting) return;
-            let courses = meeting.courses || meeting.races || meeting.lesCourses || [];
+            let courses = meeting.courses || [];
             let race = courses[rIdx];
             if (!race) return;
 
@@ -755,7 +764,7 @@
                 });
                 
                 let timeInfo = race.heureDepart ? `[${formatTime(race.heureDepart)}] ` : '';
-                let discBadge = getDisciplineBadge(race.discipline);
+                let discBadge = getDisciplineBadge(race);
                 
                 document.getElementById('raceInfoDetails').innerHTML = `
                     <div class="flex items-center">
@@ -775,7 +784,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_smart_v1_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_trot_smart_v1_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -856,7 +865,7 @@
             let currentPalierText = document.getElementById('currentPalierText');
 
             if (!isAuto && statsProgress) {
-                statsProgress.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Analyse en cours...";
+                statsProgress.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Analyse Trot en cours...";
             }
 
             let dateInput = document.getElementById('raceDate').value;
@@ -865,16 +874,17 @@
             
             let now = new Date().getTime();
 
+            // liveMeetingsData contient déjà exclusivement les courses de Trot
             let pastRacesToday = [];
             liveMeetingsData.forEach((m, mIdx) => {
                 let rNum = m.numOfficiel || (mIdx + 1);
-                let courses = m.courses || m.races || m.lesCourses || [];
+                let courses = m.courses || [];
                 courses.forEach((c, cIdx) => {
                     let cNum = c.numOrdre || (cIdx + 1);
                     if (c.heureDepart) {
                         let departTime = new Date(c.heureDepart).getTime();
                         if (departTime < (now - 10 * 60 * 1000)) {
-                            pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime, discipline: c.discipline });
+                            pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime });
                         }
                     }
                 });
@@ -883,7 +893,7 @@
             pastRacesToday.sort((a, b) => a.time - b.time);
 
             if (pastRacesToday.length === 0) {
-                if (!isAuto && statsProgress) statsProgress.textContent = "Aucune course passée aujourd'hui.";
+                if (!isAuto && statsProgress) statsProgress.textContent = "Aucune course Trot passée.";
                 return;
             }
 
@@ -902,7 +912,6 @@
             
             let currentBankroll = INITIAL_BANKROLL;
             
-            // MÉMOIRE DE DÉFICIT PAR SÉRIE (Ne revient à 5€ que lorsque le déficit de la série est effacé)
             let deficitSerieBase = 0;
             let deficitSeriePepite = 0;
             
@@ -910,7 +919,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `world_smart_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `trot_smart_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto && statsProgress) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -937,7 +946,7 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // LE GAGNANT VIRTUEL (FIXE 1€)
+                    // LE GAGNANT VIRTUEL (FIXE 1€ SUR TROT)
                     if (baseH) {
                         coursesGagnantBaseValidees++;
                         let gGagBase = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
@@ -963,7 +972,7 @@
                         }
                     }
 
-                    // 1. BASE PLACÉ (RATTRAPAGE DE SÉRIE GLISSANT)
+                    // 1. BASE PLACÉ TROT (RATTRAPAGE DE SÉRIE GLISSANT)
                     if (baseH && !objectifAtteint && currentBankroll > 0) {
                         coursesValidees++;
                         
@@ -980,25 +989,19 @@
                             baseWinsPla++; 
                             netBasePla = (gPla * actualStakeBase) - actualStakeBase;
                             totalProfitBasePla += netBasePla;
-                            
-                            // On déduit le gain net du déficit de la série en cours
                             deficitSerieBase = Math.max(0, deficitSerieBase - netBasePla);
                         } else {
                             totalProfitBasePla -= actualStakeBase;
                             netBasePla = -actualStakeBase;
-                            
-                            // On ajoute la perte au déficit de la série
                             deficitSerieBase += actualStakeBase;
-                            // Coupe-circuit de sécurité si une série dépasse 180€ de déficit cumulé
                             if (deficitSerieBase > 180) deficitSerieBase = 0;
                         }
                         currentBankroll += netBasePla;
                         
-                        // Check Stop-Win (+50€)
                         if (totalProfitBasePla >= PROFIT_TARGET) objectifAtteint = true;
                     }
 
-                    // 2. PÉPITE PLACÉ (RATTRAPAGE DE SÉRIE GLISSANT)
+                    // 2. PÉPITE PLACÉ TROT (RATTRAPAGE DE SÉRIE GLISSANT)
                     if (nuggetH && !objectifAtteint) {
                         let simStakePepite = computeSmartStake(deficitSeriePepite);
 
@@ -1019,37 +1022,38 @@
                 }
             }
 
-            if (coursesValidees > 0 || coursesGagnantBaseValidees > 0) {
-                statBaseGag.textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
-                statBasePla.textContent = `${baseWinsPla} / ${coursesValidees}`;
-                statPepiteGag.textContent = `${pepiteWinsGag} / ${coursesGagnantBaseValidees}`;
-                statPepitePla.textContent = `${pepiteWinsPla} / ${coursesValidees}`;
-                
-                gainBasePla.innerHTML = formatMoneyHTML(totalProfitBasePla);
-                gainBaseGag.innerHTML = formatMoneyHTML(totalProfitBaseGag);
-                
-                gainPepitePla.innerHTML = formatMoneyHTML(totalProfitPepitePla);
-                gainPepiteGag.innerHTML = formatMoneyHTML(totalProfitPepiteGag);
-                
-                totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
-                
-                let nextStake = computeSmartStake(deficitSerieBase);
-                if (objectifAtteint) {
-                    currentPalierText.textContent = "STOP-WIN (+50€) 🏆";
-                    currentPalierText.className = "text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/50 font-bold";
-                } else {
-                    currentPalierText.textContent = `${nextStake.toFixed(2)} €`;
-                    currentPalierText.className = "text-amber-400 bg-zinc-900 px-2 py-0.5 rounded border border-amber-500/30 font-bold";
-                }
-                
-                document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
+            statBaseGag.textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
+            statBasePla.textContent = `${baseWinsPla} / ${coursesValidees}`;
+            statPepiteGag.textContent = `${pepiteWinsGag} / ${coursesGagnantBaseValidees}`;
+            statPepitePla.textContent = `${pepiteWinsPla} / ${coursesValidees}`;
+            
+            gainBasePla.innerHTML = formatMoneyHTML(totalProfitBasePla);
+            gainBaseGag.innerHTML = formatMoneyHTML(totalProfitBaseGag);
+            
+            gainPepitePla.innerHTML = formatMoneyHTML(totalProfitPepitePla);
+            gainPepiteGag.innerHTML = formatMoneyHTML(totalProfitPepiteGag);
+            
+            totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
+            
+            let nextStake = computeSmartStake(deficitSerieBase);
+            if (objectifAtteint) {
+                currentPalierText.textContent = "STOP-WIN (+50€) 🏆";
+                currentPalierText.className = "text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/50 font-bold";
+            } else {
+                currentPalierText.textContent = `${nextStake.toFixed(2)} €`;
+                currentPalierText.className = "text-amber-400 bg-zinc-900 px-2 py-0.5 rounded border border-amber-500/30 font-bold";
+            }
+            
+            document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
 
-                localStorage.setItem(`pmu_stats_smart_v1_${ddmmyyyy}`, JSON.stringify({
+            if (coursesValidees > 0) {
+                localStorage.setItem(`pmu_stats_trot_smart_v1_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
-                
-                if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
             }
+            
+            if (statsProgress) statsProgress.textContent = "";
+            if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
         }
 
         window.onload = loadLivePmu;
