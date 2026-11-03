@@ -158,7 +158,6 @@
 
         let currentRaces = [];
         let isLiveFilterActive = false;
-        let activeProxyIndex = 0;
 
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02;
@@ -189,41 +188,42 @@
             }, 2500);
         }
 
+        // MOTEUR RÉSEAU ULTRA-RÉSISTANT (Combine 2 API PMU et 3 Proxys)
         async function fetchPMUJson(endpoint) {
-            const targetUrl = `https://online.turfinfo.api.pmu.fr/rest/client/61/${endpoint}`;
-            const proxyBuilders = [
-                (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-                (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-                (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-                (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`
+            const baseUrls = [
+                `https://online.turfinfo.api.pmu.fr/rest/client/61/${endpoint}`,
+                `https://offline.pmu.fr/api/client/1/${endpoint}`
             ];
+            
+            let proxyAttempts = [];
+            for (let base of baseUrls) {
+                proxyAttempts.push(`https://api.allorigins.win/get?url=${encodeURIComponent(base)}`);
+                proxyAttempts.push(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(base)}`);
+                proxyAttempts.push(`https://corsproxy.io/?${encodeURIComponent(base)}`);
+            }
 
-            for (let attempt = 0; attempt < proxyBuilders.length; attempt++) {
-                const idx = (activeProxyIndex + attempt) % proxyBuilders.length;
-                const proxyUrl = proxyBuilders[idx](targetUrl);
-
-                const ctrl = new AbortController();
-                const timer = setTimeout(() => ctrl.abort(), 4000);
-
+            for (let proxyUrl of proxyAttempts) {
                 try {
+                    const ctrl = new AbortController();
+                    const timer = setTimeout(() => ctrl.abort(), 4000);
                     const res = await fetch(proxyUrl, { signal: ctrl.signal });
                     clearTimeout(timer);
-                    if (!res.ok) continue;
-
-                    const text = await res.text();
-                    let json = JSON.parse(text);
-                    if (json && typeof json.contents === 'string') {
-                        json = JSON.parse(json.contents);
+                    
+                    if (res.ok) {
+                        const text = await res.text();
+                        let json = JSON.parse(text);
+                        if (json && json.contents) {
+                            json = JSON.parse(json.contents);
+                        }
+                        if (json && (json.programme || json.participants || Array.isArray(json))) {
+                            return json;
+                        }
                     }
-                    if (json) {
-                        activeProxyIndex = idx;
-                        return json;
-                    }
-                } catch (e) {
-                    clearTimeout(timer);
+                } catch(e) {
+                    // Ignore et passe au proxy suivant
                 }
             }
-            throw new Error("Relais saturés");
+            throw new Error("Relais totalement saturés.");
         }
 
         async function getRacePicksAndRapports(apiDate, race, forceRefresh = false) {
@@ -386,7 +386,7 @@
 
             } catch (error) {
                 console.error(error);
-                statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-rotate mr-1"></i> Cliquez sur Actualiser si besoin.</span>`;
+                statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-rotate mr-1"></i> Connexion encombrée. Cliquez sur Actualiser.</span>`;
             }
         }
 
