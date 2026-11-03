@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - D'Alembert (Balancier)</title>
+    <title>Fab Turf - Progression Fibonacci (55% Réussite)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,11 +22,11 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center">
-                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf (Pro)
+                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf (Pro 55%)
             </h1>
             <div class="flex items-center space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
-                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll (Balancier)</span>
+                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll (Placé)</span>
                     <span id="headerBankroll">500.00 €</span>
                 </div>
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadLivePmu()">
@@ -71,7 +71,7 @@
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider">Bilan du Jour (Toutes Réunions)</h2>
-                    <p class="text-[10px] text-zinc-400">D'Alembert (Balancier) • Base 5€ • <strong class="text-emerald-400">Stop-Win: +50€</strong></p>
+                    <p class="text-[10px] text-zinc-400">Suite : <strong>5, 8, 13, 21, 34, 55...</strong> • <strong class="text-emerald-400">Stop-Win: +50€</strong></p>
                 </div>
             </div>
 
@@ -203,11 +203,10 @@
         let autoTransitionDone = false;
         let validatedRacesCache = {}; 
         
-        // --- CONSTANTES D'ALEMBERT ---
+        // --- CONSTANTES FIBONACCI (Adapté 55% réussite) ---
         const INITIAL_BANKROLL = 500.0;
-        const PROFIT_TARGET = 50.0;  // Stop-Win
-        const STOP_LOSS = -500.0;    // Perte max acceptée
-        const UNIT_STAKE = 5.0;      // Mise de base et d'incrément/décrément
+        const PROGRESSION = [5.0, 8.0, 13.0, 21.0, 34.0, 55.0, 89.0, 144.0];
+        const PROFIT_TARGET = 50.0; // Stop-Win
 
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
@@ -733,7 +732,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_dalembert_v1_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_fibo_v1_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -823,7 +822,7 @@
                 gainPepitePla.textContent = `0.00 €`;
                 gainPepiteGag.textContent = `0.00 €`;
                 totalSpentText.textContent = `0.00 €`;
-                currentPalierText.textContent = `${UNIT_STAKE.toFixed(2)} €`;
+                currentPalierText.textContent = `5.00 €`;
                 statsProgress.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Analyse en cours...";
             }
 
@@ -870,16 +869,15 @@
             
             let currentBankroll = INITIAL_BANKROLL;
             
-            // D'ALEMBERT TRACKERS
-            let lastStakeBase = UNIT_STAKE;
-            let lastStakePepite = UNIT_STAKE;
+            // FIBONACCI TRACKERS
+            let stepBase = 0;
+            let stepPepite = 0;
             
-            let blockBetsBase = false;
-            let blockBetsPepite = false;
+            let objectifAtteint = false;
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `world_dalembert_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `world_fibo_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -906,7 +904,7 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // LE GAGNANT VIRTUEL
+                    // LE GAGNANT VIRTUEL (FIXE 1€)
                     if (baseH) {
                         coursesGagnantBaseValidees++;
                         let gGagBase = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
@@ -932,11 +930,13 @@
                         }
                     }
 
-                    // 1. BASE PLACÉ (D'ALEMBERT)
-                    if (baseH && !blockBetsBase) {
+                    // 1. BASE PLACÉ (FIBONACCI)
+                    if (baseH && !objectifAtteint) {
                         coursesValidees++;
                         
-                        let actualStakeBase = currentBankroll > 0 ? Math.min(lastStakeBase, currentBankroll) : 0;
+                        let targetStakeBase = PROGRESSION[stepBase] || PROGRESSION[PROGRESSION.length - 1];
+                        let actualStakeBase = currentBankroll > 0 ? Math.min(targetStakeBase, currentBankroll) : 0;
+                        
                         totalSpentBase += actualStakeBase;
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
@@ -948,28 +948,27 @@
                             netBasePla = (gPla * actualStakeBase) - actualStakeBase;
                             totalProfitBasePla += netBasePla;
                             
-                            // GAGNÉ : Si on repasse en positif sur la journée, on reset à 5€. Sinon on baisse d'un palier (5€).
-                            if (totalProfitBasePla > 0 && (totalProfitBasePla - netBasePla) <= 0) {
-                                lastStakeBase = UNIT_STAKE;
-                            } else {
-                                lastStakeBase = Math.max(UNIT_STAKE, lastStakeBase - UNIT_STAKE);
-                            }
+                            // GAGNÉ = REVIENT A 5€ IMMEDIATEMENT (Ecarte la série noire d'un coup grâce au 55% de WinRate)
+                            stepBase = 0;
                         } else {
                             totalProfitBasePla -= actualStakeBase;
                             netBasePla = -actualStakeBase;
                             
-                            // PERDU : On monte d'un palier (+5€)
-                            lastStakeBase += UNIT_STAKE;
+                            // PERDU = MONTE D'UN PALIER
+                            stepBase++;
+                            if (stepBase >= PROGRESSION.length) {
+                                stepBase = 0; // Sécurité : si on arrive au bout (144€ perdu), on accepte la perte et on repart à 5€.
+                            }
                         }
                         currentBankroll += netBasePla;
                         
-                        // Check Stops
-                        if (totalProfitBasePla >= PROFIT_TARGET || totalProfitBasePla <= STOP_LOSS) blockBetsBase = true;
+                        // Check Stop-Win
+                        if (totalProfitBasePla >= PROFIT_TARGET) objectifAtteint = true;
                     }
 
-                    // 2. PÉPITE PLACÉ (D'ALEMBERT VIRTUEL)
-                    if (nuggetH && !blockBetsPepite) {
-                        let simStakePepite = lastStakePepite;
+                    // 2. PÉPITE PLACÉ (FIBONACCI)
+                    if (nuggetH && !objectifAtteint) {
+                        let simStakePepite = PROGRESSION[stepPepite] || PROGRESSION[PROGRESSION.length - 1];
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
                         if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
@@ -980,17 +979,13 @@
                             netPepitePla = (gPla * simStakePepite) - simStakePepite;
                             totalProfitPepitePla += netPepitePla; 
                             
-                            if (totalProfitPepitePla > 0 && (totalProfitPepitePla - netPepitePla) <= 0) {
-                                lastStakePepite = UNIT_STAKE;
-                            } else {
-                                lastStakePepite = Math.max(UNIT_STAKE, lastStakePepite - UNIT_STAKE);
-                            }
+                            stepPepite = 0; 
                         } else { 
                             totalProfitPepitePla -= simStakePepite; 
-                            lastStakePepite += UNIT_STAKE;
+                            
+                            stepPepite++;
+                            if (stepPepite >= PROGRESSION.length) stepPepite = 0;
                         }
-
-                        if (totalProfitPepitePla >= PROFIT_TARGET || totalProfitPepitePla <= STOP_LOSS) blockBetsPepite = true;
                     }
 
                     if (!isAuto) {
@@ -1007,14 +1002,11 @@
                         
                         totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
                         
-                        if (totalProfitBasePla >= PROFIT_TARGET) {
+                        if (objectifAtteint) {
                             currentPalierText.textContent = "STOP-WIN 🏆";
                             currentPalierText.className = "text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/50 font-bold";
-                        } else if (totalProfitBasePla <= STOP_LOSS) {
-                            currentPalierText.textContent = "STOP-LOSS 🛑";
-                            currentPalierText.className = "text-red-400 bg-red-950 px-2 py-0.5 rounded border border-red-500/50 font-bold";
                         } else {
-                            currentPalierText.textContent = `${lastStakeBase.toFixed(2)} €`;
+                            currentPalierText.textContent = `${PROGRESSION[stepBase].toFixed(2)} €`;
                             currentPalierText.className = "text-amber-400 bg-zinc-900 px-2 py-0.5 rounded border border-amber-500/30 font-bold";
                         }
                         
@@ -1038,23 +1030,19 @@
                 
                 totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
                 
-                if (totalProfitBasePla >= PROFIT_TARGET) {
+                if (objectifAtteint) {
                     currentPalierText.textContent = "STOP-WIN 🏆";
                     currentPalierText.className = "text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/50 font-bold";
                     if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-trophy mr-1.5"></i> Objectif +50€ atteint !</span>`;
-                } else if (totalProfitBasePla <= STOP_LOSS) {
-                    currentPalierText.textContent = "STOP-LOSS 🛑";
-                    currentPalierText.className = "text-red-400 bg-red-950 px-2 py-0.5 rounded border border-red-500/50 font-bold";
-                    if (!isAuto) statsProgress.innerHTML = `<span class="text-red-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Stop-Loss activé. Fin de journée.</span>`;
                 } else {
-                    currentPalierText.textContent = `${lastStakeBase.toFixed(2)} €`;
+                    currentPalierText.textContent = `${PROGRESSION[stepBase].toFixed(2)} €`;
                     currentPalierText.className = "text-amber-400 bg-zinc-900 px-2 py-0.5 rounded border border-amber-500/30 font-bold";
                     if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> Analyse terminée</span>`;
                 }
                 
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
 
-                localStorage.setItem(`pmu_stats_dalembert_v1_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_fibo_v1_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
                 
