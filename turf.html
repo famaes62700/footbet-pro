@@ -267,22 +267,19 @@
             throw new Error("PMU bloqué");
         }
 
-        // FILTRE STRICT : UNIQUEMENT FRANCE & BELGIQUE
         function isFrenchOrBelgianMeeting(reunion) {
             let hip = reunion.hippodrome || {};
             let pays = String(hip.pays || hip.libellePays || "").toUpperCase();
             let codePays = String(hip.codePays || "").toUpperCase();
             let libelleLong = String(reunion.libelleLong || hip.libelleLong || "").toUpperCase();
 
-            // Bloquer net les pays d'Amérique du Sud ou lointains
             if (pays.includes("CHILI") || pays.includes("ARGENTINE") || pays.includes("DUBAI") || pays.includes("SOUTH AFRICA") || pays.includes("USA")) return false;
             if (codePays === "CL" || codePays === "AR" || codePays === "AE" || codePays === "ZA" || codePays === "US") return false;
 
-            // Valider si France ou Belgique
             if (pays.includes("FRANCE") || pays.includes("BELGIQUE") || pays === "FR" || pays === "BE") return true;
             if (codePays === "FR" || codePays === "FRA" || codePays === "BE" || codePays === "BEL") return true;
 
-            const allowedKeywords = ["MONS", "WOLVEGA", "VINCENNES", "AUTEUIL", "ENGHIEN", "CHANTILLY", "LONGCHAMP", "CAGNES", "DEAUVILLE", "LYON", "MARSEILLE", "TOULOUSE", "BORDEAUX", "NANTES", "STRASBOURG", "VICHY", "PAU", "CABOURG", "LAVAL", "REIMS", "AMIENS", "ANGERS", "CAEN", "CHARTRES", "DIEPPE", "ENGHIEN", "LE CROISE", "LE MANS", "LISIEUX", "MAUQUENCHY", "MONTAUBAN", "MOULINS", "NANCY", "PORNICOT", "SAINT-BRIEUC", "TARBES", "TOULOUSE"];
+            const allowedKeywords = ["MONS", "WOLVEGA", "VINCENNES", "AUTEUIL", "ENGHIEN", "CHANTILLY", "LONGCHAMP", "CAGNES", "DEAUVILLE", "LYON", "MARSEILLE", "TOULOUSE", "BORDEAUX", "NANTES", "STRASBOURG", "VICHY", "PAU", "CABOURG", "LAVAL", "REIMS", "AMIENS", "ANGERS", "CAEN", "CHARTRES", "DIEPPE", "LE CROISE", "LE MANS", "LISIEUX", "MAUQUENCHY", "MONTAUBAN", "MOULINS", "NANCY", "PORNICOT", "SAINT-BRIEUC", "TARBES"];
             for (let kw of allowedKeywords) {
                 if (libelleLong.includes(kw)) return true;
             }
@@ -291,6 +288,9 @@
             for (let kw of blockedKeywords) {
                 if (libelleLong.includes(kw) || pays.includes(kw)) return false;
             }
+
+            let numR = reunion.numOfficiel || 0;
+            if (numR <= 15 && (!pays || pays === "")) return true;
 
             return false;
         }
@@ -719,7 +719,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_fr_be_v3_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_fr_be_v4_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -805,7 +805,6 @@
             let parts = dateInput.split('-');
             let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
             
-            // Heure actuelle locale stricte
             let now = new Date().getTime();
 
             let pastRacesToday = [];
@@ -816,8 +815,8 @@
                     let cNum = c.numOrdre || (cIdx + 1);
                     if (c.heureDepart) {
                         let departTime = new Date(c.heureDepart).getTime();
-                        // On exige que la course ait débuté ET qu'un délai de sécurité de 5 minutes se soit écoulé
-                        if (departTime < (now - 5 * 60 * 1000)) {
+                        // SÉCURITÉ HORAIRE : On exige que la course soit passée depuis au moins 10 minutes (laissée le temps aux rapports de tomber)
+                        if (departTime < (now - 10 * 60 * 1000)) {
                             pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime });
                         }
                     }
@@ -844,7 +843,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `fr_be_v3_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `fr_be_v4_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -938,7 +937,7 @@
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                 if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> ${coursesValidees} courses (FR & BE)</span>`;
 
-                localStorage.setItem(`pmu_stats_fr_be_v3_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_fr_be_v4_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBase, pepiteProfit: totalProfitPepite
                 }));
                 
