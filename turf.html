@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Trot & Stop-Loss</title>
+    <title>Fab Turf - Martingale Dynamique</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,11 +22,11 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center">
-                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf (TROT)
+                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf (FR & BE)
             </h1>
             <div class="flex items-center space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
-                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll (Base Montante)</span>
+                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll (Base Dynamique)</span>
                     <span id="headerBankroll">100.00 €</span>
                 </div>
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadLivePmu()">
@@ -71,7 +71,7 @@
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider mb-0.5">Bilan du Jour (FR & BE)</h2>
-                    <p class="text-[10px] text-zinc-400">Spécial TROT • Stop-Loss 18 € • Cote Min 3.0</p>
+                    <p class="text-[10px] text-zinc-400">Martingale Dynamique : 1.8 à 2.5 = <strong>x3</strong> | > 2.5 = <strong>x2</strong></p>
                 </div>
             </div>
 
@@ -79,15 +79,15 @@
                 <!-- BASE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative">
                     <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">VRAIE BANKROLL</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold">Base Placé (x3)</div>
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold">Base Placé</div>
                     <div id="statBase" class="text-sm font-black text-white mt-0.5">0 / 0</div>
                     <div id="gainBasePla" class="text-base font-black text-emerald-400 mt-1">0.00 €</div>
                 </div>
 
                 <!-- PÉPITE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-amber-500/40 relative">
-                    <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMULATION MONTANTE</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold">Pépite Placé (x3)</div>
+                    <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMULATION PURE</div>
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold">Pépite Placé</div>
                     <div id="statPepite" class="text-sm font-black text-white mt-0.5">0 / 0</div>
                     <div id="gainPepitePla" class="text-base font-black text-amber-400 mt-1">0.00 €</div>
                 </div>
@@ -266,7 +266,7 @@
             throw new Error("PMU bloqué");
         }
 
-        // FILTRE GÉOGRAPHIQUE STRICT
+        // FILTRE STRICT FRANCE & BELGIQUE
         function isFrenchOrBelgianMeeting(reunion) {
             let hip = reunion.hippodrome || {};
             let pays = String(hip.pays || hip.libellePays || "").toUpperCase();
@@ -283,7 +283,6 @@
             for (let kw of allowedKeywords) {
                 if (libelleLong.includes(kw)) return true;
             }
-
             return false;
         }
 
@@ -718,7 +717,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_trot_v1_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_dyn_v1_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -836,13 +835,18 @@
 
             let currentBankroll = INITIAL_BANKROLL;
             let baseMiseLimit = 2.0; 
-            let stopLossLimit = 18.0; 
-            let currentStakeBasePla = baseMiseLimit;
-            let currentStakePepitePla = baseMiseLimit; 
+            
+            // Variables de suivi pour la Base
+            let isRecoveringBase = false;
+            let lastStakeBase = baseMiseLimit;
+
+            // Variables de suivi pour la Pépite
+            let isRecoveringPepite = false;
+            let lastStakePepite = baseMiseLimit;
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `fr_be_trot_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `fr_be_dyn_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -862,13 +866,6 @@
                 if (raceData && raceData.arrivees.length > 0) {
                     if (raceData.rapportsList.length === 0) continue; 
 
-                    let isTrot = r.discipline && (String(r.discipline).toUpperCase().includes('TROT') || String(r.discipline).toUpperCase().includes('ATTEL') || String(r.discipline).toUpperCase().includes('MONTE'));
-                    
-                    // Si ce n'est pas du Trot, on n'engage pas de paris et on passe à la course suivante sans rien déduire.
-                    if (!isTrot) {
-                        continue; 
-                    }
-
                     coursesValidees++;
                     let algoResult = computeAlgorithm(raceData.partants);
                     let baseH = algoResult.baseHorse;
@@ -877,39 +874,44 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // 1. BASE PLACÉ (STOP LOSS 18€ + COTE MINIMUM 3.0)
-                    if (baseH) {
-                        if (baseH.cote >= 3.0) {
-                            let actualStakeBase = currentBankroll > 0 ? Math.min(currentStakeBasePla, currentBankroll) : 0;
-                            totalSpentBase += actualStakeBase;
+                    // 1. BASE PLACÉ (MARTINGALE DYNAMIQUE)
+                    // On ne joue QUE SI la cote est >= 1.8 pour éviter de se ruiner sur des 1.20 Placé.
+                    if (baseH && baseH.cote >= 1.8) {
+                        let multiplier = (baseH.cote > 2.5) ? 2 : 3;
+                        let targetStakeBase = isRecoveringBase ? (lastStakeBase * multiplier) : baseMiseLimit;
+                        let actualStakeBase = currentBankroll > 0 ? Math.min(targetStakeBase, currentBankroll) : 0;
+                        
+                        totalSpentBase += actualStakeBase;
 
-                            let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
-                            if (gPla === 0 && baseArr >= 1 && baseArr <= 3) gPla = Math.max(1.1, baseH.cote / 3); 
+                        let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
+                        if (gPla === 0 && baseArr >= 1 && baseArr <= 3) gPla = Math.max(1.1, baseH.cote / 3); 
+                        
+                        let netBasePla = 0;
+                        if (gPla > 0) {
+                            baseWins++; 
+                            netBasePla = (gPla * actualStakeBase) - actualStakeBase;
+                            totalProfitBase += netBasePla; 
+                            isRecoveringBase = false;
+                            lastStakeBase = baseMiseLimit;
+                        } else {
+                            totalProfitBase -= actualStakeBase;
+                            netBasePla = -actualStakeBase;
+                            isRecoveringBase = true;
+                            lastStakeBase = actualStakeBase;
                             
-                            let netBasePla = 0;
-                            if (gPla > 0) {
-                                baseWins++; 
-                                netBasePla = (gPla * actualStakeBase) - actualStakeBase;
-                                totalProfitBase += netBasePla; 
-                                currentStakeBasePla = baseMiseLimit; // GAGNÉ -> Retour 2€
-                            } else {
-                                totalProfitBase -= actualStakeBase;
-                                netBasePla = -actualStakeBase;
-                                
-                                // STOP-LOSS CHECK
-                                if (actualStakeBase >= stopLossLimit) {
-                                    currentStakeBasePla = baseMiseLimit; // PERDU ET STOP LOSS ATTEINT -> Retour 2€
-                                } else {
-                                    currentStakeBasePla = actualStakeBase * 3; // PERDU -> Montante x3
-                                }
+                            // Stop-Loss de Sécurité
+                            if (lastStakeBase >= 50) {
+                                isRecoveringBase = false;
+                                lastStakeBase = baseMiseLimit;
                             }
-                            currentBankroll += netBasePla; 
                         }
+                        currentBankroll += netBasePla; 
                     }
 
-                    // 2. PÉPITE PLACÉ (STOP LOSS 18€)
-                    if (nuggetH) {
-                        let simStakePepite = currentStakePepitePla; 
+                    // 2. PÉPITE PLACÉ (MARTINGALE DYNAMIQUE)
+                    if (nuggetH && nuggetH.cote >= 1.8) {
+                        let multiplier = (nuggetH.cote > 2.5) ? 2 : 3;
+                        let simStakePepite = isRecoveringPepite ? (lastStakePepite * multiplier) : baseMiseLimit;
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
                         if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
@@ -919,16 +921,18 @@
                             pepiteWins++; 
                             netPepitePla = (gPla * simStakePepite) - simStakePepite;
                             totalProfitPepite += netPepitePla; 
-                            currentStakePepitePla = baseMiseLimit; // GAGNÉ -> Retour 2€
+                            isRecoveringPepite = false;
+                            lastStakePepite = baseMiseLimit; 
                         } else { 
                             netPepitePla = -simStakePepite; 
                             totalProfitPepite += netPepitePla; 
+                            isRecoveringPepite = true;
+                            lastStakePepite = simStakePepite;
                             
-                            // STOP-LOSS CHECK
-                            if (simStakePepite >= stopLossLimit) {
-                                currentStakePepitePla = baseMiseLimit; // PERDU ET STOP LOSS ATTEINT -> Retour 2€
-                            } else {
-                                currentStakePepitePla = simStakePepite * 3; // PERDU -> Montante x3
+                            // Stop-Loss de Sécurité
+                            if (lastStakePepite >= 50) {
+                                isRecoveringPepite = false;
+                                lastStakePepite = baseMiseLimit;
                             }
                         }
                     }
@@ -954,15 +958,15 @@
                 gainPepitePla.innerHTML = formatMoneyHTML(totalProfitPepite);
                 totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
-                if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> ${coursesValidees} courses (Trot)</span>`;
+                if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> ${coursesValidees} courses analysées</span>`;
 
-                localStorage.setItem(`pmu_stats_trot_v1_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_dyn_v1_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBase, pepiteProfit: totalProfitPepite
                 }));
                 
                 if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
             } else if (!isAuto) {
-                statsProgress.textContent = "Aucune course de Trot terminée aujourd'hui.";
+                statsProgress.textContent = "Aucune course qualifiée (FR/BE) terminée aujourd'hui.";
             }
         }
 
