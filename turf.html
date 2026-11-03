@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Montante Simple Gagnant & Placé (Cote &ge; 2.5)</title>
+    <title>Fab Turf - Base & Pépite (Montante Placé Uniquement)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,11 +22,11 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center">
-                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">Gagnant & Placé (Cote &ge; 2.5)</span>
+                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">Placé Uniquement (Cote &ge; 2.5)</span>
             </h1>
             <div class="flex items-center space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
-                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll Dynamique</span>
+                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll & Étape Montante</span>
                     <span id="headerBankroll">100.00 €</span>
                 </div>
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadLivePmu()">
@@ -56,12 +56,12 @@
                     <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Cette Semaine (Lun - Dim)</h3>
                     <div class="grid grid-cols-2 gap-2 text-[10px]">
                         <div class="bg-zinc-900/80 p-2 rounded border border-emerald-500/30 text-center leading-tight">
-                            <span class="text-emerald-400 font-bold block mb-1">GAGNANT (Base & Pépite)</span>
-                            <div class="text-zinc-400">Bénéfice : <span id="histWeekGag">--</span></div>
+                            <span class="text-emerald-400 font-bold block mb-1">BASE PLACÉ</span>
+                            <div class="text-zinc-400">Bénéfice : <span id="histWeekBasePla">--</span></div>
                         </div>
                         <div class="bg-zinc-900/80 p-2 rounded border border-amber-500/30 text-center leading-tight">
-                            <span class="text-amber-400 font-bold block mb-1">PLACÉ (Base & Pépite)</span>
-                            <div class="text-zinc-400">Bénéfice : <span id="histWeekPla">--</span></div>
+                            <span class="text-amber-400 font-bold block mb-1">PÉPITE PLACÉ</span>
+                            <div class="text-zinc-400">Bénéfice : <span id="histWeekPepitePla">--</span></div>
                         </div>
                     </div>
                 </div>
@@ -76,7 +76,7 @@
         <div id="statsBlock" class="bg-zinc-900 border border-indigo-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-indigo-400 tracking-wider flex items-center">
-                    <i class="fa-solid fa-trophy mr-1.5"></i> Bilan du Jour (Montante Gagnant & Placé - Cote &ge; 2.5)
+                    <i class="fa-solid fa-trophy mr-1.5"></i> Bilan du Jour (Montante Uniquement Placé)
                 </h2>
                 <div id="statsProgress" class="text-[10px] font-mono text-zinc-400 flex items-center">
                     <i class="fa-solid fa-spinner fa-spin mr-1"></i> Calcul en cours...
@@ -84,40 +84,40 @@
             </div>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <!-- GAGNANT -->
+                <!-- BASE -->
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-emerald-500/30 flex flex-col justify-between space-y-2 relative">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMPLE GAGNANT (MONTANTE)</div>
+                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">PLACÉ ACTIF (MONTANTE)</div>
                     <div class="flex justify-between items-center">
-                        <span class="text-[10px] uppercase font-bold text-emerald-400">Base & Pépite Gagnant</span>
-                        <span id="statGag" class="text-[10px] font-bold text-white">G: 0 / 0</span>
-                    </div>
-                    <div class="bg-zinc-900/60 p-2.5 rounded border border-zinc-700/50 text-center">
-                        <span class="text-[9px] text-zinc-400 block uppercase font-bold">Bénéfice Gagnant</span>
-                        <span id="gainGag" class="font-bold text-emerald-400 text-sm">--</span>
-                    </div>
-                </div>
-
-                <!-- PLACÉ -->
-                <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-amber-500/30 flex flex-col justify-between space-y-2 relative">
-                    <div class="absolute -top-2 -right-2 bg-amber-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMPLE PLACÉ (MONTANTE)</div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] uppercase font-bold text-amber-400">Base & Pépite Placé</span>
-                        <span id="statPla" class="text-[10px] font-bold text-white">P: 0 / 0</span>
+                        <span class="text-[10px] uppercase font-bold text-emerald-400">Base Solide (Placé)</span>
+                        <span id="statBase" class="text-[10px] font-bold text-white">P: 0 / 0</span>
                     </div>
                     <div class="bg-zinc-900/60 p-2.5 rounded border border-zinc-700/50 text-center">
                         <span class="text-[9px] text-zinc-400 block uppercase font-bold">Bénéfice Placé</span>
-                        <span id="gainPla" class="font-bold text-amber-400 text-sm">--</span>
+                        <span id="gainBasePla" class="font-bold text-emerald-400 text-sm">--</span>
+                    </div>
+                </div>
+
+                <!-- PÉPITE -->
+                <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-amber-500/30 flex flex-col justify-between space-y-2 relative">
+                    <div class="absolute -top-2 -right-2 bg-amber-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">PLACÉ ACTIF (MONTANTE)</div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] uppercase font-bold text-amber-400">Pépite Placé</span>
+                        <span id="statPepite" class="text-[10px] font-bold text-white">P: 0 / 0</span>
+                    </div>
+                    <div class="bg-zinc-900/60 p-2.5 rounded border border-zinc-700/50 text-center">
+                        <span class="text-[9px] text-zinc-400 block uppercase font-bold">Bénéfice Placé</span>
+                        <span id="gainPepitePla" class="font-bold text-amber-400 text-sm">--</span>
                     </div>
                 </div>
             </div>
 
             <div class="mt-3 flex justify-between items-center text-[11px] bg-zinc-800/60 px-3 py-2 rounded-xl border border-zinc-700/50 text-zinc-300">
-                <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Total Mises Engagées :</span>
+                <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Total Mises Engagées (Placé) :</span>
                 <span id="totalSpentText" class="font-bold text-white">0.00 €</span>
             </div>
 
             <div class="text-center text-[10px] text-zinc-400 mt-2 font-semibold">
-                Règle : Application simultanée de la montante sur le Simple Gagnant et le Simple Placé pour chaque cheval sélectionné (Cote mini 2.5).
+                Règle : Mises uniquement sur les places (Base & Pépite). Le simple gagnant est affiché à titre indicatif dans le tableau.
             </div>
             <div id="statGlobal" class="text-center text-[11px] text-zinc-300 mt-2 font-medium flex flex-col items-center"></div>
         </div>
@@ -140,7 +140,7 @@
 
         <div id="reportsBlock" class="hidden bg-zinc-900 border border-emerald-500/30 rounded-xl p-3.5 space-y-2">
             <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center">
-                <i class="fa-solid fa-euro-sign mr-1.5"></i> Rapports Définitifs (Gagnant & Placé)
+                <i class="fa-solid fa-euro-sign mr-1.5"></i> Rapports Définitifs Placés
             </h2>
             <div id="reportsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs"></div>
         </div>
@@ -148,7 +148,7 @@
         <div class="bg-gradient-to-r from-emerald-950/60 via-zinc-900 to-amber-950/40 border border-emerald-500/50 rounded-2xl p-4 space-y-3 shadow-xl relative">
             <div class="flex flex-wrap justify-between items-center gap-2">
                 <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center">
-                    <i class="fa-solid fa-star mr-1.5"></i> Sélection Course (Base & Pépite - Cote &ge; 2.5)
+                    <i class="fa-solid fa-star mr-1.5"></i> Sélection Course (Base & Pépite Placé)
                 </h2>
                 <div class="flex items-center space-x-1.5 flex-wrap">
                     <a href="https://www.equidia.fr/direct?utm_source=intern&utm_medium=header_menu&utm_campaign=Home" target="_blank" class="bg-red-600 hover:bg-red-500 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold shadow transition flex items-center">
@@ -172,7 +172,7 @@
                     <div id="top1Stats" class="text-[11px] text-zinc-400">--</div>
                 </div>
                 <div class="bg-zinc-900/90 p-3 rounded-xl border border-amber-500/40 space-y-1">
-                    <div class="text-[10px] uppercase font-bold text-amber-400">Pépite (Cote 5 à 20)</div>
+                    <div class="text-[10px] uppercase font-bold text-amber-400">Pépite Placé (Cote 5 à 20)</div>
                     <div id="top2Name" class="font-bold text-white text-sm">En attente...</div>
                     <div id="top2Stats" class="text-[11px] text-zinc-400">--</div>
                 </div>
@@ -189,7 +189,7 @@
                             <th class="p-3">N° / Nom</th>
                             <th class="p-3">Musique</th>
                             <th class="p-3">Cote</th>
-                            <th class="p-3">Score</th>
+                            <th class="p-3">Info Gagnant (Indicatif)</th>
                         </tr>
                     </thead>
                     <tbody id="runnersTableBody" class="divide-y divide-zinc-800/50">
@@ -636,7 +636,7 @@
                     let typePari = (repGroup.typePari || repGroup.libellePari || repGroup.codePari || "").toUpperCase();
                     let famille = (repGroup.famillePari || "").toUpperCase();
                     
-                    if (typePari.includes('SIMPLE') || typePari.includes('SG') || typePari.includes('SP') || famille.includes('SIMPLE')) {
+                    if (typePari.includes('SIMPLE') || typePari.includes('SP') || famille.includes('SIMPLE')) {
                         let details = repGroup.rapports || repGroup.dividendes || repGroup.lesRapports || [];
                         details.forEach(r => {
                             let val = 0;
@@ -652,12 +652,12 @@
                             }
 
                             let lib = (r.libelleRapport || r.libelle || typePari).toUpperCase();
-                            if (val > 0) {
+                            if (val > 0 && (lib.includes('PLACE') || lib.includes('P') || typePari.includes('PLACE') || typePari.includes('SP'))) {
                                 hasReports = true;
                                 let combo = r.combinaison || r.cheval || r.numeroCheval ? ` (N°${r.combinaison || r.cheval || r.numeroCheval})` : '';
                                 let div = document.createElement('div');
                                 div.className = "bg-zinc-800/80 p-2.5 rounded-xl border border-zinc-700 flex justify-between items-center";
-                                div.innerHTML = `<span class="text-zinc-400 font-medium">${lib}${combo} :</span> <span class="text-emerald-400 font-bold">${val.toFixed(2)} €</span>`;
+                                div.innerHTML = `<span class="text-zinc-400 font-medium">Placé${combo} :</span> <span class="text-emerald-400 font-bold">${val.toFixed(2)} €</span>`;
                                 reportsGrid.appendChild(div);
                             }
                         });
@@ -672,14 +672,14 @@
 
                 if (baseHorse) {
                     document.getElementById('top1Name').textContent = `${baseHorse.num}. ${baseHorse.nom}`;
-                    document.getElementById('top1Stats').textContent = `Score : ${baseHorse.baseScore}% | Cote : ${baseHorse.coteDisplay}`;
+                    document.getElementById('top1Stats').textContent = `Score Placé : ${baseHorse.baseScore}% | Cote : ${baseHorse.coteDisplay}`;
                 } else {
                     document.getElementById('top1Name').textContent = `Attente cotes...`;
                 }
                 
                 if (nuggetHorse) {
                     document.getElementById('top2Name').textContent = `${nuggetHorse.num}. ${nuggetHorse.nom}`;
-                    document.getElementById('top2Stats').textContent = `Score : ${nuggetHorse.nuggetScore}% | Cote : ${nuggetHorse.coteDisplay}`;
+                    document.getElementById('top2Stats').textContent = `Score Pépite : ${nuggetHorse.nuggetScore}% | Cote : ${nuggetHorse.coteDisplay}`;
                 } else {
                     document.getElementById('top2Name').textContent = `Attente cotes...`;
                 }
@@ -690,10 +690,18 @@
                 processed.forEach(p => {
                     let tr = document.createElement('tr');
                     let tag = p.ordreArrivee ? `<span class="ml-1 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
-                    if (p.num === baseHorse?.num) tag += '<span class="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">Base (Cote &ge; 2.5)</span>';
-                    if (p.num === nuggetHorse?.num) tag += '<span class="ml-1 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">Pépite</span>';
+                    if (p.num === baseHorse?.num) tag += '<span class="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">Base Placé</span>';
+                    if (p.num === nuggetHorse?.num) tag += '<span class="ml-1 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">Pépite Placé</span>';
 
-                    tr.innerHTML = `<td class="p-3 font-bold"><span class="text-emerald-400 mr-2">${p.num}</span>${p.nom}${tag}</td><td class="p-3 text-zinc-300 font-mono">${p.musique}</td><td class="p-3 text-emerald-400 font-bold">${p.coteDisplay}</td><td class="p-3 font-semibold">${p.baseScore}%</td>`;
+                    // Info Gagnant pour info pure
+                    let gagWinTag = (p.ordreArrivee === 1) ? `<span class="text-emerald-400 font-bold">1er (Gagnant)</span>` : `<span class="text-zinc-500">Non Gagnant</span>`;
+
+                    tr.innerHTML = `
+                        <td class="p-3 font-bold"><span class="text-emerald-400 mr-2">${p.num}</span>${p.nom}${tag}</td>
+                        <td class="p-3 text-zinc-300 font-mono">${p.musique}</td>
+                        <td class="p-3 text-emerald-400 font-bold">${p.coteDisplay}</td>
+                        <td class="p-3 font-semibold">${gagWinTag}</td>
+                    `;
                     tbody.appendChild(tr);
                 });
                 
@@ -703,7 +711,7 @@
                 document.getElementById('raceInfoDetails').innerHTML = `
                     <div class="flex items-center">
                         <span class="mr-2 text-zinc-400 font-normal">${timeInfo}</span>
-                        <span>Partants & Analyse Gagnant/Placé</span>
+                        <span>Partants & Analyse Placé (Gagnant pour info)</span>
                         ${discBadge}
                     </div>
                 `;
@@ -711,10 +719,10 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_montante_gp_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_placed_only_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
-            return { gag: 0, pla: 0 };
+            return { basePla: 0, pepPla: 0 };
         }
 
         function showHistoryStats() {
@@ -728,34 +736,34 @@
             let monday = new Date(currentViewDate);
             monday.setDate(currentViewDate.getDate() - (dayOfWeek - 1)); 
             
-            let wGag = 0, wPla = 0;
+            let wBasePla = 0, wPepPla = 0;
             
             for(let i=0; i<7; i++) {
                 let d = new Date(monday);
                 d.setDate(monday.getDate() + i);
                 let s = getStatForDateObj(d);
-                wGag += s.gag || 0;
-                wPla += s.pla || 0;
+                wBasePla += s.basePla || 0;
+                wPepPla += s.pepPla || 0;
             }
 
-            document.getElementById('histWeekGag').innerHTML = `<span class="${wGag >= 0 ? 'text-emerald-400' : 'text-red-400'}">${wGag >= 0 ? '+' : ''}${wGag.toFixed(2)} €</span>`;
-            document.getElementById('histWeekPla').innerHTML = `<span class="${wPla >= 0 ? 'text-amber-400' : 'text-red-400'}">${wPla >= 0 ? '+' : ''}${wPla.toFixed(2)} €</span>`;
+            document.getElementById('histWeekBasePla').innerHTML = `<span class="${wBasePla >= 0 ? 'text-emerald-400' : 'text-red-400'}">${wBasePla >= 0 ? '+' : ''}${wBasePla.toFixed(2)} €</span>`;
+            document.getElementById('histWeekPepitePla').innerHTML = `<span class="${wPepPla >= 0 ? 'text-amber-400' : 'text-red-400'}">${wPepPla >= 0 ? '+' : ''}${wPepPla.toFixed(2)} €</span>`;
 
             const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
             let monthsGrid = document.getElementById('monthsGrid');
             monthsGrid.innerHTML = '';
 
             for (let m = 0; m < 12; m++) {
-                let mGag = 0, mPla = 0;
+                let mBasePla = 0, mPepPla = 0;
                 let daysInMonth = new Date(year, m + 1, 0).getDate(); 
                 
                 for (let d = 1; d <= daysInMonth; d++) {
                     let s = getStatForDateObj(new Date(year, m, d));
-                    mGag += s.gag || 0;
-                    mPla += s.pla || 0;
+                    mBasePla += s.basePla || 0;
+                    mPepPla += s.pepPla || 0;
                 }
 
-                if (mGag !== 0 || mPla !== 0) {
+                if (mBasePla !== 0 || mPepPla !== 0) {
                     let div = document.createElement('div');
                     let isCurrentViewMonth = (m === currentViewDate.getMonth());
                     div.className = isCurrentViewMonth 
@@ -768,12 +776,12 @@
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-[10px]">
                             <div class="bg-zinc-900/80 p-2 rounded border border-emerald-500/20 text-center leading-tight">
-                                <span class="text-emerald-400 font-bold block mb-1 uppercase text-[9px]">Gagnant</span>
-                                <div class="text-zinc-400"><span class="${mGag >= 0 ? 'text-emerald-400' : 'text-red-400'}">${mGag >= 0 ? '+' : ''}${mGag.toFixed(2)} €</span></div>
+                                <span class="text-emerald-400 font-bold block mb-1 uppercase text-[9px]">Base Placé</span>
+                                <div class="text-zinc-400"><span class="${mBasePla >= 0 ? 'text-emerald-400' : 'text-red-400'}">${mBasePla >= 0 ? '+' : ''}${mBasePla.toFixed(2)} €</span></div>
                             </div>
                             <div class="bg-zinc-900/80 p-2 rounded border border-amber-500/20 text-center leading-tight">
-                                <span class="text-amber-400 font-bold block mb-1 uppercase text-[9px]">Placé</span>
-                                <div class="text-zinc-400"><span class="${mPla >= 0 ? 'text-amber-400' : 'text-red-400'}">${mPla >= 0 ? '+' : ''}${mPla.toFixed(2)} €</span></div>
+                                <span class="text-amber-400 font-bold block mb-1 uppercase text-[9px]">Pépite Placé</span>
+                                <div class="text-zinc-400"><span class="${mPepPla >= 0 ? 'text-amber-400' : 'text-red-400'}">${mPepPla >= 0 ? '+' : ''}${mPepPla.toFixed(2)} €</span></div>
                             </div>
                         </div>
                     `;
@@ -787,19 +795,19 @@
 
         async function calculateDailyStats(isAuto = false) {
             let statsProgress = document.getElementById('statsProgress');
-            let statGag = document.getElementById('statGag');
-            let statPla = document.getElementById('statPla');
+            let statBase = document.getElementById('statBase');
+            let statPepite = document.getElementById('statPepite');
             
-            let gainGag = document.getElementById('gainGag');
-            let gainPla = document.getElementById('gainPla');
+            let gainBasePla = document.getElementById('gainBasePla');
+            let gainPepitePla = document.getElementById('gainPepitePla');
             let statGlobal = document.getElementById('statGlobal');
             let totalSpentText = document.getElementById('totalSpentText');
 
             if (!isAuto) {
-                statGag.textContent = `G: 0 / 0`;
-                statPla.textContent = `P: 0 / 0`;
-                gainGag.textContent = `--`;
-                gainPla.textContent = `--`;
+                statBase.textContent = `P: 0 / 0`;
+                statPepite.textContent = `P: 0 / 0`;
+                gainBasePla.textContent = `--`;
+                gainPepitePla.textContent = `--`;
                 totalSpentText.textContent = `0.00 €`;
                 statGlobal.innerHTML = "";
                 statsProgress.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Analyse en cours...";
@@ -832,19 +840,17 @@
                 return;
             }
 
-            let gagCount = 0, plaCount = 0;
-            let totalGainGag = 0, totalGainPla = 0;
-            let totalSpent = 0; 
+            let basePlaCount = 0;
+            let pepitePlaCount = 0;
+            let totalGainBasePla = 0;
+            let totalGainPepitePla = 0;
+            let totalSpentPla = 0; 
             let coursesValidees = 0;
 
             let currentBankroll = INITIAL_BANKROLL;
 
-            // VARIABLES DE MONTANTE SÉQUENTIELLE SÉPARÉES POUR GAGNANT ET PLACÉ
-            let baseStakeGag = INITIAL_BANKROLL * BASE_RISK_PERCENT;
-            let pepiteStakeGag = INITIAL_BANKROLL * BASE_RISK_PERCENT;
-            
-            let baseStakePla = INITIAL_BANKROLL * BASE_RISK_PERCENT;
-            let pepiteStakePla = INITIAL_BANKROLL * BASE_RISK_PERCENT;
+            let baseMontanteStake = INITIAL_BANKROLL * BASE_RISK_PERCENT;
+            let pepiteMontanteStake = INITIAL_BANKROLL * BASE_RISK_PERCENT;
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
@@ -876,92 +882,56 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // GESTION DES MISES GAGNANT ET PLACÉ POUR LA BASE ET LA PÉPITE
-                    let sBaseGag = Math.max(0.5, parseFloat(baseStakeGag.toFixed(2)));
-                    let sPepGag = Math.max(0.5, parseFloat(pepiteStakeGag.toFixed(2)));
-                    let sBasePla = Math.max(0.5, parseFloat(baseStakePla.toFixed(2)));
-                    let sPepPla = Math.max(0.5, parseFloat(pepiteStakePla.toFixed(2)));
+                    let stakeBase = Math.max(0.5, parseFloat(baseMontanteStake.toFixed(2)));
+                    let stakePepite = Math.max(0.5, parseFloat(pepiteMontanteStake.toFixed(2)));
 
+                    // UNIQUEMENT LES MISES EN PLACÉ (LE GAGNANT N'EST PAS MISÉ, JUSTE SUIVI POUR INFO)
                     if (baseH) {
-                        totalSpent += (sBaseGag + sBasePla);
-
-                        // --- 1. TRAITEMENT GAGNANT (BASE) ---
-                        let gGag = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
-                        if (gGag === 0 && baseArr === 1) gGag = baseH.cote;
-                        let netBaseGag = 0;
-                        if (gGag > 0) {
-                            gagCount++;
-                            netBaseGag = (gGag * sBaseGag) - sBaseGag;
-                            totalGainGag += netBaseGag;
-                            baseStakeGag = sBaseGag + (netBaseGag * 0.4); // Montante Gagnant
-                        } else {
-                            totalGainGag -= sBaseGag;
-                            netBaseGag = -sBaseGag;
-                            baseStakeGag = Math.max(0.5, currentBankroll * BASE_RISK_PERCENT);
-                        }
-                        currentBankroll += netBaseGag;
-
-                        // --- 2. TRAITEMENT PLACÉ (BASE) ---
+                        totalSpentPla += stakeBase;
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
-                        if (gPla === 0 && baseArr >= 1 && baseArr <= 3) gPla = Math.max(1.2, baseH.cote / 2.8);
+                        if (gPla === 0 && baseArr >= 1 && baseArr <= 3) gPla = Math.max(1.2, baseH.cote / 2.8); 
+                        
                         let netBasePla = 0;
                         if (gPla > 0) {
-                            plaCount++;
-                            netBasePla = (gPla * sBasePla) - sBasePla;
-                            totalGainPla += netBasePla;
-                            baseStakePla = sBasePla + (netBasePla * 0.4); // Montante Placé
+                            basePlaCount++; 
+                            netBasePla = (gPla * stakeBase) - stakeBase;
+                            totalGainBasePla += netBasePla; 
+                            baseMontanteStake = stakeBase + (netBasePla * 0.4); 
                         } else {
-                            totalGainPla -= sBasePla;
-                            netBasePla = -sBasePla;
-                            baseStakePla = Math.max(0.5, currentBankroll * BASE_RISK_PERCENT);
+                            totalGainBasePla -= stakeBase;
+                            netBasePla = -stakeBase;
+                            baseMontanteStake = Math.max(0.5, currentBankroll * BASE_RISK_PERCENT);
                         }
-                        currentBankroll += netBasePla;
+                        currentBankroll += netBasePla; 
                     }
 
                     if (nuggetH) {
-                        totalSpent += (sPepGag + sPepPla);
-
-                        // --- 3. TRAITEMENT GAGNANT (PÉPITE) ---
-                        let gPepGag = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
-                        if (gPepGag === 0 && nuggetArr === 1) gPepGag = nuggetH.cote;
-                        let netPepGag = 0;
-                        if (gPepGag > 0) {
-                            gagCount++;
-                            netPepGag = (gPepGag * sPepGag) - sPepGag;
-                            totalGainGag += netPepGag;
-                            pepiteStakeGag = sPepGag + (netPepGag * 0.4);
-                        } else {
-                            totalGainGag -= sPepGag;
-                            netPepGag = -sPepGag;
-                            pepiteStakeGag = Math.max(0.5, currentBankroll * BASE_RISK_PERCENT);
+                        totalSpentPla += stakePepite;
+                        let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
+                        if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.4, nuggetH.cote / 2.5); 
+                        
+                        let netPepitePla = 0;
+                        if (gPla > 0) { 
+                            pepitePlaCount++; 
+                            netPepitePla = (gPla * stakePepite) - stakePepite;
+                            totalGainPepitePla += netPepitePla; 
+                            pepiteMontanteStake = stakePepite + (netPepitePla * 0.4);
+                        } else { 
+                            totalGainPepitePla -= stakePepite;
+                            netPepitePla = -stakePepite;
+                            pepiteMontanteStake = Math.max(0.5, currentBankroll * BASE_RISK_PERCENT);
                         }
-                        currentBankroll += netPepGag;
-
-                        // --- 4. TRAITEMENT PLACÉ (PÉPITE) ---
-                        let gPepPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
-                        if (gPepPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPepPla = Math.max(1.4, nuggetH.cote / 2.5);
-                        let netPepPla = 0;
-                        if (gPepPla > 0) {
-                            plaCount++;
-                            netPepPla = (gPepPla * sPepPla) - sPepPla;
-                            totalGainPla += netPepPla;
-                            pepiteStakePla = sPepPla + (netPepPla * 0.4);
-                        } else {
-                            totalGainPla -= sPepPla;
-                            netPepPla = -sPepPla;
-                            pepiteStakePla = Math.max(0.5, currentBankroll * BASE_RISK_PERCENT);
-                        }
-                        currentBankroll += netPepPla;
+                        currentBankroll += netPepitePla; 
                     }
 
                     if (!isAuto) {
-                        statGag.textContent = `G: ${gagCount} / ${coursesValidees * 2}`;
-                        statPla.textContent = `P: ${plaCount} / ${coursesValidees * 2}`;
+                        statBase.textContent = `P: ${basePlaCount} / ${coursesValidees}`;
+                        statPepite.textContent = `P: ${pepitePlaCount} / ${coursesValidees}`;
                         
-                        gainGag.innerHTML = `<span class="${totalGainGag >= 0 ? 'text-emerald-400' : 'text-red-400'}">${totalGainGag >= 0 ? '+' : ''}${totalGainGag.toFixed(2)}€</span>`;
-                        gainPla.innerHTML = `<span class="${totalGainPla >= 0 ? 'text-amber-400' : 'text-red-400'}">${totalGainPla >= 0 ? '+' : ''}${totalGainPla.toFixed(2)}€</span>`;
+                        gainBasePla.innerHTML = `<span class="${totalGainBasePla >= 0 ? 'text-emerald-400' : 'text-red-400'}">${totalGainBasePla >= 0 ? '+' : ''}${totalGainBasePla.toFixed(2)}€</span>`;
+                        gainPepitePla.innerHTML = `<span class="${totalGainPepitePla >= 0 ? 'text-amber-400' : 'text-red-400'}">${totalGainPepitePla >= 0 ? '+' : ''}${totalGainPepitePla.toFixed(2)}€</span>`;
 
-                        totalSpentText.textContent = `${totalSpent.toFixed(2)} €`;
+                        totalSpentText.textContent = `${totalSpentPla.toFixed(2)} €`;
                         document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                         await new Promise(r => setTimeout(r, 20));
                     }
@@ -969,18 +939,18 @@
             }
 
             if (coursesValidees > 0) {
-                statGag.textContent = `G: ${gagCount} / ${coursesValidees * 2}`;
-                statPla.textContent = `P: ${plaCount} / ${coursesValidees * 2}`;
+                statBase.textContent = `P: ${basePlaCount} / ${coursesValidees}`;
+                statPepite.textContent = `P: ${pepitePlaCount} / ${coursesValidees}`;
                 
-                gainGag.innerHTML = `<span class="${totalGainGag >= 0 ? 'text-emerald-400' : 'text-red-400'}">${totalGainGag >= 0 ? '+' : ''}${totalGainGag.toFixed(2)}€</span>`;
-                gainPla.innerHTML = `<span class="${totalGainPla >= 0 ? 'text-amber-400' : 'text-red-400'}">${totalGainPla >= 0 ? '+' : ''}${totalGainPla.toFixed(2)}€</span>`;
+                gainBasePla.innerHTML = `<span class="${totalGainBasePla >= 0 ? 'text-emerald-400' : 'text-red-400'}">${totalGainBasePla >= 0 ? '+' : ''}${totalGainBasePla.toFixed(2)}€</span>`;
+                gainPepitePla.innerHTML = `<span class="${totalGainPepitePla >= 0 ? 'text-amber-400' : 'text-red-400'}">${totalGainPepitePla >= 0 ? '+' : ''}${totalGainPepitePla.toFixed(2)}€</span>`;
                 
-                totalSpentText.textContent = `${totalSpent.toFixed(2)} €`;
+                totalSpentText.textContent = `${totalSpentPla.toFixed(2)} €`;
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                 if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> Bilan calculé (${coursesValidees} courses)</span>`;
 
-                localStorage.setItem(`pmu_stats_montante_gp_${ddmmyyyy}`, JSON.stringify({
-                    gag: totalGainGag, pla: totalGainPla
+                localStorage.setItem(`pmu_stats_placed_only_${ddmmyyyy}`, JSON.stringify({
+                    basePla: totalGainBasePla, pepPla: totalGainPepitePla
                 }));
                 
                 if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
