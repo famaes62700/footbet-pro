@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TennisBet Pro - Live</title>
+    <title>TennisBet Pro - Live & Historique</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,11 +23,14 @@
             <h1 class="text-base sm:text-lg font-black tracking-wider text-lime-400 flex items-center">
                 <i class="fa-solid fa-trophy mr-2"></i>TennisBet Pro
             </h1>
-            <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-2 sm:space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-lime-400 font-bold">
                     Bankroll: <span id="headerBankroll">100.00 €</span>
                 </div>
                 <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-lime-400" onchange="loadTennisMatches()">
+                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Historique Semaine & Mois">
+                    <i class="fa-solid fa-calendar-days text-lime-400"></i>
+                </button>
             </div>
         </div>
         
@@ -50,6 +53,26 @@
             <button onclick="loadTennisMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-lime-400 px-3 py-1.5 rounded-lg border border-lime-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
             </button>
+        </div>
+
+        <!-- HISTORIQUE CUMULÉ SEMAINE & MOIS -->
+        <div id="historyBlock" class="hidden bg-zinc-900 border border-lime-500/30 rounded-2xl p-4 shadow-xl mb-2">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
+                    <i class="fa-solid fa-vault mr-1.5 text-lime-400"></i> Vos Gains Cumulés Tennis
+                </h2>
+                <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
+                <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
+                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Semaine en cours</h3>
+                    <div class="flex justify-between font-black"><span class="text-white">BÉNÉFICE NET :</span><span id="weekTotal" class="text-lime-400">0.00 €</span></div>
+                </div>
+                <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
+                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Mois par Mois (<span id="currentYearText"></span>)</h3>
+                    <div id="monthsGrid" class="space-y-2"></div>
+                </div>
+            </div>
         </div>
 
         <div class="bg-zinc-900 border border-lime-500/30 rounded-2xl p-4 shadow-xl mb-2 flex justify-between items-center">
@@ -208,15 +231,11 @@
 
                 if (currentMatches.length === 0) {
                     statusText.innerHTML = `<span class="text-zinc-400">Aucun match programmé à cette date précise.</span>`;
-                    populateCompetitions([]);
-                    renderMatches([]);
-                    calculateDailyBankroll();
-                    return;
-                }
-
-                const liveCount = currentMatches.filter(m => m.status === 'IN_PLAY').length;
-                if (!isSilent) {
-                    statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} vrais matchs chargés (${liveCount} en direct)</span>`;
+                } else {
+                    const liveCount = currentMatches.filter(m => m.status === 'IN_PLAY').length;
+                    if (!isSilent) {
+                        statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs chargés (${liveCount} en direct)</span>`;
+                    }
                 }
                 
                 populateCompetitions(currentMatches);
@@ -232,7 +251,7 @@
         function populateCompetitions(matches) {
             const select = document.getElementById('compSelect');
             const currentSelection = select.value;
-            select.innerHTML = '<option value="ALL">Tous les tournois (' + matches.length + ')</option>';
+            select.innerHTML = '<option value="ALL">Tous les tournois</option>';
             const compsMap = new Map();
             
             matches.forEach(m => {
@@ -399,6 +418,90 @@
             profitEl.textContent = `${dailyProfit > 0 ? '+' : ''}${dailyProfit.toFixed(2)} €`;
             profitEl.className = `text-lg font-black ${dailyProfit > 0 ? 'text-lime-400' : (dailyProfit < 0 ? 'text-red-400' : 'text-white')}`;
             document.getElementById('headerBankroll').textContent = `${(INITIAL_BANKROLL + dailyProfit).toFixed(2)} €`;
+
+            if (betsCount > 0 || dailyProfit !== 0 || (savedBets && Object.keys(savedBets).length > 0)) {
+                let history = JSON.parse(localStorage.getItem('tennisbet_full_history')) || {};
+                history[dateStr] = dailyProfit;
+                localStorage.setItem('tennisbet_full_history', JSON.stringify(history));
+            }
+
+            if (!document.getElementById('historyBlock').classList.contains('hidden')) {
+                showHistoryStats();
+            }
+        }
+
+        function toggleHistoryStats() {
+            let block = document.getElementById('historyBlock');
+            if (block.classList.contains('hidden')) {
+                block.classList.remove('hidden');
+                showHistoryStats();
+            } else {
+                block.classList.add('hidden');
+            }
+        }
+
+        function showHistoryStats() {
+            let dateInput = document.getElementById('matchDate').value;
+            let currentViewDate = dateInput ? new Date(dateInput) : new Date();
+            let year = currentViewDate.getFullYear();
+            
+            document.getElementById('currentYearText').textContent = year;
+            let history = JSON.parse(localStorage.getItem('tennisbet_full_history')) || {};
+
+            let dayOfWeek = currentViewDate.getDay() || 7; 
+            let monday = new Date(currentViewDate);
+            monday.setDate(currentViewDate.getDate() - (dayOfWeek - 1)); 
+            
+            let wTotal = 0;
+            for (let i = 0; i < 7; i++) {
+                let d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                let dStr = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                wTotal += history[dStr] || 0;
+            }
+
+            let wpEl = document.getElementById('weekTotal');
+            wpEl.textContent = `${wTotal > 0 ? '+' : ''}${wTotal.toFixed(2)} €`;
+            wpEl.className = wTotal > 0 ? 'text-lime-400 font-black' : (wTotal < 0 ? 'text-red-400 font-black' : 'text-zinc-400 font-black');
+
+            const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
+            let monthsGrid = document.getElementById('monthsGrid');
+            monthsGrid.innerHTML = '';
+
+            for (let m = 0; m < 12; m++) {
+                let mTot = 0;
+                let hasData = false;
+                let daysInMonth = new Date(year, m + 1, 0).getDate(); 
+                
+                for (let d = 1; d <= daysInMonth; d++) {
+                    let mm = String(m + 1).padStart(2, '0');
+                    let dd = String(d).padStart(2, '0');
+                    let dStr = `${year}-${mm}-${dd}`;
+                    if (history[dStr] !== undefined) {
+                        hasData = true;
+                        mTot += history[dStr] || 0;
+                    }
+                }
+
+                if (hasData) {
+                    let div = document.createElement('div');
+                    let isCurrentMonth = (m === currentViewDate.getMonth());
+                    div.className = isCurrentMonth 
+                        ? "bg-zinc-800 p-3 rounded-xl border border-lime-500/50 mb-2 flex justify-between items-center text-xs" 
+                        : "bg-zinc-800/50 p-3 rounded-xl border border-zinc-700/50 mb-2 flex justify-between items-center text-xs";
+
+                    let totColor = mTot >= 0 ? 'text-lime-400' : 'text-red-400';
+                    div.innerHTML = `
+                        <span class="font-bold ${isCurrentMonth ? 'text-white' : 'text-zinc-300'}">${monthNames[m]}</span>
+                        <span class="font-black ${totColor}">${mTot > 0 ? '+' : ''}${mTot.toFixed(2)} €</span>
+                    `;
+                    monthsGrid.appendChild(div);
+                }
+            }
+
+            if (monthsGrid.innerHTML === '') {
+                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Naviguez sur une date pour enregistrer les bilans.</div>';
+            }
         }
 
         window.onload = loadTennisMatches;
