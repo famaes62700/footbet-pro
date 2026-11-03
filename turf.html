@@ -50,8 +50,8 @@
     <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4">
         
         <div class="flex justify-between items-center">
-            <div id="statusText" class="text-xs text-emerald-400 font-mono flex items-center w-3/4 truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion sécurisée PMU...
+            <div id="statusText" class="text-[11px] text-emerald-400 font-mono flex items-center w-3/4 truncate">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Attente connexion...
             </div>
             <button onclick="loadTurfRaces(false, true)" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
@@ -136,7 +136,7 @@
 
             <div class="flex justify-between items-center text-[11px] text-zinc-400 pt-1 border-t border-zinc-800/60">
                 <span>Courses calculées : <strong id="settledCountText" class="text-white">0</strong></span>
-                <span id="pendingRacesBadge" class="hidden text-amber-400 font-bold"><i class="fa-solid fa-hourglass-half mr-1"></i> <span id="pendingCount">0</span> étrangère(s) en attente PMU</span>
+                <span id="pendingRacesBadge" class="hidden text-amber-400 font-bold"><i class="fa-solid fa-hourglass-half mr-1"></i> <span id="pendingCount">0</span> étrangère(s) en attente</span>
             </div>
         </div>
 
@@ -155,7 +155,7 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02;
 
-        let memoryCache = JSON.parse(localStorage.getItem('turfbet_cache_v5')) || {};
+        let memoryCache = JSON.parse(localStorage.getItem('turfbet_cache_v6')) || {};
 
         function saveCache() {
             try {
@@ -163,49 +163,56 @@
                 if (keys.length > 250) {
                     keys.slice(0, keys.length - 250).forEach(k => delete memoryCache[k]);
                 }
-                localStorage.setItem('turfbet_cache_v5', JSON.stringify(memoryCache));
+                localStorage.setItem('turfbet_cache_v6', JSON.stringify(memoryCache));
             } catch (e) {}
         }
 
-        // MOTEUR RÉSEAU ULTRA-RÉSISTANT AVEC PROMISE.ANY (ZÉRO BLOCAGE)
-        async function fetchPMU(endpoint) {
-            const url = `https://online.turfinfo.api.pmu.fr/rest/client/61/${endpoint}${endpoint.includes('?') ? '&' : '?'}specialisation=INTERNET`;
+        // --- MOTEUR RÉSEAU 100% SÉQUENTIEL (Anti-Ban) ---
+        async function fetchPMU(endpoint, loadingMessage = "Connexion...") {
+            const statusText = document.getElementById('statusText');
+            const targetUrl = `https://online.turfinfo.api.pmu.fr/rest/client/1/${endpoint}`;
             
+            // Liste des proxys à tester un par un. Pas de Promise.any qui spam.
             const proxies = [
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-                `https://corsproxy.io/?${encodeURIComponent(url)}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+                { name: "Serveur A", url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}` },
+                { name: "Serveur B", url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` },
+                { name: "Serveur C", url: `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}` }
             ];
 
-            try {
-                // On lance les 3 proxys en même temps, le plus rapide répond.
-                return await Promise.any(proxies.map(async (proxyUrl) => {
-                    const ctrl = new AbortController();
-                    const id = setTimeout(() => ctrl.abort(), 6000);
-                    const res = await fetch(proxyUrl, { signal: ctrl.signal });
-                    clearTimeout(id);
-                    if (!res.ok) throw new Error("HTTP error");
-                    const json = await res.json();
-                    if (json && (json.programme || json.participants || Array.isArray(json))) return json;
-                    throw new Error("Invalid format");
-                }));
-            } catch (e) {
-                // Si les 3 proxys sur online.turfinfo échouent, on tente l'API offline.
-                const url2 = `https://offline.pmu.fr/api/client/1/${endpoint}${endpoint.includes('?') ? '&' : '?'}specialisation=INTERNET`;
-                const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url2)}`);
-                if (res.ok) return await res.json();
-                throw new Error("Réseau inaccessible");
+            for (let proxy of proxies) {
+                try {
+                    if (statusText) statusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>${loadingMessage} (${proxy.name})`;
+                    
+                    const res = await fetch(proxy.url);
+                    if (!res.ok) continue;
+
+                    const text = await res.text();
+                    let json;
+                    try { json = JSON.parse(text); } catch(e) { continue; }
+                    
+                    // AllOrigins imbrique parfois la réponse
+                    if (json && json.contents) {
+                        try { json = JSON.parse(json.contents); } catch(e) {}
+                    }
+
+                    if (json && (json.programme || json.participants || Array.isArray(json))) {
+                        return json;
+                    }
+                } catch (e) {
+                    // Échec sur ce proxy, on passe au suivant silencieusement
+                }
             }
+            throw new Error("Tous les serveurs sont actuellement bloqués.");
         }
 
         async function getRaceDetails(apiDate, race, forceRefresh = false) {
             const cacheKey = `${apiDate}_R${race.r}C${race.c}`;
             const cached = memoryCache[cacheKey] || {};
 
-            // Récupération des partants (1 seule fois)
+            // Partants
             if (!cached.picks || (forceRefresh && race.status !== 'FINISHED')) {
                 try {
-                    const data = await fetchPMU(`programme/${apiDate}/R${race.r}/C${race.c}/participants`);
+                    const data = await fetchPMU(`programme/${apiDate}/R${race.r}/C${race.c}/participants`, `Partants R${race.r}C${race.c}`);
                     const list = (data && data.participants) ? data.participants : [];
                     let runners = [];
 
@@ -229,10 +236,10 @@
                 } catch (e) {}
             }
 
-            // Récupération des Vrais Rapports (Uniquement si terminé et pas encore complet)
+            // Rapports
             if (race.status === 'FINISHED' && (!cached.rapports || !cached.rapports.isComplete || forceRefresh)) {
                 try {
-                    const data = await fetchPMU(`programme/${apiDate}/R${race.r}/C${race.c}/rapports-definitifs`);
+                    const data = await fetchPMU(`programme/${apiDate}/R${race.r}/C${race.c}/rapports-definitifs`, `Rapports R${race.r}C${race.c}`);
                     if (Array.isArray(data) && data.length > 0) {
                         let rap = { sg: {}, sp: {}, cg: {}, cp: {}, isComplete: false };
 
@@ -262,7 +269,6 @@
                             });
                         });
 
-                        // Sécurité : PMU peut publier l'arrivée mais ne pas avoir saisi les dividendes
                         if (Object.keys(rap.sp).length > 0 || Object.keys(rap.sg).length > 0) {
                             rap.isComplete = true;
                             cached.rapports = rap;
@@ -280,10 +286,8 @@
             const apiDate = `${dd}${mm}${yyyy}`;
             const statusText = document.getElementById('statusText');
 
-            if (!isSilent) statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement du programme PMU...';
-
             try {
-                const data = await fetchPMU(`programme/${apiDate}`);
+                const data = await fetchPMU(`programme/${apiDate}`, "Chargement du programme");
                 let validRaces = [];
 
                 if (data && data.programme && data.programme.reunions) {
@@ -317,7 +321,7 @@
                 currentRaces = validRaces;
 
                 if (currentRaces.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucune course à cette date.</span>`;
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucune course PMU à cette date.</span>`;
                     populateCompetitions([]);
                     renderMatches([]);
                     calculateDailyBankroll(apiDate);
@@ -327,12 +331,14 @@
                 populateCompetitions(currentRaces);
 
                 const select = document.getElementById('compSelect');
-                if (select.value === 'ALL' && select.options.length > 1) select.selectedIndex = 1;
+                if (select.value === 'ALL' && select.options.length > 1) {
+                    select.selectedIndex = 1; // Sélectionne la R1 par défaut pour éviter le spam
+                }
 
                 await loadCurrentReunionDetails(forceRefresh);
 
             } catch (error) {
-                statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-rotate mr-1"></i> Connexion encombrée. Veuillez actualiser.</span>`;
+                statusText.innerHTML = `<span class="text-red-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur : Relais PMU bloqués. Réessayez.</span>`;
             }
         }
 
@@ -361,15 +367,14 @@
             });
 
             if (missing.length > 0) {
-                statusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Analyse de la réunion (${missing.length} courses)...`;
                 for (let i = 0; i < missing.length; i++) {
                     await getRaceDetails(apiDate, missing[i], forceRefresh);
                     saveCache();
-                    applyFilters();
+                    applyFilters(); // Rafraîchit l'écran course par course
                     calculateDailyBankroll(apiDate);
                 }
             }
-            statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> Réunion à jour</span>`;
+            statusText.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1"></i> Données à jour</span>`;
         }
 
         function populateCompetitions(races) {
@@ -384,7 +389,7 @@
             
             Array.from(compsMap.keys()).forEach(c => {
                 const opt = document.createElement('option');
-                opt.value = c; opt.textContent = `${c} (${compsMap.get(c)} c.)`;
+                opt.value = c; opt.textContent = `${c} (${compsMap.get(c)} courses)`;
                 select.appendChild(opt);
             });
             
@@ -441,7 +446,7 @@
                     statusBadge = `<span class="bg-zinc-800 text-zinc-200 px-2 py-0.5 rounded text-[10px] uppercase font-bold">${arrTxt}</span>`;
                 }
 
-                let picksHtml = `<div class="text-[11px] text-zinc-500 italic py-2 text-center">Analyse de la course...</div>`;
+                let picksHtml = `<div class="text-[11px] text-zinc-500 italic py-2 text-center"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Analyse en cours...</div>`;
                 if (picks && picks.vs) {
                     picksHtml = `
                         <div class="grid grid-cols-3 gap-2 mt-2">
@@ -477,8 +482,8 @@
                             ? `<div class="mt-2.5 pt-2 border-t border-zinc-800 flex flex-wrap gap-1.5 justify-center">${b.join('')}</div>`
                             : `<div class="mt-2.5 pt-1.5 border-t border-zinc-800/80 text-center text-[10px] text-zinc-600 font-bold">Aucun gain sur les stratégies</div>`;
                     } else {
-                        // LE GEL DES COURSES ÉTRANGÈRES : 
-                        resultsHtml = `<div class="mt-2.5 pt-1.5 border-t border-zinc-800 text-center text-[10px] text-amber-500 font-bold animate-pulse"><i class="fa-solid fa-hourglass-half mr-1"></i> En attente des vrais rapports PMU...</div>`;
+                        // SÉCURITÉ COURSES ÉTRANGÈRES
+                        resultsHtml = `<div class="mt-2.5 pt-1.5 border-t border-zinc-800 text-center text-[10px] text-amber-500 font-bold animate-pulse"><i class="fa-solid fa-hourglass-half mr-1"></i> Attente des vrais rapports PMU...</div>`;
                     }
                 }
 
@@ -518,7 +523,6 @@
                 const cache = memoryCache[`${apiDate}_R${race.r}C${race.c}`];
                 if (!cache || !cache.picks || !cache.picks.vs) return;
 
-                // Si les rapports ne sont pas saisis par le PMU, on IGNORE le calcul. La bankroll reste intacte.
                 if (!cache.rapports || !cache.rapports.isComplete) {
                     pendingCount++;
                     return;
@@ -528,7 +532,7 @@
                 const picks = cache.picks;
                 const rap = cache.rapports;
 
-                // 1. BANKROLL OFFICIELLE : Uniquement impactée par la Valeur Sûre (Placé Prop. 2%)
+                // 1. BANKROLL OFFICIELLE : Uniquement impactée par la Valeur Sûre
                 let stakeVS = Math.max(1.0, bankrollVS * STAKE_PERCENT);
                 if (rap.sp[picks.vs.num]) {
                     hVS++;
@@ -537,7 +541,7 @@
                     bankrollVS -= stakeVS;
                 }
 
-                // 2. SUIVIS VIRTUELS (Mises de 1€ G / 1€ P) - Ils n'impactent pas la vraie Bankroll
+                // 2. SUIVIS VIRTUELS (Mises 1€)
                 let tSimple = false;
                 profitSimple -= 2; 
                 if (rap.sg[picks.vs.num]) { profitSimple += rap.sg[picks.vs.num] * 1; tSimple = true; }
@@ -577,7 +581,6 @@
             formatProfit('profitPepite', profitPepite, 'text-amber-400');
             formatProfit('profitCouple', profitCouple, 'text-purple-400');
 
-            // Le Header Bankroll n'affiche QUE la vraie bankroll (impactée par la Valeur Sûre)
             document.getElementById('headerBankroll').textContent = `${bankrollVS.toFixed(2)} €`;
 
             const badge = document.getElementById('pendingRacesBadge');
@@ -588,7 +591,6 @@
                 badge.classList.add('hidden');
             }
 
-            // Sauvegarde de tous les suivis (vrais et virtuels) dans le calendrier
             if (settledCount > 0) {
                 let history = JSON.parse(localStorage.getItem('turfbet_history_final')) || {};
                 history[dateStr] = { vs: profitVS, simple: profitSimple, pepite: profitPepite, couple: profitCouple };
