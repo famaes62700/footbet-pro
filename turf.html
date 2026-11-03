@@ -18,13 +18,6 @@
 
     <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
-    <nav class="bg-zinc-900 border-b border-zinc-800 p-2 flex justify-center gap-4 text-xs font-bold">
-        <a href="foot.html" class="text-zinc-500 hover:text-white transition"><i class="fa-solid fa-futbol mr-1"></i> Foot</a>
-        <a href="nba.html" class="text-zinc-500 hover:text-white transition"><i class="fa-solid fa-basketball mr-1"></i> NBA</a>
-        <a href="tennis.html" class="text-zinc-500 hover:text-white transition"><i class="fa-solid fa-table-tennis-paddle-ball mr-1"></i> Tennis</a>
-        <a href="pmu.html" class="text-emerald-400 border-b-2 border-emerald-400 pb-1"><i class="fa-solid fa-horse-head mr-1"></i> Turf</a>
-    </nav>
-
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center mb-3">
             <h1 class="text-base sm:text-lg font-black tracking-wider text-emerald-400 flex items-center">
@@ -106,23 +99,24 @@
             }, 3000);
         }
 
-        // Fonction anti-blocage (Multi-Proxys)
+        // Nouveau système de proxy plus robuste qui décode le contenu JSON directement
         async function fetchWithProxy(targetUrl) {
-            const proxies = [
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
-                `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
-            ];
-            
-            for (let proxy of proxies) {
-                try {
-                    let res = await fetch(proxy);
-                    if (res.ok) return res;
-                } catch (e) {
-                    console.warn("Proxy échoué, essai du suivant...");
+            try {
+                let res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
+                if (res.ok) {
+                    let data = await res.json();
+                    if (data.contents) return JSON.parse(data.contents);
                 }
+            } catch (e) {
+                console.warn("AllOrigins échoué, essai CodeTabs...");
             }
-            throw new Error("Tous les proxys ont échoué");
+
+            try {
+                let res = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`);
+                if (res.ok) return await res.json();
+            } catch (e) {}
+
+            throw new Error("Proxys inaccessibles.");
         }
 
         async function fetchExactRapport(apiDate, R, C) {
@@ -131,22 +125,23 @@
 
             try {
                 const targetUrl = `https://offline.pmu.fr/api/client/1/programme/${apiDate}/R${R}/C${C}/rapports-definitifs?specialisation=INTERNET`;
-                let res = await fetchWithProxy(targetUrl);
+                let data = await fetchWithProxy(targetUrl);
                 
-                let data = await res.json();
                 let rapportE_SG = null;
 
-                data.forEach(typePari => {
-                    if (typePari.typePari === 'E_SG' || typePari.typePari === 'SG') {
-                        if (typePari.rapports && typePari.rapports.length > 0) {
-                            rapportE_SG = {};
-                            typePari.rapports.forEach(r => {
-                                let chevalGagnant = r.combinaisons[0]; 
-                                rapportE_SG[chevalGagnant] = r.dividende / 100;
-                            });
+                if (Array.isArray(data)) {
+                    data.forEach(typePari => {
+                        if (typePari.typePari === 'E_SG' || typePari.typePari === 'SG') {
+                            if (typePari.rapports && typePari.rapports.length > 0) {
+                                rapportE_SG = {};
+                                typePari.rapports.forEach(r => {
+                                    let chevalGagnant = r.combinaisons[0]; 
+                                    rapportE_SG[chevalGagnant] = r.dividende / 100;
+                                });
+                            }
                         }
-                    }
-                });
+                    });
+                }
 
                 fetchedRapports[cacheKey] = rapportE_SG;
                 return rapportE_SG;
@@ -167,14 +162,13 @@
             
             try {
                 const targetUrl = `https://offline.pmu.fr/api/client/1/programme/${apiDateCorrected}`;
-                let res = await fetchWithProxy(targetUrl);
+                let data = await fetchWithProxy(targetUrl);
                 
-                let data = await res.json();
                 let validRaces = [];
                 let fetchRapportsPromises = [];
                 let savedBets = JSON.parse(localStorage.getItem(`turfbet_${dateStr}`)) || {};
 
-                if (data.programme && data.programme.reunions) {
+                if (data && data.programme && data.programme.reunions) {
                     data.programme.reunions.forEach(reunion => {
                         let reunionName = reunion.hippodrome?.libelleCourt || reunion.nomOfficiel;
                         let R = reunion.numOfficiel;
