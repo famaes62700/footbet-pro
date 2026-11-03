@@ -20,16 +20,16 @@
 
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center mb-3">
-            <h1 class="text-base sm:text-lg font-black tracking-wider text-blue-400 flex items-center">
-                <i class="fa-solid fa-futbol mr-2 text-emerald-400"></i>FootBet Pro
+            <h1 class="text-base sm:text-lg font-black tracking-wider text-sky-400 flex items-center">
+                <i class="fa-solid fa-futbol mr-2"></i>FootBet Pro
             </h1>
             <div class="flex items-center space-x-2 sm:space-x-3">
-                <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-blue-400 font-bold">
+                <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-sky-400 font-bold">
                     Bankroll: <span id="headerBankroll">100.00 €</span>
                 </div>
-                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-blue-500" onchange="loadFootballMatches()">
+                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-sky-400" onchange="loadFootMatches()">
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Historique Semaine & Mois">
-                    <i class="fa-solid fa-calendar-days text-blue-400"></i>
+                    <i class="fa-solid fa-calendar-days text-sky-400"></i>
                 </button>
             </div>
         </div>
@@ -38,7 +38,7 @@
             <button id="btnFilterLive" onclick="toggleLiveFilter()" class="bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-500/50 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center whitespace-nowrap">
                 <i class="fa-solid fa-fire mr-1.5"></i> En Direct
             </button>
-            <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 focus:outline-none focus:border-blue-500 flex-grow">
+            <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 focus:outline-none focus:border-sky-400 flex-grow">
                 <option value="ALL">Toutes les compétitions</option>
             </select>
         </div>
@@ -47,26 +47,26 @@
     <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4">
         
         <div class="flex justify-between items-center">
-            <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center w-3/4 truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Lecture de tous les matchs...
+            <div id="statusText" class="text-xs text-sky-400 font-mono flex items-center w-3/4 truncate">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Lecture des multiplex ESPN...
             </div>
-            <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-xs font-bold transition flex items-center shadow">
+            <button onclick="loadFootMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-sky-400 px-3 py-1.5 rounded-lg border border-sky-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
             </button>
         </div>
 
         <!-- HISTORIQUE CUMULÉ SEMAINE & MOIS -->
-        <div id="historyBlock" class="hidden bg-zinc-900 border border-blue-500/30 rounded-2xl p-4 shadow-xl mb-2">
+        <div id="historyBlock" class="hidden bg-zinc-900 border border-sky-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
-                    <i class="fa-solid fa-vault mr-1.5 text-blue-400"></i> Vos Gains Cumulés Football
+                    <i class="fa-solid fa-vault mr-1.5 text-sky-400"></i> Vos Gains Cumulés Football
                 </h2>
                 <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
                     <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Semaine en cours</h3>
-                    <div class="flex justify-between font-black"><span class="text-white">BÉNÉFICE NET :</span><span id="weekTotal" class="text-blue-400">0.00 €</span></div>
+                    <div class="flex justify-between font-black"><span class="text-white">BÉNÉFICE NET :</span><span id="weekTotal" class="text-sky-400">0.00 €</span></div>
                 </div>
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
                     <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Mois par Mois (<span id="currentYearText"></span>)</h3>
@@ -75,15 +75,14 @@
             </div>
         </div>
 
-        <!-- BILAN DU JOUR -->
-        <div class="bg-zinc-900 border border-blue-500/30 rounded-2xl p-4 shadow-xl mb-2 flex justify-between items-center">
+        <div class="bg-zinc-900 border border-sky-500/30 rounded-2xl p-4 shadow-xl mb-2 flex justify-between items-center">
             <div>
-                <h2 class="text-xs font-bold uppercase text-blue-400 tracking-wider mb-1">Bilan du Jour</h2>
+                <h2 class="text-xs font-bold uppercase text-sky-400 tracking-wider mb-1">Bilan du Jour</h2>
                 <div id="dailyProfit" class="text-lg font-black text-white">0.00 €</div>
             </div>
             <div class="text-right">
                 <div class="text-[10px] text-zinc-400 uppercase">Matchs pariés</div>
-                <div id="dailyBetsCount" class="text-sm font-black text-white">0</div>
+                <div id="dailyBetsCount" class="text-sm font-bold text-zinc-300">0</div>
             </div>
         </div>
 
@@ -99,18 +98,18 @@
         let currentMatches = [];
         let isLiveFilterActive = false;
         const INITIAL_BANKROLL = 100.0;
-        const STAKE_PERCENT = 0.02; // 2% du capital actuel
+        const STAKE_PERCENT = 0.02; 
 
         setInterval(() => {
             if (document.getElementById('matchDate').value === localDateStr || isLiveFilterActive) {
-                loadFootballMatches(true);
+                loadFootMatches(true);
             }
         }, 30000);
 
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            let bgClass = type === 'success' ? 'bg-blue-900/90 border-blue-500/50 text-blue-200' : (type === 'error' ? 'bg-red-900/90 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
+            let bgClass = type === 'success' ? 'bg-sky-900/90 border-sky-500/50 text-sky-200' : (type === 'error' ? 'bg-red-900/90 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
             toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center ${bgClass}`;
             toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
@@ -121,65 +120,69 @@
             }, 3000);
         }
 
-        async function loadFootballMatches(isSilent = false) {
+        async function loadFootMatches(isSilent = false) {
             const dateStr = document.getElementById('matchDate').value;
             const apiDate = dateStr.replace(/-/g, '');
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération de tous les matchs...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération directe des scores de Foot...';
                 document.getElementById('matchesContainer').innerHTML = '';
             }
             
             try {
-                const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard?dates=${apiDate}`;
-                const res = await fetch(url);
-                if (!res.ok) throw new Error("Erreur réseau");
-                const data = await res.json();
-                
+                // Les ligues majeures sur ESPN (Premier League, Ligue 1, Liga, Serie A, Bundesliga, Champions League, Europa)
+                const leagues = ['eng.1', 'fra.1', 'esp.1', 'ita.1', 'ger.1', 'uefa.champions', 'uefa.europa'];
+                const urls = leagues.map(l => `https://site.api.espn.com/apis/site/v2/sports/soccer/${l}/scoreboard?dates=${apiDate}`);
+
+                const responses = await Promise.all(urls.map(u => fetch(u).catch(() => null)));
                 let validMatches = [];
-                (data.events || []).forEach(event => {
-                    let leagueName = event.season?.slug || event.competitions?.[0]?.tournament?.name || event.leagues?.[0]?.name || "Football";
-                    let comp = event.competitions?.[0];
-                    if (!comp || !comp.competitors || comp.competitors.length < 2) return;
 
-                    const compDateStr = event.date ? new Date(event.date).toISOString().split('T')[0] : dateStr;
-                    const state = comp.status?.type?.state || 'pre';
-                    const isCompleted = comp.status?.type?.completed || state === 'post';
-                    const isLive = state === 'in';
+                for (let res of responses) {
+                    if (!res || !res.ok) continue;
+                    const data = await res.json();
+                    
+                    (data.events || []).forEach(ev => {
+                        let match = ev.competitions[0];
+                        let p1 = match.competitors[0]; 
+                        let p2 = match.competitors[1]; 
+                        
+                        let state = match.status?.type?.state || 'pre';
+                        let isCompleted = match.status?.type?.completed || state === 'post';
+                        let isLive = state === 'in';
 
-                    if (compDateStr !== dateStr && !isLive) return;
+                        let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
+                        
+                        let homeName = p1.team?.displayName || p1.team?.shortDisplayName || "Équipe Domicile";
+                        let awayName = p2.team?.displayName || p2.team?.shortDisplayName || "Équipe Extérieure";
+                        let homeLogo = p1.team?.logo || "";
+                        let awayLogo = p2.team?.logo || "";
 
-                    let home = comp.competitors.find(c => c.homeAway === 'home') || comp.competitors[0];
-                    let away = comp.competitors.find(c => c.homeAway === 'away') || comp.competitors[1];
+                        let score1 = p1.score || "0";
+                        let score2 = p2.score || "0";
 
-                    let homeName = home.team?.shortDisplayName || home.team?.displayName || "Domicile";
-                    let awayName = away.team?.shortDisplayName || away.team?.displayName || "Extérieur";
-                    let homeLogo = home.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(homeName)}&background=18181b&color=60a5fa&size=64`;
-                    let awayLogo = away.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(awayName)}&background=18181b&color=60a5fa&size=64`;
+                        let winner = null;
+                        if (isCompleted) {
+                            if (parseInt(score1) > parseInt(score2)) winner = 'P1';
+                            else if (parseInt(score2) > parseInt(score1)) winner = 'P2';
+                            else winner = 'N'; // Nul
+                        }
 
-                    let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
-                    let sHome = parseInt(home.score) || 0;
-                    let sAway = parseInt(away.score) || 0;
+                        let compName = data.leagues?.[0]?.name || "Football";
 
-                    let winner = null;
-                    if (isCompleted) {
-                        if (sHome > sAway) winner = 'HOME';
-                        else if (sAway > sHome) winner = 'AWAY';
-                        else winner = 'DRAW';
-                    }
-
-                    validMatches.push({
-                        id: event.id.toString(),
-                        status: status,
-                        statusDetail: comp.status?.type?.shortDetail || "",
-                        utcDate: event.date,
-                        competition: { name: leagueName },
-                        homeTeam: { name: homeName, logo: homeLogo, score: sHome },
-                        awayTeam: { name: awayName, logo: awayLogo, score: sAway },
-                        winner: winner
+                        validMatches.push({
+                            id: ev.id.toString(),
+                            status: status,
+                            statusDetail: match.status?.type?.shortDetail || "",
+                            utcDate: ev.date,
+                            competition: { name: compName },
+                            homeTeam: { name: homeName, logo: homeLogo },
+                            awayTeam: { name: awayName, logo: awayLogo },
+                            winner: winner,
+                            score: { current: { home: score1, away: score2 } }
+                        });
                     });
-                });
+                }
 
                 validMatches.sort((a, b) => {
                     if (a.status === 'IN_PLAY' && b.status !== 'IN_PLAY') return -1;
@@ -190,11 +193,11 @@
                 currentMatches = validMatches;
 
                 if (currentMatches.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match disponible à cette date.</span>`;
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match majeur programmé à cette date.</span>`;
                 } else {
                     const liveCount = currentMatches.filter(m => m.status === 'IN_PLAY').length;
                     if (!isSilent) {
-                        statusText.innerHTML = `<span class="text-blue-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs chargés (${liveCount} en direct)</span>`;
+                        statusText.innerHTML = `<span class="text-sky-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs chargés (${liveCount} en direct)</span>`;
                     }
                 }
                 
@@ -204,7 +207,7 @@
 
             } catch (error) {
                 console.error(error);
-                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur lors du chargement des matchs.</span>`;
+                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur réseau Football.</span>`;
             }
         }
 
@@ -253,6 +256,17 @@
             renderMatches(filtered);
         }
 
+        function computeAlgoPick(p1, p2) {
+            // Un petit algo fictif basé sur le nom pour attribuer un favori automatique visuel
+            const topTier = ["Madrid", "City", "Bayern", "Arsenal", "Liverpool", "PSG", "Barcelona", "Inter"];
+            let f1 = 50; let f2 = 50; 
+            topTier.forEach(p => {
+                if (p1.toLowerCase().includes(p.toLowerCase())) f1 += 30;
+                if (p2.toLowerCase().includes(p.toLowerCase())) f2 += 30; 
+            });
+            return f1 > f2 ? 'P1' : (f2 > f1 ? 'P2' : 'N');
+        }
+
         function renderMatches(matchesToRender) {
             const container = document.getElementById('matchesContainer');
             const dateStr = document.getElementById('matchDate').value;
@@ -261,95 +275,90 @@
             container.innerHTML = '';
 
             if (matchesToRender.length === 0) {
-                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match pour ce filtre.</div>`;
+                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match pour ce filtre actuellement.</div>`;
                 return;
             }
-
-            let runningBankroll = INITIAL_BANKROLL;
-            currentMatches.forEach(m => {
-                if (savedBets[m.id]) {
-                    runningBankroll += (m.status === 'FINISHED' && m.winner) ? (savedBets[m.id] === m.winner ? 1.80 * Math.max(0.5, runningBankroll * STAKE_PERCENT) : -Math.max(0.5, runningBankroll * STAKE_PERCENT)) : 0;
-                }
-            });
-            let currentStake = Math.max(0.5, runningBankroll * STAKE_PERCENT);
 
             matchesToRender.forEach(match => {
                 let isFinished = match.status === 'FINISHED';
                 let isLive = match.status === 'IN_PLAY';
                 
                 let homeName = match.homeTeam.name;
-                let awayName = match.awayTeam.name;
                 let homeLogo = match.homeTeam.logo;
+                let awayName = match.awayTeam.name;
                 let awayLogo = match.awayTeam.logo;
-                let sHome = match.homeTeam.score;
-                let sAway = match.awayTeam.score;
+                
+                let sHome = match.score.current.home;
+                let sAway = match.score.current.away;
 
                 let timeStr = new Date(match.utcDate).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
 
-                let statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">${timeStr}</span>`;
-                if (isLive) statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold animate-pulse">🔴 En direct (${match.statusDetail})</span>`;
-                if (isFinished) statusBadge = `<span class="bg-zinc-800 text-zinc-500 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">Terminé</span>`;
+                let statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-[10px] uppercase font-bold">${timeStr}</span>`;
+                if (isLive) statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse">🔴 ${match.statusDetail}</span>`;
+                if (isFinished) statusBadge = `<span class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px] uppercase font-bold">Terminé</span>`;
 
                 let winner = match.winner;
                 let myBet = savedBets[match.id]; 
+                let algoPick = computeAlgoPick(homeName, awayName);
 
-                let baseBtn = "flex-1 py-3 px-2 rounded-2xl font-black text-xs transition border text-center flex flex-col items-center justify-center space-y-1 shadow-md ";
+                let baseClass = "relative flex flex-col items-center justify-center p-2 rounded-xl border transition ";
                 
-                let homeClass = baseBtn + (myBet === 'HOME' ? "bg-blue-600 text-white border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.5)]" : "bg-blue-950/50 text-blue-300 border-blue-500/40 hover:bg-blue-900/50");
-                let drawClass = baseBtn + (myBet === 'DRAW' ? "bg-amber-600 text-white border-amber-400 shadow-[0_0_15px_rgba(217,119,6,0.5)]" : "bg-amber-950/50 text-amber-300 border-amber-500/40 hover:bg-amber-900/50");
-                let awayClass = baseBtn + (myBet === 'AWAY' ? "bg-emerald-600 text-white border-emerald-400 shadow-[0_0_15px_rgba(5,150,105,0.5)]" : "bg-emerald-950/50 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/50");
+                // Classes par défaut pour 1 (P1), X (N), 2 (P2)
+                let homeClass = baseClass + (algoPick === 'P1' ? "bg-sky-900/20 border-sky-500/40 " : "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ");
+                let drawClass = baseClass + (algoPick === 'N' ? "bg-purple-900/20 border-purple-500/40 " : "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ");
+                let awayClass = baseClass + (algoPick === 'P2' ? "bg-rose-900/20 border-rose-500/40 " : "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ");
 
+                if (myBet === 'P1') homeClass = baseClass + "bg-sky-600/40 border-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.3)] ";
+                if (myBet === 'N') drawClass = baseClass + "bg-purple-600/40 border-purple-400 shadow-[0_0_10px_rgba(192,132,252,0.3)] ";
+                if (myBet === 'P2') awayClass = baseClass + "bg-rose-600/40 border-rose-400 shadow-[0_0_10px_rgba(251,113,133,0.3)] ";
+
+                // Sécurité : on grise les boutons si le match est terminé
                 if (isFinished) {
-                    homeClass += ' cursor-not-allowed opacity-85';
-                    drawClass += ' cursor-not-allowed opacity-85';
-                    awayClass += ' cursor-not-allowed opacity-85';
+                    homeClass = homeClass.replace('hover:bg-zinc-800', '') + ' cursor-not-allowed opacity-80';
+                    drawClass = drawClass.replace('hover:bg-zinc-800', '') + ' cursor-not-allowed opacity-80';
+                    awayClass = awayClass.replace('hover:bg-zinc-800', '') + ' cursor-not-allowed opacity-80';
                 }
 
                 let card = document.createElement('div');
-                card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-xl space-y-3.5";
+                card.className = "bg-zinc-900 border border-zinc-800 rounded-xl p-3 shadow-md";
 
                 card.innerHTML = `
-                    <div class="flex justify-between items-center border-b border-zinc-800 pb-2.5">
+                    <div class="flex justify-between items-center border-b border-zinc-800/50 pb-2 mb-3">
                         ${statusBadge}
-                        <span class="text-[10px] text-zinc-300 font-bold tracking-wider flex items-center text-right w-2/3 truncate justify-end"><i class="fa-solid fa-trophy text-blue-400 mr-1.5"></i>${match.competition.name}</span>
+                        <span class="text-[10px] text-zinc-300 font-bold tracking-wider flex items-center text-right w-2/3 truncate justify-end"><i class="fa-solid fa-futbol text-sky-400 mr-1.5"></i>${match.competition.name}</span>
                     </div>
                     
-                    <div class="flex justify-between items-center px-1">
-                        <div class="flex items-center space-x-2.5 w-1/3 overflow-hidden">
-                            <img src="${homeLogo}" class="w-7 h-7 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=H&background=18181b&color=60a5fa'">
-                            <span class="text-xs font-black text-white truncate">${homeName}</span>
-                        </div>
-                        <span class="text-sm font-black text-blue-400 px-3 py-1 bg-zinc-950 rounded-lg border border-zinc-800">${sHome} - ${sAway}</span>
-                        <div class="flex items-center justify-end space-x-2.5 w-1/3 overflow-hidden">
-                            <span class="text-xs font-black text-white truncate text-right">${awayName}</span>
-                            <img src="${awayLogo}" class="w-7 h-7 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=A&background=18181b&color=60a5fa'">
-                        </div>
-                    </div>
+                    <div class="grid grid-cols-3 gap-2 mt-1">
+                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'P1')"`} class="${homeClass}">
+                            <div class="flex flex-col items-center justify-center mb-1 h-10">
+                                ${homeLogo ? `<img src="${homeLogo}" class="w-6 h-6 object-contain mb-1 drop-shadow-md">` : `<i class="fa-solid fa-shield text-zinc-500 mb-1"></i>`}
+                                <span class="text-[10px] font-black text-center leading-tight w-full ${myBet === 'P1' ? 'text-white' : 'text-sky-400'} drop-shadow-md truncate px-1">${homeName}</span>
+                            </div>
+                            <span class="text-lg font-black ${isFinished && winner === 'P1' ? 'text-sky-400' : 'text-zinc-200'}">${sHome}</span>
+                        </button>
 
-                    <div class="flex gap-2.5 pt-1">
-                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'HOME')"`} class="${homeClass}">
-                            <span class="text-[9px] uppercase tracking-wider opacity-75 font-normal">1 (Domicile)</span>
-                            <span class="truncate w-full text-[11px]">${homeName}</span>
+                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'N')"`} class="${drawClass}">
+                            <div class="flex flex-col items-center justify-center mb-1 h-10">
+                                <span class="text-[11px] font-black text-center w-full ${myBet === 'N' ? 'text-white' : 'text-purple-400'}">NUL (X)</span>
+                            </div>
+                            <span class="text-lg font-black ${isFinished && winner === 'N' ? 'text-purple-400' : 'text-zinc-500'}">-</span>
                         </button>
-                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'DRAW')"`} class="${drawClass}">
-                            <span class="text-[9px] uppercase tracking-wider opacity-75 font-normal">N</span>
-                            <span class="text-[11px]">Match Nul</span>
-                        </button>
-                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'AWAY')"`} class="${awayClass}">
-                            <span class="text-[9px] uppercase tracking-wider opacity-75 font-normal">2 (Extérieur)</span>
-                            <span class="truncate w-full text-[11px]">${awayName}</span>
+
+                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'P2')"`} class="${awayClass}">
+                            <div class="flex flex-col items-center justify-center mb-1 h-10">
+                                ${awayLogo ? `<img src="${awayLogo}" class="w-6 h-6 object-contain mb-1 drop-shadow-md">` : `<i class="fa-solid fa-shield text-zinc-500 mb-1"></i>`}
+                                <span class="text-[10px] font-black text-center leading-tight w-full ${myBet === 'P2' ? 'text-white' : 'text-rose-400'} drop-shadow-md truncate px-1">${awayName}</span>
+                            </div>
+                            <span class="text-lg font-black ${isFinished && winner === 'P2' ? 'text-rose-400' : 'text-zinc-200'}">${sAway}</span>
                         </button>
                     </div>
                     
                     ${myBet ? `
-                    <div class="flex justify-between items-center text-[11px] bg-zinc-950 rounded-xl px-3.5 py-2.5 border border-zinc-800">
-                        <span class="text-zinc-400">Mise engagée : <strong class="text-blue-400">${currentStake.toFixed(2)} €</strong></span>
-                        <div>
-                            ${isFinished 
-                                ? (myBet === winner ? '<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check"></i> Gagné</span>' : '<span class="text-red-400 font-bold"><i class="fa-solid fa-xmark"></i> Perdu</span>') 
-                                : '<span class="text-blue-400 font-medium">Pari validé (En attente)</span>'
-                            }
-                        </div>
+                    <div class="mt-3 text-center text-[10px] bg-zinc-950 rounded py-1.5 border border-zinc-800">
+                        ${isFinished 
+                            ? (myBet === winner ? '<span class="text-sky-400 font-bold"><i class="fa-solid fa-check"></i> Pari Gagné</span>' : '<span class="text-red-400 font-bold"><i class="fa-solid fa-xmark"></i> Pari Perdu</span>') 
+                            : '<span class="text-sky-400">Pari enregistré (En attente du résultat)</span>'
+                        }
                     </div>` : ''}
                 `;
                 container.appendChild(card);
@@ -381,9 +390,7 @@
             const dateStr = document.getElementById('matchDate').value;
             let savedBets = JSON.parse(localStorage.getItem(`footbet_${dateStr}`)) || {};
             
-            let dailyProfit = 0; 
-            let betsCount = 0; 
-            let currentBankroll = INITIAL_BANKROLL;
+            let dailyProfit = 0; let betsCount = 0; let currentBankroll = INITIAL_BANKROLL;
 
             currentMatches.forEach(match => {
                 let myBet = savedBets[match.id];
@@ -393,12 +400,11 @@
 
                     if (match.status === 'FINISHED' && match.winner) {
                         if (myBet === match.winner) {
-                            let netWin = (1.80 * currentStake) - currentStake;
-                            dailyProfit += netWin;
-                            currentBankroll += netWin;
+                            // Cotes par défaut fixes (Victoire 2.00, Nul 3.00)
+                            let cote = (myBet === 'N') ? 3.00 : 2.00;
+                            dailyProfit += ((cote * currentStake) - currentStake);
                         } else {
                             dailyProfit -= currentStake;
-                            currentBankroll -= currentStake;
                         }
                     }
                 }
@@ -407,7 +413,7 @@
             document.getElementById('dailyBetsCount').textContent = betsCount;
             let profitEl = document.getElementById('dailyProfit');
             profitEl.textContent = `${dailyProfit > 0 ? '+' : ''}${dailyProfit.toFixed(2)} €`;
-            profitEl.className = `text-lg font-black ${dailyProfit > 0 ? 'text-emerald-400' : (dailyProfit < 0 ? 'text-red-400' : 'text-white')}`;
+            profitEl.className = `text-lg font-black ${dailyProfit > 0 ? 'text-sky-400' : (dailyProfit < 0 ? 'text-red-400' : 'text-white')}`;
             document.getElementById('headerBankroll').textContent = `${(INITIAL_BANKROLL + dailyProfit).toFixed(2)} €`;
 
             if (betsCount > 0 || dailyProfit !== 0 || (savedBets && Object.keys(savedBets).length > 0)) {
@@ -418,6 +424,16 @@
 
             if (!document.getElementById('historyBlock').classList.contains('hidden')) {
                 showHistoryStats();
+            }
+        }
+
+        function toggleHistoryStats() {
+            let block = document.getElementById('historyBlock');
+            if (block.classList.contains('hidden')) {
+                block.classList.remove('hidden');
+                showHistoryStats();
+            } else {
+                block.classList.add('hidden');
             }
         }
 
@@ -443,7 +459,7 @@
 
             let wpEl = document.getElementById('weekTotal');
             wpEl.textContent = `${wTotal > 0 ? '+' : ''}${wTotal.toFixed(2)} €`;
-            wpEl.className = wTotal > 0 ? 'text-blue-400 font-black' : (wTotal < 0 ? 'text-red-400 font-black' : 'text-zinc-400 font-black');
+            wpEl.className = wTotal > 0 ? 'text-sky-400 font-black' : (wTotal < 0 ? 'text-red-400 font-black' : 'text-zinc-400 font-black');
 
             const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
             let monthsGrid = document.getElementById('monthsGrid');
@@ -468,10 +484,10 @@
                     let div = document.createElement('div');
                     let isCurrentMonth = (m === currentViewDate.getMonth());
                     div.className = isCurrentMonth 
-                        ? "bg-zinc-800 p-3 rounded-xl border border-blue-500/50 mb-2 flex justify-between items-center text-xs" 
+                        ? "bg-zinc-800 p-3 rounded-xl border border-sky-500/50 mb-2 flex justify-between items-center text-xs" 
                         : "bg-zinc-800/50 p-3 rounded-xl border border-zinc-700/50 mb-2 flex justify-between items-center text-xs";
 
-                    let totColor = mTot >= 0 ? 'text-blue-400' : 'text-red-400';
+                    let totColor = mTot >= 0 ? 'text-sky-400' : 'text-red-400';
                     div.innerHTML = `
                         <span class="font-bold ${isCurrentMonth ? 'text-white' : 'text-zinc-300'}">${monthNames[m]}</span>
                         <span class="font-black ${totColor}">${mTot > 0 ? '+' : ''}${mTot.toFixed(2)} €</span>
@@ -485,7 +501,7 @@
             }
         }
 
-        window.onload = loadFootballMatches;
+        window.onload = loadFootMatches;
     </script>
 </body>
 </html>
