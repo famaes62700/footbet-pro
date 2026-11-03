@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Base Gagnant & Placé</title>
+    <title>Fab Turf - Montante x3 PMU</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -26,7 +26,7 @@
             </h1>
             <div class="flex items-center space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
-                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll (Base & Pépite)</span>
+                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll (Montante)</span>
                     <span id="headerBankroll">100.00 €</span>
                 </div>
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadLivePmu()">
@@ -93,7 +93,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 <!-- BASE -->
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-emerald-500/30 flex flex-col justify-between space-y-2 relative">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">PLACÉ PROP. (2%)</div>
+                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">MONTANTE PLACÉ (x3)</div>
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] uppercase font-bold text-emerald-400">Base Solide</span>
                         <span id="statBase" class="text-[10px] font-bold text-white">G: 0 | P: 0 / 0</span>
@@ -104,7 +104,7 @@
                             <span id="gainBaseGag" class="font-bold text-emerald-400">--</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
-                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Placé (2%)</span>
+                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Placé (Montante)</span>
                             <span id="gainBasePla" class="font-bold text-emerald-400">--</span>
                         </div>
                     </div>
@@ -112,7 +112,7 @@
 
                 <!-- PÉPITE -->
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-amber-500/30 flex flex-col justify-between space-y-2 relative">
-                    <div class="absolute -top-2 -right-2 bg-amber-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">PLACÉ PROP. (2%)</div>
+                    <div class="absolute -top-2 -right-2 bg-amber-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">MONTANTE PLACÉ (x3)</div>
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] uppercase font-bold text-amber-400">Pépite</span>
                         <span id="statPepite" class="text-[10px] font-bold text-white">G: 0 | P: 0 / 0</span>
@@ -123,7 +123,7 @@
                             <span id="gainPepiteGag" class="font-bold text-amber-400">--</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
-                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Placé (2%)</span>
+                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Placé (Montante)</span>
                             <span id="gainPepitePla" class="font-bold text-amber-400">--</span>
                         </div>
                     </div>
@@ -150,12 +150,12 @@
 
             <!-- LIGNE D'AFFICHAGE DU TOTAL DES MISES -->
             <div class="mt-3 flex justify-between items-center text-[11px] bg-zinc-800/60 px-3 py-2 rounded-xl border border-zinc-700/50 text-zinc-300">
-                <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Total Mises (Placé Base + Pépite) :</span>
+                <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Total Mises (Montante Base + Pépite) :</span>
                 <span id="totalSpentText" class="font-bold text-white">0.00 €</span>
             </div>
 
             <div class="text-center text-[10px] text-zinc-400 mt-2 font-semibold">
-                Stratégie : Base & Pépite Placé = Bankroll (2%) • Le reste = Virtuel (1€)
+                Stratégie : Montante agressive x3 sur Base & Pépite Placé. Le reste = Suivi Virtuel (1€)
             </div>
             <div id="statGlobal" class="text-center text-[11px] text-zinc-300 mt-2 font-medium flex flex-col items-center"></div>
         </div>
@@ -245,7 +245,6 @@
         let validatedRacesCache = {}; 
         
         const INITIAL_BANKROLL = 100.0;
-        const STAKE_PERCENT = 0.02; // 2% du capital actuel par pari placé
 
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
@@ -972,8 +971,13 @@
             let totalSpentPla = 0; 
             let coursesValidees = 0, coursesValideesCP = 0;
 
+            // --- NOUVELLE LOGIQUE : LA MONTANTE (MARTINGALE x3) ---
             let currentBankroll = INITIAL_BANKROLL;
-            let refStake = 1.0; 
+            let refStake = 1.0; // Mise fixe 1€ pour les suivis virtuels (Gagnant, Couplé)
+            
+            let baseMiseLimit = 2.0; // Départ de la montante à 2€
+            let currentStakeBasePla = baseMiseLimit;
+            let currentStakePepitePla = baseMiseLimit;
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
@@ -994,6 +998,7 @@
                     if (raceData.isComplete) validatedRacesCache[cacheKey] = raceData;
                 }
 
+                // SÉCURITÉ : Ne traite pas les courses sans rapports définitifs
                 if (raceData && raceData.arrivees.length > 0) {
                     if (raceData.rapportsList.length === 0) {
                         continue; 
@@ -1007,12 +1012,8 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // MISE PROPORTIONNELLE POUR BASE ET PEPITE CALCULEE ICI
-                    let raceStakePla = Math.max(0.5, currentBankroll * STAKE_PERCENT);
-
                     if (baseH) {
-                        totalSpentPla += raceStakePla;
-
+                        // GAGNANT VIRTUEL (1€)
                         let gGag = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
                         if (gGag === 0 && baseArr === 1) gGag = baseH.cote; 
                         if (gGag > 0) { 
@@ -1022,41 +1023,62 @@
                             totalGainBaseGag -= refStake;
                         }
 
+                        // PLACÉ RÉEL (MONTANTE x3)
+                        // On limite la mise au reste de la bankroll pour éviter un solde négatif bloquant
+                        let actualStakeBase = currentBankroll > 0 ? Math.min(currentStakeBasePla, currentBankroll) : 0;
+                        totalSpentPla += actualStakeBase;
+
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
                         if (gPla === 0 && baseArr >= 1 && baseArr <= 3) gPla = Math.max(1.1, baseH.cote / 3); 
+                        
                         let netBasePla = 0;
                         if (gPla > 0) {
                             basePlaCount++; 
-                            netBasePla = (gPla * raceStakePla) - raceStakePla;
+                            netBasePla = (gPla * actualStakeBase) - actualStakeBase;
                             totalGainBasePla += netBasePla; 
+                            
+                            // GAGNÉ : On réinitialise la montante à 2€
+                            currentStakeBasePla = baseMiseLimit; 
                         } else {
-                            totalGainBasePla -= raceStakePla;
-                            netBasePla = -raceStakePla;
+                            totalGainBasePla -= actualStakeBase;
+                            netBasePla = -actualStakeBase;
+                            
+                            // PERDU : On multiplie la mise par 3 pour la course suivante
+                            if (actualStakeBase > 0) currentStakeBasePla = actualStakeBase * 3;
                         }
                         currentBankroll += netBasePla; 
                     }
 
                     if (nuggetH) {
-                        totalSpentPla += raceStakePla; // La Pépite est mise à la proportionnelle aussi
-
+                        // GAGNANT VIRTUEL (1€)
                         let gGag = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
                         if (gGag === 0 && nuggetArr === 1) gGag = nuggetH.cote; 
                         if (gGag > 0) { pepiteGagCount++; totalGainPepiteGag += (gGag * refStake) - refStake; }
                         else { totalGainPepiteGag -= refStake; }
 
+                        // PLACÉ RÉEL (MONTANTE x3)
+                        let actualStakePepite = currentBankroll > 0 ? Math.min(currentStakePepitePla, currentBankroll) : 0;
+                        totalSpentPla += actualStakePepite; 
+
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
                         if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
+                        
                         let netPepitePla = 0;
                         if (gPla > 0) { 
                             pepitePlaCount++; 
-                            netPepitePla = (gPla * raceStakePla) - raceStakePla;
+                            netPepitePla = (gPla * actualStakePepite) - actualStakePepite;
                             totalGainPepitePla += netPepitePla; 
+                            
+                            // GAGNÉ : On réinitialise la montante à 2€
+                            currentStakePepitePla = baseMiseLimit;
+                        } else { 
+                            totalGainPepitePla -= actualStakePepite;
+                            netPepitePla = -actualStakePepite;
+                            
+                            // PERDU : On multiplie la mise par 3 pour la course suivante
+                            if (actualStakePepite > 0) currentStakePepitePla = actualStakePepite * 3;
                         }
-                        else { 
-                            totalGainPepitePla -= raceStakePla;
-                            netPepitePla = -raceStakePla;
-                        }
-                        currentBankroll += netPepitePla; // IMPACT LA BANKROLL ÉGALEMENT
+                        currentBankroll += netPepitePla; 
                     }
 
                     if (baseH && nuggetH) {
