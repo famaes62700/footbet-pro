@@ -20,16 +20,16 @@
 
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center mb-3">
-            <h1 class="text-base sm:text-lg font-black tracking-wider text-emerald-400 flex items-center">
-                <i class="fa-solid fa-futbol mr-2"></i>FootBet Pro
+            <h1 class="text-base sm:text-lg font-black tracking-wider text-blue-400 flex items-center">
+                <i class="fa-solid fa-futbol mr-2 text-emerald-400"></i>FootBet Pro
             </h1>
             <div class="flex items-center space-x-2 sm:space-x-3">
-                <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold">
+                <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-blue-400 font-bold">
                     Bankroll: <span id="headerBankroll">100.00 €</span>
                 </div>
-                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-400" onchange="loadFootballMatches()">
+                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-blue-500" onchange="loadFootballMatches()">
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Historique Semaine & Mois">
-                    <i class="fa-solid fa-calendar-days text-emerald-400"></i>
+                    <i class="fa-solid fa-calendar-days text-blue-400"></i>
                 </button>
             </div>
         </div>
@@ -38,7 +38,7 @@
             <button id="btnFilterLive" onclick="toggleLiveFilter()" class="bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-500/50 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center whitespace-nowrap">
                 <i class="fa-solid fa-fire mr-1.5"></i> En Direct
             </button>
-            <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 focus:outline-none focus:border-emerald-400 flex-grow">
+            <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 focus:outline-none focus:border-blue-500 flex-grow">
                 <option value="ALL">Toutes les compétitions</option>
             </select>
         </div>
@@ -47,26 +47,26 @@
     <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4">
         
         <div class="flex justify-between items-center">
-            <div id="statusText" class="text-xs text-emerald-400 font-mono flex items-center w-3/4 truncate">
+            <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center w-3/4 truncate">
                 <i class="fa-solid fa-spinner fa-spin mr-2"></i>Lecture des matchs de football...
             </div>
-            <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 text-xs font-bold transition flex items-center shadow">
+            <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
             </button>
         </div>
 
         <!-- HISTORIQUE CUMULÉ SEMAINE & MOIS -->
-        <div id="historyBlock" class="hidden bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2">
+        <div id="historyBlock" class="hidden bg-zinc-900 border border-blue-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
-                    <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés Football
+                    <i class="fa-solid fa-vault mr-1.5 text-blue-400"></i> Vos Gains Cumulés Football
                 </h2>
                 <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
                     <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Semaine en cours</h3>
-                    <div class="flex justify-between font-black"><span class="text-white">BÉNÉFICE NET :</span><span id="weekTotal" class="text-emerald-400">0.00 €</span></div>
+                    <div class="flex justify-between font-black"><span class="text-white">BÉNÉFICE NET :</span><span id="weekTotal" class="text-blue-400">0.00 €</span></div>
                 </div>
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
                     <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Mois par Mois (<span id="currentYearText"></span>)</h3>
@@ -76,9 +76,9 @@
         </div>
 
         <!-- BILAN DU JOUR -->
-        <div class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2 flex justify-between items-center">
+        <div class="bg-zinc-900 border border-blue-500/30 rounded-2xl p-4 shadow-xl mb-2 flex justify-between items-center">
             <div>
-                <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider mb-1">Bilan du Jour</h2>
+                <h2 class="text-xs font-bold uppercase text-blue-400 tracking-wider mb-1">Bilan du Jour</h2>
                 <div id="dailyProfit" class="text-lg font-black text-white">0.00 €</div>
             </div>
             <div class="text-right">
@@ -110,7 +110,7 @@
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            let bgClass = type === 'success' ? 'bg-emerald-900/90 border-emerald-500/50 text-emerald-200' : (type === 'error' ? 'bg-red-900/90 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
+            let bgClass = type === 'success' ? 'bg-blue-900/90 border-blue-500/50 text-blue-200' : (type === 'error' ? 'bg-red-900/90 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
             toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center ${bgClass}`;
             toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
@@ -155,8 +155,8 @@
 
                     let homeName = home.team?.shortDisplayName || home.team?.displayName || "Domicile";
                     let awayName = away.team?.shortDisplayName || away.team?.displayName || "Extérieur";
-                    let homeLogo = home.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(homeName)}&background=18181b&color=34d399&size=64`;
-                    let awayLogo = away.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(awayName)}&background=18181b&color=34d399&size=64`;
+                    let homeLogo = home.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(homeName)}&background=18181b&color=60a5fa&size=64`;
+                    let awayLogo = away.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(awayName)}&background=18181b&color=60a5fa&size=64`;
 
                     let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
                     let sHome = parseInt(home.score) || 0;
@@ -194,7 +194,7 @@
                 } else {
                     const liveCount = currentMatches.filter(m => m.status === 'IN_PLAY').length;
                     if (!isSilent) {
-                        statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs chargés (${liveCount} en direct)</span>`;
+                        statusText.innerHTML = `<span class="text-blue-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs chargés (${liveCount} en direct)</span>`;
                     }
                 }
                 
@@ -294,9 +294,9 @@
                 let myBet = savedBets[match.id]; 
 
                 let baseBtn = "flex-1 py-2 px-1 rounded-lg font-black text-xs transition border text-center truncate ";
-                let homeClass = baseBtn + (myBet === 'HOME' ? "bg-emerald-600 text-white border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]" : "bg-zinc-800/80 text-emerald-400 border-zinc-700 hover:bg-zinc-800");
+                let homeClass = baseBtn + (myBet === 'HOME' ? "bg-blue-600 text-white border-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.3)]" : "bg-zinc-800/80 text-blue-400 border-zinc-700 hover:bg-zinc-800");
                 let drawClass = baseBtn + (myBet === 'DRAW' ? "bg-amber-600 text-white border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.3)]" : "bg-zinc-800/80 text-amber-400 border-zinc-700 hover:bg-zinc-800");
-                let awayClass = baseBtn + (myBet === 'AWAY' ? "bg-cyan-600 text-white border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.3)]" : "bg-zinc-800/80 text-cyan-400 border-zinc-700 hover:bg-zinc-800");
+                let awayClass = baseBtn + (myBet === 'AWAY' ? "bg-emerald-600 text-white border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]" : "bg-zinc-800/80 text-emerald-400 border-zinc-700 hover:bg-zinc-800");
 
                 if (isFinished) {
                     homeClass += ' cursor-not-allowed opacity-80';
@@ -310,18 +310,18 @@
                 card.innerHTML = `
                     <div class="flex justify-between items-center border-b border-zinc-800/50 pb-2">
                         ${statusBadge}
-                        <span class="text-[10px] text-zinc-300 font-bold tracking-wider flex items-center text-right w-2/3 truncate justify-end"><i class="fa-solid fa-trophy text-emerald-400 mr-1.5"></i>${match.competition.name}</span>
+                        <span class="text-[10px] text-zinc-300 font-bold tracking-wider flex items-center text-right w-2/3 truncate justify-end"><i class="fa-solid fa-trophy text-blue-400 mr-1.5"></i>${match.competition.name}</span>
                     </div>
                     
                     <div class="flex justify-between items-center px-2">
                         <div class="flex items-center space-x-2 w-1/3 overflow-hidden">
-                            <img src="${homeLogo}" class="w-5 h-5 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=H&background=18181b&color=34d399'">
+                            <img src="${homeLogo}" class="w-5 h-5 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=H&background=18181b&color=60a5fa'">
                             <span class="text-xs font-black text-white truncate">${homeName}</span>
                         </div>
-                        <span class="text-sm font-black text-emerald-400 px-2 bg-zinc-950 py-1 rounded border border-zinc-800">${sHome} - ${sAway}</span>
+                        <span class="text-sm font-black text-blue-400 px-2 bg-zinc-950 py-1 rounded border border-zinc-800">${sHome} - ${sAway}</span>
                         <div class="flex items-center justify-end space-x-2 w-1/3 overflow-hidden">
                             <span class="text-xs font-black text-white truncate text-right">${awayName}</span>
-                            <img src="${awayLogo}" class="w-5 h-5 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=A&background=18181b&color=34d399'">
+                            <img src="${awayLogo}" class="w-5 h-5 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=A&background=18181b&color=60a5fa'">
                         </div>
                     </div>
 
@@ -333,11 +333,11 @@
                     
                     ${myBet ? `
                     <div class="flex justify-between items-center text-[11px] bg-zinc-950 rounded px-3 py-1.5 border border-zinc-800">
-                        <span class="text-zinc-400">Mise engagée : <strong class="text-emerald-400">${currentStake.toFixed(2)} €</strong></span>
+                        <span class="text-zinc-400">Mise engagée : <strong class="text-blue-400">${currentStake.toFixed(2)} €</strong></span>
                         <div>
                             ${isFinished 
                                 ? (myBet === winner ? '<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check"></i> Gagné</span>' : '<span class="text-red-400 font-bold"><i class="fa-solid fa-xmark"></i> Perdu</span>') 
-                                : '<span class="text-emerald-400 font-medium">Pari validé (En attente)</span>'
+                                : '<span class="text-blue-400 font-medium">Pari validé (En attente)</span>'
                             }
                         </div>
                     </div>` : ''}
@@ -433,7 +433,7 @@
 
             let wpEl = document.getElementById('weekTotal');
             wpEl.textContent = `${wTotal > 0 ? '+' : ''}${wTotal.toFixed(2)} €`;
-            wpEl.className = wTotal > 0 ? 'text-emerald-400 font-black' : (wTotal < 0 ? 'text-red-400 font-black' : 'text-zinc-400 font-black');
+            wpEl.className = wTotal > 0 ? 'text-blue-400 font-black' : (wTotal < 0 ? 'text-red-400 font-black' : 'text-zinc-400 font-black');
 
             const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
             let monthsGrid = document.getElementById('monthsGrid');
@@ -458,10 +458,10 @@
                     let div = document.createElement('div');
                     let isCurrentMonth = (m === currentViewDate.getMonth());
                     div.className = isCurrentMonth 
-                        ? "bg-zinc-800 p-3 rounded-xl border border-emerald-500/50 mb-2 flex justify-between items-center text-xs" 
+                        ? "bg-zinc-800 p-3 rounded-xl border border-blue-500/50 mb-2 flex justify-between items-center text-xs" 
                         : "bg-zinc-800/50 p-3 rounded-xl border border-zinc-700/50 mb-2 flex justify-between items-center text-xs";
 
-                    let totColor = mTot >= 0 ? 'text-emerald-400' : 'text-red-400';
+                    let totColor = mTot >= 0 ? 'text-blue-400' : 'text-red-400';
                     div.innerHTML = `
                         <span class="font-bold ${isCurrentMonth ? 'text-white' : 'text-zinc-300'}">${monthNames[m]}</span>
                         <span class="font-black ${totColor}">${mTot > 0 ? '+' : ''}${mTot.toFixed(2)} €</span>
