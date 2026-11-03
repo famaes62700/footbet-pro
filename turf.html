@@ -136,7 +136,7 @@
 
             <div class="flex justify-between items-center text-[11px] text-zinc-400 pt-1 border-t border-zinc-800/60">
                 <span>Courses calculées : <strong id="settledCountText" class="text-white">0</strong></span>
-                <span id="pendingRacesBadge" class="hidden text-amber-400 font-bold"><i class="fa-solid fa-hourglass-half mr-1"></i> <span id="pendingCount">0</span> étrangère(s) en attente</span>
+                <span id="pendingRacesBadge" class="hidden text-amber-400 font-bold"><i class="fa-solid fa-hourglass-half mr-1"></i> <span id="pendingCount">0</span> étrangère(s) en attente PMU</span>
             </div>
         </div>
 
@@ -155,7 +155,7 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02;
 
-        let memoryCache = JSON.parse(localStorage.getItem('turfbet_cache_v6')) || {};
+        let memoryCache = JSON.parse(localStorage.getItem('turfbet_cache_v7')) || {};
 
         function saveCache() {
             try {
@@ -163,34 +163,43 @@
                 if (keys.length > 250) {
                     keys.slice(0, keys.length - 250).forEach(k => delete memoryCache[k]);
                 }
-                localStorage.setItem('turfbet_cache_v6', JSON.stringify(memoryCache));
+                localStorage.setItem('turfbet_cache_v7', JSON.stringify(memoryCache));
             } catch (e) {}
         }
 
-        // --- MOTEUR RÉSEAU 100% SÉQUENTIEL (Anti-Ban) ---
+        // MOTEUR RÉSEAU ULTRA-RÉSISTANT AVEC CACHE-BUSTER (Anti-ban Proxy)
         async function fetchPMU(endpoint, loadingMessage = "Connexion...") {
             const statusText = document.getElementById('statusText');
-            const targetUrl = `https://online.turfinfo.api.pmu.fr/rest/client/1/${endpoint}`;
+            // Cache buster forcé pour éviter que le proxy nous renvoie une erreur 403 bloquée en mémoire
+            const cb = `cb=${Date.now()}`;
+            const eptCb = endpoint.includes('?') ? `${endpoint}&${cb}` : `${endpoint}?${cb}`;
             
-            // Liste des proxys à tester un par un. Pas de Promise.any qui spam.
-            const proxies = [
-                { name: "Serveur A", url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}` },
-                { name: "Serveur B", url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` },
-                { name: "Serveur C", url: `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}` }
+            const targetOffline = `https://offline.pmu.fr/api/client/1/${eptCb}`;
+            const targetOnline = `https://online.turfinfo.api.pmu.fr/rest/client/61/${eptCb}`;
+            
+            const proxyAttempts = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(targetOffline)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetOffline)}`,
+                `https://corsproxy.io/?${encodeURIComponent(targetOnline)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(targetOnline)}`
             ];
 
-            for (let proxy of proxies) {
+            for (let i = 0; i < proxyAttempts.length; i++) {
                 try {
-                    if (statusText) statusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>${loadingMessage} (${proxy.name})`;
+                    if (statusText) statusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>${loadingMessage} (Canal ${i+1})...`;
                     
-                    const res = await fetch(proxy.url);
+                    const ctrl = new AbortController();
+                    const timeoutId = setTimeout(() => ctrl.abort(), 7000); // Laisse le temps au proxy de répondre
+                    
+                    const res = await fetch(proxyAttempts[i], { signal: ctrl.signal });
+                    clearTimeout(timeoutId);
+                    
                     if (!res.ok) continue;
 
                     const text = await res.text();
                     let json;
                     try { json = JSON.parse(text); } catch(e) { continue; }
                     
-                    // AllOrigins imbrique parfois la réponse
                     if (json && json.contents) {
                         try { json = JSON.parse(json.contents); } catch(e) {}
                     }
@@ -199,10 +208,10 @@
                         return json;
                     }
                 } catch (e) {
-                    // Échec sur ce proxy, on passe au suivant silencieusement
+                    // Silencieux, tente le proxy suivant
                 }
             }
-            throw new Error("Tous les serveurs sont actuellement bloqués.");
+            throw new Error("Tous les serveurs relais sont bloqués.");
         }
 
         async function getRaceDetails(apiDate, race, forceRefresh = false) {
@@ -212,7 +221,7 @@
             // Partants
             if (!cached.picks || (forceRefresh && race.status !== 'FINISHED')) {
                 try {
-                    const data = await fetchPMU(`programme/${apiDate}/R${race.r}/C${race.c}/participants`, `Partants R${race.r}C${race.c}`);
+                    const data = await fetchPMU(`programme/${apiDate}/R${race.r}/C${race.c}/participants?specialisation=INTERNET`, `Partants R${race.r}C${race.c}`);
                     const list = (data && data.participants) ? data.participants : [];
                     let runners = [];
 
@@ -239,7 +248,7 @@
             // Rapports
             if (race.status === 'FINISHED' && (!cached.rapports || !cached.rapports.isComplete || forceRefresh)) {
                 try {
-                    const data = await fetchPMU(`programme/${apiDate}/R${race.r}/C${race.c}/rapports-definitifs`, `Rapports R${race.r}C${race.c}`);
+                    const data = await fetchPMU(`programme/${apiDate}/R${race.r}/C${race.c}/rapports-definitifs?specialisation=INTERNET`, `Rapports R${race.r}C${race.c}`);
                     if (Array.isArray(data) && data.length > 0) {
                         let rap = { sg: {}, sp: {}, cg: {}, cp: {}, isComplete: false };
 
@@ -286,8 +295,10 @@
             const apiDate = `${dd}${mm}${yyyy}`;
             const statusText = document.getElementById('statusText');
 
+            if (!isSilent) statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement du programme PMU...';
+
             try {
-                const data = await fetchPMU(`programme/${apiDate}`, "Chargement du programme");
+                const data = await fetchPMU(`programme/${apiDate}?specialisation=INTERNET`, "Chargement des réunions");
                 let validRaces = [];
 
                 if (data && data.programme && data.programme.reunions) {
@@ -331,14 +342,12 @@
                 populateCompetitions(currentRaces);
 
                 const select = document.getElementById('compSelect');
-                if (select.value === 'ALL' && select.options.length > 1) {
-                    select.selectedIndex = 1; // Sélectionne la R1 par défaut pour éviter le spam
-                }
+                if (select.value === 'ALL' && select.options.length > 1) select.selectedIndex = 1;
 
                 await loadCurrentReunionDetails(forceRefresh);
 
             } catch (error) {
-                statusText.innerHTML = `<span class="text-red-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur : Relais PMU bloqués. Réessayez.</span>`;
+                statusText.innerHTML = `<span class="text-red-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur : Les relais PMU bloquent la connexion.</span>`;
             }
         }
 
@@ -370,11 +379,11 @@
                 for (let i = 0; i < missing.length; i++) {
                     await getRaceDetails(apiDate, missing[i], forceRefresh);
                     saveCache();
-                    applyFilters(); // Rafraîchit l'écran course par course
+                    applyFilters();
                     calculateDailyBankroll(apiDate);
                 }
             }
-            statusText.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1"></i> Données à jour</span>`;
+            statusText.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1"></i> Réunion à jour</span>`;
         }
 
         function populateCompetitions(races) {
@@ -389,7 +398,7 @@
             
             Array.from(compsMap.keys()).forEach(c => {
                 const opt = document.createElement('option');
-                opt.value = c; opt.textContent = `${c} (${compsMap.get(c)} courses)`;
+                opt.value = c; opt.textContent = `${c} (${compsMap.get(c)} c.)`;
                 select.appendChild(opt);
             });
             
