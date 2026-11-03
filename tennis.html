@@ -120,15 +120,21 @@
             }, 3000);
         }
 
+        // CORRECTION DE LA FONCTION : Affiche toujours Sets + Jeux si le match est en direct
         function extractSetsWon(competitor, isCompleted) {
             if (competitor.linescores && competitor.linescores.length > 0) {
                 let sets = 0;
                 competitor.linescores.forEach(ls => {
                     if (ls.winner === true) sets++;
                 });
-                if (sets > 0 || isCompleted) return sets;
+                
+                if (isCompleted) return sets; // Si match fini, on donne juste le score en sets
+
                 let currentGames = competitor.linescores[competitor.linescores.length - 1]?.value;
-                if (currentGames !== undefined) return `${sets} (${currentGames}j)`;
+                if (currentGames !== undefined) {
+                    return `${sets} (${currentGames}j)`; // Affiche les jeux même si sets > 0
+                }
+                return sets;
             }
             if (competitor.score !== undefined && competitor.score !== null && competitor.score !== "") {
                 return competitor.score;
@@ -234,7 +240,7 @@
                 } else {
                     const liveCount = currentMatches.filter(m => m.status === 'IN_PLAY').length;
                     if (!isSilent) {
-                        statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} vrais matchs chargés (${liveCount} en direct)</span>`;
+                        statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs chargés (${liveCount} en direct)</span>`;
                     }
                 }
                 
@@ -343,7 +349,6 @@
                 if (myBet === 'P1') homeClass = baseClass + "bg-lime-600/40 border-lime-400 shadow-[0_0_10px_rgba(163,230,53,0.3)] ";
                 if (myBet === 'P2') awayClass = baseClass + "bg-cyan-600/40 border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.3)] ";
 
-                // Sécurité : on grise les boutons si le match est terminé
                 if (isFinished) {
                     homeClass = homeClass.replace('hover:bg-zinc-800', '') + ' cursor-not-allowed opacity-80';
                     awayClass = awayClass.replace('hover:bg-zinc-800', '') + ' cursor-not-allowed opacity-80';
