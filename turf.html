@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Martingale Dynamique</title>
+    <title>Fab Turf - Monde (Martingale Dynamique)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,7 +22,7 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center">
-                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf (FR & BE)
+                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf (Monde)
             </h1>
             <div class="flex items-center space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
@@ -70,7 +70,7 @@
         <div class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
-                    <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider mb-0.5">Bilan du Jour (FR & BE)</h2>
+                    <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider mb-0.5">Bilan du Jour (Toutes Réunions)</h2>
                     <p class="text-[10px] text-zinc-400">Départ <strong>3.00 €</strong> • Cotes 1.8 à 2.5 = <strong>x3</strong> | > 2.5 = <strong>x2</strong></p>
                 </div>
             </div>
@@ -266,26 +266,6 @@
             throw new Error("PMU bloqué");
         }
 
-        // FILTRE STRICT FRANCE & BELGIQUE
-        function isFrenchOrBelgianMeeting(reunion) {
-            let hip = reunion.hippodrome || {};
-            let pays = String(hip.pays || hip.libellePays || "").toUpperCase();
-            let codePays = String(hip.codePays || "").toUpperCase();
-            let libelleLong = String(reunion.libelleLong || hip.libelleLong || "").toUpperCase();
-
-            if (pays.includes("CHILI") || pays.includes("ARGENTINE") || pays.includes("DUBAI") || pays.includes("SOUTH AFRICA") || pays.includes("USA") || pays.includes("SUEDE") || pays.includes("ALLEMAGNE") || pays.includes("ANGLETERRE") || pays.includes("ITALIE") || pays.includes("ESPAGNE")) return false;
-            if (codePays === "CL" || codePays === "AR" || codePays === "AE" || codePays === "ZA" || codePays === "US" || codePays === "SE" || codePays === "DE" || codePays === "GB" || codePays === "IT" || codePays === "ES") return false;
-
-            if (pays.includes("FRANCE") || pays.includes("BELGIQUE") || pays === "FR" || pays === "BE") return true;
-            if (codePays === "FR" || codePays === "FRA" || codePays === "BE" || codePays === "BEL") return true;
-
-            const allowedKeywords = ["MONS", "WOLVEGA", "VINCENNES", "AUTEUIL", "ENGHIEN", "CHANTILLY", "LONGCHAMP", "CAGNES", "DEAUVILLE", "LYON", "MARSEILLE", "TOULOUSE", "BORDEAUX", "NANTES", "STRASBOURG", "VICHY", "PAU", "CABOURG", "LAVAL", "REIMS", "AMIENS", "ANGERS", "CAEN", "CHARTRES", "DIEPPE", "LE CROISE", "LE MANS", "LISIEUX", "MAUQUENCHY", "MONTAUBAN", "MOULINS", "NANCY", "PORNICOT", "SAINT-BRIEUC", "TARBES", "MARCHEFELTRIN"];
-            for (let kw of allowedKeywords) {
-                if (libelleLong.includes(kw)) return true;
-            }
-            return false;
-        }
-
         async function getFullRaceData(dateStr, rNum, cNum) {
             let partants = [];
             let rapportsList = [];
@@ -317,14 +297,13 @@
 
             try {
                 const data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
-                let allReunions = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
-                let reunions = allReunions.filter(r => isFrenchOrBelgianMeeting(r));
+                let reunions = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
                 
                 if (reunions.length > 0) {
                     liveMeetingsData = reunions;
                     let select = document.getElementById('meetingSelect');
                     let currentVal = select.value;
-                    select.innerHTML = '<option value="">-- Choisissez un hippodrome (FR & BE) --</option>';
+                    select.innerHTML = '<option value="">-- Choisissez un hippodrome --</option>';
                     
                     reunions.forEach((r, idx) => {
                         let opt = document.createElement('option');
@@ -341,7 +320,7 @@
                         select.appendChild(opt);
                     });
                     
-                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${reunions.length} réunions FR/BE)</span>`;
+                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${reunions.length} réunions)</span>`;
                     
                     if (currentVal === "") autoSelectCurrentRace();
                     else select.value = currentVal;
@@ -349,10 +328,10 @@
                     calculateDailyStats(true);
                 } else {
                     liveMeetingsData = [];
-                    document.getElementById('meetingSelect').innerHTML = '<option value="">Aucune réunion FR ou BE</option>';
+                    document.getElementById('meetingSelect').innerHTML = '<option value="">Aucune réunion</option>';
                     document.getElementById('raceSelect').innerHTML = '<option value="">-- Course --</option>';
-                    document.getElementById('runnersTableBody').innerHTML = '<tr><td colspan="4" class="p-6 text-center text-zinc-500">Aucune course française ou belge ce jour.</td></tr>';
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucune réunion FR ou BE à cette date.</span>`;
+                    document.getElementById('runnersTableBody').innerHTML = '<tr><td colspan="4" class="p-6 text-center text-zinc-500">Aucune course ce jour.</td></tr>';
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucune réunion à cette date.</span>`;
                     calculateDailyStats(true);
                 }
             } catch (e) {
@@ -717,7 +696,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_dyn_v2_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_dyn_v3_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -834,21 +813,18 @@
             let coursesValidees = 0;
 
             let currentBankroll = INITIAL_BANKROLL;
-            
-            // LA MISE DE DÉPART PASSE À 3 €
             let baseMiseLimit = 3.0; 
             
-            // Variables de suivi pour la Base
+            // Variables de suivi
             let isRecoveringBase = false;
             let lastStakeBase = baseMiseLimit;
 
-            // Variables de suivi pour la Pépite
             let isRecoveringPepite = false;
             let lastStakePepite = baseMiseLimit;
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `fr_be_dyn_v2_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `world_dyn_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -877,7 +853,6 @@
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
                     // 1. BASE PLACÉ (MARTINGALE DYNAMIQUE)
-                    // On ne joue QUE SI la cote est >= 1.8
                     if (baseH && baseH.cote >= 1.8) {
                         let multiplier = (baseH.cote > 2.5) ? 2 : 3;
                         let targetStakeBase = isRecoveringBase ? (lastStakeBase * multiplier) : baseMiseLimit;
@@ -962,13 +937,13 @@
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                 if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> ${coursesValidees} courses analysées</span>`;
 
-                localStorage.setItem(`pmu_stats_dyn_v2_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_dyn_v3_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBase, pepiteProfit: totalProfitPepite
                 }));
                 
                 if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
             } else if (!isAuto) {
-                statsProgress.textContent = "Aucune course qualifiée (FR/BE) terminée aujourd'hui.";
+                statsProgress.textContent = "Aucune course qualifiée terminée aujourd'hui.";
             }
         }
 
