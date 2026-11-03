@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Progression Douce 54€</title>
+    <title>Fab Turf - Progression 54€ + Stop Win 50€</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -71,6 +71,7 @@
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider">Bilan du Jour (Toutes Réunions)</h2>
+                    <p class="text-[10px] text-zinc-400">Séquence 54€ max • (Cote Min: 1.80) • <strong class="text-emerald-400">Stop-Win: +50€</strong></p>
                 </div>
             </div>
 
@@ -204,10 +205,10 @@
         let autoTransitionDone = false;
         let validatedRacesCache = {}; 
         
+        // --- CONSTANTES ---
         const INITIAL_BANKROLL = 200.0;
-        
-        // NOUVELLE SÉQUENCE : 9 paliers
         const PROGRESSION = [2.0, 5.0, 9.0, 14.0, 20.0, 27.0, 35.0, 44.0, 54.0];
+        const PROFIT_TARGET = 50.0; // Stop-Win
 
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
@@ -725,7 +726,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_prog_v2_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_stopwin_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -851,15 +852,17 @@
             let totalProfitPepiteGag = 0;
 
             let coursesValidees = 0;
-
             let currentBankroll = INITIAL_BANKROLL;
             
             let stepBase = 0;
             let stepPepite = 0;
+            
+            // FLAG STOP-WIN
+            let objectifAtteint = false;
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `world_prog_v2_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `world_stopwin_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -889,37 +892,44 @@
 
                     // 1. BASE
                     if (baseH && baseH.cote >= 1.8) {
-                        // Gagnant Virtuel à 1€ pur
+                        // Gagnant Virtuel à 1€ pur (Toujours calculé même si on a arrêté de parier)
                         let gGagBase = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
                         if (gGagBase === 0 && baseArr === 1) gGagBase = baseH.cote; 
                         if (gGagBase > 0) totalProfitBaseGag += (gGagBase * 1.0) - 1.0;
                         else totalProfitBaseGag -= 1.0;
 
-                        // Placé Réel en Progression
-                        let targetStakeBase = PROGRESSION[stepBase];
-                        let actualStakeBase = currentBankroll > 0 ? Math.min(targetStakeBase, currentBankroll) : 0;
-                        
-                        totalSpentBase += actualStakeBase;
-
-                        let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
-                        if (gPla === 0 && baseArr >= 1 && baseArr <= 3) gPla = Math.max(1.1, baseH.cote / 3); 
-                        
-                        let netBasePla = 0;
-                        if (gPla > 0) {
-                            baseWins++; 
-                            netBasePla = (gPla * actualStakeBase) - actualStakeBase;
-                            totalProfitBasePla += netBasePla; 
-                            stepBase = 0; 
-                        } else {
-                            totalProfitBasePla -= actualStakeBase;
-                            netBasePla = -actualStakeBase;
+                        // Placé Réel en Progression (Stop si Objectif Atteint)
+                        if (!objectifAtteint) {
+                            let targetStakeBase = PROGRESSION[stepBase];
+                            let actualStakeBase = currentBankroll > 0 ? Math.min(targetStakeBase, currentBankroll) : 0;
                             
-                            stepBase++; 
-                            if (stepBase >= PROGRESSION.length) {
+                            totalSpentBase += actualStakeBase;
+
+                            let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
+                            if (gPla === 0 && baseArr >= 1 && baseArr <= 3) gPla = Math.max(1.1, baseH.cote / 3); 
+                            
+                            let netBasePla = 0;
+                            if (gPla > 0) {
+                                baseWins++; 
+                                netBasePla = (gPla * actualStakeBase) - actualStakeBase;
+                                totalProfitBasePla += netBasePla; 
                                 stepBase = 0; 
+                            } else {
+                                totalProfitBasePla -= actualStakeBase;
+                                netBasePla = -actualStakeBase;
+                                
+                                stepBase++; 
+                                if (stepBase >= PROGRESSION.length) {
+                                    stepBase = 0; 
+                                }
+                            }
+                            currentBankroll += netBasePla;
+                            
+                            // VERIFICATION DU STOP-WIN
+                            if (totalProfitBasePla >= PROFIT_TARGET) {
+                                objectifAtteint = true;
                             }
                         }
-                        currentBankroll += netBasePla; 
                     }
 
                     // 2. PÉPITE
@@ -930,22 +940,24 @@
                         if (gGagPepite > 0) totalProfitPepiteGag += (gGagPepite * 1.0) - 1.0;
                         else totalProfitPepiteGag -= 1.0;
 
-                        // Placé Virtuel en Progression
-                        let simStakePepite = PROGRESSION[stepPepite];
+                        // Placé Virtuel en Progression (Stop si Objectif Atteint)
+                        if (!objectifAtteint) {
+                            let simStakePepite = PROGRESSION[stepPepite];
 
-                        let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
-                        if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
-                        
-                        if (gPla > 0) { 
-                            pepiteWins++; 
-                            totalProfitPepitePla += (gPla * simStakePepite) - simStakePepite;
-                            stepPepite = 0; 
-                        } else { 
-                            totalProfitPepitePla -= simStakePepite; 
+                            let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
+                            if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
                             
-                            stepPepite++; 
-                            if (stepPepite >= PROGRESSION.length) {
+                            if (gPla > 0) { 
+                                pepiteWins++; 
+                                totalProfitPepitePla += (gPla * simStakePepite) - simStakePepite;
                                 stepPepite = 0; 
+                            } else { 
+                                totalProfitPepitePla -= simStakePepite; 
+                                
+                                stepPepite++; 
+                                if (stepPepite >= PROGRESSION.length) {
+                                    stepPepite = 0; 
+                                }
                             }
                         }
                     }
@@ -961,7 +973,14 @@
                         gainPepiteGag.innerHTML = formatMoneyHTML(totalProfitPepiteGag);
                         
                         totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
-                        currentPalierText.textContent = `${PROGRESSION[stepBase].toFixed(2)} €`;
+                        
+                        if (objectifAtteint) {
+                            currentPalierText.textContent = "OBJECTIF ATTEINT";
+                            currentPalierText.className = "text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/50";
+                        } else {
+                            currentPalierText.textContent = `${PROGRESSION[stepBase].toFixed(2)} €`;
+                            currentPalierText.className = "text-amber-400 bg-zinc-900 px-2 py-0.5 rounded border border-amber-500/30";
+                        }
                         
                         document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                         await new Promise(r => setTimeout(r, 10));
@@ -980,12 +999,20 @@
                 gainPepiteGag.innerHTML = formatMoneyHTML(totalProfitPepiteGag);
                 
                 totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
-                currentPalierText.textContent = `${PROGRESSION[stepBase].toFixed(2)} €`;
+                
+                if (objectifAtteint) {
+                    currentPalierText.textContent = "OBJECTIF ATTEINT";
+                    currentPalierText.className = "text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/50";
+                    if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-trophy mr-1.5"></i> Objectif +50€ atteint !</span>`;
+                } else {
+                    currentPalierText.textContent = `${PROGRESSION[stepBase].toFixed(2)} €`;
+                    currentPalierText.className = "text-amber-400 bg-zinc-900 px-2 py-0.5 rounded border border-amber-500/30";
+                    if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> ${coursesValidees} courses analysées</span>`;
+                }
                 
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
-                if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> ${coursesValidees} courses analysées</span>`;
 
-                localStorage.setItem(`pmu_stats_prog_v2_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_stopwin_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
                 
