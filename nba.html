@@ -109,7 +109,7 @@
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            let bgClass = type === 'success' ? 'bg-green-900/90 border-green-500/50 text-green-200' : 'bg-zinc-800 border-zinc-700 text-white';
+            let bgClass = type === 'success' ? 'bg-green-900/90 border-green-500/50 text-green-200' : (type === 'error' ? 'bg-red-900/90 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
             toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center ${bgClass}`;
             toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
@@ -273,6 +273,12 @@
                 if (myBet === 'P1') homeClass = baseClass + "bg-orange-600/40 border-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.3)] ";
                 if (myBet === 'P2') awayClass = baseClass + "bg-cyan-600/40 border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.3)] ";
 
+                // Si le match est terminé, on grise les boutons et on enlève l'effet de survol
+                if (isFinished) {
+                    homeClass = homeClass.replace('hover:bg-zinc-800', '') + ' cursor-not-allowed opacity-80';
+                    awayClass = awayClass.replace('hover:bg-zinc-800', '') + ' cursor-not-allowed opacity-80';
+                }
+
                 let card = document.createElement('div');
                 card.className = "bg-zinc-900 border border-zinc-800 rounded-xl p-3 shadow-md";
 
@@ -283,7 +289,7 @@
                     </div>
                     
                     <div class="grid grid-cols-2 gap-3 mt-1">
-                        <button onclick="placeBet('${match.id}', 'P1')" class="${homeClass}">
+                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'P1')"`} class="${homeClass}">
                             <div class="flex flex-col items-center justify-center mb-1 h-14">
                                 ${homeLogo ? `<img src="${homeLogo}" class="w-8 h-8 object-contain mb-1 drop-shadow-md">` : `<i class="fa-solid fa-basketball text-zinc-500 mb-1"></i>`}
                                 <span class="text-[11px] font-black text-center leading-tight w-full ${myBet === 'P1' ? 'text-white' : 'text-orange-400'} drop-shadow-md truncate px-1">${homeName}</span>
@@ -291,7 +297,7 @@
                             <span class="text-xl font-black ${isFinished && winner === 'P1' ? 'text-orange-400' : 'text-zinc-200'}">${sHome}</span>
                         </button>
 
-                        <button onclick="placeBet('${match.id}', 'P2')" class="${awayClass}">
+                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'P2')"`} class="${awayClass}">
                             <div class="flex flex-col items-center justify-center mb-1 h-14">
                                 ${awayLogo ? `<img src="${awayLogo}" class="w-8 h-8 object-contain mb-1 drop-shadow-md">` : `<i class="fa-solid fa-basketball text-zinc-500 mb-1"></i>`}
                                 <span class="text-[11px] font-black text-center leading-tight w-full ${myBet === 'P2' ? 'text-white' : 'text-cyan-400'} drop-shadow-md truncate px-1">${awayName}</span>
@@ -313,6 +319,12 @@
         }
 
         function placeBet(matchId, pick) {
+            let match = currentMatches.find(m => m.id === matchId);
+            if (match && match.status === 'FINISHED') {
+                showToast("Ce match est terminé, les paris sont clos.", "error");
+                return;
+            }
+
             const dateStr = document.getElementById('matchDate').value;
             let savedBets = JSON.parse(localStorage.getItem(`nbabet_${dateStr}`)) || {};
             if (savedBets[matchId] === pick) {
