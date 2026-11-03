@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro - Europe & Coupes</title>
+    <title>FootBet Pro - Live & Historique</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,7 +21,7 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center mb-3">
             <h1 class="text-base sm:text-lg font-black tracking-wider text-blue-400 flex items-center">
-                <i class="fa-solid fa-futbol mr-2 text-emerald-400"></i>FootBet Pro (Europe)
+                <i class="fa-solid fa-futbol mr-2 text-emerald-400"></i>FootBet Pro
             </h1>
             <div class="flex items-center space-x-2 sm:space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-blue-400 font-bold">
@@ -39,7 +39,7 @@
                 <i class="fa-solid fa-fire mr-1.5"></i> En Direct
             </button>
             <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 focus:outline-none focus:border-blue-500 flex-grow">
-                <option value="ALL">Top Championnats & Coupes</option>
+                <option value="ALL">Toutes les compétitions</option>
             </select>
         </div>
     </header>
@@ -48,7 +48,7 @@
         
         <div class="flex justify-between items-center">
             <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center w-3/4 truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs européens...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Lecture de tous les matchs...
             </div>
             <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
@@ -101,17 +101,6 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02; // 2% du capital actuel
 
-        // Filtre des ligues majeures uniquement
-        function isMajorCompetition(compName) {
-            let name = String(compName || "").toUpperCase();
-            const whitelist = [
-                "LIGUE 1", "FRANCE", "PREMIER LEAGUE", "ENGLAND", "LA LIGA", "SPAIN", "ESPAGNE",
-                "SERIE A", "ITALY", "ITALIE", "BUNDESLIGA", "GERMANY", "ALLEMAGNE",
-                "CHAMPIONS LEAGUE", "EUROPA LEAGUE", "CONFERENCE LEAGUE", "UEFA", "SUPER CUP"
-            ];
-            return whitelist.some(w => name.includes(w));
-        }
-
         setInterval(() => {
             if (document.getElementById('matchDate').value === localDateStr || isLiveFilterActive) {
                 loadFootballMatches(true);
@@ -138,7 +127,7 @@
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération des matchs européens...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération de tous les matchs...';
                 document.getElementById('matchesContainer').innerHTML = '';
             }
             
@@ -150,9 +139,7 @@
                 
                 let validMatches = [];
                 (data.events || []).forEach(event => {
-                    let compName = event.competitions?.[0]?.tournament?.name || event.season?.slug || event.leagues?.[0]?.name || "Football";
-                    if (!isMajorCompetition(compName)) return; // Filtre strict ligues majeures
-
+                    let leagueName = event.season?.slug || event.competitions?.[0]?.tournament?.name || event.leagues?.[0]?.name || "Football";
                     let comp = event.competitions?.[0];
                     if (!comp || !comp.competitors || comp.competitors.length < 2) return;
 
@@ -187,7 +174,7 @@
                         status: status,
                         statusDetail: comp.status?.type?.shortDetail || "",
                         utcDate: event.date,
-                        competition: { name: compName },
+                        competition: { name: leagueName },
                         homeTeam: { name: homeName, logo: homeLogo, score: sHome },
                         awayTeam: { name: awayName, logo: awayLogo, score: sAway },
                         winner: winner
@@ -203,7 +190,7 @@
                 currentMatches = validMatches;
 
                 if (currentMatches.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucun grand match européen ce jour.</span>`;
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match disponible à cette date.</span>`;
                 } else {
                     const liveCount = currentMatches.filter(m => m.status === 'IN_PLAY').length;
                     if (!isSilent) {
@@ -224,7 +211,7 @@
         function populateCompetitions(matches) {
             const select = document.getElementById('compSelect');
             const currentSelection = select.value;
-            select.innerHTML = '<option value="ALL">Top Championnats & Coupes</option>';
+            select.innerHTML = '<option value="ALL">Toutes les compétitions</option>';
             const compsMap = new Map();
             
             matches.forEach(m => {
@@ -274,7 +261,7 @@
             container.innerHTML = '';
 
             if (matchesToRender.length === 0) {
-                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match européen pour ce filtre.</div>`;
+                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match pour ce filtre.</div>`;
                 return;
             }
 
@@ -306,7 +293,6 @@
                 let winner = match.winner;
                 let myBet = savedBets[match.id]; 
 
-                // GRANDS CARRÉS DE JEU COLORÉS (1, N, 2)
                 let baseBtn = "flex-1 py-3 px-2 rounded-2xl font-black text-xs transition border text-center flex flex-col items-center justify-center space-y-1 shadow-md ";
                 
                 let homeClass = baseBtn + (myBet === 'HOME' ? "bg-blue-600 text-white border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.5)]" : "bg-blue-950/50 text-blue-300 border-blue-500/40 hover:bg-blue-900/50");
