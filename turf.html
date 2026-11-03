@@ -27,7 +27,7 @@
             <div class="flex items-center space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
                     <span class="text-[9px] text-zinc-400 font-normal">Bankroll (Base Dynamique)</span>
-                    <span id="headerBankroll">100.00 €</span>
+                    <span id="headerBankroll">200.00 €</span>
                 </div>
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadLivePmu()">
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Historique Mensuel">
@@ -183,7 +183,8 @@
         let autoTransitionDone = false;
         let validatedRacesCache = {}; 
         
-        const INITIAL_BANKROLL = 100.0;
+        // --- NOUVELLE BANKROLL À 200€ ---
+        const INITIAL_BANKROLL = 200.0;
 
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
@@ -297,6 +298,7 @@
 
             try {
                 const data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
+                // AUCUN FILTRE GEOGRAPHIQUE : ON PREND TOUT
                 let reunions = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
                 
                 if (reunions.length > 0) {
@@ -316,11 +318,12 @@
                             timeStr = ` 🕒 [${formatTime(coursesList[0].heureDepart)}]`;
                         }
                         let hipName = r.hippodrome ? (r.hippodrome.libelleLong || r.hippodrome.libelleCourt || r.hippodrome.nom) : 'Hippodrome';
-                        opt.textContent = `R${r.numOfficiel || (idx+1)} - ${hipName}${timeStr} (${coursesList.length} courses)`;
+                        let pays = (r.hippodrome && r.hippodrome.codePays) ? ` [${r.hippodrome.codePays}]` : "";
+                        opt.textContent = `R${r.numOfficiel || (idx+1)} - ${hipName}${pays}${timeStr} (${coursesList.length} courses)`;
                         select.appendChild(opt);
                     });
                     
-                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${reunions.length} réunions)</span>`;
+                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${reunions.length} réunions Monde)</span>`;
                     
                     if (currentVal === "") autoSelectCurrentRace();
                     else select.value = currentVal;
@@ -696,7 +699,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_dyn_v3_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_world_dyn_v2_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -813,6 +816,8 @@
             let coursesValidees = 0;
 
             let currentBankroll = INITIAL_BANKROLL;
+            
+            // LA MISE DE DÉPART EST À 3 €
             let baseMiseLimit = 3.0; 
             
             // Variables de suivi
@@ -824,7 +829,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `world_dyn_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `world_dyn_v2_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -841,6 +846,7 @@
                     if (raceData.isComplete) validatedRacesCache[cacheKey] = raceData;
                 }
 
+                // SÉCURITÉ : On attend obligatoirement les vrais rapports publiés (même en retard) pour calculer
                 if (raceData && raceData.arrivees.length > 0) {
                     if (raceData.rapportsList.length === 0) continue; 
 
@@ -937,13 +943,13 @@
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                 if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> ${coursesValidees} courses analysées</span>`;
 
-                localStorage.setItem(`pmu_stats_dyn_v3_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_world_dyn_v2_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBase, pepiteProfit: totalProfitPepite
                 }));
                 
                 if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
             } else if (!isAuto) {
-                statsProgress.textContent = "Aucune course qualifiée terminée aujourd'hui.";
+                statsProgress.textContent = "Aucune course avec rapports officiels terminée aujourd'hui.";
             }
         }
 
