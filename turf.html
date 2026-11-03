@@ -942,11 +942,11 @@
             let totalGainBaseGag = 0, totalGainBasePla = 0;
             let totalGainPepiteGag = 0, totalGainPepitePla = 0;
             let totalGainCoupleGag = 0, totalGainCouplePla = 0;
-            let totalSpentPla = 0; // Cumul unique des mises du Placé Proportionnel
+            let totalSpentPla = 0; 
             let coursesValidees = 0, coursesValideesCP = 0;
 
             let currentBankroll = INITIAL_BANKROLL;
-            let refStake = 1.0; // Mise fixe de référence (1€) pour les jeux indicatifs
+            let refStake = 1.0; 
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
@@ -967,7 +967,13 @@
                     if (raceData.isComplete) validatedRacesCache[cacheKey] = raceData;
                 }
 
-                if (raceData && (raceData.arrivees.length > 0 || raceData.rapportsList.length > 0)) {
+                // C'EST ICI LA SÉCURITÉ DES COURSES ÉTRANGÈRES : 
+                // On saute le calcul si on a l'arrivée MAIS PAS les rapports.
+                if (raceData && raceData.arrivees.length > 0) {
+                    if (raceData.rapportsList.length === 0) {
+                        continue; // Les rapports ne sont pas tombés, on passe à la course suivante sans toucher à la bankroll.
+                    }
+
                     coursesValidees++;
                     let algoResult = computeAlgorithm(raceData.partants);
                     let baseH = algoResult.baseHorse;
@@ -976,14 +982,11 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // MISE PROPORTIONNELLE UNIQUEMENT POUR LE SIMPLE PLACÉ DE LA BASE
                     let baseStakePla = Math.max(0.5, currentBankroll * STAKE_PERCENT);
 
                     if (baseH) {
-                        // On comptabilise la mise engagée uniquement pour le Placé proportionnel
                         totalSpentPla += baseStakePla;
 
-                        // 1. BASE GAGNANT (Indicatif 1€ - N'impacte PAS la bankroll)
                         let gGag = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
                         if (gGag === 0 && baseArr === 1) gGag = baseH.cote; 
                         if (gGag > 0) { 
@@ -993,7 +996,6 @@
                             totalGainBaseGag -= refStake;
                         }
 
-                        // 2. BASE PLACÉ (Proportionnel 2% - Impacte la Bankroll)
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
                         if (gPla === 0 && baseArr >= 1 && baseArr <= 3) gPla = Math.max(1.1, baseH.cote / 3); 
                         let netBasePla = 0;
@@ -1005,10 +1007,9 @@
                             totalGainBasePla -= baseStakePla;
                             netBasePla = -baseStakePla;
                         }
-                        currentBankroll += netBasePla; // SEUL LE PLACÉ IMPACTE LA BANKROLL
+                        currentBankroll += netBasePla; 
                     }
 
-                    // PÉPITE (Indicateur 1€ - N'impacte PAS la bankroll)
                     if (nuggetH) {
                         let gGag = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
                         if (gGag === 0 && nuggetArr === 1) gGag = nuggetH.cote; 
@@ -1021,7 +1022,6 @@
                         else { totalGainPepitePla -= refStake; }
                     }
 
-                    // COUPLE (Indicateur 1€ - N'impacte PAS la bankroll)
                     if (baseH && nuggetH) {
                         let cg = extractCoupleGain(raceData.rapportsList, baseH.num, nuggetH.num, 'CG');
                         let isCG = ((baseArr === 1 && nuggetArr === 2) || (baseArr === 2 && nuggetArr === 1));
@@ -1080,6 +1080,8 @@
                 }));
                 
                 if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
+            } else if (!isAuto) {
+                statsProgress.textContent = "Aucune course totalement terminée aujourd'hui.";
             }
         }
 
