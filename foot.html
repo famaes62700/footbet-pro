@@ -39,7 +39,7 @@
                 <i class="fa-solid fa-fire mr-1.5"></i> En Direct
             </button>
             <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 focus:outline-none focus:border-blue-500 flex-grow">
-                <option value="ALL">Top Championnats & Coupes</option>
+                <option value="ALL">Toutes les compétitions</option>
             </select>
         </div>
     </header>
@@ -48,7 +48,7 @@
         
         <div class="flex justify-between items-center">
             <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center w-3/4 truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des championnats majeurs...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs...
             </div>
             <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
@@ -101,17 +101,6 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02; // 2% du capital actuel
 
-        // Filtre strict des 5 grands championnats et coupes d'Europe
-        function isMajorCompetition(compName) {
-            let name = String(compName || "").toUpperCase();
-            const whitelist = [
-                "LIGUE 1", "FRANCE", "PREMIER LEAGUE", "ENGLAND", "LA LIGA", "SPAIN", "ESPAGNE",
-                "SERIE A", "ITALY", "ITALIE", "BUNDESLIGA", "GERMANY", "ALLEMAGNE",
-                "CHAMPIONS LEAGUE", "EUROPA LEAGUE", "CONFERENCE LEAGUE", "UEFA", "LIGUE DES CHAMPIONS"
-            ];
-            return whitelist.some(w => name.includes(w));
-        }
-
         setInterval(() => {
             if (document.getElementById('matchDate').value === localDateStr || isLiveFilterActive) {
                 loadFootballMatches(true);
@@ -138,7 +127,7 @@
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération des matchs européens...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération des matchs...';
                 document.getElementById('matchesContainer').innerHTML = '';
             }
             
@@ -150,9 +139,7 @@
                 
                 let validMatches = [];
                 (data.events || []).forEach(event => {
-                    let compName = event.competitions?.[0]?.tournament?.name || event.season?.slug || event.leagues?.[0]?.name || "Football";
-                    if (!isMajorCompetition(compName)) return; // Filtrage exclusif Europe
-
+                    let compName = event.season?.slug || event.competitions?.[0]?.tournament?.name || event.leagues?.[0]?.name || "Football";
                     let comp = event.competitions?.[0];
                     if (!comp || !comp.competitors || comp.competitors.length < 2) return;
 
@@ -203,7 +190,7 @@
                 currentMatches = validMatches;
 
                 if (currentMatches.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match européen disponible à cette date.</span>`;
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match disponible à cette date.</span>`;
                 } else {
                     const liveCount = currentMatches.filter(m => m.status === 'IN_PLAY').length;
                     if (!isSilent) {
@@ -224,7 +211,7 @@
         function populateCompetitions(matches) {
             const select = document.getElementById('compSelect');
             const currentSelection = select.value;
-            select.innerHTML = '<option value="ALL">Top Championnats & Coupes</option>';
+            select.innerHTML = '<option value="ALL">Toutes les compétitions</option>';
             const compsMap = new Map();
             
             matches.forEach(m => {
@@ -274,7 +261,7 @@
             container.innerHTML = '';
 
             if (matchesToRender.length === 0) {
-                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match européen pour ce filtre.</div>`;
+                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match pour ce filtre.</div>`;
                 return;
             }
 
