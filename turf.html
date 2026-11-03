@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Double Montante x3 (France)</title>
+    <title>Fab Turf - Double Montante x3 (France & Belgique)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,7 +22,7 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center">
-                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf (France)
+                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf (FR & BE)
             </h1>
             <div class="flex items-center space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
@@ -70,7 +70,7 @@
         <div class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
-                    <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider mb-0.5">Bilan du Jour (Courses France uniquement)</h2>
+                    <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider mb-0.5">Bilan du Jour (France & Belgique)</h2>
                     <p class="text-[10px] text-zinc-400">Montantes Placé x3 • Départ à 2.00 €</p>
                 </div>
             </div>
@@ -86,7 +86,7 @@
 
                 <!-- PÉPITE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-amber-500/40 relative">
-                    <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMULATION SIMILAIRE</div>
+                    <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMULATION MONTANTE</div>
                     <div class="text-[10px] text-zinc-400 uppercase font-bold">Pépite Placé (x3)</div>
                     <div id="statPepite" class="text-sm font-black text-white mt-0.5">0 / 0</div>
                     <div id="gainPepitePla" class="text-base font-black text-amber-400 mt-1">0.00 €</div>
@@ -267,31 +267,34 @@
             throw new Error("PMU bloqué");
         }
 
-        // DÉTECTION STRICTE DES COURSES EN FRANCE (Exclut les pays étrangers)
-        function isFrenchMeeting(reunion) {
+        // FILTRE STRICT : FRANCE + BELGIQUE UNIQUEMENT
+        function isFrenchOrBelgianMeeting(reunion) {
             let hip = reunion.hippodrome || {};
             let pays = String(hip.pays || hip.libellePays || "").toUpperCase();
             let codePays = String(hip.codePays || "").toUpperCase();
             let libelleLong = String(reunion.libelleLong || hip.libelleLong || "").toUpperCase();
 
-            // Si c'est explicitement étranger
-            if (pays && !pays.includes("FRANCE") && !pays.includes("FR")) return false;
-            if (codePays && codePays !== "FR" && codePays !== "FRA") return false;
+            // Autoriser explicitement France et Belgique
+            if (pays.includes("FRANCE") || pays.includes("BELGIQUE") || pays === "FR" || pays === "BE") return true;
+            if (codePays === "FR" || codePays === "FRA" || codePays === "BE" || codePays === "BEL") return true;
 
-            // Liste de mots clés étrangers évidents dans le libellé
-            const foreignKeywords = ["CHILI", "ARGENTINE", "DUBAI", "CAGNAS", "SOUTH", "AFRICA", "SWE", "SUEEDE", "DEAUVILLE-MIDI"?false:false];
-            for (let kw of foreignKeywords) {
-                if (libelleLong.includes(kw) && kw !== "DEAUVILLE") return false;
+            // Mots-clés d'hippodromes belges connus (Mons, Wolvega, Kuurne, Tongres, etc.) ou français
+            const allowedKeywords = ["MONS", "WOLVEGA", "DUCLAIR", "VINCENNES", "AUTEUIL", "ENGHIEN", "CHANTILLY", "LONGCHAMP", "CAGNES", "CAGNAS", "DEAUVILLE", "LYON", "MARSEILLE", "TOULOUSE", "BORDEAUX", "NANTES", "STRASBOURG", "VICHY"];
+            for (let kw of allowedKeywords) {
+                if (libelleLong.includes(kw)) return true;
             }
 
-            // Par défaut, si le numéro de réunion officielle est inférieur à 100 ou libellé standard français
+            // Bloquer tout le reste (Chili, Argentine, Dubaï, Suède, Afrique du Sud, etc.)
+            const blockedKeywords = ["CHILI", "ARGENTINE", "DUBAI", "SOUTH", "AFRICA", "SUEEDE", "SWEDEN", "CHILE", "USA"];
+            for (let kw of blockedKeywords) {
+                if (libelleLong.includes(kw) || pays.includes(kw)) return false;
+            }
+
+            // Par défaut si le code pays est vide mais numéro de réunion <= 15 (souvent les réunions principales FR/BE)
             let numR = reunion.numOfficiel || 0;
-            if (numR >= 50 && !pays.includes("FR") && !codePays.includes("FR")) {
-                // Souvent les réunions > 50 ou 90 sont internationales sur le PMU
-                return false;
-            }
+            if (numR <= 15 && (!pays || pays === "")) return true;
 
-            return true;
+            return false;
         }
 
         async function getFullRaceData(dateStr, rNum, cNum) {
@@ -327,14 +330,14 @@
                 const data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
                 let allReunions = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
                 
-                // FILTRE STRICT : On ne garde QUE les réunions françaises
-                let reunions = allReunions.filter(r => isFrenchMeeting(r));
+                // FILTRE STRICT : FRANCE + BELGIQUE
+                let reunions = allReunions.filter(r => isFrenchOrBelgianMeeting(r));
                 
                 if (reunions.length > 0) {
                     liveMeetingsData = reunions;
                     let select = document.getElementById('meetingSelect');
                     let currentVal = select.value;
-                    select.innerHTML = '<option value="">-- Choisissez un hippodrome (France) --</option>';
+                    select.innerHTML = '<option value="">-- Choisissez un hippodrome (FR & BE) --</option>';
                     
                     reunions.forEach((r, idx) => {
                         let opt = document.createElement('option');
@@ -351,14 +354,14 @@
                         select.appendChild(opt);
                     });
                     
-                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${reunions.length} réunions France)</span>`;
+                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${reunions.length} réunions FR/BE)</span>`;
                     
                     if (currentVal === "") autoSelectCurrentRace();
                     else select.value = currentVal;
                     
                     calculateDailyStats(true);
                 } else {
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucune réunion française à cette date.</span>`;
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucune réunion FR ou BE à cette date.</span>`;
                 }
             } catch (e) {
                 statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> PMU indisponible</span>';
@@ -720,7 +723,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_france_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_fr_be_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -737,30 +740,33 @@
             let monday = new Date(currentViewDate);
             monday.setDate(currentViewDate.getDate() - (dayOfWeek - 1)); 
             
-            let wTotal = 0;
+            let wBase = 0, wPep = 0;
             for(let i=0; i<7; i++) {
                 let d = new Date(monday);
                 d.setDate(monday.getDate() + i);
                 let s = getStatForDateObj(d);
-                wTotal += s.baseProfit || 0;
+                wBase += s.baseProfit || 0;
+                wPep += s.pepiteProfit || 0;
             }
 
-            document.getElementById('weekTotal').innerHTML = formatMoneyHTML(wTotal);
+            document.getElementById('weekBase').innerHTML = formatMoneyHTML(wBase);
+            document.getElementById('weekPepite').innerHTML = formatMoneyHTML(wPep);
 
             const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
             let monthsGrid = document.getElementById('monthsGrid');
             monthsGrid.innerHTML = '';
 
             for (let m = 0; m < 12; m++) {
-                let mTotal = 0;
+                let mBase = 0, mPep = 0;
                 let daysInMonth = new Date(year, m + 1, 0).getDate(); 
                 
                 for (let d = 1; d <= daysInMonth; d++) {
                     let s = getStatForDateObj(new Date(year, m, d));
-                    mTotal += s.baseProfit || 0;
+                    mBase += s.baseProfit || 0;
+                    mPep += s.pepiteProfit || 0;
                 }
 
-                if (mTotal !== 0) {
+                if (mBase !== 0 || mPep !== 0) {
                     let div = document.createElement('div');
                     let isCurrentViewMonth = (m === currentViewDate.getMonth());
                     div.className = isCurrentViewMonth 
@@ -769,7 +775,10 @@
 
                     div.innerHTML = `
                         <span class="font-bold ${isCurrentViewMonth ? 'text-white' : 'text-zinc-300'}">${monthNames[m]}</span>
-                        <span class="font-black">${formatMoneyHTML(mTotal)}</span>
+                        <div class="space-x-2">
+                            <span>Base: ${formatMoneyHTML(mBase)}</span>
+                            <span>Pépite: ${formatMoneyHTML(mPep)}</span>
+                        </div>
                     `;
                     monthsGrid.appendChild(div);
                 }
@@ -793,7 +802,7 @@
                 gainBasePla.textContent = `0.00 €`;
                 gainPepitePla.textContent = `0.00 €`;
                 totalSpentText.textContent = `0.00 €`;
-                statsProgress.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Analyse France...";
+                statsProgress.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Analyse FR & BE...";
             }
 
             let dateInput = document.getElementById('raceDate').value;
@@ -836,7 +845,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `fr_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `fr_be_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -886,20 +895,22 @@
                         currentBankroll += netBasePla; 
                     }
 
-                    // 2. PÉPITE PLACÉ (MONTANTE x3 SIMULATION)
+                    // 2. PÉPITE PLACÉ (MONTANTE x3 SIMULATION STRICTE AVEC DÉDUCTION DES MISES)
                     if (nuggetH) {
                         let simStakePepite = currentStakePepitePla; 
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
                         if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
                         
+                        let netPepitePla = 0;
                         if (gPla > 0) { 
                             pepiteWins++; 
-                            let simNet = (gPla * simStakePepite) - simStakePepite;
-                            totalProfitPepite += simNet; 
+                            netPepitePla = (gPla * simStakePepite) - simStakePepite;
+                            totalProfitPepite += netPepitePla; 
                             currentStakePepitePla = baseMiseLimit; 
                         } else { 
-                            totalProfitPepite -= simStakePepite; 
+                            netPepitePla = -simStakePepite; // Déduction effective de la mise virtuelle perdue
+                            totalProfitPepite += netPepitePla; 
                             currentStakePepitePla = simStakePepite * 3; 
                         }
                     }
@@ -925,15 +936,15 @@
                 gainPepitePla.innerHTML = formatMoneyHTML(totalProfitPepite);
                 totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
-                if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> ${coursesValidees} courses (France)</span>`;
+                if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> ${coursesValidees} courses (FR & BE)</span>`;
 
-                localStorage.setItem(`pmu_stats_france_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_fr_be_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBase, pepiteProfit: totalProfitPepite
                 }));
                 
                 if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
             } else if (!isAuto) {
-                statsProgress.textContent = "Aucune course française terminée.";
+                statsProgress.textContent = "Aucune course FR ou BE terminée.";
             }
         }
 
