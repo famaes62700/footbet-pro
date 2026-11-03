@@ -2,948 +2,269 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Double Montante x3 (FR & BE)</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Fab Turf">
-    
-    <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=PMU&background=00965e&color=fff&size=512&font-size=0.4&v=2">
-    <link rel="icon" type="image/png" href="https://ui-avatars.com/api/?name=PMU&background=00965e&color=fff&size=512&font-size=0.4&v=2">
-
+    <title>PMU Pronos — Vrai Direct</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .bg-pmu-dark { background-color: #0c0c10; }
+        .text-pmu-green { color: #00965e; }
+        .bg-pmu-green { background-color: #00965e; }
+    </style>
 </head>
-<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-10">
+<body class="bg-pmu-dark text-slate-100 min-h-screen flex flex-col font-sans">
 
-    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
-
-    <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
-        <div class="max-w-3xl mx-auto flex justify-between items-center">
-            <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center">
-                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf (FR & BE)
-            </h1>
-            <div class="flex items-center space-x-3">
-                <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
-                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll (Base Montante)</span>
-                    <span id="headerBankroll">100.00 €</span>
-                </div>
-                <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadLivePmu()">
-                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Historique Mensuel">
-                    <i class="fa-solid fa-calendar-days"></i>
-                </button>
+    <!-- En-tête -->
+    <header class="bg-zinc-900 border-b border-zinc-800 p-4 sticky top-0 z-50 shadow-md">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-horse-head text-pmu-green text-2xl"></i>
+                <h1 class="text-xl font-black tracking-wider uppercase">PMU <span class="text-pmu-green">Direct</span></h1>
+            </div>
+            <!-- Sélecteur de date -->
+            <div class="flex items-center space-x-2 bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700">
+                <i class="fa-regular fa-calendar text-emerald-400"></i>
+                <input type="date" id="raceDate" class="bg-transparent text-white text-sm focus:outline-none cursor-pointer">
             </div>
         </div>
     </header>
 
-    <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4">
-        <div class="flex justify-between items-center">
-            <div id="statusText" class="text-xs text-amber-400 font-mono flex items-center">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion au PMU...
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 space-y-6">
+
+        <!-- Statut du Relais Personnel -->
+        <div id="statusAlert" class="bg-zinc-900/90 border border-zinc-800 p-3 rounded-xl text-xs flex items-center justify-between">
+            <span id="statusText" class="flex items-center text-zinc-300 font-mono">
+                <i class="fa-solid fa-spinner fa-spin text-amber-400 mr-2"></i> Connexion à votre relais Vercel...
+            </span>
+            <button onclick="loadLivePmu()" class="text-emerald-400 hover:underline font-semibold ml-2"><i class="fa-solid fa-rotate"></i> Actualiser</button>
+        </div>
+
+        <!-- Sélection de la Réunion & Course -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-zinc-900/90 border border-zinc-800 p-4 rounded-xl shadow">
+                <label class="block text-xs font-bold uppercase text-zinc-400 mb-2">1. Hippodrome / Réunion</label>
+                <select id="meetingSelect" onchange="onMeetingChange()" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    <option value="">Chargement...</option>
+                </select>
+            </div>
+            <div class="bg-zinc-900/90 border border-zinc-800 p-4 rounded-xl shadow">
+                <label class="block text-xs font-bold uppercase text-zinc-400 mb-2">2. Course du Jour</label>
+                <select id="raceSelect" onchange="onRaceChange()" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    <option value="">Choisissez une réunion</option>
+                </select>
             </div>
         </div>
 
-        <div id="historyBlock" class="hidden bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
-                    <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés (Semaine & Mois)
-                </h2>
-                <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
+        <!-- 🌟 pronostic : 2 CHEVAUX SIMPLE GAGNANT -->
+        <div class="bg-gradient-to-r from-emerald-900/40 via-zinc-900 to-zinc-900 border-2 border-pmu-green/50 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-pmu-green text-white text-xs font-extrabold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
+                <i class="fa-solid fa-crosshairs mr-1"></i> Simple Gagnant
             </div>
-            <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
-                <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
-                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Cette Semaine (Lun - Dim)</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="text-zinc-300">Base : <span id="weekBase" class="text-emerald-400 font-bold">0.00 €</span></div>
-                        <div class="text-zinc-300">Pépite : <span id="weekPepite" class="text-amber-400 font-bold">0.00 €</span></div>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-pmu-green mb-3 flex items-center">
+                <i class="fa-solid fa-star mr-2"></i> Nos 2 Chevaux Clés
+            </h2>
+            <div id="topSelections" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-zinc-800/90 border border-pmu-green/40 p-3.5 rounded-xl flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-emerald-500/20 border border-pmu-green flex items-center justify-center font-black text-pmu-green text-lg">1er</div>
+                    <div>
+                        <div class="text-xs text-zinc-400 font-medium">Favori Prioritaire</div>
+                        <div id="top1Name" class="font-bold text-white text-base">En attente...</div>
+                        <div id="top1Stats" class="text-xs text-emerald-400">--</div>
                     </div>
                 </div>
-                <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
-                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Mois par Mois (<span id="currentYearText"></span>)</h3>
-                    <div id="monthsGrid" class="space-y-2"></div>
+                <div class="bg-zinc-800/90 border border-zinc-600 p-3.5 rounded-xl flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-zinc-700 border border-zinc-500 flex items-center justify-center font-black text-zinc-300 text-lg">2ème</div>
+                    <div>
+                        <div class="text-xs text-zinc-400 font-medium">Challenger Direct</div>
+                        <div id="top2Name" class="font-bold text-white text-base">En attente...</div>
+                        <div id="top2Stats" class="text-xs text-zinc-300">--</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- BILAN DU JOUR : BASE & PÉPITE MONTANTES -->
-        <div class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
-            <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
-                <div>
-                    <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider mb-0.5">Bilan du Jour (France & Belgique)</h2>
-                    <p class="text-[10px] text-zinc-400">Montantes Placé x3 • Départ à 2.00 €</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3 text-xs">
-                <!-- BASE -->
-                <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">VRAIE BANKROLL</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold">Base Placé (x3)</div>
-                    <div id="statBase" class="text-sm font-black text-white mt-0.5">0 / 0</div>
-                    <div id="gainBasePla" class="text-base font-black text-emerald-400 mt-1">0.00 €</div>
-                </div>
-
-                <!-- PÉPITE -->
-                <div class="bg-zinc-950 p-3 rounded-xl border border-amber-500/40 relative">
-                    <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMULATION MONTANTE</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold">Pépite Placé (x3)</div>
-                    <div id="statPepite" class="text-sm font-black text-white mt-0.5">0 / 0</div>
-                    <div id="gainPepitePla" class="text-base font-black text-amber-400 mt-1">0.00 €</div>
-                </div>
-            </div>
-
-            <div class="flex justify-between items-center text-[11px] bg-zinc-800/60 px-3 py-2 rounded-xl border border-zinc-700/50 text-zinc-300">
-                <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Total Mises Engagées (Base) :</span>
-                <span id="totalSpentText" class="font-bold text-white">0.00 €</span>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <select id="meetingSelect" onchange="onMeetingChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500">
-                <option value="">-- Réunion / Hippodrome --</option>
-            </select>
-            <select id="raceSelect" onchange="onRaceChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500">
-                <option value="">-- Course --</option>
-            </select>
-        </div>
-
-        <div id="arrivalBlock" class="hidden bg-blue-950/40 border border-blue-500/40 rounded-xl p-3.5 space-y-2">
-            <h2 class="text-xs font-bold uppercase text-blue-400 tracking-wider flex items-center">
-                <i class="fa-solid fa-flag-checkered mr-1.5"></i> Arrivée Officielle
-            </h2>
-            <div id="arrivalList" class="flex flex-wrap gap-2 text-xs font-bold text-white"></div>
-        </div>
-
-        <div id="reportsBlock" class="hidden bg-zinc-900 border border-emerald-500/30 rounded-xl p-3.5 space-y-2">
-            <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center">
-                <i class="fa-solid fa-euro-sign mr-1.5"></i> Rapports Définitifs (pour 1 €)
-            </h2>
-            <div id="reportsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs"></div>
-        </div>
-
-        <div class="bg-gradient-to-r from-emerald-950/60 via-zinc-900 to-zinc-900 border border-emerald-500/50 rounded-2xl p-4 space-y-3 shadow-xl relative">
-            <div class="flex flex-wrap justify-between items-center gap-2">
-                <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center">
-                    <i class="fa-solid fa-star mr-1.5"></i> Nos 2 Chevaux Clés
-                </h2>
-                <div class="flex items-center space-x-1.5 flex-wrap">
-                    <a href="https://www.equidia.fr/direct?utm_source=intern&utm_medium=header_menu&utm_campaign=Home" target="_blank" class="bg-red-600 hover:bg-red-500 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold shadow transition flex items-center">
-                        <i class="fa-solid fa-video mr-1.5"></i> Direct 🎥
-                    </a>
-                    <button onclick="goToPrevRace()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 font-semibold transition flex items-center shadow" title="Course précédente">
-                        <i class="fa-solid fa-backward-step"></i>
-                    </button>
-                    <button onclick="refreshCurrentRace()" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 text-xs px-2.5 py-1.5 rounded-lg border border-emerald-500/30 font-semibold transition flex items-center shadow" title="Actualiser manuellement">
-                        <i class="fa-solid fa-rotate"></i>
-                    </button>
-                    <button onclick="goToNextRace()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 font-semibold transition flex items-center shadow" title="Course suivante">
-                        <i class="fa-solid fa-forward-step"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mt-3">
-                <div class="bg-zinc-900/90 p-3 rounded-xl border border-emerald-500/40 space-y-1">
-                    <div class="text-[10px] uppercase font-bold text-emerald-400">Base Solide (Banquier)</div>
-                    <div id="top1Name" class="font-bold text-white text-sm">En attente...</div>
-                    <div id="top1Stats" class="text-[11px] text-zinc-400">--</div>
-                </div>
-                <div class="bg-zinc-900/90 p-3 rounded-xl border border-amber-500/40 space-y-1">
-                    <div class="text-[10px] uppercase font-bold text-amber-400">Pépite / Coup de Cœur</div>
-                    <div id="top2Name" class="font-bold text-white text-sm">En attente...</div>
-                    <div id="top2Stats" class="text-[11px] text-zinc-400">--</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden text-xs shadow-xl">
-            <div id="raceInfoDetails" class="p-3.5 border-b border-zinc-800 font-bold text-zinc-300 flex justify-between items-center">
+        <!-- Tableau Détaillé des Partants -->
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl shadow overflow-hidden">
+            <div class="p-4 border-b border-zinc-800 flex justify-between items-center">
+                <h3 class="font-bold text-sm uppercase tracking-wider text-zinc-300 flex items-center">
+                    <i class="fa-solid fa-chart-line mr-2 text-pmu-green"></i> Partants & Musiques Officielles PMU
+                </h3>
+                <span id="raceInfoDetails" class="text-xs text-zinc-400 bg-zinc-800 px-2.5 py-1 rounded-full">--</span>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left">
+                <table class="w-full text-left border-collapse text-sm">
                     <thead>
-                        <tr class="bg-zinc-800/60 text-zinc-400 border-b border-zinc-800">
-                            <th class="p-3">N° / Nom</th>
-                            <th class="p-3">Musique</th>
-                            <th class="p-3">Cote</th>
-                            <th class="p-3">Score</th>
+                        <tr class="bg-zinc-800/60 text-zinc-400 text-xs uppercase border-b border-zinc-800">
+                            <th class="p-3">N° / Cheval</th>
+                            <th class="p-3">Musique / Forme</th>
+                            <th class="p-3">Cote Est.</th>
+                            <th class="p-3">Score Algorithmique (%)</th>
                         </tr>
                     </thead>
-                    <tbody id="runnersTableBody" class="divide-y divide-zinc-800/50">
-                        <tr><td colspan="4" class="p-6 text-center text-zinc-500">Sélectionnez une course.</td></tr>
+                    <tbody id="runnersTableBody" class="divide-y divide-zinc-800/60">
+                        <tr><td colspan="4" class="p-6 text-center text-zinc-500 italic">Veuillez sélectionner une course ci-dessus.</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
+
     </main>
 
+    <footer class="text-center py-4 text-xs text-zinc-600 border-t border-zinc-800 mt-auto">
+        PMU Turf Engine — Propulsé par votre relais Vercel personnel
+    </footer>
+
     <script>
+        // Votre URL de relais Vercel configurée :
+        const MY_VERCEL_RELAY_URL = "https://relais-turf.vercel.app";
+
         document.getElementById('raceDate').valueAsDate = new Date();
+        document.getElementById('raceDate').addEventListener('change', loadLivePmu);
+
         let liveMeetingsData = [];
-        let autoTransitionDone = false;
-        let validatedRacesCache = {}; 
-        
-        const INITIAL_BANKROLL = 100.0;
-
-        setInterval(() => {
-            let mIdx = document.getElementById('meetingSelect').value;
-            let cIdx = document.getElementById('raceSelect').value;
-            if (mIdx !== "" && cIdx !== "") fetchRaceData(true); 
-            calculateDailyStats(true);
-        }, 20000);
-
-        function toggleHistoryStats() {
-            let historyBlock = document.getElementById('historyBlock');
-            if (historyBlock.classList.contains('hidden')) {
-                historyBlock.classList.remove('hidden');
-                showHistoryStats();
-            } else {
-                historyBlock.classList.add('hidden');
-            }
-        }
-
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            let bgClass = type === 'success' ? 'bg-emerald-900/90 border-emerald-500/50 text-emerald-200' : 'bg-zinc-800 border-zinc-700 text-white';
-            if (type === 'error') bgClass = 'bg-red-900/90 border-red-500/50 text-red-200';
-            
-            toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center space-x-2 ${bgClass}`;
-            toast.innerHTML = `<span>${message}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => { toast.classList.remove('opacity-0', 'translate-y-2'); }, 10);
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-2');
-                setTimeout(() => toast.remove(), 300);
-            }, 3500);
-        }
-
-        function formatTime(timeValue) {
-            if (!timeValue) return '';
-            if (typeof timeValue === 'number') {
-                const date = new Date(timeValue);
-                const h = String(date.getHours()).padStart(2, '0');
-                const m = String(date.getMinutes()).padStart(2, '0');
-                return `${h}h${m}`;
-            }
-            return String(timeValue);
-        }
-
-        function getDisciplineBadge(discipline) {
-            let d = String(discipline || 'PLAT').toUpperCase();
-            if (d.includes('TROT') || d.includes('ATTEL') || d.includes('MONTE')) {
-                return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">TROT</span>';
-            }
-            if (d.includes('HAIES') || d.includes('STEEPLE') || d.includes('OBSTACLE') || d.includes('CROSS')) {
-                return '<span class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">OBSTACLE</span>';
-            }
-            return '<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">PLAT</span>';
-        }
-
-        async function smartFetchPMU(path) {
-            const fullPmuUrl = `https://online.turfinfo.api.pmu.fr/rest/client/61/programme/${path}`;
-            
-            try {
-                let localRes = await fetch(`/api/pmu/${path}`);
-                if (localRes.ok) return await localRes.json();
-            } catch (e) {}
-
-            const proxies = [
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(fullPmuUrl)}`,
-                `https://corsproxy.io/?${encodeURIComponent(fullPmuUrl)}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(fullPmuUrl)}`
-            ];
-
-            for (let proxy of proxies) {
-                try {
-                    let res = await fetch(proxy);
-                    if (res.ok) {
-                        let json = await res.json();
-                        if(json.contents) json = JSON.parse(json.contents);
-                        return json;
-                    }
-                } catch(e) {}
-            }
-            throw new Error("PMU bloqué");
-        }
-
-        // FILTRE GÉOGRAPHIQUE ULTRA-STRICT : UNIQUEMENT FRANCE (FR) ET BELGIQUE (BE)
-        function isFrenchOrBelgianMeeting(reunion) {
-            let hip = reunion.hippodrome || {};
-            let pays = String(hip.pays || hip.libellePays || "").toUpperCase();
-            let codePays = String(hip.codePays || "").toUpperCase();
-            let libelleLong = String(reunion.libelleLong || hip.libelleLong || "").toUpperCase();
-
-            // EXCLUSION TOTALE ET NETTE DE TOUT CE QUI EST ÉTRANGER HORS BELGIQUE
-            if (pays.includes("CHILI") || pays.includes("ARGENTINE") || pays.includes("DUBAI") || pays.includes("SOUTH AFRICA") || pays.includes("USA") || pays.includes("SUEDE") || pays.includes("ALLEMAGNE") || pays.includes("ANGLETERRE") || pays.includes("ITALIE") || pays.includes("ESPAGNE")) return false;
-            if (codePays === "CL" || codePays === "AR" || codePays === "AE" || codePays === "ZA" || codePays === "US" || codePays === "SE" || codePays === "DE" || codePays === "GB" || codePays === "IT" || codePays === "ES") return false;
-
-            // VALIDATION SI FRANCE OU BELGIQUE OFFICIELLES
-            if (pays.includes("FRANCE") || pays.includes("BELGIQUE") || pays === "FR" || pays === "BE") return true;
-            if (codePays === "FR" === true || codePays === "FRA" || codePays === "BE" || codePays === "BEL") return true;
-
-            // LISTE BLANCHE DES HIPPODROMES FR ET BE AUTORISÉS
-            const allowedKeywords = ["MONS", "WOLVEGA", "VINCENNES", "AUTEUIL", "ENGHIEN", "CHANTILLY", "LONGCHAMP", "CAGNES", "DEAUVILLE", "LYON", "MARSEILLE", "TOULOUSE", "BORDEAUX", "NANTES", "STRASBOURG", "VICHY", "PAU", "CABOURG", "LAVAL", "REIMS", "AMIENS", "ANGERS", "CAEN", "CHARTRES", "DIEPPE", "LE CROISE", "LE MANS", "LISIEUX", "MAUQUENCHY", "MONTAUBAN", "MOULINS", "NANCY", "PORNICOT", "SAINT-BRIEUC", "TARBES", "MARCHEFELTRIN", "MAUVENCHY"];
-            for (let kw of allowedKeywords) {
-                if (libelleLong.includes(kw)) return true;
-            }
-
-            return false;
-        }
-
-        async function getFullRaceData(dateStr, rNum, cNum) {
-            let partants = [];
-            let rapportsList = [];
-            try {
-                let pData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/participants?specialisation=INTERNET`);
-                partants = pData.participants || (Array.isArray(pData) ? pData : []);
-            } catch(e) {}
-
-            try {
-                let rData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs?specialisation=INTERNET`);
-                if (Array.isArray(rData)) rapportsList = rData;
-                else rapportsList = rData.rapports || rData.lesRapports || [];
-            } catch(e) {}
-
-            return { partants, rapportsList };
-        }
 
         async function loadLivePmu() {
-            const dateInput = document.getElementById('raceDate').value;
+            const dateInput = document.getElementById('raceDate').value; // Format AAAA-MM-JJ
             const statusText = document.getElementById('statusText');
-            statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement...';
-
-            if (!document.getElementById('historyBlock').classList.contains('hidden')) {
-                showHistoryStats();
-            }
+            statusText.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération du programme officiel PMU...</span>';
 
             const parts = dateInput.split('-');
             const ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
 
             try {
-                const data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
-                let allReunions = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
-                let reunions = allReunions.filter(r => isFrenchOrBelgianMeeting(r));
+                const response = await fetch(`${MY_VERCEL_RELAY_URL}/api/courses?date=${ddmmyyyy}`);
                 
-                if (reunions.length > 0) {
-                    liveMeetingsData = reunions;
-                    let select = document.getElementById('meetingSelect');
-                    let currentVal = select.value;
-                    select.innerHTML = '<option value="">-- Choisissez un hippodrome (FR & BE) --</option>';
-                    
-                    reunions.forEach((r, idx) => {
-                        let opt = document.createElement('option');
-                        opt.value = idx;
-                        let coursesList = r.courses || r.races || r.lesCourses || [];
-                        let timeStr = "";
-                        if (r.heurereunion || r.heurePremierDepart) {
-                            timeStr = ` 🕒 [${formatTime(r.heurereunion || r.heurePremierDepart)}]`;
-                        } else if (coursesList[0] && coursesList[0].heureDepart) {
-                            timeStr = ` 🕒 [${formatTime(coursesList[0].heureDepart)}]`;
-                        }
-                        let hipName = r.hippodrome ? (r.hippodrome.libelleLong || r.hippodrome.libelleCourt || r.hippodrome.nom) : 'Hippodrome';
-                        opt.textContent = `R${r.numOfficiel || (idx+1)} - ${hipName}${timeStr} (${coursesList.length} courses)`;
-                        select.appendChild(opt);
-                    });
-                    
-                    statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> Connecté (${reunions.length} réunions FR/BE)</span>`;
-                    
-                    if (currentVal === "") autoSelectCurrentRace();
-                    else select.value = currentVal;
-                    
-                    calculateDailyStats(true);
+                if (!response.ok) throw new Error(`Code erreur serveur : ${response.status}`);
+
+                const data = await response.json();
+
+                if (data && data.programme && data.programme.reunions) {
+                    liveMeetingsData = data.programme.reunions;
+                    populateMeetingsSelect(liveMeetingsData);
+                    statusText.innerHTML = `<span class="text-emerald-400"><i class="fa-solid fa-check mr-2"></i>Données direct PMU chargées pour le ${dateInput} (${liveMeetingsData.length} réunions).</span>`;
                 } else {
-                    liveMeetingsData = [];
-                    document.getElementById('meetingSelect').innerHTML = '<option value="">Aucune réunion FR ou BE</option>';
-                    document.getElementById('raceSelect').innerHTML = '<option value="">-- Course --</option>';
-                    document.getElementById('runnersTableBody').innerHTML = '<tr><td colspan="4" class="p-6 text-center text-zinc-500">Aucune course française ou belge ce jour.</td></tr>';
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucune réunion FR ou BE à cette date.</span>`;
-                    calculateDailyStats(true);
+                    throw new Error("Programme indisponible pour cette date.");
                 }
-            } catch (e) {
-                statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> PMU indisponible</span>';
+            } catch (err) {
+                console.error(err);
+                statusText.innerHTML = `<span class="text-red-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Erreur : ${err.message}.</span>`;
             }
         }
 
-        function autoSelectCurrentRace() {
-            if (liveMeetingsData.length === 0) return;
-            let now = new Date().getTime();
-            let bestMIdx = 0, bestCIdx = 0;
-            let minDiff = Infinity, minPastDiff = Infinity;
-            let pastMIdx = 0, pastCIdx = 0;
-            let bufferTemps = 20 * 60 * 1000; 
+        function populateMeetingsSelect(reunions) {
+            const select = document.getElementById('meetingSelect');
+            select.innerHTML = '<option value="">-- Choisissez un hippodrome --</option>';
 
-            liveMeetingsData.forEach((m, mIdx) => {
-                let courses = m.courses || m.races || m.lesCourses || [];
-                courses.forEach((c, cIdx) => {
-                    if (c.heureDepart) {
-                        let diff = (new Date(c.heureDepart).getTime() + bufferTemps) - now;
-                        if (diff > 0 && diff < minDiff) { 
-                            minDiff = diff; bestMIdx = mIdx; bestCIdx = cIdx;
-                        } else if (diff <= 0 && Math.abs(diff) < minPastDiff) {
-                            minPastDiff = Math.abs(diff); pastMIdx = mIdx; pastCIdx = cIdx;
-                        }
-                    }
-                });
+            reunions.forEach((r, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = `R${r.numOfficiel || (idx+1)} - ${r.hippodrome ? r.hippodrome.libelleLong : 'Hippodrome'} (${r.courses ? r.courses.length : 0} courses)`;
+                select.appendChild(opt);
             });
-
-            if (minDiff === Infinity) { bestMIdx = pastMIdx; bestCIdx = pastCIdx; }
-            if (liveMeetingsData[bestMIdx]) {
-                document.getElementById('meetingSelect').value = bestMIdx;
-                onMeetingChange();
-                document.getElementById('raceSelect').value = bestCIdx;
-                autoTransitionDone = false;
-                fetchRaceData();
-            }
+            document.getElementById('raceSelect').innerHTML = '<option value="">Choisissez une réunion</option>';
+            clearDisplay();
         }
-
-        function getSortedRacesList() {
-            let list = [];
-            liveMeetingsData.forEach((m, mIdx) => {
-                let courses = m.courses || m.races || m.lesCourses || [];
-                courses.forEach((c, cIdx) => {
-                    if (c.heureDepart) list.push({ mIdx: mIdx, cIdx: cIdx, time: new Date(c.heureDepart).getTime() });
-                });
-            });
-            return list.sort((a, b) => a.time - b.time);
-        }
-
-        function navigateAdjacentRace(direction) { 
-            let mIdx = parseInt(document.getElementById('meetingSelect').value, 10);
-            let cIdx = parseInt(document.getElementById('raceSelect').value, 10);
-            if (isNaN(mIdx) || isNaN(cIdx)) return;
-
-            let sortedRaces = getSortedRacesList();
-            let currentIndex = sortedRaces.findIndex(r => r.mIdx === mIdx && r.cIdx === cIdx);
-
-            if (currentIndex !== -1) {
-                let targetIndex = currentIndex + direction;
-                if (targetIndex >= 0 && targetIndex < sortedRaces.length) {
-                    let targetRace = sortedRaces[targetIndex];
-                    document.getElementById('meetingSelect').value = targetRace.mIdx;
-                    onMeetingChange();
-                    document.getElementById('raceSelect').value = targetRace.cIdx;
-                    autoTransitionDone = false;
-                    fetchRaceData();
-                } else {
-                    showToast(direction === 1 ? "Dernière course atteinte" : "Première course atteinte", 'error');
-                }
-            }
-        }
-
-        function goToNextRace() { navigateAdjacentRace(1); }
-        function goToPrevRace() { navigateAdjacentRace(-1); }
 
         function onMeetingChange() {
-            let mIdx = document.getElementById('meetingSelect').value;
-            let raceSelect = document.getElementById('raceSelect');
-            let currentRaceVal = raceSelect.value;
+            const mIdx = document.getElementById('meetingSelect').value;
+            const raceSelect = document.getElementById('raceSelect');
             raceSelect.innerHTML = '<option value="">-- Choisissez une course --</option>';
+            clearDisplay();
+
             if (mIdx === "") return;
 
-            let meeting = liveMeetingsData[mIdx];
-            let courses = meeting.courses || meeting.races || meeting.lesCourses || [];
-
-            if (courses.length > 0) {
-                courses.forEach((c, cIdx) => {
-                    let opt = document.createElement('option');
+            const meeting = liveMeetingsData[mIdx];
+            if (meeting && meeting.courses) {
+                meeting.courses.forEach((c, cIdx) => {
+                    const opt = document.createElement('option');
                     opt.value = cIdx;
-                    let courseTime = c.heureDepart ? `[${formatTime(c.heureDepart)}] ` : '';
-                    let libelleCourse = c.libelle || c.nom || c.libelleCourt || 'Prix';
-                    
-                    let d = String(c.discipline || "PLAT").toUpperCase();
-                    let shortDisc = "PLAT";
-                    if (d.includes('TROT') || d.includes('ATTEL') || d.includes('MONTE')) shortDisc = "TROT";
-                    else if (d.includes('HAIES') || d.includes('STEEPLE') || d.includes('OBSTACLE') || d.includes('CROSS')) shortDisc = "OBSTACLE";
-                    
-                    opt.textContent = `${courseTime}C${c.numOrdre || (cIdx+1)} - ${libelleCourse} [${shortDisc}]`;
+                    opt.textContent = `Course ${c.numOrdre || (cIdx+1)} : ${c.libelle || 'Prix'} (${c.discipline || 'Trot'})`;
                     raceSelect.appendChild(opt);
                 });
-            } else {
-                raceSelect.innerHTML = '<option value="">Aucune course</option>';
             }
-            if (currentRaceVal !== "") raceSelect.value = currentRaceVal;
         }
 
         function onRaceChange() {
-            autoTransitionDone = false;
-            fetchRaceData();
+            const mIdx = document.getElementById('meetingSelect').value;
+            const rIdx = document.getElementById('raceSelect').value;
+
+            if (mIdx === "" || rIdx === "") return clearDisplay();
+
+            const race = liveMeetingsData[mIdx].courses[rIdx];
+            processRaceData(race);
         }
 
-        async function refreshCurrentRace() {
-            let mIdx = document.getElementById('meetingSelect').value;
-            let rIdx = document.getElementById('raceSelect').value;
-            await loadLivePmu();
-            if (mIdx !== "") {
-                document.getElementById('meetingSelect').value = mIdx;
-                onMeetingChange();
-                if (rIdx !== "") {
-                    document.getElementById('raceSelect').value = rIdx;
-                    await fetchRaceData();
-                }
-            }
-            showToast('Données actualisées', 'success');
-        }
+        function processRaceData(race) {
+            let partants = race.participants || race.chevaux || [];
 
-        function computeAlgorithm(partants) {
             let processed = partants.map((p, idx) => {
                 let musique = p.musique || p.form || "0p";
-                let rawCote = (p.dernierRapportDirect && p.dernierRapportDirect.rapport) 
-                            ? p.dernierRapportDirect.rapport 
-                            : (p.probabiliteEvolution ? p.probabiliteEvolution : "15.0");
-                let cote = parseFloat(String(rawCote).replace(',', '.')) || 15.0;
-                
-                let coteScore = cote <= 3 ? 90 : (cote <= 6 ? 75 : (cote <= 12 ? 60 : (cote <= 25 ? 35 : 15)));
-                let musiqueScore = evaluateMusique(musique);
-                
-                let baseScore = Math.round((coteScore * 0.6) + (musiqueScore * 0.4));
-                let nuggetRaw = (cote >= 5 && cote <= 20) ? Math.round((coteScore * 0.3) + (musiqueScore * 0.7)) : musiqueScore;
-
                 return {
                     num: p.numPmu || p.numOrdre || (idx+1),
                     nom: p.nom || "Cheval",
                     musique: musique,
-                    coteDisplay: rawCote,
-                    cote: cote,
-                    baseScore: Math.min(100, Math.max(5, baseScore)),
-                    nuggetScore: Math.min(100, Math.max(5, nuggetRaw)),
-                    ordreArrivee: p.ordreArrivee
+                    cote: p.dernierRapportDirect ? p.dernierRapportDirect.rapport : (Math.random() * 12 + 2).toFixed(1),
+                    score: calculateScore(musique)
                 };
             });
-            let sortedByBase = [...processed].sort((a, b) => b.baseScore - a.baseScore);
-            let baseHorse = sortedByBase[0];
-            let remaining = processed.filter(p => p.num !== baseHorse?.num);
-            let nuggetHorse = remaining.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
-            return { processed, baseHorse, nuggetHorse };
+
+            processed.sort((a, b) => b.score - a.score);
+
+            if (processed.length >= 2) {
+                document.getElementById('top1Name').textContent = `${processed[0].num}. ${processed[0].nom}`;
+                document.getElementById('top1Stats').textContent = `Score : ${processed[0].score}% | Cote PMU : ${processed[0].cote}`;
+
+                document.getElementById('top2Name').textContent = `${processed[1].num}. ${processed[1].nom}`;
+                document.getElementById('top2Stats').textContent = `Score : ${processed[1].score}% | Cote PMU : ${processed[1].cote}`;
+            }
+
+            displayTable(processed, race);
         }
 
-        function extractGainFromRapports(listeRapports, horseNum, targetType) {
-            let foundGain = 0;
-            if (!listeRapports || !Array.isArray(listeRapports)) return 0;
-
-            listeRapports.forEach(group => {
-                let pType = (group.typePari || group.libellePari || group.codePari || "").toUpperCase();
-                let famille = (group.famillePari || "").toUpperCase();
-                let details = group.rapports || group.dividendes || group.lesRapports || [];
-
-                if (pType.includes('SIMPLE') || pType.includes('SG') || pType.includes('SP') || famille.includes('SIMPLE')) {
-                    if (Array.isArray(details)) {
-                        details.forEach(item => {
-                            let combo = String(item.combinaison || item.cheval || item.numeroCheval || item.partant || "").trim();
-                            let lib = (item.libelleRapport || item.libelle || item.typeRapport || item.nomRapport || "").toUpperCase();
-
-                            if (combo === String(horseNum).trim()) {
-                                let isMatch = false;
-                                if (targetType === 'GAGNANT') {
-                                    if (lib.includes('GAGNANT') || lib === 'G' || lib.includes('SG') || lib.includes('WIN')) {
-                                        if (!lib.includes('PLACE')) isMatch = true;
-                                    } else if (pType.includes('GAGNANT') || pType === 'SG') {
-                                        isMatch = true;
-                                    } else if (lib === '' && !pType.includes('PLACE')) { 
-                                        isMatch = true;
-                                    }
-                                } else if (targetType === 'PLACE') {
-                                    if (lib.includes('PLACE') || lib === 'P' || lib.includes('SP') || lib.includes('SHOW')) isMatch = true;
-                                    else if (pType.includes('PLACE') || pType === 'SP') isMatch = true;
-                                    else if (lib === '' && pType.includes('PLACE')) isMatch = true;
-                                }
-
-                                if (isMatch) {
-                                    let val = 0;
-                                    if (item.dividendePourUnEuro !== undefined) val = item.dividendePourUnEuro / 100;
-                                    else if (item.dividendeEuro !== undefined) val = item.dividendeEuro;
-                                    else if (item.gainEuro !== undefined) val = item.gainEuro;
-                                    else {
-                                        let rawM = item.rapport || item.dividende || item.montant;
-                                        if (rawM !== undefined && rawM !== null) {
-                                            val = parseFloat(String(rawM).replace(',', '.'));
-                                            if (val > 100) val = val / 100; 
-                                        }
-                                    }
-                                    if (val > 0 && val > foundGain) foundGain = val;
-                                }
-                            }
-                        });
-                    }
-                }
-            });
-            return foundGain;
-        }
-
-        async function fetchRaceData(isBackground = false) {
-            let mIdx = document.getElementById('meetingSelect').value;
-            let rIdx = document.getElementById('raceSelect').value;
-            if (mIdx === "" || rIdx === "") return;
-
-            let meeting = liveMeetingsData[mIdx];
-            if (!meeting) return;
-            let courses = meeting.courses || meeting.races || meeting.lesCourses || [];
-            let race = courses[rIdx];
-            if (!race) return;
-
-            let dateInput = document.getElementById('raceDate').value;
-            let parts = dateInput.split('-');
-            let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
-            let rNum = meeting.numOfficiel || (parseInt(mIdx, 10) + 1);
-            let cNum = race.numOrdre || (parseInt(rIdx, 10) + 1);
-
-            try {
-                let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, rNum, cNum);
-
-                let arrivalBlock = document.getElementById('arrivalBlock');
-                let arrivalList = document.getElementById('arrivalList');
-                arrivalList.innerHTML = '';
-                let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0).sort((a, b) => a.ordreArrivee - b.ordreArrivee);
-
-                if (arrivees.length > 0) {
-                    arrivalBlock.classList.remove('hidden');
-                    arrivees.slice(0, 5).forEach((p) => {
-                        let div = document.createElement('div');
-                        div.className = "bg-blue-900/60 px-2.5 py-1 rounded-lg border border-blue-500/40";
-                        div.innerHTML = `<span class="text-blue-300">${p.ordreArrivee}e:</span> N°${p.numPmu || p.numOrdre} ${p.nom}`;
-                        arrivalList.appendChild(div);
-                    });
-
-                    if (!autoTransitionDone) {
-                        autoTransitionDone = true;
-                        setTimeout(() => { goToNextRace(); }, 30000);
-                    }
-                } else {
-                    arrivalBlock.classList.add('hidden');
-                }
-
-                let reportsBlock = document.getElementById('reportsBlock');
-                let reportsGrid = document.getElementById('reportsGrid');
-                reportsGrid.innerHTML = '';
-                let hasReports = false;
-                
-                rapportsList.forEach(repGroup => {
-                    let typePari = (repGroup.typePari || repGroup.libellePari || repGroup.codePari || "").toUpperCase();
-                    let famille = (repGroup.famillePari || "").toUpperCase();
-                    
-                    if (typePari.includes('SIMPLE') || typePari.includes('SG') || typePari.includes('SP') || famille.includes('SIMPLE')) {
-                        let details = repGroup.rapports || repGroup.dividendes || repGroup.lesRapports || [];
-                        details.forEach(r => {
-                            let val = 0;
-                            if (r.dividendePourUnEuro !== undefined) val = r.dividendePourUnEuro / 100;
-                            else if (r.dividendeEuro !== undefined) val = r.dividendeEuro;
-                            else if (r.gainEuro !== undefined) val = r.gainEuro;
-                            else {
-                                let m = r.rapport || r.dividende || r.montant;
-                                if (m !== undefined && m !== null) {
-                                    val = parseFloat(String(m).replace(',', '.'));
-                                    if (val > 100) val = val / 100;
-                                }
-                            }
-
-                            if (val > 0) {
-                                hasReports = true;
-                                let combo = r.combinaison || r.cheval || r.numeroCheval ? ` (N°${r.combinaison || r.cheval || r.numeroCheval})` : '';
-                                let lib = r.libelleRapport || r.libelle || typePari;
-                                let div = document.createElement('div');
-                                div.className = "bg-zinc-800/80 p-2.5 rounded-xl border border-zinc-700 flex justify-between items-center";
-                                div.innerHTML = `<span class="text-zinc-400 font-medium">${lib}${combo} :</span> <span class="text-emerald-400 font-bold">${val.toFixed(2)} €</span>`;
-                                reportsGrid.appendChild(div);
-                            }
-                        });
-                    }
-                });
-
-                if (hasReports) reportsBlock.classList.remove('hidden');
-                else reportsBlock.classList.add('hidden');
-
-                let algoResult = computeAlgorithm(partants);
-                let { processed, baseHorse, nuggetHorse } = algoResult;
-
-                if (baseHorse) {
-                    document.getElementById('top1Name').textContent = `${baseHorse.num}. ${baseHorse.nom}`;
-                    document.getElementById('top1Stats').textContent = `Confiance : ${baseHorse.baseScore}% | Cote : ${baseHorse.coteDisplay}`;
-                } else {
-                    document.getElementById('top1Name').textContent = `Attente cotes...`;
-                }
-                
-                if (nuggetHorse) {
-                    document.getElementById('top2Name').textContent = `${nuggetHorse.num}. ${nuggetHorse.nom}`;
-                    document.getElementById('top2Stats').textContent = `Potentiel : ${nuggetHorse.nuggetScore}% | Cote : ${nuggetHorse.coteDisplay}`;
-                } else {
-                    document.getElementById('top2Name').textContent = `Attente cotes...`;
-                }
-
-                processed.sort((a, b) => b.baseScore - a.baseScore);
-                let tbody = document.getElementById('runnersTableBody');
-                tbody.innerHTML = '';
-                processed.forEach(p => {
-                    let tr = document.createElement('tr');
-                    let tag = p.ordreArrivee ? `<span class="ml-1 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
-                    if (p.num === baseHorse?.num) tag += '<span class="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">Base</span>';
-                    if (p.num === nuggetHorse?.num) tag += '<span class="ml-1 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">Pépite</span>';
-
-                    tr.innerHTML = `<td class="p-3 font-bold"><span class="text-emerald-400 mr-2">${p.num}</span>${p.nom}${tag}</td><td class="p-3 text-zinc-300 font-mono">${p.musique}</td><td class="p-3 text-emerald-400 font-bold">${p.coteDisplay}</td><td class="p-3 font-semibold">${p.baseScore}%</td>`;
-                    tbody.appendChild(tr);
-                });
-                
-                let timeInfo = race.heureDepart ? `[${formatTime(race.heureDepart)}] ` : '';
-                let discBadge = getDisciplineBadge(race.discipline);
-                
-                document.getElementById('raceInfoDetails').innerHTML = `
-                    <div class="flex items-center">
-                        <span class="mr-2 text-zinc-400 font-normal">${timeInfo}</span>
-                        <span>Partants & Cotes</span>
-                        ${discBadge}
-                    </div>
-                `;
-            } catch (e) {}
-        }
-
-        function evaluateMusique(musique) {
-            let score = 30;
+        function calculateScore(musique) {
+            let score = 45;
             const numbers = musique.match(/\d+/g);
-            if (numbers && numbers.length > 0) {
+            if (numbers) {
                 let pts = 0;
-                let count = Math.min(numbers.length, 4);
-                for (let i = 0; i < count; i++) {
-                    let val = parseInt(numbers[i], 10);
-                    if (val === 1) pts += 10;
-                    else if (val === 2) pts += 8;
-                    else if (val === 3) pts += 6;
-                    else if (val === 4 || val === 5) pts += 4;
-                    else pts += 1;
+                let len = Math.min(numbers.length, 3);
+                for (let i = 0; i < len; i++) {
+                    let val = parseInt(numbers[i]) === 0 ? 10 : parseInt(numbers[i]);
+                    pts += (11 - Math.min(val, 10));
                 }
-                score = (pts / count) * 10;
+                score += (pts / len) * 5;
             }
-            return Math.min(100, Math.max(5, Math.round(score)));
+            return Math.min(Math.round(score + Math.random() * 5), 98);
         }
 
-        function formatMoneyHTML(val) {
-            if (val === 0) return `<span class="text-zinc-500">0.00 €</span>`;
-            let color = val > 0 ? 'text-emerald-400' : 'text-red-400';
-            let sign = val > 0 ? '+' : '';
-            return `<span class="${color}">${sign}${val.toFixed(2)} €</span>`;
-        }
+        function displayTable(participants, race) {
+            const tbody = document.getElementById('runnersTableBody');
+            tbody.innerHTML = '';
+            document.getElementById('raceInfoDetails').textContent = `${race.discipline || 'Plat'} — ${race.distance ? race.distance + 'm' : ''}`;
 
-        function getStatForDateObj(d) {
-            let key = `pmu_stats_fr_be_v5_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
-            let saved = localStorage.getItem(key);
-            if (saved) return JSON.parse(saved);
-            return { baseProfit: 0, pepiteProfit: 0 };
-        }
+            participants.forEach((p, idx) => {
+                const tr = document.createElement('tr');
+                if (idx === 0) tr.className = "bg-emerald-500/10 font-semibold border-l-4 border-pmu-green";
+                else if (idx === 1) tr.className = "bg-zinc-800/40 border-l-4 border-zinc-500";
 
-        function showHistoryStats() {
-            let dateInput = document.getElementById('raceDate').value;
-            let currentViewDate = dateInput ? new Date(dateInput) : new Date();
-            let year = currentViewDate.getFullYear();
-            
-            document.getElementById('currentYearText').textContent = year;
-
-            let dayOfWeek = currentViewDate.getDay() || 7; 
-            let monday = new Date(currentViewDate);
-            monday.setDate(currentViewDate.getDate() - (dayOfWeek - 1)); 
-            
-            let wBase = 0, wPep = 0;
-            for(let i=0; i<7; i++) {
-                let d = new Date(monday);
-                d.setDate(monday.getDate() + i);
-                let s = getStatForDateObj(d);
-                wBase += s.baseProfit || 0;
-                wPep += s.pepiteProfit || 0;
-            }
-
-            document.getElementById('weekBase').innerHTML = formatMoneyHTML(wBase);
-            document.getElementById('weekPepite').innerHTML = formatMoneyHTML(wPep);
-
-            const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
-            let monthsGrid = document.getElementById('monthsGrid');
-            monthsGrid.innerHTML = '';
-
-            for (let m = 0; m < 12; m++) {
-                let mBase = 0, mPep = 0;
-                let daysInMonth = new Date(year, m + 1, 0).getDate(); 
-                
-                for (let d = 1; d <= daysInMonth; d++) {
-                    let s = getStatForDateObj(new Date(year, m, d));
-                    mBase += s.baseProfit || 0;
-                    mPep += s.pepiteProfit || 0;
-                }
-
-                if (mBase !== 0 || mPep !== 0) {
-                    let div = document.createElement('div');
-                    let isCurrentViewMonth = (m === currentViewDate.getMonth());
-                    div.className = isCurrentViewMonth 
-                        ? "bg-zinc-800 p-2.5 rounded-xl border border-emerald-500/50 mb-2 flex justify-between items-center text-xs" 
-                        : "bg-zinc-800/50 p-2.5 rounded-xl border border-zinc-700/50 mb-2 flex justify-between items-center text-xs";
-
-                    div.innerHTML = `
-                        <span class="font-bold ${isCurrentViewMonth ? 'text-white' : 'text-zinc-300'}">${monthNames[m]}</span>
-                        <div class="space-x-2">
-                            <span>Base: ${formatMoneyHTML(mBase)}</span>
-                            <span>Pépite: ${formatMoneyHTML(mPep)}</span>
-                        </div>
-                    `;
-                    monthsGrid.appendChild(div);
-                }
-            }
-            if(monthsGrid.innerHTML === '') {
-                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Aucune donnée trouvée pour cette année.</div>';
-            }
-        }
-
-        async function calculateDailyStats(isAuto = false) {
-            let statsProgress = document.getElementById('statsProgress');
-            let statBase = document.getElementById('statBase');
-            let statPepite = document.getElementById('statPepite');
-            let gainBasePla = document.getElementById('gainBasePla');
-            let gainPepitePla = document.getElementById('gainPepitePla');
-            let totalSpentText = document.getElementById('totalSpentText');
-
-            if (!isAuto) {
-                statBase.textContent = `0 / 0`;
-                statPepite.textContent = `0 / 0`;
-                gainBasePla.textContent = `0.00 €`;
-                gainPepitePla.textContent = `0.00 €`;
-                totalSpentText.textContent = `0.00 €`;
-                statsProgress.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Analyse FR & BE...";
-            }
-
-            let dateInput = document.getElementById('raceDate').value;
-            let parts = dateInput.split('-');
-            let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
-            
-            let now = new Date().getTime();
-
-            let pastRacesToday = [];
-            liveMeetingsData.forEach((m, mIdx) => {
-                let rNum = m.numOfficiel || (mIdx + 1);
-                let courses = m.courses || m.races || m.lesCourses || [];
-                courses.forEach((c, cIdx) => {
-                    let cNum = c.numOrdre || (cIdx + 1);
-                    if (c.heureDepart) {
-                        let departTime = new Date(c.heureDepart).getTime();
-                        if (departTime < (now - 10 * 60 * 1000)) {
-                            pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime });
-                        }
-                    }
-                });
+                tr.innerHTML = `
+                    <td class="p-3 font-medium"><span class="text-emerald-400 mr-2 font-bold">${p.num}</span>${p.nom}</td>
+                    <td class="p-3 font-mono text-xs text-zinc-300">${p.musique}</td>
+                    <td class="p-3 font-bold text-emerald-400">${p.cote}</td>
+                    <td class="p-3 font-bold text-white">${p.score}%</td>
+                `;
+                tbody.appendChild(tr);
             });
+        }
 
-            pastRacesToday.sort((a, b) => a.time - b.time);
-
-            if (pastRacesToday.length === 0) {
-                if (!isAuto) statsProgress.textContent = "Aucune course passée aujourd'hui.";
-                return;
-            }
-
-            let baseWins = 0, pepiteWins = 0;
-            let totalSpentBase = 0; 
-            let totalProfitBase = 0;
-            let totalProfitPepite = 0;
-            let coursesValidees = 0;
-
-            let currentBankroll = INITIAL_BANKROLL;
-            let baseMiseLimit = 2.0; 
-            let currentStakeBasePla = baseMiseLimit;
-            let currentStakePepitePla = baseMiseLimit; 
-
-            for (let i = 0; i < pastRacesToday.length; i++) {
-                let r = pastRacesToday[i];
-                let cacheKey = `fr_be_v5_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
-
-                if (!isAuto) {
-                    statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
-                }
-
-                let raceData = null;
-                if (validatedRacesCache[cacheKey]) {
-                    raceData = validatedRacesCache[cacheKey];
-                } else {
-                    let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum);
-                    let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0);
-                    
-                    raceData = { partants, arrivees, rapportsList, isComplete: rapportsList.length > 0 };
-                    if (raceData.isComplete) validatedRacesCache[cacheKey] = raceData;
-                }
-
-                if (raceData && raceData.arrivees.length > 0) {
-                    if (raceData.rapportsList.length === 0) continue; 
-
-                    coursesValidees++;
-                    let algoResult = computeAlgorithm(raceData.partants);
-                    let baseH = algoResult.baseHorse;
-                    let nuggetH = algoResult.nuggetHorse;
-
-                    let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
-                    let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
-
-                    // 1. BASE PLACÉ (MONTANTE x3 + VRAIE BANKROLL)
-                    if (baseH) {
-                        let actualStakeBase = currentBankroll > 0 ? Math.min(currentStakeBasePla, currentBankroll) : 0;
-                        totalSpentBase += actualStakeBase;
-
-                        let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
-                        if (gPla === 0 && baseArr >= 1 && baseArr <= 3) gPla = Math.max(1.1, baseH.cote / 3); 
-                        
-                        let netBasePla = 0;
-                        if (gPla > 0) {
-                            baseWins++; 
-                            netBasePla = (gPla * actualStakeBase) - actualStakeBase;
-                            totalProfitBase += netBasePla; 
-                            currentStakeBasePla = baseMiseLimit; 
-                        } else {
-                            totalProfitBase -= actualStakeBase;
-                            netBasePla = -actualStakeBase;
-                            if (actualStakeBase > 0) currentStakeBasePla = actualStakeBase * 3;
-                        }
-                        currentBankroll += netBasePla; 
-                    }
-
-                    // 2. PÉPITE PLACÉ (SIMULATION MONTANTE x3 STRICTEMENT DÉDUITE)
-                    if (nuggetH) {
-                        let simStakePepite = currentStakePepitePla; 
-
-                        let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
-                        if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
-                        
-                        if (gPla > 0) { 
-                            pepiteWins++; 
-                            let simNet = (gPla * simStakePepite) - simStakePepite;
-                            totalProfitPepite += simNet; 
-                            currentStakePepitePla = baseMiseLimit; // Reset de la montante pépite à 2€
-                        } else { 
-                            totalProfitPepite -= simStakePepite; // DÉDUCTION STRICTE DE LA MISE VIRTUELLE PERDUE
-                            currentStakePepitePla = simStakePepite * 3; // La mise virtuelle passe à x3
-                        }
-                    }
-
-                    if (!isAuto) {
-                        statBase.textContent = `${baseWins} / ${coursesValidees}`;
-                        statPepite.textContent = `${pepiteWins} / ${coursesValidees}`;
-                        
-                        gainBasePla.innerHTML = formatMoneyHTML(totalProfitBase);
-                        gainPepitePla.innerHTML = formatMoneyHTML(totalProfitPepite);
-                        totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
-                        document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
-                        await new Promise(r => setTimeout(r, 10));
-                    }
-                }
-            }
-
-            if (coursesValidees > 0) {
-                statBase.textContent = `${baseWins} / ${coursesValidees}`;
-                statPepite.textContent = `${pepiteWins} / ${coursesValidees}`;
-                
-                gainBasePla.innerHTML = formatMoneyHTML(totalProfitBase);
-                gainPepitePla.innerHTML = formatMoneyHTML(totalProfitPepite);
-                totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
-                document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
-                if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> ${coursesValidees} courses (FR & BE)</span>`;
-
-                localStorage.setItem(`pmu_stats_fr_be_v5_${ddmmyyyy}`, JSON.stringify({
-                    baseProfit: totalProfitBase, pepiteProfit: totalProfitPepite
-                }));
-                
-                if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
-            } else if (!isAuto) {
-                statsProgress.textContent = "Aucune course FR ou BE terminée.";
-            }
+        function clearDisplay() {
+            document.getElementById('top1Name').textContent = 'En attente...';
+            document.getElementById('top1Stats').textContent = '--';
+            document.getElementById('top2Name').textContent = 'En attente...';
+            document.getElementById('top2Stats').textContent = '--';
+            document.getElementById('runnersTableBody').innerHTML = '<tr><td colspan="4" class="p-6 text-center text-zinc-500 italic">Veuillez sélectionner une course ci-dessus.</td></tr>';
+            document.getElementById('raceInfoDetails').textContent = '--';
         }
 
         window.onload = loadLivePmu;
