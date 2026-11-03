@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Base & Pépite (Montante Placé & Cote Mini 2.5)</title>
+    <title>Fab Turf - Mode Agressif Placé (Cote 2.5 - 4.5)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,11 +22,11 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-emerald-500 flex items-center">
-                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">Montante Placé (Cote &ge; 2.5)</span>
+                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">Agressif Placé (2.5 - 4.5)</span>
             </h1>
             <div class="flex items-center space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
-                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll & Étape Montante</span>
+                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll Dynamique</span>
                     <span id="headerBankroll">100.00 €</span>
                 </div>
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadLivePmu()">
@@ -76,7 +76,7 @@
         <div id="statsBlock" class="bg-zinc-900 border border-indigo-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-indigo-400 tracking-wider flex items-center">
-                    <i class="fa-solid fa-trophy mr-1.5"></i> Bilan du Jour (Montante Séquentielle - Cote &ge; 2.5)
+                    <i class="fa-solid fa-trophy mr-1.5"></i> Bilan du Jour (Mode Agressif Placé)
                 </h2>
                 <div id="statsProgress" class="text-[10px] font-mono text-zinc-400 flex items-center">
                     <i class="fa-solid fa-spinner fa-spin mr-1"></i> Calcul en cours...
@@ -86,7 +86,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <!-- BASE -->
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-emerald-500/30 flex flex-col justify-between space-y-2 relative">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">MONTANTE (COTE &ge; 2.5)</div>
+                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">AGRESSIF (Cote 2.5 - 4.5)</div>
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] uppercase font-bold text-emerald-400">Base Solide (Placé)</span>
                         <span id="statBase" class="text-[10px] font-bold text-white">P: 0 / 0</span>
@@ -117,7 +117,7 @@
             </div>
 
             <div class="text-center text-[10px] text-zinc-400 mt-2 font-semibold">
-                Règle de la Montante : En cas de succès, la mise augmente pour l'étape suivante. En cas d'échec, retour à la mise de base (2% du capital). Cote mini 2.5 requise pour la base.
+                Stratégie Agressive : Sélection stricte de la Base sur une cote de valeur (entre 2.5 et 4.5) avec mise amplifiée de 3.5% de la bankroll pour maximiser le rendement.
             </div>
             <div id="statGlobal" class="text-center text-[11px] text-zinc-300 mt-2 font-medium flex flex-col items-center"></div>
         </div>
@@ -148,7 +148,7 @@
         <div class="bg-gradient-to-r from-emerald-950/60 via-zinc-900 to-amber-950/40 border border-emerald-500/50 rounded-2xl p-4 space-y-3 shadow-xl relative">
             <div class="flex flex-wrap justify-between items-center gap-2">
                 <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center">
-                    <i class="fa-solid fa-star mr-1.5"></i> Sélection Course (Montante Base Cote &ge; 2.5 & Pépite)
+                    <i class="fa-solid fa-star mr-1.5"></i> Sélection Course (Mode Agressif Placé)
                 </h2>
                 <div class="flex items-center space-x-1.5 flex-wrap">
                     <a href="https://www.equidia.fr/direct?utm_source=intern&utm_medium=header_menu&utm_campaign=Home" target="_blank" class="bg-red-600 hover:bg-red-500 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold shadow transition flex items-center">
@@ -167,7 +167,7 @@
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mt-3">
                 <div class="bg-zinc-900/90 p-3 rounded-xl border border-emerald-500/40 space-y-1">
-                    <div class="text-[10px] uppercase font-bold text-emerald-400">Base Solide (Cote &ge; 2.5)</div>
+                    <div class="text-[10px] uppercase font-bold text-emerald-400">Base Agressive (Cote 2.5 à 4.5)</div>
                     <div id="top1Name" class="font-bold text-white text-sm">En attente...</div>
                     <div id="top1Stats" class="text-[11px] text-zinc-400">--</div>
                 </div>
@@ -207,7 +207,17 @@
         let validatedRacesCache = {}; 
         
         const INITIAL_BANKROLL = 100.0;
-        const BASE_RISK_PERCENT = 0.02; // 2% de base
+        const AGGRESSIVE_RISK_PERCENT = 0.035; // Mise agressive à 3.5% du capital
+
+        function getAggressiveStake(currentBankroll, cote) {
+            // Mise proportionnelle agressive encadrée pour le rendement
+            let calculatedStake = currentBankroll * AGGRESSIVE_RISK_PERCENT;
+            // Si la cote est excellente (entre 2.5 et 4.5), on amplifie légèrement le potentiel
+            if (cote >= 2.5 && cote <= 4.5) {
+                calculatedStake = calculatedStake * 1.2;
+            }
+            return Math.max(1.0, parseFloat(calculatedStake.toFixed(2)));
+        }
 
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
@@ -523,9 +533,9 @@
                 };
             });
 
-            // FILTRE CLÉ : La base doit avoir une cote minimale de 2.5
+            // FILTRE AGRESSIF : On cherche en priorité une base avec une cote de valeur entre 2.5 et 4.5
             let sortedByBase = [...processed].sort((a, b) => b.baseScore - a.baseScore);
-            let baseHorse = sortedByBase.find(p => p.cote >= 2.5) || sortedByBase[0];
+            let baseHorse = sortedByBase.find(p => p.cote >= 2.5 && p.cote <= 4.5) || sortedByBase[0];
 
             let remaining = processed.filter(p => p.num !== baseHorse?.num);
             let nuggetHorse = remaining.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
@@ -682,7 +692,7 @@
                 processed.forEach(p => {
                     let tr = document.createElement('tr');
                     let tag = p.ordreArrivee ? `<span class="ml-1 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
-                    if (p.num === baseHorse?.num) tag += '<span class="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">Base Placé (Cote &ge; 2.5)</span>';
+                    if (p.num === baseHorse?.num) tag += '<span class="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">Base Agressive</span>';
                     if (p.num === nuggetHorse?.num) tag += '<span class="ml-1 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">Pépite Placé</span>';
 
                     tr.innerHTML = `<td class="p-3 font-bold"><span class="text-emerald-400 mr-2">${p.num}</span>${p.nom}${tag}</td><td class="p-3 text-zinc-300 font-mono">${p.musique}</td><td class="p-3 text-emerald-400 font-bold">${p.coteDisplay}</td><td class="p-3 font-semibold">${p.baseScore}%</td>`;
@@ -695,7 +705,7 @@
                 document.getElementById('raceInfoDetails').innerHTML = `
                     <div class="flex items-center">
                         <span class="mr-2 text-zinc-400 font-normal">${timeInfo}</span>
-                        <span>Partants & Analyse Placé</span>
+                        <span>Partants & Analyse Agressive</span>
                         ${discBadge}
                     </div>
                 `;
@@ -703,7 +713,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_montante_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_agressive_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { basePla: 0, pepPla: 0 };
@@ -833,10 +843,6 @@
 
             let currentBankroll = INITIAL_BANKROLL;
 
-            // VARIABLES DE LA MONTANTE SÉQUENTIELLE
-            let baseMontanteStake = INITIAL_BANKROLL * BASE_RISK_PERCENT;
-            let pepiteMontanteStake = INITIAL_BANKROLL * BASE_RISK_PERCENT;
-
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
                 let cacheKey = `${ddmmyyyy}_${r.rNum}_${r.cNum}`;
@@ -867,8 +873,8 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    let stakeBase = Math.max(0.5, parseFloat(baseMontanteStake.toFixed(2)));
-                    let stakePepite = Math.max(0.5, parseFloat(pepiteMontanteStake.toFixed(2)));
+                    let stakeBase = baseH ? getAggressiveStake(currentBankroll, baseH.cote) : 1.0;
+                    let stakePepite = nuggetH ? getAggressiveStake(currentBankroll, nuggetH.cote) : 1.0;
 
                     if (baseH) {
                         totalSpentPla += stakeBase;
@@ -880,11 +886,9 @@
                             basePlaCount++; 
                             netBasePla = (gPla * stakeBase) - stakeBase;
                             totalGainBasePla += netBasePla; 
-                            baseMontanteStake = stakeBase + (netBasePla * 0.5); 
                         } else {
                             totalGainBasePla -= stakeBase;
                             netBasePla = -stakeBase;
-                            baseMontanteStake = Math.max(0.5, currentBankroll * BASE_RISK_PERCENT);
                         }
                         currentBankroll += netBasePla; 
                     }
@@ -899,11 +903,9 @@
                             pepitePlaCount++; 
                             netPepitePla = (gPla * stakePepite) - stakePepite;
                             totalGainPepitePla += netPepitePla; 
-                            pepiteMontanteStake = stakePepite + (netPepitePla * 0.5);
                         } else { 
                             totalGainPepitePla -= stakePepite;
                             netPepitePla = -stakePepite;
-                            pepiteMontanteStake = Math.max(0.5, currentBankroll * BASE_RISK_PERCENT);
                         }
                         currentBankroll += netPepitePla; 
                     }
@@ -933,7 +935,7 @@
                 document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
                 if (!isAuto) statsProgress.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1.5"></i> Bilan calculé (${coursesValidees} courses)</span>`;
 
-                localStorage.setItem(`pmu_stats_montante_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_agressive_${ddmmyyyy}`, JSON.stringify({
                     basePla: totalGainBasePla, pepPla: totalGainPepitePla
                 }));
                 
