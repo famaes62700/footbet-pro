@@ -25,8 +25,9 @@
                 <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf
             </h1>
             <div class="flex items-center space-x-3">
-                <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold">
-                    Bankroll: <span id="headerBankroll">100.00 €</span>
+                <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
+                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll (Base & Pépite)</span>
+                    <span id="headerBankroll">100.00 €</span>
                 </div>
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadLivePmu()">
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Historique Mensuel">
@@ -90,8 +91,9 @@
             </div>
             
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <!-- BASE -->
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-emerald-500/30 flex flex-col justify-between space-y-2 relative">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">PLACÉ PROPORTIONNEL (2%)</div>
+                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">PLACÉ PROP. (2%)</div>
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] uppercase font-bold text-emerald-400">Base Solide</span>
                         <span id="statBase" class="text-[10px] font-bold text-white">G: 0 | P: 0 / 0</span>
@@ -107,22 +109,27 @@
                         </div>
                     </div>
                 </div>
-                <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-amber-500/30 flex flex-col justify-between space-y-2">
+
+                <!-- PÉPITE -->
+                <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-amber-500/30 flex flex-col justify-between space-y-2 relative">
+                    <div class="absolute -top-2 -right-2 bg-amber-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">PLACÉ PROP. (2%)</div>
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] uppercase font-bold text-amber-400">Pépite</span>
                         <span id="statPepite" class="text-[10px] font-bold text-white">G: 0 | P: 0 / 0</span>
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-[11px]">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
-                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Gagnant</span>
+                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Gagnant (1€)</span>
                             <span id="gainPepiteGag" class="font-bold text-amber-400">--</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
-                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Placé</span>
+                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Placé (2%)</span>
                             <span id="gainPepitePla" class="font-bold text-amber-400">--</span>
                         </div>
                     </div>
                 </div>
+
+                <!-- COUPLÉ -->
                 <div class="bg-zinc-800/90 p-3.5 rounded-xl border border-blue-500/30 flex flex-col justify-between space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] uppercase font-bold text-blue-400">Couplé (Base+Pép)</span>
@@ -130,25 +137,25 @@
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-[11px]">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
-                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Gagnant</span>
+                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Gagnant (1€)</span>
                             <span id="gainCoupleGag" class="font-bold text-blue-400">--</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
-                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Placé</span>
+                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Placé (1€)</span>
                             <span id="gainCouplePla" class="font-bold text-blue-400">--</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- LIGNE D'AFFICHAGE DU TOTAL DES MISES ENGAGÉES (UNIQUE PLACÉ PROPORTIONNEL) -->
+            <!-- LIGNE D'AFFICHAGE DU TOTAL DES MISES -->
             <div class="mt-3 flex justify-between items-center text-[11px] bg-zinc-800/60 px-3 py-2 rounded-xl border border-zinc-700/50 text-zinc-300">
-                <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Total Mises Engagées (Placé Proportionnel) :</span>
+                <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Total Mises (Placé Base + Pépite) :</span>
                 <span id="totalSpentText" class="font-bold text-white">0.00 €</span>
             </div>
 
             <div class="text-center text-[10px] text-zinc-400 mt-2 font-semibold">
-                Stratégie : Seul le Simple Placé impacte la Bankroll (2%). Gagnant et autres jeux en mode indicatif (1€).
+                Stratégie : Base & Pépite Placé = Bankroll (2%) • Le reste = Virtuel (1€)
             </div>
             <div id="statGlobal" class="text-center text-[11px] text-zinc-300 mt-2 font-medium flex flex-col items-center"></div>
         </div>
@@ -295,12 +302,9 @@
             return '<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">PLAT</span>';
         }
 
-        // ---------- NOUVEAU MOTEUR RÉSEAU 100% SÉCURISÉ ----------
         async function smartFetchPMU(path) {
-            // Construit l'URL exacte du PMU
             const fullPmuUrl = `https://online.turfinfo.api.pmu.fr/rest/client/61/programme/${path}`;
             
-            // On essaie d'abord ton serveur Vercel local (au cas où il remarche)
             try {
                 let localRes = await fetch(`/api/pmu/${path}`);
                 if (localRes.ok) return await localRes.json();
@@ -308,7 +312,6 @@
                 console.log("Vercel bloqué, passage aux proxys de secours...");
             }
 
-            // Si Vercel est bloqué, on bascule sur nos relais de secours publics
             const proxies = [
                 `https://api.allorigins.win/raw?url=${encodeURIComponent(fullPmuUrl)}`,
                 `https://corsproxy.io/?${encodeURIComponent(fullPmuUrl)}`,
@@ -320,7 +323,7 @@
                     let res = await fetch(proxy);
                     if (res.ok) {
                         let json = await res.json();
-                        if(json.contents) json = JSON.parse(json.contents); // Pour certains relais
+                        if(json.contents) json = JSON.parse(json.contents);
                         return json;
                     }
                 } catch(e) {}
@@ -359,7 +362,6 @@
 
             try {
                 const data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
-                
                 let reunions = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
                 
                 if (reunions.length > 0) {
@@ -396,7 +398,6 @@
                 statusText.innerHTML = '<span class="text-red-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Erreur réseau (PMU indisponible)</span>';
             }
         }
-        // ---------------------------------------------------------
 
         function autoSelectCurrentRace() {
             let now = new Date().getTime();
@@ -993,11 +994,9 @@
                     if (raceData.isComplete) validatedRacesCache[cacheKey] = raceData;
                 }
 
-                // C'EST ICI LA SÉCURITÉ DES COURSES ÉTRANGÈRES : 
-                // On saute le calcul si on a l'arrivée MAIS PAS les rapports.
                 if (raceData && raceData.arrivees.length > 0) {
                     if (raceData.rapportsList.length === 0) {
-                        continue; // Les rapports ne sont pas tombés, on passe à la course suivante sans toucher à la bankroll.
+                        continue; 
                     }
 
                     coursesValidees++;
@@ -1008,10 +1007,11 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    let baseStakePla = Math.max(0.5, currentBankroll * STAKE_PERCENT);
+                    // MISE PROPORTIONNELLE POUR BASE ET PEPITE CALCULEE ICI
+                    let raceStakePla = Math.max(0.5, currentBankroll * STAKE_PERCENT);
 
                     if (baseH) {
-                        totalSpentPla += baseStakePla;
+                        totalSpentPla += raceStakePla;
 
                         let gGag = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
                         if (gGag === 0 && baseArr === 1) gGag = baseH.cote; 
@@ -1027,16 +1027,18 @@
                         let netBasePla = 0;
                         if (gPla > 0) {
                             basePlaCount++; 
-                            netBasePla = (gPla * baseStakePla) - baseStakePla;
+                            netBasePla = (gPla * raceStakePla) - raceStakePla;
                             totalGainBasePla += netBasePla; 
                         } else {
-                            totalGainBasePla -= baseStakePla;
-                            netBasePla = -baseStakePla;
+                            totalGainBasePla -= raceStakePla;
+                            netBasePla = -raceStakePla;
                         }
                         currentBankroll += netBasePla; 
                     }
 
                     if (nuggetH) {
+                        totalSpentPla += raceStakePla; // La Pépite est mise à la proportionnelle aussi
+
                         let gGag = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
                         if (gGag === 0 && nuggetArr === 1) gGag = nuggetH.cote; 
                         if (gGag > 0) { pepiteGagCount++; totalGainPepiteGag += (gGag * refStake) - refStake; }
@@ -1044,8 +1046,17 @@
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
                         if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
-                        if (gPla > 0) { pepitePlaCount++; totalGainPepitePla += (gPla * refStake) - refStake; }
-                        else { totalGainPepitePla -= refStake; }
+                        let netPepitePla = 0;
+                        if (gPla > 0) { 
+                            pepitePlaCount++; 
+                            netPepitePla = (gPla * raceStakePla) - raceStakePla;
+                            totalGainPepitePla += netPepitePla; 
+                        }
+                        else { 
+                            totalGainPepitePla -= raceStakePla;
+                            netPepitePla = -raceStakePla;
+                        }
+                        currentBankroll += netPepitePla; // IMPACT LA BANKROLL ÉGALEMENT
                     }
 
                     if (baseH && nuggetH) {
