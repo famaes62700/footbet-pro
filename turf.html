@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Spécial Trot Pro</title>
+    <title>Fab Turf - Spécial Trot (Sans Limite)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -67,12 +67,12 @@
             </div>
         </div>
 
-        <!-- BILAN DU JOUR : BASE & PÉPITE (TROT UNIQUEMENT) -->
+        <!-- BILAN DU JOUR : BASE & PÉPITE (TROT UNIQUEMENT - SANS PLAFOND) -->
         <div class="bg-zinc-900 border border-amber-500/30 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (Exclusivement Trot)</h2>
-                    <p class="text-[10px] text-zinc-400">Rattrapage de Série Glissant • Base 5€ • <strong class="text-emerald-400">Stop-Win: +50€</strong></p>
+                    <p class="text-[10px] text-zinc-400">Rattrapage de Série Glissant • Base 5€ • <strong class="text-emerald-400">Gains Illimités (Sans Plafond)</strong></p>
                 </div>
             </div>
 
@@ -204,9 +204,8 @@
         let autoTransitionDone = false;
         let validatedRacesCache = {}; 
         
-        // --- PARAMÈTRES SPÉCIAL TROT ---
+        // --- PARAMÈTRES SPÉCIAL TROT (SANS PLAFOND DE GAIN) ---
         const INITIAL_BANKROLL = 500.0;
-        const PROFIT_TARGET = 50.0; // Stop-Win quotidien (+50€)
         const BASE_STAKE = 5.0;     // Mise initiale de base
         const MAX_STAKE = 85.0;     // Plafond de sécurité sur une seule course
 
@@ -217,7 +216,6 @@
             calculateDailyStats(true);
         }, 20000);
 
-        // Détecte si une course est du Trot (Attelé ou Monté)
         function isTrotRace(course) {
             let d = String(course.discipline || '').toUpperCase();
             let s = String(course.specialite || '').toUpperCase();
@@ -330,7 +328,6 @@
                 const data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
                 let rawReunions = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
                 
-                // On conserve uniquement les courses de Trot dans chaque réunion
                 let trotReunions = [];
                 rawReunions.forEach(r => {
                     let allCourses = r.courses || r.races || r.lesCourses || [];
@@ -511,7 +508,6 @@
             showToast('Données Trot actualisées', 'success');
         }
 
-        // --- ÉVALUATION MUSIQUE SPÉCIALE TROT (PÉNALISE LES FAUTES / DISQUALIFICATIONS) ---
         function evaluateMusique(musique) {
             if (!musique) return 25;
             let clean = String(musique).replace(/\(\d+\)/g, '');
@@ -534,7 +530,7 @@
                 else if (res === '4') pts = 55;
                 else if (res === '5') pts = 40;
                 else if (res === '6' || res === '7') pts = 20;
-                else if (res.includes('D') || res.includes('A')) pts = -15; // Pénalité Trot pour cheval fautif (Disqualifié/Arrêté)
+                else if (res.includes('D') || res.includes('A')) pts = -15;
                 else pts = 0;
 
                 totalPts += pts * w;
@@ -557,7 +553,6 @@
                             : (p.probabiliteEvolution ? p.probabiliteEvolution : "15.0");
                 let cote = parseFloat(String(rawCote).replace(',', '.')) || 15.0;
                 
-                // Cible en priorité les favoris/co-favoris solides au Trot (1.6 à 4.8) qui paient bien en Placé
                 let coteScore = 15;
                 if (cote >= 1.6 && cote <= 4.5) coteScore = 96;
                 else if (cote < 1.6) coteScore = 84;
@@ -567,7 +562,6 @@
 
                 let musiqueScore = evaluateMusique(musique);
                 
-                // Au Trot, la régularité de la musique compte à 50% avec la cote
                 let baseScore = Math.round((coteScore * 0.50) + (musiqueScore * 0.50));
                 
                 let nuggetRaw = (cote >= 4.0 && cote <= 16) 
@@ -784,7 +778,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_trot_smart_v1_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_trot_nolimit_v1_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -874,7 +868,6 @@
             
             let now = new Date().getTime();
 
-            // liveMeetingsData contient déjà exclusivement les courses de Trot
             let pastRacesToday = [];
             liveMeetingsData.forEach((m, mIdx) => {
                 let rNum = m.numOfficiel || (mIdx + 1);
@@ -914,12 +907,10 @@
             
             let deficitSerieBase = 0;
             let deficitSeriePepite = 0;
-            
-            let objectifAtteint = false;
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `trot_smart_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `trot_nolimit_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto && statsProgress) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -972,8 +963,8 @@
                         }
                     }
 
-                    // 1. BASE PLACÉ TROT (RATTRAPAGE DE SÉRIE GLISSANT)
-                    if (baseH && !objectifAtteint && currentBankroll > 0) {
+                    // 1. BASE PLACÉ TROT (SANS PLAFOND STOP-WIN)
+                    if (baseH && currentBankroll > 0) {
                         coursesValidees++;
                         
                         let targetStakeBase = computeSmartStake(deficitSerieBase);
@@ -997,12 +988,10 @@
                             if (deficitSerieBase > 180) deficitSerieBase = 0;
                         }
                         currentBankroll += netBasePla;
-                        
-                        if (totalProfitBasePla >= PROFIT_TARGET) objectifAtteint = true;
                     }
 
-                    // 2. PÉPITE PLACÉ TROT (RATTRAPAGE DE SÉRIE GLISSANT)
-                    if (nuggetH && !objectifAtteint) {
+                    // 2. PÉPITE PLACÉ TROT (SANS PLAFOND STOP-WIN)
+                    if (nuggetH) {
                         let simStakePepite = computeSmartStake(deficitSeriePepite);
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
@@ -1036,18 +1025,13 @@
             totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
             
             let nextStake = computeSmartStake(deficitSerieBase);
-            if (objectifAtteint) {
-                currentPalierText.textContent = "STOP-WIN (+50€) 🏆";
-                currentPalierText.className = "text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/50 font-bold";
-            } else {
-                currentPalierText.textContent = `${nextStake.toFixed(2)} €`;
-                currentPalierText.className = "text-amber-400 bg-zinc-900 px-2 py-0.5 rounded border border-amber-500/30 font-bold";
-            }
+            currentPalierText.textContent = `${nextStake.toFixed(2)} €`;
+            currentPalierText.className = "text-amber-400 bg-zinc-900 px-2 py-0.5 rounded border border-amber-500/30 font-bold";
             
             document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
 
             if (coursesValidees > 0) {
-                localStorage.setItem(`pmu_stats_trot_smart_v1_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_trot_nolimit_v1_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
             }
