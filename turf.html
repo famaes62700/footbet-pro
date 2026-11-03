@@ -77,39 +77,37 @@
 
             <div class="grid grid-cols-2 gap-3 text-xs">
                 <!-- BASE -->
-                <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative">
+                <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
                     <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">VRAIE BANKROLL</div>
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-[10px] text-zinc-400 uppercase font-bold">Base</span>
-                        <span id="statBase" class="text-[10px] font-black text-white">0 / 0</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 mt-2">
-                        <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
                             <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant (1€ virt.)</span>
-                            <span id="gainBaseGag" class="font-bold text-zinc-300">0.00 €</span>
+                            <span id="statBaseGag" class="text-[9px] text-zinc-500 font-bold my-0.5">0 / 0</span>
+                            <span id="gainBaseGag" class="font-bold text-zinc-300 mt-0.5">0.00 €</span>
                         </div>
-                        <div class="bg-zinc-900/60 p-2 rounded border border-emerald-500/30 text-center">
+                        <div class="bg-zinc-900/60 p-2 rounded border border-emerald-500/30 text-center flex flex-col justify-center">
                             <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé (Réel)</span>
-                            <span id="gainBasePla" class="font-bold text-emerald-400">0.00 €</span>
+                            <span id="statBasePla" class="text-[9px] text-emerald-500/70 font-bold my-0.5">0 / 0</span>
+                            <span id="gainBasePla" class="font-bold text-emerald-400 mt-0.5">0.00 €</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- PÉPITE -->
-                <div class="bg-zinc-950 p-3 rounded-xl border border-amber-500/40 relative">
+                <div class="bg-zinc-950 p-3 rounded-xl border border-amber-500/40 relative flex flex-col justify-between">
                     <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMULATION PURE</div>
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-[10px] text-zinc-400 uppercase font-bold">Pépite</span>
-                        <span id="statPepite" class="text-[10px] font-black text-white">0 / 0</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 mt-2">
-                        <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Pépite</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
                             <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant (1€ virt.)</span>
-                            <span id="gainPepiteGag" class="font-bold text-zinc-300">0.00 €</span>
+                            <span id="statPepiteGag" class="text-[9px] text-zinc-500 font-bold my-0.5">0 / 0</span>
+                            <span id="gainPepiteGag" class="font-bold text-zinc-300 mt-0.5">0.00 €</span>
                         </div>
-                        <div class="bg-zinc-900/60 p-2 rounded border border-amber-500/30 text-center">
+                        <div class="bg-zinc-900/60 p-2 rounded border border-amber-500/30 text-center flex flex-col justify-center">
                             <span class="text-[8px] text-amber-400 block uppercase font-bold">Placé (Simu)</span>
-                            <span id="gainPepitePla" class="font-bold text-amber-400">0.00 €</span>
+                            <span id="statPepitePla" class="text-[9px] text-amber-500/70 font-bold my-0.5">0 / 0</span>
+                            <span id="gainPepitePla" class="font-bold text-amber-400 mt-0.5">0.00 €</span>
                         </div>
                     </div>
                 </div>
@@ -793,8 +791,11 @@
 
         async function calculateDailyStats(isAuto = false) {
             let statsProgress = document.getElementById('statsProgress');
-            let statBase = document.getElementById('statBase');
-            let statPepite = document.getElementById('statPepite');
+            let statBaseGag = document.getElementById('statBaseGag');
+            let statBasePla = document.getElementById('statBasePla');
+            let statPepiteGag = document.getElementById('statPepiteGag');
+            let statPepitePla = document.getElementById('statPepitePla');
+            
             let gainBasePla = document.getElementById('gainBasePla');
             let gainBaseGag = document.getElementById('gainBaseGag');
             let gainPepitePla = document.getElementById('gainPepitePla');
@@ -803,8 +804,10 @@
             let currentPalierText = document.getElementById('currentPalierText');
 
             if (!isAuto) {
-                statBase.textContent = `0 / 0`;
-                statPepite.textContent = `0 / 0`;
+                statBaseGag.textContent = `0 / 0`;
+                statBasePla.textContent = `0 / 0`;
+                statPepiteGag.textContent = `0 / 0`;
+                statPepitePla.textContent = `0 / 0`;
                 gainBasePla.textContent = `0.00 €`;
                 gainBaseGag.textContent = `0.00 €`;
                 gainPepitePla.textContent = `0.00 €`;
@@ -842,7 +845,8 @@
                 return;
             }
 
-            let baseWins = 0, pepiteWins = 0;
+            let baseWinsGag = 0, baseWinsPla = 0;
+            let pepiteWinsGag = 0, pepiteWinsPla = 0;
             let totalSpentBase = 0; 
             
             let totalProfitBasePla = 0;
@@ -891,15 +895,17 @@
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
                     // 1. BASE
-                    // TOUTES LES COTES SONT ACCEPTÉES (Filtre supprimé)
                     if (baseH) {
-                        // Gagnant Virtuel à 1€ pur (Toujours calculé même si on a arrêté de parier)
                         let gGagBase = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
                         if (gGagBase === 0 && baseArr === 1) gGagBase = baseH.cote; 
-                        if (gGagBase > 0) totalProfitBaseGag += (gGagBase * 1.0) - 1.0;
-                        else totalProfitBaseGag -= 1.0;
+                        
+                        if (gGagBase > 0) {
+                            baseWinsGag++;
+                            totalProfitBaseGag += (gGagBase * 1.0) - 1.0;
+                        } else {
+                            totalProfitBaseGag -= 1.0;
+                        }
 
-                        // Placé Réel en Progression (Stop si Objectif Atteint)
                         if (!objectifAtteint) {
                             let targetStakeBase = PROGRESSION[stepBase];
                             let actualStakeBase = currentBankroll > 0 ? Math.min(targetStakeBase, currentBankroll) : 0;
@@ -911,7 +917,7 @@
                             
                             let netBasePla = 0;
                             if (gPla > 0) {
-                                baseWins++; 
+                                baseWinsPla++; 
                                 netBasePla = (gPla * actualStakeBase) - actualStakeBase;
                                 totalProfitBasePla += netBasePla; 
                                 stepBase = 0; 
@@ -926,7 +932,6 @@
                             }
                             currentBankroll += netBasePla;
                             
-                            // VERIFICATION DU STOP-WIN
                             if (totalProfitBasePla >= PROFIT_TARGET) {
                                 objectifAtteint = true;
                             }
@@ -934,15 +939,17 @@
                     }
 
                     // 2. PÉPITE
-                    // TOUTES LES COTES SONT ACCEPTÉES (Filtre supprimé)
                     if (nuggetH) {
-                        // Gagnant Virtuel à 1€ pur
                         let gGagPepite = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
                         if (gGagPepite === 0 && nuggetArr === 1) gGagPepite = nuggetH.cote; 
-                        if (gGagPepite > 0) totalProfitPepiteGag += (gGagPepite * 1.0) - 1.0;
-                        else totalProfitPepiteGag -= 1.0;
+                        
+                        if (gGagPepite > 0) {
+                            pepiteWinsGag++;
+                            totalProfitPepiteGag += (gGagPepite * 1.0) - 1.0;
+                        } else {
+                            totalProfitPepiteGag -= 1.0;
+                        }
 
-                        // Placé Virtuel en Progression (Stop si Objectif Atteint)
                         if (!objectifAtteint) {
                             let simStakePepite = PROGRESSION[stepPepite];
 
@@ -950,7 +957,7 @@
                             if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
                             
                             if (gPla > 0) { 
-                                pepiteWins++; 
+                                pepiteWinsPla++; 
                                 totalProfitPepitePla += (gPla * simStakePepite) - simStakePepite;
                                 stepPepite = 0; 
                             } else { 
@@ -965,8 +972,10 @@
                     }
 
                     if (!isAuto) {
-                        statBase.textContent = `${baseWins} / ${coursesValidees}`;
-                        statPepite.textContent = `${pepiteWins} / ${coursesValidees}`;
+                        statBaseGag.textContent = `${baseWinsGag} / ${coursesValidees}`;
+                        statBasePla.textContent = `${baseWinsPla} / ${coursesValidees}`;
+                        statPepiteGag.textContent = `${pepiteWinsGag} / ${coursesValidees}`;
+                        statPepitePla.textContent = `${pepiteWinsPla} / ${coursesValidees}`;
                         
                         gainBasePla.innerHTML = formatMoneyHTML(totalProfitBasePla);
                         gainBaseGag.innerHTML = formatMoneyHTML(totalProfitBaseGag);
@@ -991,8 +1000,10 @@
             }
 
             if (coursesValidees > 0) {
-                statBase.textContent = `${baseWins} / ${coursesValidees}`;
-                statPepite.textContent = `${pepiteWins} / ${coursesValidees}`;
+                statBaseGag.textContent = `${baseWinsGag} / ${coursesValidees}`;
+                statBasePla.textContent = `${baseWinsPla} / ${coursesValidees}`;
+                statPepiteGag.textContent = `${pepiteWinsGag} / ${coursesValidees}`;
+                statPepitePla.textContent = `${pepiteWinsPla} / ${coursesValidees}`;
                 
                 gainBasePla.innerHTML = formatMoneyHTML(totalProfitBasePla);
                 gainBaseGag.innerHTML = formatMoneyHTML(totalProfitBaseGag);
