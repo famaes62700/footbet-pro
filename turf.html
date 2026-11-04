@@ -119,9 +119,16 @@
                     <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Joué Base: <strong id="totalSpentText" class="text-white">0.00 €</strong> <span class="text-zinc-500">(Max: <span id="maxStakeBaseText">0.00 €</span>)</span></span>
                     <span><i class="fa-solid fa-gem mr-1 text-amber-400"></i> Joué Pépite: <strong id="totalSpentPepiteText" class="text-amber-400">0.00 €</strong> <span class="text-zinc-500">(Max: <span id="maxStakePepiteText">0.00 €</span>)</span></span>
                 </div>
-                <div class="flex flex-col items-end space-y-1">
-                    <span class="text-[9px] uppercase text-zinc-400">Prochaine mise</span>
-                    <strong id="currentPalierText" class="text-amber-400 bg-zinc-900 px-2 py-0.5 rounded border border-amber-500/30 font-bold text-xs">5.00 €</strong>
+                <div class="flex flex-col items-end space-y-1 text-right">
+                    <span class="text-[9px] uppercase text-zinc-400">Prochaines mises</span>
+                    <div class="flex items-center space-x-1">
+                        <span class="text-[10px] text-zinc-500">Base:</span>
+                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-1.5 py-0.5 rounded border border-emerald-500/30 font-bold text-[11px]">5.00 €</strong>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <span class="text-[10px] text-zinc-500">Pépite:</span>
+                        <strong id="nextStakePepiteText" class="text-amber-400 bg-zinc-900 px-1.5 py-0.5 rounded border border-amber-500/30 font-bold text-[11px]">5.00 €</strong>
+                    </div>
                 </div>
             </div>
         </div>
@@ -791,7 +798,6 @@
         }
 
         function getStatForDateObj(d) {
-            // NOUVELLE CLÉ RÉTROACTIVE : LE CACHE EST VIDÉ ET TOUT REPART A ZERO AVEC LE FAVORI
             let key = `pmu_stats_trot_favori_v1_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
@@ -871,10 +877,12 @@
             
             let totalSpentText = document.getElementById('totalSpentText');
             let totalSpentPepiteText = document.getElementById('totalSpentPepiteText');
-            let currentPalierText = document.getElementById('currentPalierText');
             
             let maxStakeBaseText = document.getElementById('maxStakeBaseText');
             let maxStakePepiteText = document.getElementById('maxStakePepiteText');
+            
+            let nextStakeBaseText = document.getElementById('nextStakeBaseText');
+            let nextStakePepiteText = document.getElementById('nextStakePepiteText');
 
             if (!isAuto && statsProgress) {
                 statsProgress.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Analyse Trot en cours...";
@@ -910,6 +918,7 @@
 
             let baseWinsGag = 0, baseWinsPla = 0;
             let pepiteWinsGag = 0, pepiteWinsPla = 0;
+            
             let totalSpentBase = 0; 
             let totalSpentPepite = 0;
             
@@ -1012,6 +1021,7 @@
 
                     if (nuggetH) {
                         let simStakePepite = computeSmartStake(deficitSeriePepite);
+                        
                         totalSpentPepite += simStakePepite;
                         if (simStakePepite > maxStakePepite) maxStakePepite = simStakePepite;
 
@@ -1042,15 +1052,17 @@
             gainPepitePla.innerHTML = formatMoneyHTML(totalProfitPepitePla);
             gainPepiteGag.innerHTML = formatMoneyHTML(totalProfitPepiteGag);
             
-            totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
-            totalSpentPepiteText.textContent = `${totalSpentPepite.toFixed(2)} €`;
+            if (totalSpentText) totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
+            if (totalSpentPepiteText) totalSpentPepiteText.textContent = `${totalSpentPepite.toFixed(2)} €`;
             
             if (maxStakeBaseText) maxStakeBaseText.textContent = `${maxStakeBase.toFixed(2)} €`;
             if (maxStakePepiteText) maxStakePepiteText.textContent = `${maxStakePepite.toFixed(2)} €`;
             
-            let nextStake = computeSmartStake(deficitSerieBase);
-            currentPalierText.textContent = `${nextStake.toFixed(2)} €`;
-            currentPalierText.className = "text-amber-400 bg-zinc-900 px-2 py-0.5 rounded border border-amber-500/30 font-bold text-xs";
+            let nextStakeBase = computeSmartStake(deficitSerieBase);
+            let nextStakePepite = computeSmartStake(deficitSeriePepite);
+
+            if (nextStakeBaseText) nextStakeBaseText.textContent = `${nextStakeBase.toFixed(2)} €`;
+            if (nextStakePepiteText) nextStakePepiteText.textContent = `${nextStakePepite.toFixed(2)} €`;
             
             document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
 
