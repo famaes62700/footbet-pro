@@ -20,14 +20,14 @@
 
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center mb-3">
-            <h1 class="text-base sm:text-lg font-black tracking-wider text-orange-400 flex items-center">
-                <i class="fa-solid fa-basketball mr-2"></i>NBABet Pro
+            <h1 class="text-base sm:text-lg font-black tracking-wider text-orange-500 flex items-center">
+                <i class="fa-solid fa-basketball mr-2 text-orange-400"></i>NBABet Pro
             </h1>
             <div class="flex items-center space-x-2 sm:space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-orange-400 font-bold">
                     Bankroll: <span id="headerBankroll">100.00 €</span>
                 </div>
-                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-orange-400" onchange="loadNBAMatches()">
+                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-orange-500" onchange="loadNBAMatches()">
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Historique Semaine & Mois">
                     <i class="fa-solid fa-calendar-days text-orange-400"></i>
                 </button>
@@ -38,9 +38,6 @@
             <button id="btnFilterLive" onclick="toggleLiveFilter()" class="bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-500/50 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center whitespace-nowrap">
                 <i class="fa-solid fa-fire mr-1.5"></i> En Direct
             </button>
-            <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 focus:outline-none focus:border-orange-400 flex-grow">
-                <option value="ALL">Toutes les rencontres</option>
-            </select>
         </div>
     </header>
 
@@ -48,7 +45,7 @@
         
         <div class="flex justify-between items-center">
             <div id="statusText" class="text-xs text-orange-400 font-mono flex items-center w-3/4 truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion au parquet ESPN...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement de la NBA...
             </div>
             <button onclick="loadNBAMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-orange-400 px-3 py-1.5 rounded-lg border border-orange-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
@@ -66,7 +63,7 @@
             <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
                     <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Semaine en cours</h3>
-                    <div class="flex justify-between font-black"><span class="text-white">BÉNÉFICE NET :</span><span id="weekTotal" class="text-green-400">0.00 €</span></div>
+                    <div class="flex justify-between font-black"><span class="text-white">BÉNÉFICE NET :</span><span id="weekTotal" class="text-orange-400">0.00 €</span></div>
                 </div>
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
                     <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Mois par Mois (<span id="currentYearText"></span>)</h3>
@@ -75,14 +72,15 @@
             </div>
         </div>
 
+        <!-- BILAN DU JOUR & TOTAL MISES -->
         <div class="bg-zinc-900 border border-orange-500/30 rounded-2xl p-4 shadow-xl mb-2 flex justify-between items-center">
             <div>
                 <h2 class="text-xs font-bold uppercase text-orange-400 tracking-wider mb-1">Bilan du Jour</h2>
                 <div id="dailyProfit" class="text-lg font-black text-white">0.00 €</div>
             </div>
-            <div class="text-right">
-                <div class="text-[10px] text-zinc-400 uppercase">Matchs pariés</div>
-                <div id="dailyBetsCount" class="text-sm font-bold text-zinc-300">0</div>
+            <div class="text-right space-y-0.5">
+                <div class="text-[10px] text-zinc-400 uppercase">Matchs pariés: <strong id="dailyBetsCount" class="text-white">0</strong></div>
+                <div class="text-[10px] text-zinc-400 uppercase">Total Mises: <strong id="dailyTotalStake" class="text-orange-400">0.00 €</strong></div>
             </div>
         </div>
 
@@ -92,13 +90,58 @@
 
     <script>
         const now = new Date();
+        // Ajustement fuseau horaire pour éviter les décalages avec les matchs NBA nocturnes
         const localDateStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
         document.getElementById('matchDate').value = localDateStr;
 
         let currentMatches = [];
         let isLiveFilterActive = false;
         const INITIAL_BANKROLL = 100.0;
-        const STAKE_PERCENT = 0.02; 
+        const STAKE_PERCENT = 0.02; // 2% du capital
+
+        // ALGORITHME PRONOSTIC NBA (Puissance des franchises + Dynamique W/L)
+        const nbaPowerRankings = {
+            "Celtics": 96, "Thunder": 94, "Nuggets": 93, "Timberwolves": 91, 
+            "Knicks": 90, "Mavericks": 89, "76ers": 88, "Bucks": 87, 
+            "Lakers": 86, "Suns": 86, "Cavaliers": 85, "Pacers": 85,
+            "Warriors": 84, "Clippers": 83, "Kings": 83, "Heat": 82
+        };
+
+        function getTeamScore(teamName, recordStr) {
+            let baseScore = 75; // Niveau moyen NBA
+            
+            // 1. Appliquer le boost pour les top franchises
+            for (let t in nbaPowerRankings) {
+                if (teamName.includes(t)) {
+                    baseScore = nbaPowerRankings[t];
+                    break;
+                }
+            }
+
+            // 2. Affiner avec la forme actuelle (Bilan Victoires-Défaites)
+            if (recordStr && recordStr !== "0-0" && recordStr.includes('-')) {
+                let parts = recordStr.split('-');
+                if (parts.length >= 2) {
+                    let w = parseInt(parts[0]) || 0;
+                    let l = parseInt(parts[1]) || 0;
+                    let matches = w + l;
+                    if (matches > 5) { // Attendre quelques matchs pour lisser
+                        let winPct = (w / matches) * 100;
+                        return (baseScore * 0.6) + (winPct * 0.4); // 60% Force intrinsèque / 40% Forme du moment
+                    }
+                }
+            }
+            return baseScore;
+        }
+
+        function getAlgoPick(homeName, awayName, homeRec, awayRec) {
+            // L'avantage du terrain en NBA vaut statistiquement ~3 à 4 points d'équivalence
+            let hScore = getTeamScore(homeName, homeRec) + 4; 
+            let aScore = getTeamScore(awayName, awayRec);
+            
+            // Pas de match nul au basket, on tranche toujours pour le meilleur score
+            return (hScore >= aScore) ? 'HOME' : 'AWAY';
+        }
 
         setInterval(() => {
             if (document.getElementById('matchDate').value === localDateStr || isLiveFilterActive) {
@@ -109,7 +152,7 @@
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            let bgClass = type === 'success' ? 'bg-green-900/90 border-green-500/50 text-green-200' : (type === 'error' ? 'bg-red-900/90 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
+            let bgClass = type === 'success' ? 'bg-orange-900/90 border-orange-500/50 text-orange-200' : (type === 'error' ? 'bg-red-900/90 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
             toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center ${bgClass}`;
             toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
@@ -126,56 +169,57 @@
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération directe des scores NBA...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération des matchs NBA...';
                 document.getElementById('matchesContainer').innerHTML = '';
             }
             
             try {
+                // API ESPN pour la NBA
                 const url = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${apiDate}`;
-                let validMatches = [];
-
-                let res = await fetch(url).catch(() => null);
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("Erreur réseau");
+                const data = await res.json();
                 
-                if (res && res.ok) {
-                    let data = await res.json();
-                    (data.events || []).forEach(ev => {
-                        let match = ev.competitions[0];
-                        let p1 = match.competitors[0]; 
-                        let p2 = match.competitors[1]; 
-                        
-                        let state = match.status?.type?.state || 'pre';
-                        let isCompleted = match.status?.type?.completed || state === 'post';
-                        let isLive = state === 'in';
+                let validMatches = [];
+                (data.events || []).forEach(event => {
+                    let comp = event.competitions?.[0];
+                    if (!comp || !comp.competitors || comp.competitors.length < 2) return;
 
-                        let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
-                        
-                        let homeName = p1.team?.displayName || p1.team?.shortDisplayName || "Équipe Domicile";
-                        let awayName = p2.team?.displayName || p2.team?.shortDisplayName || "Équipe Extérieure";
-                        let homeLogo = p1.team?.logo || "";
-                        let awayLogo = p2.team?.logo || "";
+                    const state = comp.status?.type?.state || 'pre';
+                    const isCompleted = comp.status?.type?.completed || state === 'post';
+                    const isLive = state === 'in';
 
-                        let score1 = p1.score || "0";
-                        let score2 = p2.score || "0";
+                    let home = comp.competitors.find(c => c.homeAway === 'home') || comp.competitors[0];
+                    let away = comp.competitors.find(c => c.homeAway === 'away') || comp.competitors[1];
 
-                        let winner = null;
-                        if (isCompleted) {
-                            if (p1.winner === true || parseInt(score1) > parseInt(score2)) winner = 'P1';
-                            else if (p2.winner === true || parseInt(score2) > parseInt(score1)) winner = 'P2';
-                        }
+                    let homeName = home.team?.shortDisplayName || home.team?.displayName || "Domicile";
+                    let awayName = away.team?.shortDisplayName || away.team?.displayName || "Extérieur";
+                    let homeLogo = home.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(homeName)}&background=18181b&color=f97316&size=64`;
+                    let awayLogo = away.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(awayName)}&background=18181b&color=f97316&size=64`;
 
-                        validMatches.push({
-                            id: ev.id.toString(),
-                            status: status,
-                            statusDetail: match.status?.type?.shortDetail || "",
-                            utcDate: ev.date,
-                            competition: { name: "NBA" },
-                            homeTeam: { name: homeName, logo: homeLogo },
-                            awayTeam: { name: awayName, logo: awayLogo },
-                            winner: winner,
-                            score: { current: { home: score1, away: score2 } }
-                        });
+                    let homeRecord = home.records?.[0]?.summary || "0-0";
+                    let awayRecord = away.records?.[0]?.summary || "0-0";
+
+                    let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
+                    let sHome = parseInt(home.score) || 0;
+                    let sAway = parseInt(away.score) || 0;
+
+                    let winner = null;
+                    if (isCompleted) {
+                        if (sHome > sAway) winner = 'HOME';
+                        else if (sAway > sHome) winner = 'AWAY';
+                    }
+
+                    validMatches.push({
+                        id: event.id.toString(),
+                        status: status,
+                        statusDetail: comp.status?.type?.shortDetail || "",
+                        utcDate: event.date,
+                        homeTeam: { name: homeName, logo: homeLogo, score: sHome, record: homeRecord },
+                        awayTeam: { name: awayName, logo: awayLogo, score: sAway, record: awayRecord },
+                        winner: winner
                     });
-                }
+                });
 
                 validMatches.sort((a, b) => {
                     if (a.status === 'IN_PLAY' && b.status !== 'IN_PLAY') return -1;
@@ -186,11 +230,11 @@
                 currentMatches = validMatches;
 
                 if (currentMatches.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match NBA prévu à cette date.</span>`;
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match NBA trouvé à cette date.</span>`;
                 } else {
                     const liveCount = currentMatches.filter(m => m.status === 'IN_PLAY').length;
                     if (!isSilent) {
-                        statusText.innerHTML = `<span class="text-green-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs chargés (${liveCount} en direct)</span>`;
+                        statusText.innerHTML = `<span class="text-orange-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs NBA chargés (${liveCount} en direct)</span>`;
                     }
                 }
                 
@@ -199,7 +243,7 @@
 
             } catch (error) {
                 console.error(error);
-                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur réseau NBA.</span>`;
+                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur lors du chargement des matchs.</span>`;
             }
         }
 
@@ -222,96 +266,116 @@
             renderMatches(filtered);
         }
 
-        function computeAlgoPick(p1, p2) {
-            const topTier = ["Celtics", "Nuggets", "Thunder", "Timberwolves", "Knicks", "Mavericks", "Lakers", "Warriors"];
-            let f1 = 50; let f2 = 50; 
-            topTier.forEach(p => {
-                if (p1.toLowerCase().includes(p.toLowerCase())) f1 += 20;
-                if (p2.toLowerCase().includes(p.toLowerCase())) f2 += 20; 
-            });
-            return f1 >= f2 ? 'P1' : 'P2';
-        }
-
         function renderMatches(matchesToRender) {
             const container = document.getElementById('matchesContainer');
             const dateStr = document.getElementById('matchDate').value;
-            let savedBets = JSON.parse(localStorage.getItem(`nbabet_${dateStr}`)) || {};
+            // NOUVELLE CLÉ 'nbabet2_' POUR REPARTIR A ZERO
+            let savedBets = JSON.parse(localStorage.getItem(`nbabet2_${dateStr}`)) || {};
 
             container.innerHTML = '';
 
             if (matchesToRender.length === 0) {
-                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match NBA pour ce filtre actuellement.</div>`;
+                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match NBA pour ce filtre.</div>`;
                 return;
             }
+
+            let runningBankroll = INITIAL_BANKROLL;
+            currentMatches.forEach(m => {
+                if (savedBets[m.id]) {
+                    // Cote moyenne standard estimée à 1.80 pour la NBA (Handicap/Moneyline équilibré)
+                    runningBankroll += (m.status === 'FINISHED' && m.winner) ? (savedBets[m.id] === m.winner ? 1.80 * Math.max(0.5, runningBankroll * STAKE_PERCENT) : -Math.max(0.5, runningBankroll * STAKE_PERCENT)) : 0;
+                }
+            });
+            let currentStake = Math.max(0.5, runningBankroll * STAKE_PERCENT);
 
             matchesToRender.forEach(match => {
                 let isFinished = match.status === 'FINISHED';
                 let isLive = match.status === 'IN_PLAY';
                 
                 let homeName = match.homeTeam.name;
-                let homeLogo = match.homeTeam.logo;
                 let awayName = match.awayTeam.name;
+                let homeLogo = match.homeTeam.logo;
                 let awayLogo = match.awayTeam.logo;
-                
-                let sHome = match.score.current.home;
-                let sAway = match.score.current.away;
+                let sHome = match.homeTeam.score;
+                let sAway = match.awayTeam.score;
+
+                let algoPrediction = getAlgoPick(match.homeTeam.name, match.awayTeam.name, match.homeTeam.record, match.awayTeam.record);
+                let badgeAlgo = `<span class="mt-1.5 text-[9px] text-white bg-zinc-950/40 px-1.5 py-0.5 rounded font-black tracking-wider"><i class="fa-solid fa-bolt mr-1 text-orange-400"></i>PRONO</span>`;
 
                 let timeStr = new Date(match.utcDate).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
 
-                let statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-[10px] uppercase font-bold">${timeStr}</span>`;
-                if (isLive) statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse">🔴 ${match.statusDetail}</span>`;
-                if (isFinished) statusBadge = `<span class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px] uppercase font-bold">Terminé</span>`;
+                let statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">${timeStr}</span>`;
+                if (isLive) statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold animate-pulse">🔴 En direct (${match.statusDetail})</span>`;
+                if (isFinished) statusBadge = `<span class="bg-zinc-800 text-zinc-500 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">Terminé</span>`;
 
                 let winner = match.winner;
                 let myBet = savedBets[match.id]; 
-                let algoPick = computeAlgoPick(homeName, awayName);
 
-                let baseClass = "relative flex flex-col items-center justify-center p-3 rounded-xl border transition ";
-                let homeClass = baseClass + (algoPick === 'P1' ? "bg-orange-900/20 border-orange-500/40 " : "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ");
-                let awayClass = baseClass + (algoPick === 'P2' ? "bg-cyan-900/20 border-cyan-500/40 " : "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ");
+                // Uniquement 2 boutons en NBA (pas de nul)
+                let baseBtn = "relative flex-1 py-4 px-2 rounded-xl font-bold text-xs transition-all duration-200 border text-center flex flex-col items-center justify-center shadow-sm overflow-hidden ";
+                
+                let homeClass = baseBtn + (myBet === 'HOME' 
+                    ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_12px_rgba(37,99,235,0.6)] scale-[1.02]" 
+                    : "bg-blue-900/40 text-blue-300 border-blue-500/40 hover:bg-blue-800/60 hover:text-white");
+                    
+                let awayClass = baseBtn + (myBet === 'AWAY' 
+                    ? "bg-emerald-600 text-white border-emerald-500 shadow-[0_0_12px_rgba(5,150,105,0.6)] scale-[1.02]" 
+                    : "bg-emerald-900/40 text-emerald-300 border-emerald-500/40 hover:bg-emerald-800/60 hover:text-white");
 
-                if (myBet === 'P1') homeClass = baseClass + "bg-orange-600/40 border-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.3)] ";
-                if (myBet === 'P2') awayClass = baseClass + "bg-cyan-600/40 border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.3)] ";
-
-                // Si le match est terminé, on grise les boutons et on enlève l'effet de survol
                 if (isFinished) {
-                    homeClass = homeClass.replace('hover:bg-zinc-800', '') + ' cursor-not-allowed opacity-80';
-                    awayClass = awayClass.replace('hover:bg-zinc-800', '') + ' cursor-not-allowed opacity-80';
+                    homeClass = baseBtn + (myBet === 'HOME' ? "bg-blue-900/50 text-blue-300 border-blue-800" : "bg-zinc-900 text-zinc-600 border-zinc-800") + " cursor-not-allowed opacity-75";
+                    awayClass = baseBtn + (myBet === 'AWAY' ? "bg-emerald-900/50 text-emerald-300 border-emerald-800" : "bg-zinc-900 text-zinc-600 border-zinc-800") + " cursor-not-allowed opacity-75";
                 }
 
                 let card = document.createElement('div');
-                card.className = "bg-zinc-900 border border-zinc-800 rounded-xl p-3 shadow-md";
+                card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-xl space-y-4";
 
                 card.innerHTML = `
-                    <div class="flex justify-between items-center border-b border-zinc-800/50 pb-2 mb-3">
+                    <div class="flex justify-between items-center border-b border-zinc-800 pb-2.5">
                         ${statusBadge}
-                        <span class="text-[10px] text-zinc-300 font-bold tracking-wider flex items-center text-right w-2/3 truncate justify-end"><i class="fa-solid fa-basketball text-orange-400 mr-1.5"></i>${match.competition.name}</span>
+                        <span class="text-[10px] text-zinc-400 font-bold tracking-wider flex items-center"><i class="fa-solid fa-basketball text-orange-500 mr-1.5"></i>NBA</span>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-3 mt-1">
-                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'P1')"`} class="${homeClass}">
-                            <div class="flex flex-col items-center justify-center mb-1 h-14">
-                                ${homeLogo ? `<img src="${homeLogo}" class="w-8 h-8 object-contain mb-1 drop-shadow-md">` : `<i class="fa-solid fa-basketball text-zinc-500 mb-1"></i>`}
-                                <span class="text-[11px] font-black text-center leading-tight w-full ${myBet === 'P1' ? 'text-white' : 'text-orange-400'} drop-shadow-md truncate px-1">${homeName}</span>
+                    <div class="flex justify-between items-center px-1">
+                        <div class="flex items-center space-x-2.5 w-1/3 overflow-hidden">
+                            <img src="${homeLogo}" class="w-8 h-8 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=H&background=18181b&color=f97316'">
+                            <div class="flex flex-col">
+                                <span class="text-xs font-black text-white truncate">${homeName}</span>
+                                <span class="text-[9px] text-zinc-500 font-mono">${match.homeTeam.record}</span>
                             </div>
-                            <span class="text-xl font-black ${isFinished && winner === 'P1' ? 'text-orange-400' : 'text-zinc-200'}">${sHome}</span>
-                        </button>
+                        </div>
+                        <span class="text-base font-black text-orange-400 px-3 py-1 bg-zinc-950 rounded-lg border border-zinc-800">${sHome} - ${sAway}</span>
+                        <div class="flex items-center justify-end space-x-2.5 w-1/3 overflow-hidden">
+                            <div class="flex flex-col text-right">
+                                <span class="text-xs font-black text-white truncate">${awayName}</span>
+                                <span class="text-[9px] text-zinc-500 font-mono">${match.awayTeam.record}</span>
+                            </div>
+                            <img src="${awayLogo}" class="w-8 h-8 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=A&background=18181b&color=f97316'">
+                        </div>
+                    </div>
 
-                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'P2')"`} class="${awayClass}">
-                            <div class="flex flex-col items-center justify-center mb-1 h-14">
-                                ${awayLogo ? `<img src="${awayLogo}" class="w-8 h-8 object-contain mb-1 drop-shadow-md">` : `<i class="fa-solid fa-basketball text-zinc-500 mb-1"></i>`}
-                                <span class="text-[11px] font-black text-center leading-tight w-full ${myBet === 'P2' ? 'text-white' : 'text-cyan-400'} drop-shadow-md truncate px-1">${awayName}</span>
-                            </div>
-                            <span class="text-xl font-black ${isFinished && winner === 'P2' ? 'text-orange-400' : 'text-zinc-200'}">${sAway}</span>
+                    <div class="flex gap-3 pt-1">
+                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'HOME')"`} class="${homeClass}">
+                            <span class="text-[10px] uppercase font-bold tracking-wider mb-0.5 opacity-80">1 (Domicile)</span>
+                            <span class="truncate w-full text-[11px] leading-tight">${homeName}</span>
+                            ${algoPrediction === 'HOME' ? badgeAlgo : ''}
+                        </button>
+                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'AWAY')"`} class="${awayClass}">
+                            <span class="text-[10px] uppercase font-bold tracking-wider mb-0.5 opacity-80">2 (Extérieur)</span>
+                            <span class="truncate w-full text-[11px] leading-tight">${awayName}</span>
+                            ${algoPrediction === 'AWAY' ? badgeAlgo : ''}
                         </button>
                     </div>
                     
                     ${myBet ? `
-                    <div class="mt-3 text-center text-[10px] bg-zinc-950 rounded py-1.5 border border-zinc-800">
-                        ${isFinished 
-                            ? (myBet === winner ? '<span class="text-green-400 font-bold"><i class="fa-solid fa-check"></i> Pari Gagné</span>' : '<span class="text-red-400 font-bold"><i class="fa-solid fa-xmark"></i> Pari Perdu</span>') 
-                            : '<span class="text-orange-400">Pari enregistré (En attente du résultat)</span>'
-                        }
+                    <div class="flex justify-between items-center text-[11px] bg-zinc-950 rounded-xl px-3.5 py-2.5 border border-zinc-800 mt-2">
+                        <span class="text-zinc-400">Mise engagée : <strong class="text-orange-400">${currentStake.toFixed(2)} €</strong></span>
+                        <div>
+                            ${isFinished 
+                                ? (myBet === winner ? '<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check"></i> Gagné</span>' : '<span class="text-red-400 font-bold"><i class="fa-solid fa-xmark"></i> Perdu</span>') 
+                                : '<span class="text-orange-400 font-medium">Pari validé (En attente)</span>'
+                            }
+                        </div>
                     </div>` : ''}
                 `;
                 container.appendChild(card);
@@ -326,7 +390,7 @@
             }
 
             const dateStr = document.getElementById('matchDate').value;
-            let savedBets = JSON.parse(localStorage.getItem(`nbabet_${dateStr}`)) || {};
+            let savedBets = JSON.parse(localStorage.getItem(`nbabet2_${dateStr}`)) || {};
             if (savedBets[matchId] === pick) {
                 delete savedBets[matchId];
                 showToast("Pari annulé");
@@ -334,57 +398,56 @@
                 savedBets[matchId] = pick;
                 showToast("Pari validé", "success");
             }
-            localStorage.setItem(`nbabet_${dateStr}`, JSON.stringify(savedBets));
+            localStorage.setItem(`nbabet2_${dateStr}`, JSON.stringify(savedBets));
             applyFilters();
             calculateDailyBankroll();
         }
 
         function calculateDailyBankroll() {
             const dateStr = document.getElementById('matchDate').value;
-            let savedBets = JSON.parse(localStorage.getItem(`nbabet_${dateStr}`)) || {};
+            let savedBets = JSON.parse(localStorage.getItem(`nbabet2_${dateStr}`)) || {};
             
-            let dailyProfit = 0; let betsCount = 0; let currentBankroll = INITIAL_BANKROLL;
+            let dailyProfit = 0; 
+            let betsCount = 0; 
+            let totalStake = 0;
+            let currentBankroll = INITIAL_BANKROLL;
 
             currentMatches.forEach(match => {
                 let myBet = savedBets[match.id];
                 if (myBet) {
                     betsCount++;
                     let currentStake = Math.max(0.5, currentBankroll * STAKE_PERCENT);
+                    totalStake += currentStake;
 
                     if (match.status === 'FINISHED' && match.winner) {
                         if (myBet === match.winner) {
-                            dailyProfit += ((1.85 * currentStake) - currentStake); 
+                            let netWin = (1.80 * currentStake) - currentStake; // Multiplicateur moyen NBA
+                            dailyProfit += netWin;
+                            currentBankroll += netWin;
                         } else {
                             dailyProfit -= currentStake;
+                            currentBankroll -= currentStake;
                         }
                     }
                 }
             });
 
             document.getElementById('dailyBetsCount').textContent = betsCount;
+            document.getElementById('dailyTotalStake').textContent = `${totalStake.toFixed(2)} €`;
+
             let profitEl = document.getElementById('dailyProfit');
             profitEl.textContent = `${dailyProfit > 0 ? '+' : ''}${dailyProfit.toFixed(2)} €`;
-            profitEl.className = `text-lg font-black ${dailyProfit > 0 ? 'text-green-400' : (dailyProfit < 0 ? 'text-red-400' : 'text-white')}`;
+            profitEl.className = `text-lg font-black ${dailyProfit > 0 ? 'text-emerald-400' : (dailyProfit < 0 ? 'text-red-400' : 'text-white')}`;
             document.getElementById('headerBankroll').textContent = `${(INITIAL_BANKROLL + dailyProfit).toFixed(2)} €`;
 
             if (betsCount > 0 || dailyProfit !== 0 || (savedBets && Object.keys(savedBets).length > 0)) {
-                let history = JSON.parse(localStorage.getItem('nbabet_full_history')) || {};
+                let history = JSON.parse(localStorage.getItem('nbabet2_full_history')) || {};
                 history[dateStr] = dailyProfit;
-                localStorage.setItem('nbabet_full_history', JSON.stringify(history));
+                localStorage.setItem('nbabet2_full_history', JSON.stringify(history));
             }
 
             if (!document.getElementById('historyBlock').classList.contains('hidden')) {
                 showHistoryStats();
-            }
-        }
-
-        function toggleHistoryStats() {
-            let block = document.getElementById('historyBlock');
-            if (block.classList.contains('hidden')) {
-                block.classList.remove('hidden');
-                showHistoryStats();
-            } else {
-                block.classList.add('hidden');
             }
         }
 
@@ -394,7 +457,7 @@
             let year = currentViewDate.getFullYear();
             
             document.getElementById('currentYearText').textContent = year;
-            let history = JSON.parse(localStorage.getItem('nbabet_full_history')) || {};
+            let history = JSON.parse(localStorage.getItem('nbabet2_full_history')) || {};
 
             let dayOfWeek = currentViewDate.getDay() || 7; 
             let monday = new Date(currentViewDate);
@@ -410,7 +473,7 @@
 
             let wpEl = document.getElementById('weekTotal');
             wpEl.textContent = `${wTotal > 0 ? '+' : ''}${wTotal.toFixed(2)} €`;
-            wpEl.className = wTotal > 0 ? 'text-green-400 font-black' : (wTotal < 0 ? 'text-red-400 font-black' : 'text-zinc-400 font-black');
+            wpEl.className = wTotal > 0 ? 'text-orange-400 font-black' : (wTotal < 0 ? 'text-red-400 font-black' : 'text-zinc-400 font-black');
 
             const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
             let monthsGrid = document.getElementById('monthsGrid');
@@ -438,7 +501,7 @@
                         ? "bg-zinc-800 p-3 rounded-xl border border-orange-500/50 mb-2 flex justify-between items-center text-xs" 
                         : "bg-zinc-800/50 p-3 rounded-xl border border-zinc-700/50 mb-2 flex justify-between items-center text-xs";
 
-                    let totColor = mTot >= 0 ? 'text-green-400' : 'text-red-400';
+                    let totColor = mTot >= 0 ? 'text-orange-400' : 'text-red-400';
                     div.innerHTML = `
                         <span class="font-bold ${isCurrentMonth ? 'text-white' : 'text-zinc-300'}">${monthNames[m]}</span>
                         <span class="font-black ${totColor}">${mTot > 0 ? '+' : ''}${mTot.toFixed(2)} €</span>
