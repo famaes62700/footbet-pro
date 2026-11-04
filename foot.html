@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro - Europe (Fixé)</title>
+    <title>FootBet Pro - Europe (Couleurs & Pronos)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -101,28 +101,50 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02; // 2% du capital
 
-        // ALGORITHME PRONOSTIC
-        function getTeamScore(recordStr) {
-            if (!recordStr) return 50; 
-            let parts = recordStr.split('-');
-            if (parts.length >= 3) {
-                let w = parseInt(parts[0]) || 0;
-                let d = parseInt(parts[1]) || 0;
-                let l = parseInt(parts[2]) || 0;
-                let total = w + d + l;
-                if (total === 0) return 50;
-                return ((w * 3 + d * 1) / (total * 3)) * 100;
+        // NOUVEL ALGORITHME PRONOSTIC (Cohérent avec classement ELO simulé)
+        const topTeams = {
+            "Real Madrid": 95, "Manchester City": 95, "Bayern Munich": 94, "Liverpool": 93, "Arsenal": 92, "Barcelona": 92,
+            "Paris Saint-Germain": 90, "Inter Milan": 90, "Bayer Leverkusen": 88, "Borussia Dortmund": 85,
+            "Juventus": 85, "AC Milan": 85, "Atletico Madrid": 85, "Napoli": 84, "Chelsea": 83, "Tottenham": 83, 
+            "Aston Villa": 82, "Marseille": 80, "Monaco": 80, "Lille": 78, "Lens": 75, "Lyon": 75,
+            "Sporting CP": 82, "Benfica": 80, "FC Porto": 80, "PSV Eindhoven": 78, "Atalanta": 82, "RB Leipzig": 82
+        };
+
+        function getTeamScore(teamName, recordStr) {
+            let baseScore = 60; // Niveau moyen Ligue 1 / Liga etc.
+            
+            // 1. Appliquer le boost pour les top clubs
+            for (let t in topTeams) {
+                if (teamName.includes(t)) {
+                    baseScore = topTeams[t];
+                    break;
+                }
             }
-            return 50;
+
+            // 2. Affiner avec la forme actuelle si disponible (W-D-L)
+            if (recordStr && recordStr !== "0-0-0" && recordStr.includes('-')) {
+                let parts = recordStr.split('-');
+                if (parts.length >= 3) {
+                    let w = parseInt(parts[0]) || 0;
+                    let d = parseInt(parts[1]) || 0;
+                    let l = parseInt(parts[2]) || 0;
+                    let matches = w + d + l;
+                    if (matches > 3) {
+                        let winPct = ((w * 3 + d) / (matches * 3)) * 100;
+                        return (baseScore * 0.5) + (winPct * 0.5); // Mix réputation + forme
+                    }
+                }
+            }
+            return baseScore;
         }
 
-        function getAlgoPick(homeRec, awayRec) {
-            let hScore = getTeamScore(homeRec) + 12; // Avantage domicile
-            let aScore = getTeamScore(awayRec);
+        function getAlgoPick(homeName, awayName, homeRec, awayRec) {
+            let hScore = getTeamScore(homeName, homeRec) + 6; // +6 points pour l'avantage à domicile
+            let aScore = getTeamScore(awayName, awayRec);
             
-            if (hScore > aScore + 15) return 'HOME';
-            if (aScore > hScore + 5) return 'AWAY';
-            return 'DRAW';
+            if (hScore > aScore + 8) return 'HOME'; // Avantage net domicile
+            if (aScore > hScore + 4) return 'AWAY'; // Avantage net extérieur (doit surmonter le terrain)
+            return 'DRAW'; // Match serré
         }
 
         setInterval(() => {
@@ -156,7 +178,6 @@
             }
             
             try {
-                // FETCH EXPLICITE POUR GARANTIR L'AFFICHAGE DE LA FRANCE, ESPAGNE, ITALIE, ANGLETERRE, ALLEMAGNE ET COUPES D'EUROPE
                 const leagues = ['fra.1', 'eng.1', 'esp.1', 'ita.1', 'ger.1', 'uefa.champions', 'uefa.europa'];
                 const fetchPromises = leagues.map(league => 
                     fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${league}/scoreboard?dates=${apiDate}`)
@@ -204,7 +225,6 @@
                             else winner = 'DRAW';
                         }
 
-                        // Nom Propre de la Compétition
                         let displayCompName = leagueName.toUpperCase();
                         if (displayCompName.includes('FRA.1')) displayCompName = 'LIGUE 1';
                         else if (displayCompName.includes('ENG.1')) displayCompName = 'PREMIER LEAGUE';
@@ -330,8 +350,8 @@
                 let sHome = match.homeTeam.score;
                 let sAway = match.awayTeam.score;
 
-                let algoPrediction = getAlgoPick(match.homeTeam.record, match.awayTeam.record);
-                let badgeAlgo = `<span class="mt-1.5 text-[9px] text-amber-400 bg-amber-900/20 px-1.5 py-0.5 rounded font-black tracking-wider"><i class="fa-solid fa-bolt mr-1"></i>PRONO</span>`;
+                let algoPrediction = getAlgoPick(match.homeTeam.name, match.awayTeam.name, match.homeTeam.record, match.awayTeam.record);
+                let badgeAlgo = `<span class="mt-1.5 text-[9px] text-white bg-zinc-950/40 px-1.5 py-0.5 rounded font-black tracking-wider"><i class="fa-solid fa-bolt mr-1 text-amber-400"></i>PRONO</span>`;
 
                 let timeStr = new Date(match.utcDate).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
 
@@ -342,20 +362,20 @@
                 let winner = match.winner;
                 let myBet = savedBets[match.id]; 
 
-                // GRANDS CARRÉS NEUTRES QUI SE COLORENT UNIQUEMENT AU CLIC
+                // CARRÉS COLORÉS PAR DÉFAUT (Bleu, Jaune, Vert)
                 let baseBtn = "relative flex-1 py-4 px-2 rounded-xl font-bold text-xs transition-all duration-200 border text-center flex flex-col items-center justify-center shadow-sm overflow-hidden ";
                 
                 let homeClass = baseBtn + (myBet === 'HOME' 
                     ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_12px_rgba(37,99,235,0.6)] scale-[1.02]" 
-                    : "bg-zinc-800/80 text-zinc-400 border-zinc-700 hover:bg-zinc-700 hover:text-white");
+                    : "bg-blue-900/40 text-blue-300 border-blue-500/40 hover:bg-blue-800/60 hover:text-white");
                     
                 let drawClass = baseBtn + (myBet === 'DRAW' 
                     ? "bg-amber-500 text-white border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.6)] scale-[1.02]" 
-                    : "bg-zinc-800/80 text-zinc-400 border-zinc-700 hover:bg-zinc-700 hover:text-white");
+                    : "bg-amber-900/40 text-amber-300 border-amber-500/40 hover:bg-amber-800/60 hover:text-white");
                     
                 let awayClass = baseBtn + (myBet === 'AWAY' 
                     ? "bg-emerald-600 text-white border-emerald-500 shadow-[0_0_12px_rgba(5,150,105,0.6)] scale-[1.02]" 
-                    : "bg-zinc-800/80 text-zinc-400 border-zinc-700 hover:bg-zinc-700 hover:text-white");
+                    : "bg-emerald-900/40 text-emerald-300 border-emerald-500/40 hover:bg-emerald-800/60 hover:text-white");
 
                 if (isFinished) {
                     homeClass = baseBtn + (myBet === 'HOME' ? "bg-blue-900/50 text-blue-300 border-blue-800" : "bg-zinc-900 text-zinc-600 border-zinc-800") + " cursor-not-allowed opacity-75";
@@ -386,17 +406,17 @@
 
                     <div class="flex gap-2.5 pt-1">
                         <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'HOME')"`} class="${homeClass}">
-                            <span class="text-[10px] uppercase font-bold tracking-wider mb-0.5 ${myBet === 'HOME' ? 'text-blue-100' : 'text-zinc-500'}">1</span>
+                            <span class="text-[10px] uppercase font-bold tracking-wider mb-0.5 opacity-80">1</span>
                             <span class="truncate w-full text-[11px] leading-tight">${homeName}</span>
                             ${algoPrediction === 'HOME' ? badgeAlgo : ''}
                         </button>
                         <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'DRAW')"`} class="${drawClass}">
-                            <span class="text-[10px] uppercase font-bold tracking-wider mb-0.5 ${myBet === 'DRAW' ? 'text-amber-100' : 'text-zinc-500'}">N</span>
+                            <span class="text-[10px] uppercase font-bold tracking-wider mb-0.5 opacity-80">N</span>
                             <span class="text-[11px] leading-tight">Nul</span>
                             ${algoPrediction === 'DRAW' ? badgeAlgo : ''}
                         </button>
                         <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'AWAY')"`} class="${awayClass}">
-                            <span class="text-[10px] uppercase font-bold tracking-wider mb-0.5 ${myBet === 'AWAY' ? 'text-emerald-100' : 'text-zinc-500'}">2</span>
+                            <span class="text-[10px] uppercase font-bold tracking-wider mb-0.5 opacity-80">2</span>
                             <span class="truncate w-full text-[11px] leading-tight">${awayName}</span>
                             ${algoPrediction === 'AWAY' ? badgeAlgo : ''}
                         </button>
