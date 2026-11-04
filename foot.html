@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro - Live & Historique</title>
+    <title>FootBet Pro - Europe (Fixé)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,7 +21,7 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center mb-3">
             <h1 class="text-base sm:text-lg font-black tracking-wider text-blue-400 flex items-center">
-                <i class="fa-solid fa-futbol mr-2 text-emerald-400"></i>FootBet Pro
+                <i class="fa-solid fa-futbol mr-2 text-blue-500"></i>FootBet Pro
             </h1>
             <div class="flex items-center space-x-2 sm:space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-blue-400 font-bold">
@@ -48,7 +48,7 @@
         
         <div class="flex justify-between items-center">
             <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center w-3/4 truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs européens...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement de l'Europe...
             </div>
             <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
@@ -59,7 +59,7 @@
         <div id="historyBlock" class="hidden bg-zinc-900 border border-blue-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
-                    <i class="fa-solid fa-vault mr-1.5 text-blue-400"></i> Vos Gains Cumulés Football
+                    <i class="fa-solid fa-vault mr-1.5 text-blue-400"></i> Vos Gains Cumulés
                 </h2>
                 <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
             </div>
@@ -99,26 +99,9 @@
         let currentMatches = [];
         let isLiveFilterActive = false;
         const INITIAL_BANKROLL = 100.0;
-        const STAKE_PERCENT = 0.02; // 2% du capital actuel
+        const STAKE_PERCENT = 0.02; // 2% du capital
 
-        // Filtre ciblé exclusif avec les codes exacts de l'API ESPN
-        function isMajorEuropeanCompetition(compName) {
-            let name = String(compName || "").toUpperCase();
-            const whitelist = [
-                "LIGUE 1", "FRA.1", "FRANCE", 
-                "PREMIER LEAGUE", "ENG.1", "ENGLAND", 
-                "LA LIGA", "ESP.1", "SPAIN", "ESPAGNE", 
-                "SERIE A", "ITA.1", "ITALY", "ITALIE", 
-                "BUNDESLIGA", "GER.1", "GERMANY", "ALLEMAGNE", 
-                "UEFA.CHAMPIONS", "CHAMPIONS", 
-                "UEFA.EUROPA", "EUROPA", 
-                "UEFA.CONFERENCE", "CONFERENCE", 
-                "UEFA"
-            ];
-            return whitelist.some(w => name.includes(w));
-        }
-
-        // ALGORITHME DE PRONOSTIC
+        // ALGORITHME PRONOSTIC
         function getTeamScore(recordStr) {
             if (!recordStr) return 50; 
             let parts = recordStr.split('-');
@@ -168,73 +151,79 @@
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération des matchs européens...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Interrogation sécurisée des championnats...';
                 document.getElementById('matchesContainer').innerHTML = '';
             }
             
             try {
-                const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard?dates=${apiDate}`;
-                const res = await fetch(url);
-                if (!res.ok) throw new Error("Erreur réseau");
-                const data = await res.json();
-                
+                // FETCH EXPLICITE POUR GARANTIR L'AFFICHAGE DE LA FRANCE, ESPAGNE, ITALIE, ANGLETERRE, ALLEMAGNE ET COUPES D'EUROPE
+                const leagues = ['fra.1', 'eng.1', 'esp.1', 'ita.1', 'ger.1', 'uefa.champions', 'uefa.europa'];
+                const fetchPromises = leagues.map(league => 
+                    fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${league}/scoreboard?dates=${apiDate}`)
+                    .then(res => res.ok ? res.json() : null)
+                    .catch(() => null)
+                );
+
+                const results = await Promise.all(fetchPromises);
                 let validMatches = [];
-                (data.events || []).forEach(event => {
-                    let leagueName = event.season?.slug || event.competitions?.[0]?.tournament?.name || event.leagues?.[0]?.name || "Football";
-                    
-                    if (!isMajorEuropeanCompetition(leagueName)) return;
 
-                    let comp = event.competitions?.[0];
-                    if (!comp || !comp.competitors || comp.competitors.length < 2) return;
+                results.forEach(data => {
+                    if (!data || !data.events) return;
 
-                    const compDateStr = event.date ? new Date(event.date).toISOString().split('T')[0] : dateStr;
-                    const state = comp.status?.type?.state || 'pre';
-                    const isCompleted = comp.status?.type?.completed || state === 'post';
-                    const isLive = state === 'in';
+                    data.events.forEach(event => {
+                        let leagueName = event.season?.slug || event.competitions?.[0]?.tournament?.name || event.leagues?.[0]?.name || "Football";
+                        let comp = event.competitions?.[0];
+                        if (!comp || !comp.competitors || comp.competitors.length < 2) return;
 
-                    if (compDateStr !== dateStr && !isLive) return;
+                        const compDateStr = event.date ? new Date(event.date).toISOString().split('T')[0] : dateStr;
+                        const state = comp.status?.type?.state || 'pre';
+                        const isCompleted = comp.status?.type?.completed || state === 'post';
+                        const isLive = state === 'in';
 
-                    let home = comp.competitors.find(c => c.homeAway === 'home') || comp.competitors[0];
-                    let away = comp.competitors.find(c => c.homeAway === 'away') || comp.competitors[1];
+                        if (compDateStr !== dateStr && !isLive) return;
 
-                    let homeName = home.team?.shortDisplayName || home.team?.displayName || "Domicile";
-                    let awayName = away.team?.shortDisplayName || away.team?.displayName || "Extérieur";
-                    let homeLogo = home.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(homeName)}&background=18181b&color=60a5fa&size=64`;
-                    let awayLogo = away.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(awayName)}&background=18181b&color=60a5fa&size=64`;
+                        let home = comp.competitors.find(c => c.homeAway === 'home') || comp.competitors[0];
+                        let away = comp.competitors.find(c => c.homeAway === 'away') || comp.competitors[1];
 
-                    let homeRecord = home.records?.[0]?.summary || "";
-                    let awayRecord = away.records?.[0]?.summary || "";
+                        let homeName = home.team?.shortDisplayName || home.team?.displayName || "Domicile";
+                        let awayName = away.team?.shortDisplayName || away.team?.displayName || "Extérieur";
+                        let homeLogo = home.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(homeName)}&background=18181b&color=60a5fa&size=64`;
+                        let awayLogo = away.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(awayName)}&background=18181b&color=60a5fa&size=64`;
 
-                    let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
-                    let sHome = parseInt(home.score) || 0;
-                    let sAway = parseInt(away.score) || 0;
+                        let homeRecord = home.records?.[0]?.summary || "0-0-0";
+                        let awayRecord = away.records?.[0]?.summary || "0-0-0";
 
-                    let winner = null;
-                    if (isCompleted) {
-                        if (sHome > sAway) winner = 'HOME';
-                        else if (sAway > sHome) winner = 'AWAY';
-                        else winner = 'DRAW';
-                    }
+                        let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
+                        let sHome = parseInt(home.score) || 0;
+                        let sAway = parseInt(away.score) || 0;
 
-                    // Formatage du nom de la compétition pour le visuel
-                    let displayCompName = leagueName.toUpperCase();
-                    if (displayCompName.includes('FRA.1')) displayCompName = 'LIGUE 1';
-                    else if (displayCompName.includes('ENG.1')) displayCompName = 'PREMIER LEAGUE';
-                    else if (displayCompName.includes('ESP.1')) displayCompName = 'LA LIGA';
-                    else if (displayCompName.includes('ITA.1')) displayCompName = 'SERIE A';
-                    else if (displayCompName.includes('GER.1')) displayCompName = 'BUNDESLIGA';
-                    else if (displayCompName.includes('UEFA.CHAMPIONS')) displayCompName = 'CHAMPIONS LEAGUE';
-                    else if (displayCompName.includes('UEFA.EUROPA')) displayCompName = 'EUROPA LEAGUE';
+                        let winner = null;
+                        if (isCompleted) {
+                            if (sHome > sAway) winner = 'HOME';
+                            else if (sAway > sHome) winner = 'AWAY';
+                            else winner = 'DRAW';
+                        }
 
-                    validMatches.push({
-                        id: event.id.toString(),
-                        status: status,
-                        statusDetail: comp.status?.type?.shortDetail || "",
-                        utcDate: event.date,
-                        competition: { name: displayCompName },
-                        homeTeam: { name: homeName, logo: homeLogo, score: sHome, record: homeRecord },
-                        awayTeam: { name: awayName, logo: awayLogo, score: sAway, record: awayRecord },
-                        winner: winner
+                        // Nom Propre de la Compétition
+                        let displayCompName = leagueName.toUpperCase();
+                        if (displayCompName.includes('FRA.1')) displayCompName = 'LIGUE 1';
+                        else if (displayCompName.includes('ENG.1')) displayCompName = 'PREMIER LEAGUE';
+                        else if (displayCompName.includes('ESP.1')) displayCompName = 'LA LIGA';
+                        else if (displayCompName.includes('ITA.1')) displayCompName = 'SERIE A';
+                        else if (displayCompName.includes('GER.1')) displayCompName = 'BUNDESLIGA';
+                        else if (displayCompName.includes('UEFA.CHAMPIONS')) displayCompName = 'CHAMPIONS LEAGUE';
+                        else if (displayCompName.includes('UEFA.EUROPA')) displayCompName = 'EUROPA LEAGUE';
+
+                        validMatches.push({
+                            id: event.id.toString(),
+                            status: status,
+                            statusDetail: comp.status?.type?.shortDetail || "",
+                            utcDate: event.date,
+                            competition: { name: displayCompName },
+                            homeTeam: { name: homeName, logo: homeLogo, score: sHome, record: homeRecord },
+                            awayTeam: { name: awayName, logo: awayLogo, score: sAway, record: awayRecord },
+                            winner: winner
+                        });
                     });
                 });
 
@@ -247,7 +236,7 @@
                 currentMatches = validMatches;
 
                 if (currentMatches.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucun grand match européen ce jour.</span>`;
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match européen trouvé aujourd'hui.</span>`;
                 } else {
                     const liveCount = currentMatches.filter(m => m.status === 'IN_PLAY').length;
                     if (!isSilent) {
@@ -342,7 +331,7 @@
                 let sAway = match.awayTeam.score;
 
                 let algoPrediction = getAlgoPick(match.homeTeam.record, match.awayTeam.record);
-                let badgeAlgo = `<span class="mt-1 text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-black tracking-wider shadow border border-amber-500/30"><i class="fa-solid fa-bolt mr-1"></i>PRONO</span>`;
+                let badgeAlgo = `<span class="mt-1.5 text-[9px] text-amber-400 bg-amber-900/20 px-1.5 py-0.5 rounded font-black tracking-wider"><i class="fa-solid fa-bolt mr-1"></i>PRONO</span>`;
 
                 let timeStr = new Date(match.utcDate).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
 
@@ -353,21 +342,29 @@
                 let winner = match.winner;
                 let myBet = savedBets[match.id]; 
 
-                // Les grands carrés de pari
-                let baseBtn = "relative flex-1 py-3 px-2 rounded-2xl font-black text-xs transition border text-center flex flex-col items-center justify-center space-y-1 shadow-md ";
+                // GRANDS CARRÉS NEUTRES QUI SE COLORENT UNIQUEMENT AU CLIC
+                let baseBtn = "relative flex-1 py-4 px-2 rounded-xl font-bold text-xs transition-all duration-200 border text-center flex flex-col items-center justify-center shadow-sm overflow-hidden ";
                 
-                let homeClass = baseBtn + (myBet === 'HOME' ? "bg-blue-600 text-white border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.5)]" : "bg-blue-950/50 text-blue-300 border-blue-500/40 hover:bg-blue-900/50");
-                let drawClass = baseBtn + (myBet === 'DRAW' ? "bg-amber-600 text-white border-amber-400 shadow-[0_0_15px_rgba(217,119,6,0.5)]" : "bg-amber-950/50 text-amber-300 border-amber-500/40 hover:bg-amber-900/50");
-                let awayClass = baseBtn + (myBet === 'AWAY' ? "bg-emerald-600 text-white border-emerald-400 shadow-[0_0_15px_rgba(5,150,105,0.5)]" : "bg-emerald-950/50 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/50");
+                let homeClass = baseBtn + (myBet === 'HOME' 
+                    ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_12px_rgba(37,99,235,0.6)] scale-[1.02]" 
+                    : "bg-zinc-800/80 text-zinc-400 border-zinc-700 hover:bg-zinc-700 hover:text-white");
+                    
+                let drawClass = baseBtn + (myBet === 'DRAW' 
+                    ? "bg-amber-500 text-white border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.6)] scale-[1.02]" 
+                    : "bg-zinc-800/80 text-zinc-400 border-zinc-700 hover:bg-zinc-700 hover:text-white");
+                    
+                let awayClass = baseBtn + (myBet === 'AWAY' 
+                    ? "bg-emerald-600 text-white border-emerald-500 shadow-[0_0_12px_rgba(5,150,105,0.6)] scale-[1.02]" 
+                    : "bg-zinc-800/80 text-zinc-400 border-zinc-700 hover:bg-zinc-700 hover:text-white");
 
                 if (isFinished) {
-                    homeClass += ' cursor-not-allowed opacity-85';
-                    drawClass += ' cursor-not-allowed opacity-85';
-                    awayClass += ' cursor-not-allowed opacity-85';
+                    homeClass = baseBtn + (myBet === 'HOME' ? "bg-blue-900/50 text-blue-300 border-blue-800" : "bg-zinc-900 text-zinc-600 border-zinc-800") + " cursor-not-allowed opacity-75";
+                    drawClass = baseBtn + (myBet === 'DRAW' ? "bg-amber-900/50 text-amber-300 border-amber-800" : "bg-zinc-900 text-zinc-600 border-zinc-800") + " cursor-not-allowed opacity-75";
+                    awayClass = baseBtn + (myBet === 'AWAY' ? "bg-emerald-900/50 text-emerald-300 border-emerald-800" : "bg-zinc-900 text-zinc-600 border-zinc-800") + " cursor-not-allowed opacity-75";
                 }
 
                 let card = document.createElement('div');
-                card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-xl space-y-3.5";
+                card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-xl space-y-4";
 
                 card.innerHTML = `
                     <div class="flex justify-between items-center border-b border-zinc-800 pb-2.5">
@@ -377,36 +374,36 @@
                     
                     <div class="flex justify-between items-center px-1">
                         <div class="flex items-center space-x-2.5 w-1/3 overflow-hidden">
-                            <img src="${homeLogo}" class="w-7 h-7 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=H&background=18181b&color=60a5fa'">
+                            <img src="${homeLogo}" class="w-8 h-8 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=H&background=18181b&color=60a5fa'">
                             <span class="text-xs font-black text-white truncate">${homeName}</span>
                         </div>
-                        <span class="text-sm font-black text-blue-400 px-3 py-1 bg-zinc-950 rounded-lg border border-zinc-800">${sHome} - ${sAway}</span>
+                        <span class="text-base font-black text-blue-400 px-3 py-1 bg-zinc-950 rounded-lg border border-zinc-800">${sHome} - ${sAway}</span>
                         <div class="flex items-center justify-end space-x-2.5 w-1/3 overflow-hidden">
                             <span class="text-xs font-black text-white truncate text-right">${awayName}</span>
-                            <img src="${awayLogo}" class="w-7 h-7 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=A&background=18181b&color=60a5fa'">
+                            <img src="${awayLogo}" class="w-8 h-8 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=A&background=18181b&color=60a5fa'">
                         </div>
                     </div>
 
                     <div class="flex gap-2.5 pt-1">
                         <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'HOME')"`} class="${homeClass}">
-                            <span class="text-[9px] uppercase tracking-wider opacity-75 font-normal">1 (Domicile)</span>
-                            <span class="truncate w-full text-[11px]">${homeName}</span>
+                            <span class="text-[10px] uppercase font-bold tracking-wider mb-0.5 ${myBet === 'HOME' ? 'text-blue-100' : 'text-zinc-500'}">1</span>
+                            <span class="truncate w-full text-[11px] leading-tight">${homeName}</span>
                             ${algoPrediction === 'HOME' ? badgeAlgo : ''}
                         </button>
                         <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'DRAW')"`} class="${drawClass}">
-                            <span class="text-[9px] uppercase tracking-wider opacity-75 font-normal">N</span>
-                            <span class="text-[11px]">Match Nul</span>
+                            <span class="text-[10px] uppercase font-bold tracking-wider mb-0.5 ${myBet === 'DRAW' ? 'text-amber-100' : 'text-zinc-500'}">N</span>
+                            <span class="text-[11px] leading-tight">Nul</span>
                             ${algoPrediction === 'DRAW' ? badgeAlgo : ''}
                         </button>
                         <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'AWAY')"`} class="${awayClass}">
-                            <span class="text-[9px] uppercase tracking-wider opacity-75 font-normal">2 (Extérieur)</span>
-                            <span class="truncate w-full text-[11px]">${awayName}</span>
+                            <span class="text-[10px] uppercase font-bold tracking-wider mb-0.5 ${myBet === 'AWAY' ? 'text-emerald-100' : 'text-zinc-500'}">2</span>
+                            <span class="truncate w-full text-[11px] leading-tight">${awayName}</span>
                             ${algoPrediction === 'AWAY' ? badgeAlgo : ''}
                         </button>
                     </div>
                     
                     ${myBet ? `
-                    <div class="flex justify-between items-center text-[11px] bg-zinc-950 rounded-xl px-3.5 py-2.5 border border-zinc-800">
+                    <div class="flex justify-between items-center text-[11px] bg-zinc-950 rounded-xl px-3.5 py-2.5 border border-zinc-800 mt-2">
                         <span class="text-zinc-400">Mise engagée : <strong class="text-blue-400">${currentStake.toFixed(2)} €</strong></span>
                         <div>
                             ${isFinished 
