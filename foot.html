@@ -113,7 +113,6 @@
         function getTeamScore(teamName, recordStr) {
             let baseScore = 60; // Niveau moyen Ligue 1 / Liga etc.
             
-            // 1. Appliquer le boost pour les top clubs
             for (let t in topTeams) {
                 if (teamName.includes(t)) {
                     baseScore = topTeams[t];
@@ -121,7 +120,6 @@
                 }
             }
 
-            // 2. Affiner avec la forme actuelle si disponible (W-D-L)
             if (recordStr && recordStr !== "0-0-0" && recordStr.includes('-')) {
                 let parts = recordStr.split('-');
                 if (parts.length >= 3) {
@@ -131,7 +129,7 @@
                     let matches = w + d + l;
                     if (matches > 3) {
                         let winPct = ((w * 3 + d) / (matches * 3)) * 100;
-                        return (baseScore * 0.5) + (winPct * 0.5); // Mix réputation + forme
+                        return (baseScore * 0.5) + (winPct * 0.5); 
                     }
                 }
             }
@@ -139,12 +137,12 @@
         }
 
         function getAlgoPick(homeName, awayName, homeRec, awayRec) {
-            let hScore = getTeamScore(homeName, homeRec) + 6; // +6 points pour l'avantage à domicile
+            let hScore = getTeamScore(homeName, homeRec) + 6; 
             let aScore = getTeamScore(awayName, awayRec);
             
-            if (hScore > aScore + 8) return 'HOME'; // Avantage net domicile
-            if (aScore > hScore + 4) return 'AWAY'; // Avantage net extérieur (doit surmonter le terrain)
-            return 'DRAW'; // Match serré
+            if (hScore > aScore + 8) return 'HOME'; 
+            if (aScore > hScore + 4) return 'AWAY'; 
+            return 'DRAW'; 
         }
 
         setInterval(() => {
@@ -322,7 +320,8 @@
         function renderMatches(matchesToRender) {
             const container = document.getElementById('matchesContainer');
             const dateStr = document.getElementById('matchDate').value;
-            let savedBets = JSON.parse(localStorage.getItem(`footbet_${dateStr}`)) || {};
+            // NOUVELLE CLÉ POUR RÉINITIALISER LES MISES
+            let savedBets = JSON.parse(localStorage.getItem(`footbet2_${dateStr}`)) || {};
 
             container.innerHTML = '';
 
@@ -362,7 +361,6 @@
                 let winner = match.winner;
                 let myBet = savedBets[match.id]; 
 
-                // CARRÉS COLORÉS PAR DÉFAUT (Bleu, Jaune, Vert)
                 let baseBtn = "relative flex-1 py-4 px-2 rounded-xl font-bold text-xs transition-all duration-200 border text-center flex flex-col items-center justify-center shadow-sm overflow-hidden ";
                 
                 let homeClass = baseBtn + (myBet === 'HOME' 
@@ -445,7 +443,8 @@
             }
 
             const dateStr = document.getElementById('matchDate').value;
-            let savedBets = JSON.parse(localStorage.getItem(`footbet_${dateStr}`)) || {};
+            // NOUVELLE CLÉ POUR RÉINITIALISER LES MISES
+            let savedBets = JSON.parse(localStorage.getItem(`footbet2_${dateStr}`)) || {};
             if (savedBets[matchId] === pick) {
                 delete savedBets[matchId];
                 showToast("Pari annulé");
@@ -453,14 +452,15 @@
                 savedBets[matchId] = pick;
                 showToast("Pari validé", "success");
             }
-            localStorage.setItem(`footbet_${dateStr}`, JSON.stringify(savedBets));
+            localStorage.setItem(`footbet2_${dateStr}`, JSON.stringify(savedBets));
             applyFilters();
             calculateDailyBankroll();
         }
 
         function calculateDailyBankroll() {
             const dateStr = document.getElementById('matchDate').value;
-            let savedBets = JSON.parse(localStorage.getItem(`footbet_${dateStr}`)) || {};
+            // NOUVELLE CLÉ POUR RÉINITIALISER LES MISES
+            let savedBets = JSON.parse(localStorage.getItem(`footbet2_${dateStr}`)) || {};
             
             let dailyProfit = 0; 
             let betsCount = 0; 
@@ -496,9 +496,9 @@
             document.getElementById('headerBankroll').textContent = `${(INITIAL_BANKROLL + dailyProfit).toFixed(2)} €`;
 
             if (betsCount > 0 || dailyProfit !== 0 || (savedBets && Object.keys(savedBets).length > 0)) {
-                let history = JSON.parse(localStorage.getItem('footbet_full_history')) || {};
+                let history = JSON.parse(localStorage.getItem('footbet2_full_history')) || {};
                 history[dateStr] = dailyProfit;
-                localStorage.setItem('footbet_full_history', JSON.stringify(history));
+                localStorage.setItem('footbet2_full_history', JSON.stringify(history));
             }
 
             if (!document.getElementById('historyBlock').classList.contains('hidden')) {
@@ -512,7 +512,8 @@
             let year = currentViewDate.getFullYear();
             
             document.getElementById('currentYearText').textContent = year;
-            let history = JSON.parse(localStorage.getItem('footbet_full_history')) || {};
+            // NOUVELLE CLÉ POUR RÉINITIALISER L'HISTORIQUE
+            let history = JSON.parse(localStorage.getItem('footbet2_full_history')) || {};
 
             let dayOfWeek = currentViewDate.getDay() || 7; 
             let monday = new Date(currentViewDate);
