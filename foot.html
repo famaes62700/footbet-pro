@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro - Europe</title>
+    <title>FootBet Pro - Europe (Algorithme Rentable)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,7 +21,7 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center mb-3">
             <h1 class="text-base sm:text-lg font-black tracking-wider text-blue-400 flex items-center">
-                <i class="fa-solid fa-futbol mr-2 text-blue-500"></i>FootBet Pro
+                <i class="fa-solid fa-futbol mr-2 text-blue-500"></i>FootBet Pro <span class="text-[10px] ml-2 bg-blue-900/40 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded">Pro V3</span>
             </h1>
             <div class="flex items-center space-x-2 sm:space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-blue-400 font-bold">
@@ -101,7 +101,7 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02; // 2% du capital
 
-        // NOUVEL ALGORITHME PRONOSTIC (Cohérent avec classement ELO simulé)
+        // DICTIONNAIRE ELO / PUISSANCE DES CLUBS EUROPÉENS
         const topTeams = {
             "Real Madrid": 95, "Manchester City": 95, "Bayern Munich": 94, "Liverpool": 93, "Arsenal": 92, "Barcelona": 92,
             "Paris Saint-Germain": 90, "Inter Milan": 90, "Bayer Leverkusen": 88, "Borussia Dortmund": 85,
@@ -111,7 +111,7 @@
         };
 
         function getTeamScore(teamName, recordStr) {
-            let baseScore = 60; // Niveau moyen Ligue 1 / Liga etc.
+            let baseScore = 60; // Niveau moyen standard
             
             for (let t in topTeams) {
                 if (teamName.includes(t)) {
@@ -136,13 +136,17 @@
             return baseScore;
         }
 
+        // --- ALGORITHME DE CIBLAGE RENTABLE (Pro V3) ---
         function getAlgoPick(homeName, awayName, homeRec, awayRec) {
-            let hScore = getTeamScore(homeName, homeRec) + 6; 
+            let hScore = getTeamScore(homeName, homeRec) + 8; // Avantage massif du terrain en Europe (+8 points)
             let aScore = getTeamScore(awayName, awayRec);
+            let diff = hScore - aScore;
+
+            if (diff >= 12) return 'HOME'; // Le favori à domicile écrase l'adversaire
+            if (diff <= -8) return 'AWAY'; // Gros déséquilibre, l'extérieur est intouchable
             
-            if (hScore > aScore + 8) return 'HOME'; 
-            if (aScore > hScore + 4) return 'AWAY'; 
-            return 'DRAW'; 
+            // Si le match est très serré, l'algorithme sécurise en évitant le piège et favorise le Domicile ou le Nul
+            return (hScore > aScore) ? 'HOME' : 'DRAW';
         }
 
         setInterval(() => {
@@ -320,8 +324,8 @@
         function renderMatches(matchesToRender) {
             const container = document.getElementById('matchesContainer');
             const dateStr = document.getElementById('matchDate').value;
-            // NOUVELLE CLÉ POUR RÉINITIALISER LES MISES
-            let savedBets = JSON.parse(localStorage.getItem(`footbet2_${dateStr}`)) || {};
+            // NOUVELLE CLÉ DE SAUVEGARDE POUR FOOTBET PRO V3
+            let savedBets = JSON.parse(localStorage.getItem(`footbet_pro_v3_${dateStr}`)) || {};
 
             container.innerHTML = '';
 
@@ -347,10 +351,10 @@
                 let homeLogo = match.homeTeam.logo;
                 let awayLogo = match.awayTeam.logo;
                 let sHome = match.homeTeam.score;
-                let sAway = match.awayTeam.score;
+                let sAway = match.homeTeam.score;
 
                 let algoPrediction = getAlgoPick(match.homeTeam.name, match.awayTeam.name, match.homeTeam.record, match.awayTeam.record);
-                let badgeAlgo = `<span class="mt-1.5 text-[9px] text-white bg-zinc-950/40 px-1.5 py-0.5 rounded font-black tracking-wider"><i class="fa-solid fa-bolt mr-1 text-amber-400"></i>PRONO</span>`;
+                let badgeAlgo = `<span class="mt-1.5 text-[9px] text-white bg-zinc-950/40 px-1.5 py-0.5 rounded font-black tracking-wider"><i class="fa-solid fa-bolt mr-1 text-amber-400"></i>PRONO V3</span>`;
 
                 let timeStr = new Date(match.utcDate).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
 
@@ -443,8 +447,7 @@
             }
 
             const dateStr = document.getElementById('matchDate').value;
-            // NOUVELLE CLÉ POUR RÉINITIALISER LES MISES
-            let savedBets = JSON.parse(localStorage.getItem(`footbet2_${dateStr}`)) || {};
+            let savedBets = JSON.parse(localStorage.getItem(`footbet_pro_v3_${dateStr}`)) || {};
             if (savedBets[matchId] === pick) {
                 delete savedBets[matchId];
                 showToast("Pari annulé");
@@ -452,15 +455,14 @@
                 savedBets[matchId] = pick;
                 showToast("Pari validé", "success");
             }
-            localStorage.setItem(`footbet2_${dateStr}`, JSON.stringify(savedBets));
+            localStorage.setItem(`footbet_pro_v3_${dateStr}`, JSON.stringify(savedBets));
             applyFilters();
             calculateDailyBankroll();
         }
 
         function calculateDailyBankroll() {
             const dateStr = document.getElementById('matchDate').value;
-            // NOUVELLE CLÉ POUR RÉINITIALISER LES MISES
-            let savedBets = JSON.parse(localStorage.getItem(`footbet2_${dateStr}`)) || {};
+            let savedBets = JSON.parse(localStorage.getItem(`footbet_pro_v3_${dateStr}`)) || {};
             
             let dailyProfit = 0; 
             let betsCount = 0; 
@@ -496,9 +498,9 @@
             document.getElementById('headerBankroll').textContent = `${(INITIAL_BANKROLL + dailyProfit).toFixed(2)} €`;
 
             if (betsCount > 0 || dailyProfit !== 0 || (savedBets && Object.keys(savedBets).length > 0)) {
-                let history = JSON.parse(localStorage.getItem('footbet2_full_history')) || {};
+                let history = JSON.parse(localStorage.getItem('footbet_pro_v3_full_history')) || {};
                 history[dateStr] = dailyProfit;
-                localStorage.setItem('footbet2_full_history', JSON.stringify(history));
+                localStorage.setItem('footbet_pro_v3_full_history', JSON.stringify(history));
             }
 
             if (!document.getElementById('historyBlock').classList.contains('hidden')) {
@@ -512,8 +514,7 @@
             let year = currentViewDate.getFullYear();
             
             document.getElementById('currentYearText').textContent = year;
-            // NOUVELLE CLÉ POUR RÉINITIALISER L'HISTORIQUE
-            let history = JSON.parse(localStorage.getItem('footbet2_full_history')) || {};
+            let history = JSON.parse(localStorage.getItem('footbet_pro_v3_full_history')) || {};
 
             let dayOfWeek = currentViewDate.getDay() || 7; 
             let monday = new Date(currentViewDate);
