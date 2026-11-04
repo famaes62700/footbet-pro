@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Spécial Trot (Mises Illimitées)</title>
+    <title>Fab Turf - Spécial Trot (Mises Illimitées - Opti 50%)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -72,7 +72,7 @@
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (Exclusivement Trot)</h2>
-                    <p class="text-[10px] text-zinc-400">Rattrapage de Série Glissant • Base 5€ • <strong class="text-emerald-400">Gains Illimités (Sans Plafond)</strong></p>
+                    <p class="text-[10px] text-zinc-400">Rattrapage optimisé (50% Réussite) • Base 5€ • <strong class="text-emerald-400">Illimité</strong></p>
                 </div>
             </div>
 
@@ -207,7 +207,6 @@
         // --- PARAMÈTRES SPÉCIAL TROT (SANS PLAFOND DE GAIN) ---
         const INITIAL_BANKROLL = 500.0;
         const BASE_STAKE = 5.0;     // Mise initiale de base
-        // La contrainte MAX_STAKE a été retirée pour autoriser des mises illimitées
 
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
@@ -639,12 +638,12 @@
             return foundGain;
         }
 
-        // --- CALCUL DE MISE ILLIMITÉE ---
+        // --- CALCUL DE MISE ILLIMITÉE (Adapté 50% de réussite) ---
         function computeSmartStake(deficitSerie) {
             if (deficitSerie <= 0) return BASE_STAKE;
-            // On calcule la mise nécessaire pour couvrir le déficit (+ BASE_STAKE de bénéfice ciblé)
-            let stake = Math.ceil((deficitSerie * 1.15) + BASE_STAKE);
-            // La mise est sans limite de MAX_STAKE : elle peut grimper aussi haut que la bankroll le permet
+            // Coefficient augmenté à 1.35 pour compenser un taux de réussite de 50% (cotes ~1.60-1.80)
+            let stake = Math.ceil((deficitSerie * 1.35) + BASE_STAKE);
+            // La mise grimpe sans aucune limite MAX_STAKE
             return Math.max(BASE_STAKE + 3, stake);
         }
 
@@ -781,8 +780,7 @@
         }
 
         function getStatForDateObj(d) {
-            // NOUVELLE CLÉ POUR RÉINITIALISER L'HISTORIQUE SANS LIMITE (v2)
-            let key = `pmu_stats_trot_nolimit_v2_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_trot_opti50_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -914,8 +912,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                // NOUVELLE CLÉ POUR RÉINITIALISER LE CACHE DES COURSES DU JOUR
-                let cacheKey = `trot_nolimit_v2_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `trot_opti50_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto && statsProgress) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -942,7 +939,6 @@
                     let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu || p.numOrdre) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // LE GAGNANT VIRTUEL (FIXE 1€ SUR TROT)
                     if (baseH) {
                         coursesGagnantBaseValidees++;
                         let gGagBase = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
@@ -968,12 +964,11 @@
                         }
                     }
 
-                    // 1. BASE PLACÉ TROT (SANS PLAFOND STOP-WIN)
+                    // 1. BASE PLACÉ TROT (ILLIMITÉ)
                     if (baseH && currentBankroll > 0) {
                         coursesValidees++;
                         
                         let targetStakeBase = computeSmartStake(deficitSerieBase);
-                        // LA MISE N'EST PLUS PLAFONNÉE À MAX_STAKE
                         let actualStakeBase = Math.min(targetStakeBase, currentBankroll);
                         
                         totalSpentBase += actualStakeBase;
@@ -991,12 +986,12 @@
                             totalProfitBasePla -= actualStakeBase;
                             netBasePla = -actualStakeBase;
                             deficitSerieBase += actualStakeBase;
-                            if (deficitSerieBase > 180) deficitSerieBase = 0;
+                            // Suppression du stop-loss à 180 € : La montante est vraiment illimitée
                         }
                         currentBankroll += netBasePla;
                     }
 
-                    // 2. PÉPITE PLACÉ TROT (SANS PLAFOND STOP-WIN)
+                    // 2. PÉPITE PLACÉ TROT (ILLIMITÉ)
                     if (nuggetH) {
                         let simStakePepite = computeSmartStake(deficitSeriePepite);
 
@@ -1011,7 +1006,6 @@
                         } else { 
                             totalProfitPepitePla -= simStakePepite; 
                             deficitSeriePepite += simStakePepite;
-                            if (deficitSeriePepite > 180) deficitSeriePepite = 0;
                         }
                     }
                 }
@@ -1037,8 +1031,7 @@
             document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
 
             if (coursesValidees > 0) {
-                // NOUVELLE CLÉ DE SAUVEGARDE QUOTIDIENNE SANS LIMITE
-                localStorage.setItem(`pmu_stats_trot_nolimit_v2_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_trot_opti50_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
             }
