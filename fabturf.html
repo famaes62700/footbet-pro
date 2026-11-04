@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Spécial Trot (Mises Illimitées - Opti 50%)</title>
+    <title>Fab Turf - Trot (Base Favori)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -72,7 +72,7 @@
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (Exclusivement Trot)</h2>
-                    <p class="text-[10px] text-zinc-400">Rattrapage optimisé (50% Réussite) • Base 5€ • <strong class="text-emerald-400">Illimité</strong></p>
+                    <p class="text-[10px] text-zinc-400">Rattrapage optimisé • Base 5€ • <strong class="text-emerald-400">Illimité</strong></p>
                 </div>
             </div>
 
@@ -80,7 +80,7 @@
                 <!-- BASE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
                     <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">VRAIE BANKROLL</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Trot)</div>
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori)</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
                             <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant (1€ virt.)</span>
@@ -165,7 +165,7 @@
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mt-3">
                 <div class="bg-zinc-900/90 p-3 rounded-xl border border-emerald-500/40 space-y-1">
-                    <div class="text-[10px] uppercase font-bold text-emerald-400">Base Solide (Banquier)</div>
+                    <div class="text-[10px] uppercase font-bold text-emerald-400">Favori des Parieurs (Base)</div>
                     <div id="top1Name" class="font-bold text-white text-sm">En attente...</div>
                     <div id="top1Stats" class="text-[11px] text-zinc-400">--</div>
                 </div>
@@ -187,7 +187,7 @@
                             <th class="p-3">N° / Nom</th>
                             <th class="p-3">Musique</th>
                             <th class="p-3">Cote</th>
-                            <th class="p-3">Score</th>
+                            <th class="p-3">Score Pépite</th>
                         </tr>
                     </thead>
                     <tbody id="runnersTableBody" class="divide-y divide-zinc-800/50">
@@ -204,9 +204,9 @@
         let autoTransitionDone = false;
         let validatedRacesCache = {}; 
         
-        // --- PARAMÈTRES SPÉCIAL TROT (SANS PLAFOND DE GAIN) ---
+        // --- PARAMÈTRES SPÉCIAL TROT ---
         const INITIAL_BANKROLL = 500.0;
-        const BASE_STAKE = 5.0;     // Mise initiale de base
+        const BASE_STAKE = 5.0;
 
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
@@ -538,6 +538,7 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
+        // --- NOUVEL ALGORITHME : LA BASE = LE FAVORI ---
         function computeAlgorithm(partants) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
@@ -547,11 +548,15 @@
 
             let processed = validPartants.map((p, idx) => {
                 let musique = p.musique || p.form || "0a";
+                // On extrait la cote brute
                 let rawCote = (p.dernierRapportDirect && p.dernierRapportDirect.rapport) 
                             ? p.dernierRapportDirect.rapport 
-                            : (p.probabiliteEvolution ? p.probabiliteEvolution : "15.0");
-                let cote = parseFloat(String(rawCote).replace(',', '.')) || 15.0;
+                            : (p.probabiliteEvolution ? p.probabiliteEvolution : "99.9");
+                let cote = parseFloat(String(rawCote).replace(',', '.')) || 99.9;
                 
+                let musiqueScore = evaluateMusique(musique);
+                
+                // Calcul du score de la Pépite (outsiders en forme)
                 let coteScore = 15;
                 if (cote >= 1.6 && cote <= 4.5) coteScore = 96;
                 else if (cote < 1.6) coteScore = 84;
@@ -559,13 +564,9 @@
                 else if (cote <= 12) coteScore = 62;
                 else if (cote <= 20) coteScore = 35;
 
-                let musiqueScore = evaluateMusique(musique);
-                
-                let baseScore = Math.round((coteScore * 0.50) + (musiqueScore * 0.50));
-                
-                let nuggetRaw = (cote >= 4.0 && cote <= 16) 
+                let nuggetRaw = (cote >= 4.5 && cote <= 20) 
                     ? Math.round((musiqueScore * 0.75) + (coteScore * 0.25) + 12) 
-                    : Math.round(musiqueScore * 0.6);
+                    : Math.round(musiqueScore * 0.5);
 
                 return {
                     num: p.numPmu || p.numOrdre || (idx+1),
@@ -573,15 +574,21 @@
                     musique: musique,
                     coteDisplay: rawCote,
                     cote: cote,
-                    baseScore: Math.min(100, Math.max(5, baseScore)),
-                    nuggetScore: Math.min(100, Math.max(5, nuggetRaw)),
+                    // Score visuel d'information (plus la cote est petite, plus c'est proche de 99%)
+                    baseScore: Math.min(99, Math.max(5, Math.round(100 - (cote * 2)))),
+                    nuggetScore: Math.min(99, Math.max(5, nuggetRaw)),
                     ordreArrivee: p.ordreArrivee
                 };
             });
-            let sortedByBase = [...processed].sort((a, b) => b.baseScore - a.baseScore);
-            let baseHorse = sortedByBase[0];
+
+            // LA RÈGLE D'OR : La base est STRICTEMENT le cheval avec la plus petite cote.
+            let sortedByCote = [...processed].sort((a, b) => a.cote - b.cote);
+            let baseHorse = sortedByCote[0]; // Le favori n°1
+
+            // La Pépite est calculée sur le reste du peloton
             let remaining = processed.filter(p => p.num !== baseHorse?.num);
             let nuggetHorse = remaining.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
+            
             return { processed, baseHorse, nuggetHorse };
         }
 
@@ -638,12 +645,9 @@
             return foundGain;
         }
 
-        // --- CALCUL DE MISE ILLIMITÉE (Adapté 50% de réussite) ---
         function computeSmartStake(deficitSerie) {
             if (deficitSerie <= 0) return BASE_STAKE;
-            // Coefficient augmenté à 1.35 pour compenser un taux de réussite de 50% (cotes ~1.60-1.80)
             let stake = Math.ceil((deficitSerie * 1.35) + BASE_STAKE);
-            // La mise grimpe sans aucune limite MAX_STAKE
             return Math.max(BASE_STAKE + 3, stake);
         }
 
@@ -734,28 +738,29 @@
 
                 if (baseHorse) {
                     document.getElementById('top1Name').textContent = `${baseHorse.num}. ${baseHorse.nom}`;
-                    document.getElementById('top1Stats').textContent = `Confiance : ${baseHorse.baseScore}% | Cote : ${baseHorse.coteDisplay}`;
+                    document.getElementById('top1Stats').textContent = `Cote : ${baseHorse.coteDisplay} | Confiance : ${baseHorse.baseScore}%`;
                 } else {
                     document.getElementById('top1Name').textContent = `Attente cotes...`;
                 }
                 
                 if (nuggetHorse) {
                     document.getElementById('top2Name').textContent = `${nuggetHorse.num}. ${nuggetHorse.nom}`;
-                    document.getElementById('top2Stats').textContent = `Potentiel : ${nuggetHorse.nuggetScore}% | Cote : ${nuggetHorse.coteDisplay}`;
+                    document.getElementById('top2Stats').textContent = `Cote : ${nuggetHorse.coteDisplay} | Potentiel : ${nuggetHorse.nuggetScore}%`;
                 } else {
                     document.getElementById('top2Name').textContent = `Attente cotes...`;
                 }
 
-                processed.sort((a, b) => b.baseScore - a.baseScore);
+                // Affichage du tableau trié par cotes (Le favori toujours en premier)
+                processed.sort((a, b) => a.cote - b.cote);
                 let tbody = document.getElementById('runnersTableBody');
                 tbody.innerHTML = '';
                 processed.forEach(p => {
                     let tr = document.createElement('tr');
                     let tag = p.ordreArrivee ? `<span class="ml-1 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
-                    if (p.num === baseHorse?.num) tag += '<span class="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">Base</span>';
+                    if (p.num === baseHorse?.num) tag += '<span class="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">Favori</span>';
                     if (p.num === nuggetHorse?.num) tag += '<span class="ml-1 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">Pépite</span>';
 
-                    tr.innerHTML = `<td class="p-3 font-bold"><span class="text-emerald-400 mr-2">${p.num}</span>${p.nom}${tag}</td><td class="p-3 text-zinc-300 font-mono">${p.musique}</td><td class="p-3 text-emerald-400 font-bold">${p.coteDisplay}</td><td class="p-3 font-semibold">${p.baseScore}%</td>`;
+                    tr.innerHTML = `<td class="p-3 font-bold"><span class="text-emerald-400 mr-2">${p.num}</span>${p.nom}${tag}</td><td class="p-3 text-zinc-300 font-mono">${p.musique}</td><td class="p-3 text-emerald-400 font-bold">${p.coteDisplay}</td><td class="p-3 font-semibold text-zinc-500">${p.nuggetScore}%</td>`;
                     tbody.appendChild(tr);
                 });
                 
@@ -765,7 +770,7 @@
                 document.getElementById('raceInfoDetails').innerHTML = `
                     <div class="flex items-center">
                         <span class="mr-2 text-zinc-400 font-normal">${timeInfo}</span>
-                        <span>Partants & Cotes</span>
+                        <span>Partants classés par cotes</span>
                         ${discBadge}
                     </div>
                 `;
@@ -780,7 +785,8 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_trot_opti50_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            // NOUVELLE CLÉ RÉTROACTIVE : LE CACHE EST VIDÉ ET TOUT REPART A ZERO AVEC LE FAVORI
+            let key = `pmu_stats_trot_favori_v1_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -841,7 +847,7 @@
                 }
             }
             if(monthsGrid.innerHTML === '') {
-                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Aucune donnée trouvée pour cette année.</div>';
+                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Aucune donnée calculée pour cette année.</div>';
             }
         }
 
@@ -912,7 +918,8 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `trot_opti50_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                // CLÉ CACHE RENOMMÉE POUR FORCER LE RECALCUL SUR LES ANCIENNES COURSES
+                let cacheKey = `trot_favori_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto && statsProgress) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -964,7 +971,6 @@
                         }
                     }
 
-                    // 1. BASE PLACÉ TROT (ILLIMITÉ)
                     if (baseH && currentBankroll > 0) {
                         coursesValidees++;
                         
@@ -986,12 +992,10 @@
                             totalProfitBasePla -= actualStakeBase;
                             netBasePla = -actualStakeBase;
                             deficitSerieBase += actualStakeBase;
-                            // Suppression du stop-loss à 180 € : La montante est vraiment illimitée
                         }
                         currentBankroll += netBasePla;
                     }
 
-                    // 2. PÉPITE PLACÉ TROT (ILLIMITÉ)
                     if (nuggetH) {
                         let simStakePepite = computeSmartStake(deficitSeriePepite);
 
@@ -1031,7 +1035,8 @@
             document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
 
             if (coursesValidees > 0) {
-                localStorage.setItem(`pmu_stats_trot_opti50_${ddmmyyyy}`, JSON.stringify({
+                // ENREGISTREMENT SOUS LA NOUVELLE CLÉ GLOBALE POUR METTRE A JOUR LE MOIS EN COURS
+                localStorage.setItem(`pmu_stats_trot_favori_v1_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
             }
