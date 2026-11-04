@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Trot (Base Vrai Favori)</title>
+    <title>Fab Turf V3 - Base Favori</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,17 +21,20 @@
 
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
-            <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center">
-                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf (100% Trot)
+            <h1 class="text-sm sm:text-base font-black uppercase tracking-wider text-amber-400 flex items-center">
+                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf V3 (Base = Favori)
             </h1>
-            <div class="flex items-center space-x-3">
-                <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
-                    <span class="text-[9px] text-zinc-400 font-normal">Bankroll (Trot Placé)</span>
+            <div class="flex items-center space-x-2">
+                <div class="text-xs bg-zinc-800 px-2.5 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
+                    <span class="text-[8px] text-zinc-400 font-normal">Bankroll</span>
                     <span id="headerBankroll">500.00 €</span>
                 </div>
-                <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-amber-500" onchange="loadLivePmu()">
-                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Historique Mensuel">
+                <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-amber-500" onchange="loadLivePmu()">
+                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2.5 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow" title="Historique Mensuel">
                     <i class="fa-solid fa-calendar-days"></i>
+                </button>
+                <button onclick="resetAllCache()" class="bg-red-950/60 hover:bg-red-900 text-red-400 px-2.5 py-1.5 rounded-lg border border-red-500/40 font-bold transition flex items-center shadow" title="Purger et Recalculer">
+                    <i class="fa-solid fa-trash-can"></i>
                 </button>
             </div>
         </div>
@@ -71,8 +74,8 @@
         <div class="bg-zinc-900 border border-amber-500/30 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
-                    <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (Exclusivement Trot)</h2>
-                    <p class="text-[10px] text-zinc-400">Rattrapage optimisé • Base 5€ • <strong class="text-emerald-400">Illimité</strong></p>
+                    <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (100% Favori en Base)</h2>
+                    <p class="text-[10px] text-zinc-400">Rattrapage x1.35 • Base 5€ • <strong class="text-emerald-400">Mises Illimitées</strong></p>
                 </div>
             </div>
 
@@ -186,8 +189,8 @@
                         <tr class="bg-zinc-800/60 text-zinc-400 border-b border-zinc-800">
                             <th class="p-3">N° / Nom</th>
                             <th class="p-3">Musique</th>
-                            <th class="p-3">Cote</th>
-                            <th class="p-3">Score Pépite</th>
+                            <th class="p-3">Cote Exacte</th>
+                            <th class="p-3">Indice Pépite</th>
                         </tr>
                     </thead>
                     <tbody id="runnersTableBody" class="divide-y divide-zinc-800/50">
@@ -204,7 +207,6 @@
         let autoTransitionDone = false;
         let validatedRacesCache = {}; 
         
-        // --- PARAMÈTRES SPÉCIAL TROT ---
         const INITIAL_BANKROLL = 500.0;
         const BASE_STAKE = 5.0;
 
@@ -214,6 +216,16 @@
             if (mIdx !== "" && cIdx !== "") fetchRaceData(true); 
             calculateDailyStats(true);
         }, 20000);
+
+        function resetAllCache() {
+            validatedRacesCache = {};
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('pmu_stats_')) localStorage.removeItem(k);
+            });
+            showToast("Mémoire purgée ! Recalcul avec les vrais favoris...", "success");
+            fetchRaceData();
+            calculateDailyStats(false);
+        }
 
         function isTrotRace(course) {
             let d = String(course.discipline || '').toUpperCase();
@@ -538,7 +550,40 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
-        // --- ALGORITHME ROBUSTE : LA BASE = LE FAVORI EXACT ---
+        // --- EXTRACTION ANTI-PIÈGE DE LA COTE PMU ---
+        function parseCleanCote(val) {
+            if (val === undefined || val === null || val === "") return 999;
+            let c = parseFloat(String(val).replace(',', '.'));
+            if (isNaN(c) || c <= 1.0) return 999;
+            // Si le PMU envoie la cote en centimes (ex: 280 au lieu de 2.8)
+            if (c >= 100 && Number.isInteger(c)) {
+                c = c / 100;
+            }
+            return c < 1.05 ? 999 : c;
+        }
+
+        function extractBestCote(p) {
+            let candidates = [
+                p.dernierRapportDirect?.rapport,
+                p.dernierRapportReference?.rapport,
+                p.coteDirect,
+                p.rapportDirect,
+                p.probabiliteEvolution
+            ];
+            if (Array.isArray(p.rapportsDirect)) {
+                p.rapportsDirect.forEach(r => candidates.push(r.rapport));
+            }
+            if (Array.isArray(p.rapportsReference)) {
+                p.rapportsReference.forEach(r => candidates.push(r.rapport));
+            }
+            for (let cand of candidates) {
+                let clean = parseCleanCote(cand);
+                if (clean < 999) return clean;
+            }
+            return 999;
+        }
+
+        // --- ALGORITHME V3 : LE FAVORI = PLUS PETITE COTE STRICTE ---
         function computeAlgorithm(partants) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
@@ -548,23 +593,12 @@
 
             let processed = validPartants.map((p, idx) => {
                 let musique = p.musique || p.form || "0a";
-                
-                // EXTRACTION ULTRA ROBUSTE DE LA COTE (PMU met parfois des 0 ou masque les cotes après la course)
-                let rawCote = 999;
-                if (p.dernierRapportDirect && p.dernierRapportDirect.rapport) {
-                    rawCote = p.dernierRapportDirect.rapport;
-                } else if (p.rapportsReference && Array.isArray(p.rapportsReference) && p.rapportsReference.length > 0) {
-                    rawCote = p.rapportsReference[p.rapportsReference.length - 1].rapport;
-                }
-                
-                let cote = parseFloat(String(rawCote).replace(',', '.')) || 999;
-                // Sécurité Anti-Zéro : Une cote PMU ne peut jamais être inférieure à 1.1
-                if (isNaN(cote) || cote < 1.1) cote = 999; 
+                let cote = extractBestCote(p);
+                let isOfficialFav = Boolean(p.dernierRapportDirect?.indicateurFavori || p.dernierRapportReference?.indicateurFavori || p.favori);
                 
                 let coteDisplay = cote === 999 ? "--" : cote.toFixed(1);
                 let musiqueScore = evaluateMusique(musique);
                 
-                // Calcul du score de la Pépite (outsiders en forme)
                 let coteScore = 15;
                 if (cote >= 1.6 && cote <= 4.5) coteScore = 96;
                 else if (cote < 1.6) coteScore = 84;
@@ -572,7 +606,7 @@
                 else if (cote <= 12) coteScore = 62;
                 else if (cote <= 20) coteScore = 35;
 
-                let nuggetRaw = (cote >= 4.5 && cote <= 20) 
+                let nuggetRaw = (cote >= 4.5 && cote <= 22) 
                     ? Math.round((musiqueScore * 0.75) + (coteScore * 0.25) + 12) 
                     : Math.round(musiqueScore * 0.5);
 
@@ -582,25 +616,26 @@
                     musique: musique,
                     coteDisplay: coteDisplay,
                     cote: cote,
+                    isOfficialFav: isOfficialFav,
                     musiqueScore: musiqueScore,
                     nuggetScore: Math.min(99, Math.max(5, nuggetRaw)),
                     ordreArrivee: p.ordreArrivee
                 };
             });
 
-            // LA RÈGLE D'OR : Le favori est STRICTEMENT la plus petite cote
+            // TRI STRICT PAR COTE LA PLUS PETITE
             let sortedByCote = [...processed].sort((a, b) => {
-                if (a.cote === b.cote) return b.musiqueScore - a.musiqueScore; // Départage sur la forme si même cote (écurie)
-                return a.cote - b.cote;
+                if (a.cote !== b.cote) return a.cote - b.cote;
+                if (a.isOfficialFav !== b.isOfficialFav) return a.isOfficialFav ? -1 : 1;
+                return b.musiqueScore - a.musiqueScore;
             });
             
-            let baseHorse = sortedByCote[0]; // Le favori n°1 intouchable
+            let baseHorse = sortedByCote[0]; // Le cheval avec la plus petite cote est TOUJOURS la Base
 
-            // La Pépite
             let remaining = processed.filter(p => p.num !== baseHorse?.num);
             let nuggetHorse = remaining.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
             
-            return { processed, baseHorse, nuggetHorse };
+            return { processed: sortedByCote, baseHorse, nuggetHorse };
         }
 
         function extractGainFromRapports(listeRapports, horseNum, targetType) {
@@ -749,7 +784,7 @@
 
                 if (baseHorse) {
                     document.getElementById('top1Name').textContent = `${baseHorse.num}. ${baseHorse.nom}`;
-                    document.getElementById('top1Stats').textContent = `Cote : ${baseHorse.coteDisplay}`;
+                    document.getElementById('top1Stats').textContent = `Favori n°1 | Cote : ${baseHorse.coteDisplay}`;
                 } else {
                     document.getElementById('top1Name').textContent = `Attente cotes...`;
                 }
@@ -761,14 +796,12 @@
                     document.getElementById('top2Name').textContent = `Attente cotes...`;
                 }
 
-                // Affichage du tableau trié par cotes (Le favori toujours en premier)
-                processed.sort((a, b) => a.cote - b.cote);
                 let tbody = document.getElementById('runnersTableBody');
                 tbody.innerHTML = '';
                 processed.forEach(p => {
                     let tr = document.createElement('tr');
                     let tag = p.ordreArrivee ? `<span class="ml-1 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
-                    if (p.num === baseHorse?.num) tag += '<span class="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">Favori</span>';
+                    if (p.num === baseHorse?.num) tag += '<span class="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">Favori (Base)</span>';
                     if (p.num === nuggetHorse?.num) tag += '<span class="ml-1 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">Pépite</span>';
 
                     tr.innerHTML = `<td class="p-3 font-bold"><span class="text-emerald-400 mr-2">${p.num}</span>${p.nom}${tag}</td><td class="p-3 text-zinc-300 font-mono">${p.musique}</td><td class="p-3 text-emerald-400 font-bold">${p.coteDisplay}</td><td class="p-3 font-semibold text-zinc-500">${p.nuggetScore}%</td>`;
@@ -781,7 +814,7 @@
                 document.getElementById('raceInfoDetails').innerHTML = `
                     <div class="flex items-center">
                         <span class="mr-2 text-zinc-400 font-normal">${timeInfo}</span>
-                        <span>Partants classés par cotes</span>
+                        <span>Partants triés du Favori au plus gros Outsider</span>
                         ${discBadge}
                     </div>
                 `;
@@ -796,7 +829,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_trot_fav_v2_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_trot_fav_v3_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -928,7 +961,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `trot_fav_v2_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `trot_fav_v3_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto && statsProgress) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -1044,7 +1077,7 @@
             document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
 
             if (coursesValidees > 0) {
-                localStorage.setItem(`pmu_stats_trot_fav_v2_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_trot_fav_v3_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
             }
