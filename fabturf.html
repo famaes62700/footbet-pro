@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf - Trot (Base Favori)</title>
+    <title>Fab Turf - Trot (Base Vrai Favori)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -538,7 +538,7 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
-        // --- NOUVEL ALGORITHME : LA BASE = LE FAVORI ---
+        // --- ALGORITHME ROBUSTE : LA BASE = LE FAVORI EXACT ---
         function computeAlgorithm(partants) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
@@ -548,12 +548,20 @@
 
             let processed = validPartants.map((p, idx) => {
                 let musique = p.musique || p.form || "0a";
-                // On extrait la cote brute
-                let rawCote = (p.dernierRapportDirect && p.dernierRapportDirect.rapport) 
-                            ? p.dernierRapportDirect.rapport 
-                            : (p.probabiliteEvolution ? p.probabiliteEvolution : "99.9");
-                let cote = parseFloat(String(rawCote).replace(',', '.')) || 99.9;
                 
+                // EXTRACTION ULTRA ROBUSTE DE LA COTE (PMU met parfois des 0 ou masque les cotes après la course)
+                let rawCote = 999;
+                if (p.dernierRapportDirect && p.dernierRapportDirect.rapport) {
+                    rawCote = p.dernierRapportDirect.rapport;
+                } else if (p.rapportsReference && Array.isArray(p.rapportsReference) && p.rapportsReference.length > 0) {
+                    rawCote = p.rapportsReference[p.rapportsReference.length - 1].rapport;
+                }
+                
+                let cote = parseFloat(String(rawCote).replace(',', '.')) || 999;
+                // Sécurité Anti-Zéro : Une cote PMU ne peut jamais être inférieure à 1.1
+                if (isNaN(cote) || cote < 1.1) cote = 999; 
+                
+                let coteDisplay = cote === 999 ? "--" : cote.toFixed(1);
                 let musiqueScore = evaluateMusique(musique);
                 
                 // Calcul du score de la Pépite (outsiders en forme)
@@ -572,20 +580,23 @@
                     num: p.numPmu || p.numOrdre || (idx+1),
                     nom: p.nom || "Cheval",
                     musique: musique,
-                    coteDisplay: rawCote,
+                    coteDisplay: coteDisplay,
                     cote: cote,
-                    // Score visuel d'information (plus la cote est petite, plus c'est proche de 99%)
-                    baseScore: Math.min(99, Math.max(5, Math.round(100 - (cote * 2)))),
+                    musiqueScore: musiqueScore,
                     nuggetScore: Math.min(99, Math.max(5, nuggetRaw)),
                     ordreArrivee: p.ordreArrivee
                 };
             });
 
-            // LA RÈGLE D'OR : La base est STRICTEMENT le cheval avec la plus petite cote.
-            let sortedByCote = [...processed].sort((a, b) => a.cote - b.cote);
-            let baseHorse = sortedByCote[0]; // Le favori n°1
+            // LA RÈGLE D'OR : Le favori est STRICTEMENT la plus petite cote
+            let sortedByCote = [...processed].sort((a, b) => {
+                if (a.cote === b.cote) return b.musiqueScore - a.musiqueScore; // Départage sur la forme si même cote (écurie)
+                return a.cote - b.cote;
+            });
+            
+            let baseHorse = sortedByCote[0]; // Le favori n°1 intouchable
 
-            // La Pépite est calculée sur le reste du peloton
+            // La Pépite
             let remaining = processed.filter(p => p.num !== baseHorse?.num);
             let nuggetHorse = remaining.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
             
@@ -738,7 +749,7 @@
 
                 if (baseHorse) {
                     document.getElementById('top1Name').textContent = `${baseHorse.num}. ${baseHorse.nom}`;
-                    document.getElementById('top1Stats').textContent = `Cote : ${baseHorse.coteDisplay} | Confiance : ${baseHorse.baseScore}%`;
+                    document.getElementById('top1Stats').textContent = `Cote : ${baseHorse.coteDisplay}`;
                 } else {
                     document.getElementById('top1Name').textContent = `Attente cotes...`;
                 }
@@ -785,8 +796,7 @@
         }
 
         function getStatForDateObj(d) {
-            // NOUVELLE CLÉ RÉTROACTIVE : LE CACHE EST VIDÉ ET TOUT REPART A ZERO AVEC LE FAVORI
-            let key = `pmu_stats_trot_favori_v1_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_trot_fav_v2_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -918,8 +928,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                // CLÉ CACHE RENOMMÉE POUR FORCER LE RECALCUL SUR LES ANCIENNES COURSES
-                let cacheKey = `trot_favori_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `trot_fav_v2_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto && statsProgress) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -1035,8 +1044,7 @@
             document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
 
             if (coursesValidees > 0) {
-                // ENREGISTREMENT SOUS LA NOUVELLE CLÉ GLOBALE POUR METTRE A JOUR LE MOIS EN COURS
-                localStorage.setItem(`pmu_stats_trot_favori_v1_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_trot_fav_v2_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
             }
