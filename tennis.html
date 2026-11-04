@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TennisBetPro - ATP & WTA Pro</title>
+    <title>TennisBet Pro - Live & Historique</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -20,16 +20,16 @@
 
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center mb-3">
-            <h1 class="text-base sm:text-lg font-black tracking-wider text-emerald-400 flex items-center">
-                <i class="fa-solid fa-table-tennis-paddle-ball mr-2 text-emerald-500"></i>TennisBetPro <span class="text-[10px] ml-2 bg-emerald-900/40 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded">Pro V2</span>
+            <h1 class="text-base sm:text-lg font-black tracking-wider text-lime-400 flex items-center">
+                <i class="fa-solid fa-trophy mr-2"></i>TennisBet Pro
             </h1>
             <div class="flex items-center space-x-2 sm:space-x-3">
-                <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold">
+                <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-lime-400 font-bold">
                     Bankroll: <span id="headerBankroll">100.00 €</span>
                 </div>
-                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-emerald-500" onchange="loadTennisMatches()">
+                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-lime-400" onchange="loadTennisMatches()">
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Historique Semaine & Mois">
-                    <i class="fa-solid fa-calendar-days text-emerald-400"></i>
+                    <i class="fa-solid fa-calendar-days text-lime-400"></i>
                 </button>
             </div>
         </div>
@@ -38,32 +38,35 @@
             <button id="btnFilterLive" onclick="toggleLiveFilter()" class="bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-500/50 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center whitespace-nowrap">
                 <i class="fa-solid fa-fire mr-1.5"></i> En Direct
             </button>
+            <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 focus:outline-none focus:border-lime-400 flex-grow">
+                <option value="ALL">Tous les tournois</option>
+            </select>
         </div>
     </header>
 
     <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4">
         
         <div class="flex justify-between items-center">
-            <div id="statusText" class="text-xs text-emerald-400 font-mono flex items-center w-3/4 truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement du circuit tennis...
+            <div id="statusText" class="text-xs text-lime-400 font-mono flex items-center w-3/4 truncate">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Lecture des tableaux ATP/WTA...
             </div>
-            <button onclick="loadTennisMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 text-xs font-bold transition flex items-center shadow">
+            <button onclick="loadTennisMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-lime-400 px-3 py-1.5 rounded-lg border border-lime-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
             </button>
         </div>
 
         <!-- HISTORIQUE CUMULÉ SEMAINE & MOIS -->
-        <div id="historyBlock" class="hidden bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2">
+        <div id="historyBlock" class="hidden bg-zinc-900 border border-lime-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
-                    <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés Tennis
+                    <i class="fa-solid fa-vault mr-1.5 text-lime-400"></i> Vos Gains Cumulés Tennis
                 </h2>
                 <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
                     <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Semaine en cours</h3>
-                    <div class="flex justify-between font-black"><span class="text-white">BÉNÉFICE NET :</span><span id="weekTotal" class="text-emerald-400">0.00 €</span></div>
+                    <div class="flex justify-between font-black"><span class="text-white">BÉNÉFICE NET :</span><span id="weekTotal" class="text-lime-400">0.00 €</span></div>
                 </div>
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
                     <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Mois par Mois (<span id="currentYearText"></span>)</h3>
@@ -73,15 +76,21 @@
         </div>
 
         <!-- BILAN DU JOUR & TOTAL MISES -->
-        <div class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2 flex justify-between items-center">
+        <div class="bg-zinc-900 border border-lime-500/30 rounded-2xl p-4 shadow-xl mb-2 flex justify-between items-center">
             <div>
-                <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider mb-1">Bilan du Jour</h2>
+                <h2 class="text-xs font-bold uppercase text-lime-400 tracking-wider mb-1">Bilan du Jour</h2>
                 <div id="dailyProfit" class="text-lg font-black text-white">0.00 €</div>
             </div>
             <div class="text-right space-y-0.5">
                 <div class="text-[10px] text-zinc-400 uppercase">Matchs pariés: <strong id="dailyBetsCount" class="text-white">0</strong></div>
-                <div class="text-[10px] text-zinc-400 uppercase">Total Mises: <strong id="dailyTotalStake" class="text-emerald-400">0.00 €</strong></div>
+                <div class="text-[10px] text-zinc-400 uppercase">Total Mises: <strong id="dailyTotalStake" class="text-lime-400">0.00 €</strong></div>
             </div>
+        </div>
+
+        <!-- LIGNE RÉCAPITULATIVE TOTALE DES MISES JOUÉES -->
+        <div class="flex justify-between items-center text-[11px] bg-zinc-900/90 px-3.5 py-2.5 rounded-xl border border-zinc-800 text-zinc-300 shadow">
+            <span><i class="fa-solid fa-wallet mr-1.5 text-lime-400"></i> Somme Totale des Mises Engagées (Jour) :</span>
+            <span id="totalSpentText" class="font-black text-white text-xs">0.00 €</span>
         </div>
 
         <div id="matchesContainer" class="space-y-3"></div>
@@ -96,32 +105,7 @@
         let currentMatches = [];
         let isLiveFilterActive = false;
         const INITIAL_BANKROLL = 100.0;
-        const STAKE_PERCENT = 0.02; // 2% du capital
-
-        // DICTIONNAIRE TOP JOUEURS TENNIS (ATP / WTA)
-        const topTennisPlayers = {
-            "Sinner": 96, "Alcaraz": 95, "Djokovic": 95, "Zverev": 92, "Medvedev": 90, "Fritz": 88, "Ruud": 87, "De Minaur": 87,
-            "Sabalenka": 95, "Swiatek": 95, "Gauff": 92, "Pegula": 90, "Rybakina": 90, "Paolini": 87, "Zheng": 86
-        };
-
-        function getPlayerScore(playerName) {
-            let baseScore = 70; // Niveau standard tournoi ATP/WTA
-            for (let p in topTennisPlayers) {
-                if (playerName.includes(p)) {
-                    baseScore = topTennisPlayers[p];
-                    break;
-                }
-            }
-            return baseScore;
-        }
-
-        // ALGORITHME DE PRONOSTIC TENNIS
-        function getAlgoPick(p1Name, p2Name) {
-            let p1Score = getPlayerScore(p1Name);
-            let p2Score = getPlayerScore(p2Name);
-            
-            return (p1Score >= p2Score) ? 'PLAYER1' : 'PLAYER2';
-        }
+        const STAKE_PERCENT = 0.02; // 2% du capital actuel
 
         setInterval(() => {
             if (document.getElementById('matchDate').value === localDateStr || isLiveFilterActive) {
@@ -132,7 +116,7 @@
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            let bgClass = type === 'success' ? 'bg-emerald-900/90 border-emerald-500/50 text-emerald-200' : (type === 'error' ? 'bg-red-900/90 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
+            let bgClass = type === 'success' ? 'bg-lime-900/90 border-lime-500/50 text-lime-200' : (type === 'error' ? 'bg-red-900/90 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
             toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center ${bgClass}`;
             toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
@@ -143,73 +127,111 @@
             }, 3000);
         }
 
+        function extractSetsWon(competitor, isCompleted) {
+            if (competitor.linescores && competitor.linescores.length > 0) {
+                let sets = 0;
+                competitor.linescores.forEach(ls => {
+                    if (ls.winner === true) sets++;
+                });
+                
+                if (isCompleted) return sets;
+
+                let currentGames = competitor.linescores[competitor.linescores.length - 1]?.value;
+                if (currentGames !== undefined) {
+                    return `${sets} (${currentGames}j)`;
+                }
+                return sets;
+            }
+            if (competitor.score !== undefined && competitor.score !== null && competitor.score !== "") {
+                return competitor.score;
+            }
+            return 0;
+        }
+
         async function loadTennisMatches(isSilent = false) {
             const dateStr = document.getElementById('matchDate').value;
             const apiDate = dateStr.replace(/-/g, '');
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Interrogation du circuit tennis...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération directe des tableaux ATP & WTA...';
                 document.getElementById('matchesContainer').innerHTML = '';
             }
             
             try {
-                // API ESPN Tennis (ATP & WTA)
-                const leagues = ['atp', 'wta'];
-                const fetchPromises = leagues.map(league => 
-                    fetch(`https://site.api.espn.com/apis/site/v2/sports/tennis/${league}/scoreboard?dates=${apiDate}`)
-                    .then(res => res.ok ? res.json() : null)
-                    .catch(() => null)
-                );
+                const urls = [
+                    `https://site.api.espn.com/apis/site/v2/sports/tennis/atp/scoreboard?dates=${apiDate}`,
+                    `https://site.api.espn.com/apis/site/v2/sports/tennis/wta/scoreboard?dates=${apiDate}`
+                ];
 
-                const results = await Promise.all(fetchPromises);
+                const responses = await Promise.all(urls.map(u => fetch(u).catch(() => null)));
                 let validMatches = [];
 
-                results.forEach((data, idx) => {
-                    if (!data || !data.events) return;
-                    let circuitName = idx === 0 ? 'ATP Tour' : 'WTA Tour';
-
-                    data.events.forEach(event => {
-                        let comp = event.competitions?.[0];
-                        if (!comp || !comp.competitors || comp.competitors.length < 2) return;
-
-                        const state = comp.status?.type?.state || 'pre';
-                        const isCompleted = comp.status?.type?.completed || state === 'post';
-                        const isLive = state === 'in';
-
-                        // FILTRE ASSOUPLI : On accepte tous les matchs renvoyés par l'API pour cette date
-                        // sans vérifier le décalage UTC qui masquait les matchs asiatiques ou américains.
-
-                        let p1 = comp.competitors[0];
-                        let p2 = comp.competitors[1];
-
-                        let p1Name = p1.athlete?.shortName || p1.athlete?.displayName || "Joueur 1";
-                        let p2Name = p2.athlete?.shortName || p2.athlete?.displayName || "Joueur 2";
-                        let p1Logo = p1.athlete?.headshot || `https://ui-avatars.com/api/?name=${encodeURIComponent(p1Name)}&background=18181b&color=34d399&size=64`;
-                        let p2Logo = p2.athlete?.headshot || `https://ui-avatars.com/api/?name=${encodeURIComponent(p2Name)}&background=18181b&color=34d399&size=64`;
-
-                        let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
-                        let p1Score = p1.score || "0";
-                        let p2Score = p2.score || "0";
-
-                        let winner = null;
-                        if (isCompleted) {
-                            if (p1.winner) winner = 'PLAYER1';
-                            else if (p2.winner) winner = 'PLAYER2';
+                for (let res of responses) {
+                    if (!res || !res.ok) continue;
+                    const data = await res.json();
+                    
+                    (data.events || []).forEach(tournament => {
+                        const baseTournName = tournament.name || "Tournoi ATP/WTA";
+                        
+                        let allCompetitions = [];
+                        if (tournament.groupings && Array.isArray(tournament.groupings)) {
+                            tournament.groupings.forEach(group => {
+                                const drawName = group.grouping?.displayName || "";
+                                (group.competitions || []).forEach(comp => {
+                                    comp._fullTournName = drawName ? `${baseTournName} (${drawName})` : baseTournName;
+                                    allCompetitions.push(comp);
+                                });
+                            });
+                        } else if (tournament.competitions && Array.isArray(tournament.competitions)) {
+                            tournament.competitions.forEach(comp => {
+                                comp._fullTournName = baseTournName;
+                                allCompetitions.push(comp);
+                            });
                         }
 
-                        validMatches.push({
-                            id: event.id.toString(),
-                            status: status,
-                            statusDetail: comp.status?.type?.shortDetail || "",
-                            utcDate: event.date,
-                            tournament: event.name || circuitName,
-                            player1: { name: p1Name, logo: p1Logo, score: p1Score },
-                            player2: { name: p2Name, logo: p2Logo, score: p2Score },
-                            winner: winner
+                        allCompetitions.forEach(comp => {
+                            if (!comp.competitors || comp.competitors.length < 2) return;
+
+                            const compDateStr = comp.date ? new Date(comp.date).toISOString().split('T')[0] : dateStr;
+                            const state = comp.status?.type?.state || 'pre';
+                            const isCompleted = comp.status?.type?.completed || state === 'post';
+                            const isLive = state === 'in';
+
+                            if (compDateStr !== dateStr && !isLive) return;
+
+                            let p1 = comp.competitors[0];
+                            let p2 = comp.competitors[1];
+
+                            let homeName = p1.athlete?.shortName || p1.athlete?.displayName || p1.roster?.shortDisplayName || p1.team?.displayName || "TBD";
+                            let awayName = p2.athlete?.shortName || p2.athlete?.displayName || p2.roster?.shortDisplayName || p2.team?.displayName || "TBD";
+
+                            if (homeName === "TBD" && awayName === "TBD") return;
+
+                            let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
+                            let s1 = extractSetsWon(p1, isCompleted);
+                            let s2 = extractSetsWon(p2, isCompleted);
+
+                            let winner = null;
+                            if (isCompleted) {
+                                if (p1.winner === true) winner = 'P1';
+                                else if (p2.winner === true) winner = 'P2';
+                            }
+
+                            validMatches.push({
+                                id: comp.id.toString(),
+                                status: status,
+                                statusDetail: comp.status?.type?.shortDetail || "",
+                                utcDate: comp.date || tournament.date,
+                                competition: { name: comp._fullTournName },
+                                homeTeam: { name: homeName },
+                                awayTeam: { name: awayName },
+                                winner: winner,
+                                score: { current: { home: s1, away: s2 } }
+                            });
                         });
                     });
-                });
+                }
 
                 validMatches.sort((a, b) => {
                     if (a.status === 'IN_PLAY' && b.status !== 'IN_PLAY') return -1;
@@ -220,20 +242,45 @@
                 currentMatches = validMatches;
 
                 if (currentMatches.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match majeur ATP/WTA trouvé pour le ${dateStr}.</span>`;
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match programmé à cette date précise.</span>`;
                 } else {
                     const liveCount = currentMatches.filter(m => m.status === 'IN_PLAY').length;
                     if (!isSilent) {
-                        statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs chargés (${liveCount} en direct)</span>`;
+                        statusText.innerHTML = `<span class="text-lime-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${currentMatches.length} matchs chargés (${liveCount} en direct)</span>`;
                     }
                 }
                 
+                populateCompetitions(currentMatches);
                 applyFilters();
                 calculateDailyBankroll();
 
             } catch (error) {
                 console.error(error);
-                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur lors du chargement des matchs tennis.</span>`;
+                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur lors de la lecture des tableaux.</span>`;
+            }
+        }
+
+        function populateCompetitions(matches) {
+            const select = document.getElementById('compSelect');
+            const currentSelection = select.value;
+            select.innerHTML = '<option value="ALL">Tous les tournois</option>';
+            const compsMap = new Map();
+            
+            matches.forEach(m => {
+                if (m.competition?.name) {
+                    compsMap.set(m.competition.name, (compsMap.get(m.competition.name) || 0) + 1);
+                }
+            });
+            
+            Array.from(compsMap.keys()).sort().forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = `${c} (${compsMap.get(c)})`;
+                select.appendChild(opt);
+            });
+            
+            if (Array.from(compsMap.keys()).includes(currentSelection)) {
+                select.value = currentSelection;
             }
         }
 
@@ -253,25 +300,39 @@
         function applyFilters() {
             let filtered = currentMatches;
             if (isLiveFilterActive) filtered = filtered.filter(m => m.status === 'IN_PLAY');
+            const selectedComp = document.getElementById('compSelect').value;
+            if (selectedComp !== "ALL") filtered = filtered.filter(m => m.competition?.name === selectedComp);
             renderMatches(filtered);
+        }
+
+        function computeAlgoPick(p1, p2) {
+            p1 = String(p1 || ""); p2 = String(p2 || "");
+            const topTier = ["Sinner", "Alcaraz", "Zverev", "Djokovic", "Medvedev", "Fritz", "Ruud", "Rublev", "De Minaur", "Dimitrov", "Tsitsipas", "Humbert", "Fils", "Sabalenka", "Swiatek", "Gauff", "Pegula", "Rybakina"];
+            let f1 = 50; let f2 = 50; 
+            topTier.forEach(p => {
+                if (p1.toLowerCase().includes(p.toLowerCase())) f1 += 20;
+                if (p2.toLowerCase().includes(p.toLowerCase())) f2 += 20; 
+            });
+            return f1 >= f2 ? 'P1' : 'P2';
         }
 
         function renderMatches(matchesToRender) {
             const container = document.getElementById('matchesContainer');
             const dateStr = document.getElementById('matchDate').value;
-            let savedBets = JSON.parse(localStorage.getItem(`tennisbet_v2_${dateStr}`)) || {};
+            let savedBets = JSON.parse(localStorage.getItem(`tennisbet_${dateStr}`)) || {};
 
             container.innerHTML = '';
 
             if (matchesToRender.length === 0) {
-                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match de tennis pour ce filtre ou cette date. (Fin de saison)</div>`;
+                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match pour ce filtre actuellement.</div>`;
                 return;
             }
 
+            // Calcul dynamique de la mise en cours pour chaque carte
             let runningBankroll = INITIAL_BANKROLL;
             currentMatches.forEach(m => {
                 if (savedBets[m.id]) {
-                    runningBankroll += (m.status === 'FINISHED' && m.winner) ? (savedBets[m.id] === m.winner ? 1.80 * Math.max(0.5, runningBankroll * STAKE_PERCENT) : -Math.max(0.5, runningBankroll * STAKE_PERCENT)) : 0;
+                    runningBankroll += (m.status === 'FINISHED' && m.winner) ? (savedBets[m.id] === m.winner ? 1.75 * Math.max(0.5, runningBankroll * STAKE_PERCENT) : -Math.max(0.5, runningBankroll * STAKE_PERCENT)) : 0;
                 }
             });
             let currentStake = Math.max(0.5, runningBankroll * STAKE_PERCENT);
@@ -280,85 +341,62 @@
                 let isFinished = match.status === 'FINISHED';
                 let isLive = match.status === 'IN_PLAY';
                 
-                let p1Name = match.player1.name;
-                let p2Name = match.player2.name;
-                let p1Logo = match.player1.logo;
-                let p2Logo = match.player2.logo;
-                let p1Score = match.player1.score;
-                let p2Score = match.player2.score;
-
-                let algoPrediction = getAlgoPick(p1Name, p2Name);
-                let badgeAlgo = `<span class="mt-1.5 text-[9px] text-white bg-zinc-950/40 px-1.5 py-0.5 rounded font-black tracking-wider"><i class="fa-solid fa-bolt mr-1 text-emerald-400"></i>PRONO</span>`;
+                let homeName = match.homeTeam.name;
+                let awayName = match.awayTeam.name;
+                
+                let sHome = match.score.current.home;
+                let sAway = match.score.current.away;
 
                 let timeStr = new Date(match.utcDate).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
 
-                let statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">${timeStr}</span>`;
-                if (isLive) statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold animate-pulse">🔴 En direct (${match.statusDetail})</span>`;
-                if (isFinished) statusBadge = `<span class="bg-zinc-800 text-zinc-500 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">Terminé</span>`;
+                let statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-[10px] uppercase font-bold">${timeStr}</span>`;
+                if (isLive) statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse">🔴 En direct (${match.statusDetail})</span>`;
+                if (isFinished) statusBadge = `<span class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px] uppercase font-bold">Terminé</span>`;
 
                 let winner = match.winner;
                 let myBet = savedBets[match.id]; 
+                let algoPick = computeAlgoPick(homeName, awayName);
 
-                let baseBtn = "relative flex-1 py-4 px-2 rounded-xl font-bold text-xs transition-all duration-200 border text-center flex flex-col items-center justify-center shadow-sm overflow-hidden ";
-                
-                let p1Class = baseBtn + (myBet === 'PLAYER1' 
-                    ? "bg-emerald-600 text-white border-emerald-500 shadow-[0_0_12px_rgba(5,150,105,0.6)] scale-[1.02]" 
-                    : "bg-emerald-900/40 text-emerald-300 border-emerald-500/40 hover:bg-emerald-800/60 hover:text-white");
-                    
-                let p2Class = baseBtn + (myBet === 'PLAYER2' 
-                    ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_12px_rgba(37,99,235,0.6)] scale-[1.02]" 
-                    : "bg-blue-900/40 text-blue-300 border-blue-500/40 hover:bg-blue-800/60 hover:text-white");
+                let baseClass = "relative flex flex-col items-center justify-center p-3 rounded-xl border transition ";
+                let homeClass = baseClass + (algoPick === 'P1' ? "bg-lime-900/20 border-lime-500/40 " : "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ");
+                let awayClass = baseClass + (algoPick === 'P2' ? "bg-cyan-900/20 border-cyan-500/40 " : "bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 ");
+
+                if (myBet === 'P1') homeClass = baseClass + "bg-lime-600/40 border-lime-400 shadow-[0_0_10px_rgba(163,230,53,0.3)] ";
+                if (myBet === 'P2') awayClass = baseClass + "bg-cyan-600/40 border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.3)] ";
 
                 if (isFinished) {
-                    p1Class = baseBtn + (myBet === 'PLAYER1' ? "bg-emerald-900/50 text-emerald-300 border-emerald-800" : "bg-zinc-900 text-zinc-600 border-zinc-800") + " cursor-not-allowed opacity-75";
-                    p2Class = baseBtn + (myBet === 'PLAYER2' ? "bg-blue-900/50 text-blue-300 border-blue-800" : "bg-zinc-900 text-zinc-600 border-zinc-800") + " cursor-not-allowed opacity-75";
+                    homeClass = homeClass.replace('hover:bg-zinc-800', '') + ' cursor-not-allowed opacity-80';
+                    awayClass = awayClass.replace('hover:bg-zinc-800', '') + ' cursor-not-allowed opacity-80';
                 }
 
                 let card = document.createElement('div');
-                card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-xl space-y-4";
+                card.className = "bg-zinc-900 border border-zinc-800 rounded-xl p-3 shadow-md";
 
                 card.innerHTML = `
-                    <div class="flex justify-between items-center border-b border-zinc-800 pb-2.5">
+                    <div class="flex justify-between items-center border-b border-zinc-800/50 pb-2 mb-3">
                         ${statusBadge}
-                        <span class="text-[10px] text-zinc-300 font-bold tracking-wider flex items-center text-right w-2/3 truncate justify-end"><i class="fa-solid fa-trophy text-emerald-400 mr-1.5"></i>${match.tournament}</span>
+                        <span class="text-[10px] text-zinc-300 font-bold tracking-wider flex items-center text-right w-2/3 truncate justify-end"><i class="fa-solid fa-trophy text-lime-400 mr-1.5"></i>${match.competition.name}</span>
                     </div>
                     
-                    <div class="flex justify-between items-center px-1">
-                        <div class="flex items-center space-x-2.5 w-1/3 overflow-hidden">
-                            <img src="${p1Logo}" class="w-8 h-8 rounded-full object-cover flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=P1&background=18181b&color=34d399'">
-                            <span class="text-xs font-black text-white truncate">${p1Name}</span>
-                        </div>
-                        <div class="text-center px-2 py-1 bg-zinc-950 rounded-lg border border-zinc-800">
-                            <span class="text-xs font-black text-emerald-400">${p1Score}</span>
-                            <span class="text-xs text-zinc-500 mx-1">-</span>
-                            <span class="text-xs font-black text-blue-400">${p2Score}</span>
-                        </div>
-                        <div class="flex items-center justify-end space-x-2.5 w-1/3 overflow-hidden">
-                            <span class="text-xs font-black text-white truncate text-right">${p2Name}</span>
-                            <img src="${p2Logo}" class="w-8 h-8 rounded-full object-cover flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=P2&background=18181b&color=34d399'">
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3 pt-1">
-                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'PLAYER1')"`} class="${p1Class}">
-                            <span class="text-[10px] uppercase font-bold tracking-wider mb-0.5 opacity-80">Joueur 1</span>
-                            <span class="truncate w-full text-[11px] leading-tight">${p1Name}</span>
-                            ${algoPrediction === 'PLAYER1' ? badgeAlgo : ''}
+                    <div class="grid grid-cols-2 gap-3 mt-1">
+                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'P1')"`} class="${homeClass}">
+                            <span class="text-[12px] font-black text-center leading-tight mb-1 w-full ${myBet === 'P1' ? 'text-white' : 'text-lime-400'} drop-shadow-md truncate px-1">${homeName}</span>
+                            <span class="text-lg font-black ${isFinished && winner === 'P1' ? 'text-lime-400' : 'text-zinc-200'}">Sets: ${sHome}</span>
                         </button>
-                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'PLAYER2')"`} class="${p2Class}">
-                            <span class="text-[10px] uppercase font-bold tracking-wider mb-0.5 opacity-80">Joueur 2</span>
-                            <span class="truncate w-full text-[11px] leading-tight">${p2Name}</span>
-                            ${algoPrediction === 'PLAYER2' ? badgeAlgo : ''}
+
+                        <button ${isFinished ? 'disabled' : `onclick="placeBet('${match.id}', 'P2')"`} class="${awayClass}">
+                            <span class="text-[12px] font-black text-center leading-tight mb-1 w-full ${myBet === 'P2' ? 'text-white' : 'text-cyan-400'} drop-shadow-md truncate px-1">${awayName}</span>
+                            <span class="text-lg font-black ${isFinished && winner === 'P2' ? 'text-lime-400' : 'text-zinc-200'}">Sets: ${sAway}</span>
                         </button>
                     </div>
                     
                     ${myBet ? `
-                    <div class="flex justify-between items-center text-[11px] bg-zinc-950 rounded-xl px-3.5 py-2.5 border border-zinc-800 mt-2">
-                        <span class="text-zinc-400">Mise engagée : <strong class="text-emerald-400">${currentStake.toFixed(2)} €</strong></span>
+                    <div class="mt-3 flex justify-between items-center text-[11px] bg-zinc-950 rounded px-3 py-1.5 border border-zinc-800">
+                        <span class="text-zinc-400">Mise engagée : <strong class="text-lime-400">${currentStake.toFixed(2)} €</strong></span>
                         <div>
                             ${isFinished 
-                                ? (myBet === winner ? '<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check"></i> Gagné</span>' : '<span class="text-red-400 font-bold"><i class="fa-solid fa-xmark"></i> Perdu</span>') 
-                                : '<span class="text-emerald-400 font-medium">Pari validé (En attente)</span>'
+                                ? (myBet === winner ? '<span class="text-lime-400 font-bold"><i class="fa-solid fa-check"></i> Gagné</span>' : '<span class="text-red-400 font-bold"><i class="fa-solid fa-xmark"></i> Perdu</span>') 
+                                : '<span class="text-lime-400 font-medium">Pari validé (En attente)</span>'
                             }
                         </div>
                     </div>` : ''}
@@ -375,7 +413,7 @@
             }
 
             const dateStr = document.getElementById('matchDate').value;
-            let savedBets = JSON.parse(localStorage.getItem(`tennisbet_v2_${dateStr}`)) || {};
+            let savedBets = JSON.parse(localStorage.getItem(`tennisbet_${dateStr}`)) || {};
             if (savedBets[matchId] === pick) {
                 delete savedBets[matchId];
                 showToast("Pari annulé");
@@ -383,14 +421,14 @@
                 savedBets[matchId] = pick;
                 showToast("Pari validé", "success");
             }
-            localStorage.setItem(`tennisbet_v2_${dateStr}`, JSON.stringify(savedBets));
+            localStorage.setItem(`tennisbet_${dateStr}`, JSON.stringify(savedBets));
             applyFilters();
             calculateDailyBankroll();
         }
 
         function calculateDailyBankroll() {
             const dateStr = document.getElementById('matchDate').value;
-            let savedBets = JSON.parse(localStorage.getItem(`tennisbet_v2_${dateStr}`)) || {};
+            let savedBets = JSON.parse(localStorage.getItem(`tennisbet_${dateStr}`)) || {};
             
             let dailyProfit = 0; 
             let betsCount = 0; 
@@ -406,7 +444,7 @@
 
                     if (match.status === 'FINISHED' && match.winner) {
                         if (myBet === match.winner) {
-                            let netWin = (1.80 * currentStake) - currentStake; // Cote moyenne tennis standard 1.80
+                            let netWin = (1.75 * currentStake) - currentStake;
                             dailyProfit += netWin;
                             currentBankroll += netWin;
                         } else {
@@ -419,20 +457,31 @@
 
             document.getElementById('dailyBetsCount').textContent = betsCount;
             document.getElementById('dailyTotalStake').textContent = `${totalStake.toFixed(2)} €`;
+            document.getElementById('totalSpentText').textContent = `${totalStake.toFixed(2)} €`;
 
             let profitEl = document.getElementById('dailyProfit');
             profitEl.textContent = `${dailyProfit > 0 ? '+' : ''}${dailyProfit.toFixed(2)} €`;
-            profitEl.className = `text-lg font-black ${dailyProfit > 0 ? 'text-emerald-400' : (dailyProfit < 0 ? 'text-red-400' : 'text-white')}`;
+            profitEl.className = `text-lg font-black ${dailyProfit > 0 ? 'text-lime-400' : (dailyProfit < 0 ? 'text-red-400' : 'text-white')}`;
             document.getElementById('headerBankroll').textContent = `${(INITIAL_BANKROLL + dailyProfit).toFixed(2)} €`;
 
             if (betsCount > 0 || dailyProfit !== 0 || (savedBets && Object.keys(savedBets).length > 0)) {
-                let history = JSON.parse(localStorage.getItem('tennisbet_v2_full_history')) || {};
+                let history = JSON.parse(localStorage.getItem('tennisbet_full_history')) || {};
                 history[dateStr] = dailyProfit;
-                localStorage.setItem('tennisbet_v2_full_history', JSON.stringify(history));
+                localStorage.setItem('tennisbet_full_history', JSON.stringify(history));
             }
 
             if (!document.getElementById('historyBlock').classList.contains('hidden')) {
                 showHistoryStats();
+            }
+        }
+
+        function toggleHistoryStats() {
+            let block = document.getElementById('historyBlock');
+            if (block.classList.contains('hidden')) {
+                block.classList.remove('hidden');
+                showHistoryStats();
+            } else {
+                block.classList.add('hidden');
             }
         }
 
@@ -442,7 +491,7 @@
             let year = currentViewDate.getFullYear();
             
             document.getElementById('currentYearText').textContent = year;
-            let history = JSON.parse(localStorage.getItem('tennisbet_v2_full_history')) || {};
+            let history = JSON.parse(localStorage.getItem('tennisbet_full_history')) || {};
 
             let dayOfWeek = currentViewDate.getDay() || 7; 
             let monday = new Date(currentViewDate);
@@ -458,7 +507,7 @@
 
             let wpEl = document.getElementById('weekTotal');
             wpEl.textContent = `${wTotal > 0 ? '+' : ''}${wTotal.toFixed(2)} €`;
-            wpEl.className = wTotal > 0 ? 'text-emerald-400 font-black' : (wTotal < 0 ? 'text-red-400 font-black' : 'text-zinc-400 font-black');
+            wpEl.className = wTotal > 0 ? 'text-lime-400 font-black' : (wTotal < 0 ? 'text-red-400 font-black' : 'text-zinc-400 font-black');
 
             const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
             let monthsGrid = document.getElementById('monthsGrid');
@@ -483,10 +532,10 @@
                     let div = document.createElement('div');
                     let isCurrentMonth = (m === currentViewDate.getMonth());
                     div.className = isCurrentMonth 
-                        ? "bg-zinc-800 p-3 rounded-xl border border-emerald-500/50 mb-2 flex justify-between items-center text-xs" 
+                        ? "bg-zinc-800 p-3 rounded-xl border border-lime-500/50 mb-2 flex justify-between items-center text-xs" 
                         : "bg-zinc-800/50 p-3 rounded-xl border border-zinc-700/50 mb-2 flex justify-between items-center text-xs";
 
-                    let totColor = mTot >= 0 ? 'text-emerald-400' : 'text-red-400';
+                    let totColor = mTot >= 0 ? 'text-lime-400' : 'text-red-400';
                     div.innerHTML = `
                         <span class="font-bold ${isCurrentMonth ? 'text-white' : 'text-zinc-300'}">${monthNames[m]}</span>
                         <span class="font-black ${totColor}">${mTot > 0 ? '+' : ''}${mTot.toFixed(2)} €</span>
