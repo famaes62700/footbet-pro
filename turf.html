@@ -116,10 +116,13 @@
 
             <div class="flex justify-between items-center text-[11px] bg-zinc-800/60 px-3 py-2 rounded-xl border border-zinc-700/50 text-zinc-300">
                 <div class="flex flex-col space-y-1">
-                    <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Joué Base : <strong id="totalSpentText" class="text-white">0.00 €</strong></span>
-                    <span><i class="fa-solid fa-gem mr-1 text-amber-400"></i> Joué Pépite : <strong id="totalSpentPepiteText" class="text-amber-400">0.00 €</strong></span>
+                    <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Joué Base: <strong id="totalSpentText" class="text-white">0.00 €</strong> <span class="text-zinc-500">(Max: <span id="maxStakeBaseText">0.00 €</span>)</span></span>
+                    <span><i class="fa-solid fa-gem mr-1 text-amber-400"></i> Joué Pépite: <strong id="totalSpentPepiteText" class="text-amber-400">0.00 €</strong> <span class="text-zinc-500">(Max: <span id="maxStakePepiteText">0.00 €</span>)</span></span>
                 </div>
-                <span>Prochaine mise : <strong id="currentPalierText" class="text-amber-400 bg-zinc-900 px-2 py-0.5 rounded border border-amber-500/30 font-bold">5.00 €</strong></span>
+                <div class="flex flex-col items-end space-y-1">
+                    <span class="text-[9px] uppercase text-zinc-400">Prochaine mise</span>
+                    <strong id="currentPalierText" class="text-amber-400 bg-zinc-900 px-2 py-0.5 rounded border border-amber-500/30 font-bold text-xs">5.00 €</strong>
+                </div>
             </div>
         </div>
 
@@ -869,6 +872,9 @@
             let totalSpentText = document.getElementById('totalSpentText');
             let totalSpentPepiteText = document.getElementById('totalSpentPepiteText');
             let currentPalierText = document.getElementById('currentPalierText');
+            
+            let maxStakeBaseText = document.getElementById('maxStakeBaseText');
+            let maxStakePepiteText = document.getElementById('maxStakePepiteText');
 
             if (!isAuto && statsProgress) {
                 statsProgress.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Analyse Trot en cours...";
@@ -907,6 +913,9 @@
             let totalSpentBase = 0; 
             let totalSpentPepite = 0;
             
+            let maxStakeBase = 0;
+            let maxStakePepite = 0;
+            
             let totalProfitBasePla = 0;
             let totalProfitBaseGag = 0;
             
@@ -923,7 +932,6 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                // CLÉ CACHE RENOMMÉE POUR FORCER LE RECALCUL SUR LES ANCIENNES COURSES
                 let cacheKey = `trot_favori_v1_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto && statsProgress) {
@@ -983,6 +991,7 @@
                         let actualStakeBase = Math.min(targetStakeBase, currentBankroll);
                         
                         totalSpentBase += actualStakeBase;
+                        if (actualStakeBase > maxStakeBase) maxStakeBase = actualStakeBase;
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
                         if (gPla === 0 && baseArr >= 1 && baseArr <= 3) gPla = Math.max(1.1, baseH.cote / 3); 
@@ -1004,6 +1013,7 @@
                     if (nuggetH) {
                         let simStakePepite = computeSmartStake(deficitSeriePepite);
                         totalSpentPepite += simStakePepite;
+                        if (simStakePepite > maxStakePepite) maxStakePepite = simStakePepite;
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
                         if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
@@ -1035,14 +1045,16 @@
             totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
             totalSpentPepiteText.textContent = `${totalSpentPepite.toFixed(2)} €`;
             
+            if (maxStakeBaseText) maxStakeBaseText.textContent = `${maxStakeBase.toFixed(2)} €`;
+            if (maxStakePepiteText) maxStakePepiteText.textContent = `${maxStakePepite.toFixed(2)} €`;
+            
             let nextStake = computeSmartStake(deficitSerieBase);
             currentPalierText.textContent = `${nextStake.toFixed(2)} €`;
-            currentPalierText.className = "text-amber-400 bg-zinc-900 px-2 py-0.5 rounded border border-amber-500/30 font-bold";
+            currentPalierText.className = "text-amber-400 bg-zinc-900 px-2 py-0.5 rounded border border-amber-500/30 font-bold text-xs";
             
             document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
 
             if (coursesValidees > 0) {
-                // ENREGISTREMENT SOUS LA NOUVELLE CLÉ GLOBALE POUR METTRE A JOUR LE MOIS EN COURS
                 localStorage.setItem(`pmu_stats_trot_favori_v1_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
