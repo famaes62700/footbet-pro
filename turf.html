@@ -115,7 +115,10 @@
             </div>
 
             <div class="flex justify-between items-center text-[11px] bg-zinc-800/60 px-3 py-2 rounded-xl border border-zinc-700/50 text-zinc-300">
-                <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Total Joué: <strong id="totalSpentText" class="text-white">0.00 €</strong></span>
+                <div class="flex flex-col space-y-1">
+                    <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Joué Base : <strong id="totalSpentText" class="text-white">0.00 €</strong></span>
+                    <span><i class="fa-solid fa-gem mr-1 text-amber-400"></i> Joué Pépite : <strong id="totalSpentPepiteText" class="text-amber-400">0.00 €</strong></span>
+                </div>
                 <span>Prochaine mise : <strong id="currentPalierText" class="text-amber-400 bg-zinc-900 px-2 py-0.5 rounded border border-amber-500/30 font-bold">5.00 €</strong></span>
             </div>
         </div>
@@ -864,6 +867,7 @@
             let gainPepiteGag = document.getElementById('gainPepiteGag');
             
             let totalSpentText = document.getElementById('totalSpentText');
+            let totalSpentPepiteText = document.getElementById('totalSpentPepiteText');
             let currentPalierText = document.getElementById('currentPalierText');
 
             if (!isAuto && statsProgress) {
@@ -901,6 +905,7 @@
             let baseWinsGag = 0, baseWinsPla = 0;
             let pepiteWinsGag = 0, pepiteWinsPla = 0;
             let totalSpentBase = 0; 
+            let totalSpentPepite = 0;
             
             let totalProfitBasePla = 0;
             let totalProfitBaseGag = 0;
@@ -998,6 +1003,7 @@
 
                     if (nuggetH) {
                         let simStakePepite = computeSmartStake(deficitSeriePepite);
+                        totalSpentPepite += simStakePepite;
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
                         if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
@@ -1027,6 +1033,7 @@
             gainPepiteGag.innerHTML = formatMoneyHTML(totalProfitPepiteGag);
             
             totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
+            totalSpentPepiteText.textContent = `${totalSpentPepite.toFixed(2)} €`;
             
             let nextStake = computeSmartStake(deficitSerieBase);
             currentPalierText.textContent = `${nextStake.toFixed(2)} €`;
