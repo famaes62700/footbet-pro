@@ -48,7 +48,7 @@
         
         <div class="flex justify-between items-center">
             <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center w-3/4 truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des championnats majeurs...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs européens...
             </div>
             <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
@@ -101,19 +101,24 @@
         const INITIAL_BANKROLL = 100.0;
         const STAKE_PERCENT = 0.02; // 2% du capital actuel
 
-        // Filtre ciblé exclusif : Europe
+        // Filtre ciblé exclusif avec les codes exacts de l'API ESPN
         function isMajorEuropeanCompetition(compName) {
             let name = String(compName || "").toUpperCase();
             const whitelist = [
-                "LIGUE 1", "FRANCE", "PREMIER LEAGUE", "ENGLAND", "LA LIGA", "SPAIN", "ESPAGNE",
-                "SERIE A", "ITALY", "ITALIE", "BUNDESLIGA", "GERMANY", "ALLEMAGNE",
-                "CHAMPIONS LEAGUE", "EUROPA LEAGUE", "CONFERENCE LEAGUE", "UEFA", "LIGUE DES CHAMPIONS"
+                "LIGUE 1", "FRA.1", "FRANCE", 
+                "PREMIER LEAGUE", "ENG.1", "ENGLAND", 
+                "LA LIGA", "ESP.1", "SPAIN", "ESPAGNE", 
+                "SERIE A", "ITA.1", "ITALY", "ITALIE", 
+                "BUNDESLIGA", "GER.1", "GERMANY", "ALLEMAGNE", 
+                "UEFA.CHAMPIONS", "CHAMPIONS", 
+                "UEFA.EUROPA", "EUROPA", 
+                "UEFA.CONFERENCE", "CONFERENCE", 
+                "UEFA"
             ];
             return whitelist.some(w => name.includes(w));
         }
 
         // ALGORITHME DE PRONOSTIC
-        // Calcule un score basé sur le ratio V/N/D de la saison
         function getTeamScore(recordStr) {
             if (!recordStr) return 50; 
             let parts = recordStr.split('-');
@@ -129,12 +134,12 @@
         }
 
         function getAlgoPick(homeRec, awayRec) {
-            let hScore = getTeamScore(homeRec) + 12; // +12% d'avantage statistique à domicile
+            let hScore = getTeamScore(homeRec) + 12; // Avantage domicile
             let aScore = getTeamScore(awayRec);
             
-            if (hScore > aScore + 15) return 'HOME'; // Le domicile est net favori
-            if (aScore > hScore + 5) return 'AWAY';  // L'extérieur est net favori même avec le désavantage du terrain
-            return 'DRAW'; // Match serré
+            if (hScore > aScore + 15) return 'HOME';
+            if (aScore > hScore + 5) return 'AWAY';
+            return 'DRAW';
         }
 
         setInterval(() => {
@@ -163,7 +168,7 @@
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des championnats majeurs...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération des matchs européens...';
                 document.getElementById('matchesContainer').innerHTML = '';
             }
             
@@ -197,7 +202,6 @@
                     let homeLogo = home.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(homeName)}&background=18181b&color=60a5fa&size=64`;
                     let awayLogo = away.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(awayName)}&background=18181b&color=60a5fa&size=64`;
 
-                    // Extraction du ratio pour l'algorithme
                     let homeRecord = home.records?.[0]?.summary || "";
                     let awayRecord = away.records?.[0]?.summary || "";
 
@@ -212,12 +216,22 @@
                         else winner = 'DRAW';
                     }
 
+                    // Formatage du nom de la compétition pour le visuel
+                    let displayCompName = leagueName.toUpperCase();
+                    if (displayCompName.includes('FRA.1')) displayCompName = 'LIGUE 1';
+                    else if (displayCompName.includes('ENG.1')) displayCompName = 'PREMIER LEAGUE';
+                    else if (displayCompName.includes('ESP.1')) displayCompName = 'LA LIGA';
+                    else if (displayCompName.includes('ITA.1')) displayCompName = 'SERIE A';
+                    else if (displayCompName.includes('GER.1')) displayCompName = 'BUNDESLIGA';
+                    else if (displayCompName.includes('UEFA.CHAMPIONS')) displayCompName = 'CHAMPIONS LEAGUE';
+                    else if (displayCompName.includes('UEFA.EUROPA')) displayCompName = 'EUROPA LEAGUE';
+
                     validMatches.push({
                         id: event.id.toString(),
                         status: status,
                         statusDetail: comp.status?.type?.shortDetail || "",
                         utcDate: event.date,
-                        competition: { name: leagueName },
+                        competition: { name: displayCompName },
                         homeTeam: { name: homeName, logo: homeLogo, score: sHome, record: homeRecord },
                         awayTeam: { name: awayName, logo: awayLogo, score: sAway, record: awayRecord },
                         winner: winner
@@ -233,7 +247,7 @@
                 currentMatches = validMatches;
 
                 if (currentMatches.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match des grands championnats à cette date.</span>`;
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucun grand match européen ce jour.</span>`;
                 } else {
                     const liveCount = currentMatches.filter(m => m.status === 'IN_PLAY').length;
                     if (!isSilent) {
@@ -327,7 +341,6 @@
                 let sHome = match.homeTeam.score;
                 let sAway = match.awayTeam.score;
 
-                // Génération de la prédiction de l'algorithme
                 let algoPrediction = getAlgoPick(match.homeTeam.record, match.awayTeam.record);
                 let badgeAlgo = `<span class="mt-1 text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-black tracking-wider shadow border border-amber-500/30"><i class="fa-solid fa-bolt mr-1"></i>PRONO</span>`;
 
@@ -340,7 +353,7 @@
                 let winner = match.winner;
                 let myBet = savedBets[match.id]; 
 
-                // Grands carrés de jeux (1, N, 2) aux couleurs distinctes
+                // Les grands carrés de pari
                 let baseBtn = "relative flex-1 py-3 px-2 rounded-2xl font-black text-xs transition border text-center flex flex-col items-center justify-center space-y-1 shadow-md ";
                 
                 let homeClass = baseBtn + (myBet === 'HOME' ? "bg-blue-600 text-white border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.5)]" : "bg-blue-950/50 text-blue-300 border-blue-500/40 hover:bg-blue-900/50");
