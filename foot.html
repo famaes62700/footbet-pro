@@ -27,7 +27,7 @@
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-blue-400 font-bold">
                     Bankroll: <span id="headerBankroll">100.00 €</span>
                 </div>
-                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-blue-500" onchange="loadFootballMatches()">
+                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-blue-500" onchange="loadFootballMatches(false)">
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Historique Semaine & Mois">
                     <i class="fa-solid fa-calendar-days text-blue-400"></i>
                 </button>
@@ -99,6 +99,10 @@
             return `${yr}-${mo}-${da}`;
         }
 
+        function getCompactDate(d) {
+            return getLocalYYYYMMDD(d).replace(/-/g, '');
+        }
+
         const localDateStr = getLocalYYYYMMDD(new Date());
         document.getElementById('matchDate').value = localDateStr;
 
@@ -150,30 +154,46 @@
             return (hScore > aScore) ? 'HOME' : 'DRAW';
         }
 
-        // EXTRACTION ROBUSTE DU SCORE DEPUIS L'API ESPN
-        function extractTeamScore(competitor) {
-            if (!competitor) return 0;
+        // EXTRACTION EXACTE DU SCORE DU MATCH (Évite les scores cumulés aller/retour ou tirs au but mélangés)
+        function extractTrueMatchScore(competitor) {
+            if (!competitor) return { goals: 0, shootouts: null };
+
+            let shootouts = null;
+            if (competitor.shootoutScore !== undefined && competitor.shootoutScore !== null && competitor.shootoutScore !== "") {
+                let sh = parseInt(competitor.shootoutScore, 10);
+                if (!isNaN(sh)) shootouts = sh;
+            }
+
+            let mainScore = null;
             let s = competitor.score;
-            if (s !== undefined && s !== null) {
-                if (typeof s === 'object') {
-                    let val = s.displayValue !== undefined ? s.displayValue : s.value;
+
+            if (s !== undefined && s !== null && s !== "") {
+                if (typeof s === 'number') {
+                    mainScore = s;
+                } else if (typeof s === 'string') {
+                    // Nettoyage si format "2 (4)"
+                    let cleanStr = s.trim().split(' ')[0];
+                    let parsed = parseInt(cleanStr, 10);
+                    if (!isNaN(parsed)) mainScore = parsed;
+                } else if (typeof s === 'object') {
+                    let val = s.value !== undefined ? s.value : s.displayValue;
                     let parsed = parseInt(val, 10);
-                    if (!isNaN(parsed)) return parsed;
-                } else {
-                    let parsed = parseInt(String(s).trim(), 10);
-                    if (!isNaN(parsed)) return parsed;
+                    if (!isNaN(parsed)) mainScore = parsed;
                 }
             }
-            // Secours : calcul via les linescores (mi-temps) si le champ principal est vide
-            if (Array.isArray(competitor.linescores) && competitor.linescores.length > 0) {
-                let sum = 0;
-                competitor.linescores.forEach(ls => {
-                    let v = typeof ls.value === 'number' ? ls.value : parseInt(ls.displayValue || ls.value, 10);
-                    if (!isNaN(v)) sum += v;
-                });
-                return sum;
+
+            // Si le score principal est manquant, on lit la première entrée de linescores
+            if (mainScore === null && Array.isArray(competitor.linescores) && competitor.linescores.length > 0) {
+                let firstLs = competitor.linescores[0];
+                let v = firstLs.value !== undefined ? firstLs.value : firstLs.displayValue;
+                let parsed = parseInt(v, 10);
+                if (!isNaN(parsed)) mainScore = parsed;
             }
-            return 0;
+
+            return {
+                goals: mainScore !== null ? mainScore : 0,
+                shootouts: shootouts
+            };
         }
 
         setInterval(() => {
@@ -208,22 +228,36 @@
 
         async function loadFootballMatches(isSilent = false) {
             const dateStr = document.getElementById('matchDate').value;
-            const apiDate = dateStr.replace(/-/g, '');
             const statusText = document.getElementById('statusText');
             
+            // Fenêtre de dates élargie (J-1 à J+1) pour contrer le décalage horaire US d'ESPN
+            const parts = dateStr.split('-');
+            const targetDateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
+            const prevDayObj = new Date(targetDateObj.getTime() - 86400000);
+            const nextDayObj = new Date(targetDateObj.getTime() + 86400000);
+            const dateRangeParam = `${getCompactDate(prevDayObj)}-${getCompactDate(nextDayObj)}`;
+            
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Actualisation des scores en direct...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Synchronisation des scores officiels...';
                 document.getElementById('matchesContainer').innerHTML = '';
             }
             
             try {
                 const leagues = [
-                    'fra.1', 'fra.2', 'eng.1', 'esp.1', 'ita.1', 'ger.1', 
-                    'por.1', 'ned.1', 'uefa.champions', 'uefa.europa', 'uefa.europa.conf'
+                    'fra.1', 'fra.2', 'fra.coupe_de_france',
+                    'eng.1', 'eng.fa', 'eng.league_cup',
+                    'esp.1', 'esp.copa_del_rey',
+                    'ita.1', 'ita.coppa_italia',
+                    'ger.1', 'ger.dfb_pokal',
+                    'por.1', 'ned.1', 'bel.1',
+                    'uefa.champions', 'uefa.europa', 'uefa.europa.conf'
                 ];
-                const cacheBuster = Date.now();
+
+                // IMPORTANT : Aucun paramètre ?_t= inconnu pour ne pas corrompre la réponse d'ESPN
                 const fetchPromises = leagues.map(league => 
-                    fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${league}/scoreboard?dates=${apiDate}&_t=${cacheBuster}`, { cache: 'no-store' })
+                    fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${league}/scoreboard?dates=${dateRangeParam}&limit=100`, {
+                        cache: 'reload'
+                    })
                     .then(res => res.ok ? res.json() : null)
                     .catch(() => null)
                 );
@@ -246,15 +280,18 @@
                         let eventDateObj = event.date ? new Date(event.date) : new Date();
                         let compDateStr = getLocalYYYYMMDD(eventDateObj);
                         
-                        const state = String(comp.status?.type?.state || event.status?.type?.state || 'pre').toLowerCase();
-                        const isCompleted = Boolean(comp.status?.type?.completed || event.status?.type?.completed || state === 'post');
+                        let statusObj = comp.status || event.status || {};
+                        let statusType = statusObj.type || {};
+                        const state = String(statusType.state || 'pre').toLowerCase();
+                        const isCompleted = Boolean(statusType.completed || state === 'post');
                         const isLive = (state === 'in');
 
+                        // On filtre strictement sur la date locale française choisie (ou match en direct)
                         if (compDateStr !== dateStr && !isLive) return;
                         seenIds.add(event.id);
 
-                        let home = comp.competitors.find(c => c.homeAway === 'home') || comp.competitors[0];
-                        let away = comp.competitors.find(c => c.homeAway === 'away') || comp.competitors[1];
+                        let home = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'home') || comp.competitors[0];
+                        let away = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'away') || comp.competitors[1];
 
                         let homeName = home.team?.shortDisplayName || home.team?.name || home.team?.displayName || "Domicile";
                         let awayName = away.team?.shortDisplayName || away.team?.name || away.team?.displayName || "Extérieur";
@@ -266,12 +303,21 @@
 
                         let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
                         
-                        let ptsHome = extractTeamScore(home);
-                        let ptsAway = extractTeamScore(away);
+                        let homeScoreObj = extractTrueMatchScore(home);
+                        let awayScoreObj = extractTrueMatchScore(away);
+
+                        let ptsHome = homeScoreObj.goals;
+                        let ptsAway = awayScoreObj.goals;
 
                         let sHomeDisplay = (status === 'TIMED') ? '-' : String(ptsHome);
                         let sAwayDisplay = (status === 'TIMED') ? '-' : String(ptsAway);
 
+                        if (status !== 'TIMED' && homeScoreObj.shootouts !== null && awayScoreObj.shootouts !== null) {
+                            sHomeDisplay = `${ptsHome} (${homeScoreObj.shootouts})`;
+                            sAwayDisplay = `(${awayScoreObj.shootouts}) ${ptsAway}`;
+                        }
+
+                        // Au football, le pari 1N2 porte sur le score à la fin du temps réglementaire (hors TAB)
                         let winner = null;
                         if (isCompleted) {
                             if (ptsHome > ptsAway) winner = 'HOME';
@@ -283,15 +329,21 @@
                         let displayCompName = rawLeague;
                         if (rawLeague.includes('LIGUE 1') || rawLeague.includes('FRA.1')) displayCompName = 'LIGUE 1';
                         else if (rawLeague.includes('LIGUE 2') || rawLeague.includes('FRA.2')) displayCompName = 'LIGUE 2';
+                        else if (rawLeague.includes('COUPE DE FRANCE')) displayCompName = 'COUPE DE FRANCE';
                         else if (rawLeague.includes('PREMIER LEAGUE') || rawLeague.includes('ENG.1')) displayCompName = 'PREMIER LEAGUE';
+                        else if (rawLeague.includes('FA CUP')) displayCompName = 'FA CUP';
+                        else if (rawLeague.includes('EFL') || rawLeague.includes('CARABAO')) displayCompName = 'EFL CUP';
                         else if (rawLeague.includes('LALIGA') || rawLeague.includes('LA LIGA') || rawLeague.includes('ESP.1')) displayCompName = 'LA LIGA';
+                        else if (rawLeague.includes('COPA DEL REY')) displayCompName = 'COPA DEL REY';
                         else if (rawLeague.includes('SERIE A') || rawLeague.includes('ITA.1')) displayCompName = 'SERIE A';
+                        else if (rawLeague.includes('COPPA ITALIA')) displayCompName = 'COPPA ITALIA';
                         else if (rawLeague.includes('BUNDESLIGA') || rawLeague.includes('GER.1')) displayCompName = 'BUNDESLIGA';
+                        else if (rawLeague.includes('DFB')) displayCompName = 'DFB POKAL';
                         else if (rawLeague.includes('CHAMPIONS')) displayCompName = 'CHAMPIONS LEAGUE';
                         else if (rawLeague.includes('CONFERENCE')) displayCompName = 'CONFERENCE LEAGUE';
                         else if (rawLeague.includes('EUROPA')) displayCompName = 'EUROPA LEAGUE';
 
-                        let detailClock = comp.status?.displayClock || comp.status?.type?.shortDetail || event.status?.type?.shortDetail || "En cours";
+                        let detailClock = statusObj.displayClock || statusType.shortDetail || statusType.detail || "En cours";
 
                         validMatches.push({
                             id: String(event.id),
