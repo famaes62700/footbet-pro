@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fab Turf V7 - Double Alarme</title>
+    <title>Fab Turf V8 - Calculs Corrigés</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,7 +22,7 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center flex-wrap gap-2">
             <h1 class="text-sm sm:text-base font-black uppercase tracking-wider text-amber-400 flex items-center">
-                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf V7
+                <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf V8
             </h1>
             <div class="flex items-center space-x-2">
                 <div class="text-xs bg-zinc-800 px-2.5 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
@@ -37,6 +37,9 @@
 
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2.5 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow" title="Historique Mensuel">
                     <i class="fa-solid fa-calendar-days"></i>
+                </button>
+                <button onclick="resetAllCache()" class="bg-red-950/60 hover:bg-red-900 text-red-400 px-2.5 py-1.5 rounded-lg border border-red-500/40 font-bold transition flex items-center shadow" title="Purger et Recalculer">
+                    <i class="fa-solid fa-trash-can"></i>
                 </button>
             </div>
         </div>
@@ -210,15 +213,12 @@
         let lastAutoTransitionRaceKey = "";
         let validatedRacesCache = {}; 
         
-        // GESTION DES ALARMES AUDIO
         let alarmEnabled = false;
         let lastAlarmRaceKey = "";
-        let notifiedResults = {}; // Mémorise les courses dont les résultats ont déjà sonné
-        let isFirstLoad = true; // Empêche le spam de sonneries au lancement de l'application
+        let notifiedResults = {}; 
+        let isFirstLoad = true; 
         
-        // Audio Départ (Double bip)
         let alarmStartAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
-        // Audio Résultat Définitif (Notification type succès)
         let alarmResultAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2870/2870-preview.mp3'); 
 
         const INITIAL_BANKROLL = 1000.0;
@@ -234,7 +234,6 @@
                 icon.classList.replace('fa-bell-slash', 'fa-bell');
                 showToast("Double Alarme activée (Départs & Résultats)", "success");
                 
-                // Déverrouillage audio obligatoire sur navigateur
                 alarmStartAudio.volume = 0.01;
                 alarmStartAudio.play().then(() => {
                     setTimeout(() => { alarmStartAudio.pause(); alarmStartAudio.currentTime = 0; alarmStartAudio.volume = 1.0; }, 500);
@@ -253,7 +252,6 @@
             }
         }
 
-        // VÉRIFICATION DE L'ALARME DE DÉPART
         function checkAlarm() {
             if(!alarmEnabled || liveMeetingsData.length === 0) return;
             let now = new Date().getTime();
@@ -302,9 +300,10 @@
             validatedRacesCache = {};
             notifiedResults = {};
             Object.keys(localStorage).forEach(k => {
+                // Purge totale des anciens calculs
                 if (k.startsWith('pmu_stats_')) localStorage.removeItem(k);
             });
-            showToast("Mémoire purgée !", "success");
+            showToast("Mémoire purgée ! L'historique se recalcule...", "success");
             fetchRaceData(false);
             calculateDailyStats(false);
         }
@@ -721,20 +720,22 @@
             return { processed: sortedByCote, baseHorse, nuggetHorse };
         }
 
+        // V8 FIX : NORMALISATION DES ACCENTS POUR SÉCURISER L'EXTRACTION
         function extractGainFromRapports(listeRapports, horseNum, targetType) {
             let foundGain = 0;
             if (!listeRapports || !Array.isArray(listeRapports)) return 0;
 
             listeRapports.forEach(group => {
-                let pType = (group.typePari || group.libellePari || group.codePari || "").toUpperCase();
-                let famille = (group.famillePari || "").toUpperCase();
+                // Nettoyage parfait : transforme "E-SIMPLE PLACÉ" en "E-SIMPLE PLACE"
+                let pType = (group.typePari || group.libellePari || group.codePari || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                let famille = (group.famillePari || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 let details = group.rapports || group.dividendes || group.lesRapports || [];
 
                 if (pType.includes('SIMPLE') || pType.includes('SG') || pType.includes('SP') || famille.includes('SIMPLE')) {
                     if (Array.isArray(details)) {
                         details.forEach(item => {
                             let combo = String(item.combinaison || item.cheval || item.numeroCheval || item.partant || "").trim();
-                            let lib = (item.libelleRapport || item.libelle || item.typeRapport || item.nomRapport || "").toUpperCase();
+                            let lib = (item.libelleRapport || item.libelle || item.typeRapport || item.nomRapport || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
                             if (combo === String(horseNum).trim()) {
                                 let isMatch = false;
@@ -918,7 +919,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_trot_fav_v7_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_trot_fav_v8_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -1051,7 +1052,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `trot_fav_v7_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `trot_fav_v8_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (!isAuto && statsProgress) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -1064,19 +1065,31 @@
                     let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum);
                     let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0);
                     
-                    raceData = { partants, arrivees, rapportsList, isComplete: rapportsList.length > 0 };
+                    // V8 FIX : On s'assure que le PMU a publié les rapports Gagnant ET Placé avant de valider la course en mémoire
+                    let isComplete = false;
+                    if (rapportsList.length > 0) {
+                        let str = JSON.stringify(rapportsList).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                        let hasG = str.includes('GAGNANT') || str.includes('_SG');
+                        let hasP = str.includes('PLACE') || str.includes('_SP');
+                        // S'il y a 4 partants ou plus, on exige de voir un rapport Placé pour valider
+                        if (partants.length >= 4) {
+                            isComplete = hasG && hasP;
+                        } else {
+                            isComplete = hasG;
+                        }
+                        // Sécurité : si la course a plus d'une heure, on valide de force
+                        if (now - r.time > 3600000) isComplete = true; 
+                    }
+
+                    raceData = { partants, arrivees, rapportsList, isComplete };
                     if (raceData.isComplete) validatedRacesCache[cacheKey] = raceData;
                 }
 
                 if (raceData && raceData.arrivees.length > 0) {
                     let hasReports = raceData.rapportsList.length > 0;
                     
-                    // NOUVELLE LOGIQUE D'ALARME DES RÉSULTATS DÉFINITIFS
-                    if (hasReports && !notifiedResults[cacheKey]) {
+                    if (hasReports && raceData.isComplete && !notifiedResults[cacheKey]) {
                         notifiedResults[cacheKey] = true;
-                        
-                        // Sécurité : On ne sonne que si on n'est pas au lancement de l'application
-                        // Et uniquement si la course s'est terminée il y a moins de 3 heures
                         let timeSinceRace = now - r.time;
                         if (!isFirstLoad && alarmEnabled && timeSinceRace < (3 * 3600000)) {
                             alarmResultAudio.play().catch(e=>{});
@@ -1084,19 +1097,15 @@
                         }
                     }
                     
-                    if (!hasReports) continue; 
+                    if (!raceData.isComplete) continue; 
 
                     let algoResult = computeAlgorithm(raceData.partants);
                     let baseH = algoResult.baseHorse;
                     let nuggetH = algoResult.nuggetHorse;
 
-                    let baseArr = baseH ? (raceData.partants.find(p => (p.numPmu === baseH.num || p.numOrdre === baseH.num))?.ordreArrivee || 99) : 99;
-                    let nuggetArr = nuggetH ? (raceData.partants.find(p => (p.numPmu === nuggetH.num || p.numOrdre === nuggetH.num))?.ordreArrivee || 99) : 99;
-
                     if (baseH) {
                         coursesGagnantBaseValidees++;
                         let gGagBase = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
-                        if (gGagBase === 0 && baseArr === 1) gGagBase = baseH.cote; 
                         
                         if (gGagBase > 0) {
                             baseWinsGag++;
@@ -1108,7 +1117,6 @@
 
                     if (nuggetH) {
                         let gGagPepite = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
-                        if (gGagPepite === 0 && nuggetArr === 1) gGagPepite = nuggetH.cote; 
                         
                         if (gGagPepite > 0) {
                             pepiteWinsGag++;
@@ -1127,9 +1135,9 @@
                         totalSpentBase += actualStakeBase;
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
-                        if (gPla === 0 && baseArr >= 1 && baseArr <= 3) gPla = Math.max(1.1, baseH.cote / 3); 
                         
                         let netBasePla = 0;
+                        // V8 FIX : Plus aucun gain fictif inventé. Si gPla > 0 le PMU a payé, sinon c'est perdu.
                         if (gPla > 0) {
                             baseWinsPla++; 
                             netBasePla = (gPla * actualStakeBase) - actualStakeBase;
@@ -1147,7 +1155,6 @@
                         let simStakePepite = computeSmartStake(deficitSeriePepite);
 
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
-                        if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= 3) gPla = Math.max(1.1, nuggetH.cote / 3); 
                         
                         if (gPla > 0) { 
                             pepiteWinsPla++; 
@@ -1182,7 +1189,7 @@
             document.getElementById('headerBankroll').textContent = `${currentBankroll.toFixed(2)} €`;
 
             if (coursesValidees > 0) {
-                localStorage.setItem(`pmu_stats_trot_fav_v7_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_trot_fav_v8_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
             }
