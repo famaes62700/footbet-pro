@@ -225,7 +225,7 @@
     <script>
         document.getElementById('raceDate').valueAsDate = new Date();
         let liveMeetingsData = [];
-        let autoTransitionDone = false;
+        let autoTransitionTimer = null; // Mémoire pour la bascule de 30s
         let validatedRacesCache = {}; 
         
         // --- PARAMÈTRES SPÉCIAL TROT ---
@@ -416,6 +416,7 @@
         }
 
         async function loadLivePmu() {
+            if(autoTransitionTimer) { clearTimeout(autoTransitionTimer); autoTransitionTimer = null; }
             const dateInput = document.getElementById('raceDate').value;
             const statusText = document.getElementById('statusText');
             statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des courses de Trot...';
@@ -539,6 +540,7 @@
         }
 
         function navigateAdjacentRace(direction) { 
+            if(autoTransitionTimer) { clearTimeout(autoTransitionTimer); autoTransitionTimer = null; }
             let mIdx = parseInt(document.getElementById('meetingSelect').value, 10);
             let cIdx = parseInt(document.getElementById('raceSelect').value, 10);
             if (isNaN(mIdx) || isNaN(cIdx)) return;
@@ -565,6 +567,7 @@
         function goToPrevRace() { navigateAdjacentRace(-1); }
 
         function onMeetingChange() {
+            if(autoTransitionTimer) { clearTimeout(autoTransitionTimer); autoTransitionTimer = null; }
             let mIdx = document.getElementById('meetingSelect').value;
             let raceSelect = document.getElementById('raceSelect');
             let currentRaceVal = raceSelect.value;
@@ -593,11 +596,13 @@
         }
 
         function onRaceChange() {
+            if(autoTransitionTimer) { clearTimeout(autoTransitionTimer); autoTransitionTimer = null; }
             autoTransitionDone = false;
             fetchRaceData();
         }
 
         async function refreshCurrentRace() {
+            if(autoTransitionTimer) { clearTimeout(autoTransitionTimer); autoTransitionTimer = null; }
             let mIdx = document.getElementById('meetingSelect').value;
             let rIdx = document.getElementById('raceSelect').value;
             await loadLivePmu();
@@ -653,7 +658,6 @@
 
             let processed = validPartants.map((p, idx) => {
                 let musique = p.musique || p.form || "0a";
-                // On extrait la cote brute
                 let rawCote = (p.dernierRapportDirect && p.dernierRapportDirect.rapport) 
                             ? p.dernierRapportDirect.rapport 
                             : (p.probabiliteEvolution ? p.probabiliteEvolution : "99.9");
@@ -661,7 +665,6 @@
                 
                 let musiqueScore = evaluateMusique(musique);
                 
-                // Calcul du score de la Pépite (outsiders en forme)
                 let coteScore = 15;
                 if (cote >= 1.6 && cote <= 4.5) coteScore = 96;
                 else if (cote < 1.6) coteScore = 84;
@@ -679,18 +682,15 @@
                     musique: musique,
                     coteDisplay: rawCote,
                     cote: cote,
-                    // Score visuel d'information (plus la cote est petite, plus c'est proche de 99%)
                     baseScore: Math.min(99, Math.max(5, Math.round(100 - (cote * 2)))),
                     nuggetScore: Math.min(99, Math.max(5, nuggetRaw)),
                     ordreArrivee: p.ordreArrivee
                 };
             });
 
-            // LA RÈGLE D'OR : La base est STRICTEMENT le cheval avec la plus petite cote.
             let sortedByCote = [...processed].sort((a, b) => a.cote - b.cote);
-            let baseHorse = sortedByCote[0]; // Le favori n°1
+            let baseHorse = sortedByCote[0]; 
 
-            // La Pépite est calculée sur le reste du peloton
             let remaining = processed.filter(p => p.num !== baseHorse?.num);
             let nuggetHorse = remaining.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
             
@@ -791,7 +791,7 @@
                         arrivalList.appendChild(div);
                     });
 
-                    // ALERTE ARRIVÉE OFFICIELLE : Sonne uniquement si l'arrivée tombe en direct sur la course affichée
+                    // ALERTE ARRIVÉE OFFICIELLE
                     if (!notifiedArrivals[currentRaceKey]) {
                         notifiedArrivals[currentRaceKey] = true;
                         if (isBackground && arrivalAlarmEnabled) {
@@ -800,9 +800,13 @@
                         }
                     }
 
-                    if (!autoTransitionDone) {
+                    // CORRECTION DU SAUT DE COURSES : 1 SEUL MINUTEUR STRICT DE 30 SECONDES VERS LA SUITE IMMÉDIATE
+                    if (!autoTransitionDone && !autoTransitionTimer) {
                         autoTransitionDone = true;
-                        setTimeout(() => { goToNextRace(); }, 30000);
+                        autoTransitionTimer = setTimeout(() => {
+                            autoTransitionTimer = null;
+                            goToNextRace();
+                        }, 30000);
                     }
                 } else {
                     arrivalBlock.classList.add('hidden');
@@ -865,7 +869,6 @@
                     document.getElementById('top2Name').textContent = `Attente cotes...`;
                 }
 
-                // Affichage du tableau trié par cotes (Le favori toujours en premier)
                 processed.sort((a, b) => a.cote - b.cote);
                 let tbody = document.getElementById('runnersTableBody');
                 tbody.innerHTML = '';
@@ -1063,7 +1066,6 @@
                 if (raceData && raceData.arrivees.length > 0) {
                     if (raceData.rapportsList.length === 0) continue; 
 
-                    // ALERTE ARRIVÉE OFFICIELLE EN ARRIÈRE-PLAN
                     let bgRaceKey = `${ddmmyyyy}_R${r.rNum}_C${r.cNum}`;
                     if (!notifiedArrivals[bgRaceKey]) {
                         notifiedArrivals[bgRaceKey] = true;
