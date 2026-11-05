@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro - Europe (Algorithme Rentable)</title>
+    <title>FootBet Pro - Europe (Scores Corrigés & Saisie Manuelle)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -48,7 +48,7 @@
         
         <div class="flex justify-between items-center">
             <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center w-3/4 truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération des scores en direct...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement global des scores...
             </div>
             <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-xs font-bold transition flex items-center shadow">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Actualiser
@@ -115,7 +115,7 @@
             "Sporting CP": 82, "Benfica": 80, "FC Porto": 80, "PSV Eindhoven": 78, "Atalanta": 82, "RB Leipzig": 82
         };
 
-        function getTeamScore(teamName) {
+        function getTeamScorePower(teamName) {
             let baseScore = 60;
             for (let t in topTeams) {
                 if (teamName.includes(t)) {
@@ -127,8 +127,8 @@
         }
 
         function getAlgoPick(homeName, awayName) {
-            let hScore = getTeamScore(homeName) + 8; // Avantage domicile
-            let aScore = getTeamScore(awayName);
+            let hScore = getTeamScorePower(homeName) + 8;
+            let aScore = getTeamScorePower(awayName);
             let diff = hScore - aScore;
 
             if (diff >= 12) return 'HOME';
@@ -136,13 +136,41 @@
             return (hScore > aScore) ? 'HOME' : 'DRAW';
         }
 
-        function parseScore(competitor) {
+        // PARSEUR ULTRA ROBUSTE DES SCORES ESPEN
+        function parseScoreDeep(competitor) {
             if (!competitor) return 0;
+            
+            // 1. Essai direct sur la propriété score
             let s = competitor.score;
-            if (s !== undefined && s !== null) {
-                let parsed = parseInt(typeof s === 'object' ? (s.value !== undefined ? s.value : s.displayValue) : s, 10);
+            if (s !== undefined && s !== null && s !== "") {
+                if (typeof s === 'number') return s;
+                let parsed = parseInt(typeof s === 'object' ? (s.value !== undefined ? s.value : s.displayValue) : String(s).trim(), 10);
                 if (!isNaN(parsed)) return parsed;
             }
+
+            // 2. Essai via statistiques ou lignes de scores
+            if (Array.isArray(competitor.statistics)) {
+                let statScore = competitor.statistics.find(st => st.name === 'score' || st.name === 'goals');
+                if (statScore && statScore.displayValue) {
+                    let parsed = parseInt(statScore.displayValue, 10);
+                    if (!isNaN(parsed)) return parsed;
+                }
+            }
+
+            // 3. Essai via les linescores
+            if (Array.isArray(competitor.linescores) && competitor.linescores.length > 0) {
+                let sum = 0;
+                let found = false;
+                competitor.linescores.forEach(ls => {
+                    let v = parseInt(ls.value !== undefined ? ls.value : ls.displayValue, 10);
+                    if (!isNaN(v)) {
+                        sum += v;
+                        found = true;
+                    }
+                });
+                if (found) return sum;
+            }
+
             return 0;
         }
 
@@ -177,7 +205,7 @@
         }
 
         async function loadFootballMatches(isSilent = false) {
-            const dateInputVal = document.getElementById('matchDate').value; // Format YYYY-MM-DD
+            const dateInputVal = document.getElementById('matchDate').value;
             const apiDate = dateInputVal.replace(/-/g, '');
             const statusText = document.getElementById('statusText');
             
@@ -187,7 +215,6 @@
             }
             
             try {
-                // UTILISATION DE L'ENDPOINT GLOBAL OFFICIEL ESPN POUR TOUTES LES LIGUES DU MONDE
                 const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard?dates=${apiDate}`, { cache: 'no-store' });
                 if (!res.ok) throw new Error("Erreur réseau");
                 const data = await res.json();
@@ -195,11 +222,13 @@
                 let validMatches = [];
                 let events = data.events || [];
 
+                const dateStrStorage = document.getElementById('matchDate').value;
+                let manualScores = JSON.parse(localStorage.getItem(`foot_manual_scores_${dateStrStorage}`)) || {};
+
                 events.forEach(event => {
                     let comp = event.competitions?.[0];
                     if (!comp || !comp.competitors || comp.competitors.length < 2) return;
 
-                    // Vérification de la date du match
                     let matchDateIso = event.date ? event.date.split('T')[0] : '';
                     let statusObj = comp.status || event.status || {};
                     let statusType = statusObj.type || {};
@@ -207,7 +236,6 @@
                     const isCompleted = Boolean(statusType.completed || state === 'post');
                     const isLive = (state === 'in');
 
-                    // Si le match n'est ni en direct ni à la date demandée, on ignore
                     if (matchDateIso !== dateInputVal && !isLive) return;
 
                     let home = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'home') || comp.competitors[0];
@@ -220,20 +248,27 @@
 
                     let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
                     
-                    let ptsHome = parseScore(home);
-                    let ptsAway = parseScore(away);
+                    let ptsHome = parseScoreDeep(home);
+                    let ptsAway = parseScoreDeep(away);
+
+                    // Surcharge manuelle si l'utilisateur a modifié le score lui-même
+                    if (manualScores[event.id] && manualScores[event.id].home !== undefined) {
+                        ptsHome = manualScores[event.id].home;
+                        ptsAway = manualScores[event.id].away;
+                        if (status === 'TIMED') status = 'FINISHED'; // Force terminé si modifié manuellement
+                    }
 
                     let sHomeDisplay = (status === 'TIMED') ? '-' : String(ptsHome);
                     let sAwayDisplay = (status === 'TIMED') ? '-' : String(ptsAway);
 
                     let winner = null;
-                    if (isCompleted) {
+                    if (isCompleted || (manualScores[event.id])) {
                         if (ptsHome > ptsAway) winner = 'HOME';
                         else if (ptsAway > ptsHome) winner = 'AWAY';
                         else winner = 'DRAW';
+                        if (status === 'TIMED') status = 'FINISHED';
                     }
 
-                    // Récupération propre du nom de la compétition
                     let leagueName = event.season?.slug || comp.tournament?.name || data.leagues?.[0]?.name || "Football";
                     if (typeof leagueName === 'string') {
                         leagueName = leagueName.toUpperCase();
@@ -392,8 +427,8 @@
                 }
 
                 let scoreBadgeClass = isLive 
-                    ? "text-base font-black text-red-400 px-3 py-1 bg-red-950/40 rounded-lg border border-red-500/40 whitespace-nowrap"
-                    : "text-base font-black text-blue-400 px-3 py-1 bg-zinc-950 rounded-lg border border-zinc-800 whitespace-nowrap";
+                    ? "text-base font-black text-red-400 px-3 py-1 bg-red-950/40 rounded-lg border border-red-500/40 whitespace-nowrap cursor-pointer hover:bg-red-900/50 transition"
+                    : "text-base font-black text-blue-400 px-3 py-1 bg-zinc-950 rounded-lg border border-zinc-800 whitespace-nowrap cursor-pointer hover:bg-zinc-800 transition";
 
                 let card = document.createElement('div');
                 card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-xl space-y-4";
@@ -409,7 +444,7 @@
                             <img src="${homeLogo}" class="w-8 h-8 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=H&background=18181b&color=60a5fa'">
                             <span class="text-xs font-black text-white truncate">${homeName}</span>
                         </div>
-                        <span class="${scoreBadgeClass}">${sHome} - ${sAway}</span>
+                        <span onclick="editScoreManual('${match.id}', '${homeName}', '${awayName}')" title="Cliquer pour corriger le score manuellement" class="${scoreBadgeClass}">${sHome} - ${sAway} <i class="fa-solid fa-pen text-[10px] ml-1 opacity-60"></i></span>
                         <div class="flex items-center justify-end space-x-2.5 w-2/5 overflow-hidden">
                             <span class="text-xs font-black text-white truncate text-right">${awayName}</span>
                             <img src="${awayLogo}" class="w-8 h-8 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=A&background=18181b&color=60a5fa'">
@@ -449,6 +484,34 @@
                 `;
                 container.appendChild(card);
             });
+        }
+
+        // FONCTION DE SAISIE MANUELLE DES SCORES SI L'API API EST INEXACTE
+        function editScoreManual(matchId, homeName, awayName) {
+            let currentMatch = currentMatches.find(m => m.id === matchId);
+            let defH = currentMatch ? currentMatch.homeTeam.numScore : 0;
+            let defA = currentMatch ? currentMatch.awayTeam.numScore : 0;
+
+            let inputH = prompt(`Score pour ${homeName} :`, defH);
+            if (inputH === null) return;
+            let inputA = prompt(`Score pour ${awayName} :`, defA);
+            if (inputA === null) return;
+
+            let hScore = parseInt(inputH, 10);
+            let aScore = parseInt(inputA, 10);
+
+            if (isNaN(hScore) || isNaN(aScore)) {
+                showToast("Veuillez entrer des chiffres valides.", "error");
+                return;
+            }
+
+            const dateStr = document.getElementById('matchDate').value;
+            let manualScores = JSON.parse(localStorage.getItem(`foot_manual_scores_${dateStr}`)) || {};
+            manualScores[matchId] = { home: hScore, away: aScore };
+            localStorage.setItem(`foot_manual_scores_${dateStr}`, JSON.stringify(manualScores));
+
+            showToast("Score mis à jour manuellement avec succès !", "success");
+            loadFootballMatches(true);
         }
 
         function placeBet(matchId, pick) {
@@ -536,7 +599,10 @@
             for (let i = 0; i < 7; i++) {
                 let d = new Date(monday);
                 d.setDate(monday.getDate() + i);
-                let dStr = d.toISOString().split('T')[0];
+                let yr = d.getFullYear();
+                let mo = String(d.getMonth() + 1).padStart(2, '0');
+                let da = String(d.getDate()).padStart(2, '0');
+                let dStr = `${yr}-${mo}-${da}`;
                 wTotal += history[dStr] || 0;
             }
 
