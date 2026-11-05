@@ -868,6 +868,7 @@
                 arrivalList.innerHTML = '';
                 let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0).sort((a, b) => a.ordreArrivee - b.ordreArrivee);
 
+                // GESTION DE L'ARRIVÉE OFFICIELLE : Sonnerie et Bascule Automatique
                 if (arrivees.length > 0) {
                     arrivalBlock.classList.remove('hidden');
                     arrivees.slice(0, 5).forEach((p) => {
@@ -876,10 +877,43 @@
                         div.innerHTML = `<span class="text-blue-300">${p.ordreArrivee}e:</span> N°${p.numPmu || p.numOrdre} ${p.nom}`;
                         arrivalList.appendChild(div);
                     });
+
+                    // 1. Sonnerie Alerte Arrivée (Dès l'arrivée officielle)
+                    if (!notifiedArrivals[currentRaceKey]) {
+                        notifiedArrivals[currentRaceKey] = true;
+                        if (isBackground && arrivalAlarmEnabled) {
+                            audioArrival.play().catch(() => {});
+                            showToast(`🏁 Arrivée Officielle publiée (R${rNum}C${cNum}) !`, "success");
+                        }
+                    }
+
+                    // 2. Bascule Automatique à la course suivante (30s après l'arrivée officielle)
+                    if (!hasAutoTransitioned[currentRaceKey]) {
+                        hasAutoTransitioned[currentRaceKey] = true; 
+                        
+                        let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
+                        let isOldRace = raceStartTime > 0 && (now - raceStartTime) > 60 * 60 * 1000; 
+
+                        if (!isOldRace) {
+                            showToast(`Bascule à la course suivante dans 30 secondes... ⏱️`, "info");
+                            
+                            if (autoTransitionTimer) clearTimeout(autoTransitionTimer);
+                            autoTransitionTimer = setTimeout(() => {
+                                autoTransitionTimer = null;
+                                let currentM = document.getElementById('meetingSelect').value;
+                                let currentC = document.getElementById('raceSelect').value;
+                                if (currentM === mIdxStr && currentC === rIdxStr) {
+                                    goToNextRace();
+                                }
+                            }, 30000); 
+                        }
+                    }
+
                 } else {
                     arrivalBlock.classList.add('hidden');
                 }
 
+                // GESTION DES RAPPORTS DÉFINITIFS
                 let reportsBlock = document.getElementById('reportsBlock');
                 let reportsGrid = document.getElementById('reportsGrid');
                 reportsGrid.innerHTML = '';
@@ -921,35 +955,6 @@
 
                 if (hasReports) {
                     reportsBlock.classList.remove('hidden');
-
-                    if (!notifiedArrivals[currentRaceKey]) {
-                        notifiedArrivals[currentRaceKey] = true;
-                        if (isBackground && arrivalAlarmEnabled) {
-                            audioArrival.play().catch(() => {});
-                            showToast(`🏁 Rapports Définitifs publiés (R${rNum}C${cNum}) !`, "success");
-                        }
-                    }
-
-                    if (!hasAutoTransitioned[currentRaceKey]) {
-                        hasAutoTransitioned[currentRaceKey] = true; 
-                        
-                        let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
-                        let isOldRace = raceStartTime > 0 && (now - raceStartTime) > 60 * 60 * 1000; 
-
-                        if (!isOldRace) {
-                            showToast(`Bascule à la course suivante dans 30 secondes... ⏱️`, "info");
-                            
-                            if (autoTransitionTimer) clearTimeout(autoTransitionTimer);
-                            autoTransitionTimer = setTimeout(() => {
-                                autoTransitionTimer = null;
-                                let currentM = document.getElementById('meetingSelect').value;
-                                let currentC = document.getElementById('raceSelect').value;
-                                if (currentM === mIdxStr && currentC === rIdxStr) {
-                                    goToNextRace();
-                                }
-                            }, 30000); 
-                        }
-                    }
                 } else {
                     reportsBlock.classList.add('hidden');
                 }
