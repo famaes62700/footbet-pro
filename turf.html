@@ -749,27 +749,16 @@
                 
                 let musiqueScore = evaluateMusique(musique);
                 
-                // ---- NOUVEL ALGO PÉPITE CIBLÉ (Rapport Placé 2.0€ - 2.5€) ----
-                // 1. Estimation du rapport placé (formule mathématique standard PMU)
-                let potentielPlace = Math.max(1.10, 1 + ((cote - 1) / 3.5));
-                
-                let nuggetRaw = 0;
-                
-                // La cible idéale est un rapport placé estimé entre 1.80€ et 2.80€ (Cote approx 4.0 à 7.5)
-                if (potentielPlace >= 1.8 && potentielPlace <= 2.8) {
-                    // Cœur de cible : on donne un gros bonus basé sur la musique (Score entre ~40 et ~100)
-                    nuggetRaw = Math.round((musiqueScore * 0.8) + 20);
-                } else if (potentielPlace > 2.8 && potentielPlace <= 4.0) {
-                    // Outsider un peu plus risqué (Cote approx 7.5 à 11.5)
-                    nuggetRaw = Math.round((musiqueScore * 0.5) + 10);
-                } else if (potentielPlace < 1.8) {
-                    // Trop favori : rapport placé trop faible pour être une pépite
-                    nuggetRaw = Math.round(musiqueScore * 0.2);
-                } else {
-                    // Gros tocard : très peu de chances d'être à l'arrivée (rapport > 4.0 placé)
-                    nuggetRaw = Math.round(musiqueScore * 0.1);
-                }
-                // --------------------------------------------------------------
+                let coteScore = 15;
+                if (cote >= 1.6 && cote <= 4.5) coteScore = 96;
+                else if (cote < 1.6) coteScore = 84;
+                else if (cote <= 7.0) coteScore = 82;
+                else if (cote <= 12) coteScore = 62;
+                else if (cote <= 20) coteScore = 35;
+
+                let nuggetRaw = (cote >= 4.5 && cote <= 20) 
+                    ? Math.round((musiqueScore * 0.75) + (coteScore * 0.25) + 12) 
+                    : Math.round(musiqueScore * 0.5);
 
                 return {
                     num: parseInt(p.numPmu || p.numOrdre, 10) || (idx+1),
@@ -787,7 +776,6 @@
             let baseHorse = sortedByCote[0]; 
 
             let remaining = processed.filter(p => p.num !== baseHorse?.num);
-            // On sélectionne le cheval avec le plus gros nuggetScore
             let nuggetHorse = remaining.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
             
             return { processed, baseHorse, nuggetHorse };
