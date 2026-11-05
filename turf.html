@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V20 Montante Précise</title>
+    <title>Turf - V21 Interface Symétrique</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -27,7 +27,6 @@
             
             <div class="flex items-center space-x-1.5 sm:space-x-2">
                 
-                <!-- LE RÉEL À MISER EN DIRECT -->
                 <div class="text-xs bg-zinc-800 px-2 py-1 rounded-lg border border-emerald-500/30 text-emerald-400 font-bold flex flex-col items-end shadow mr-1">
                     <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">À Jouer (Base)</span>
                     <span id="headerNextStake">5.00 €</span>
@@ -53,7 +52,21 @@
 
     <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4">
         
-        <!-- SÉLECTEUR DE DISCIPLINE -->
+        <div class="bg-zinc-900/50 p-1.5 rounded-xl border border-zinc-800 flex justify-between space-x-1.5 overflow-x-auto shadow-inner">
+            <button onclick="showToast('Section Foot en développement ⚽', 'info')" class="flex-1 bg-zinc-800 text-zinc-400 hover:text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center min-w-[70px]">
+                <i class="fa-solid fa-futbol mr-1.5"></i> Foot
+            </button>
+            <button class="flex-1 bg-amber-500 text-zinc-950 py-2 rounded-lg text-xs font-black shadow transition flex items-center justify-center min-w-[70px]">
+                <i class="fa-solid fa-horse-head mr-1.5"></i> Turf
+            </button>
+            <button onclick="showToast('Section NBA en développement 🏀', 'info')" class="flex-1 bg-zinc-800 text-zinc-400 hover:text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center min-w-[70px]">
+                <i class="fa-solid fa-basketball mr-1.5"></i> NBA
+            </button>
+            <button onclick="showToast('Section Tennis en développement 🎾', 'info')" class="flex-1 bg-zinc-800 text-zinc-400 hover:text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center min-w-[70px]">
+                <i class="fa-solid fa-table-tennis-paddle-ball mr-1.5"></i> Tennis
+            </button>
+        </div>
+
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-2 flex items-center justify-between text-xs">
             <span class="text-zinc-400 font-bold ml-2"><i class="fa-solid fa-filter mr-1.5 text-amber-400"></i> Mode :</span>
             <div class="flex space-x-2">
@@ -95,7 +108,6 @@
             </div>
         </div>
 
-        <!-- BILAN DU JOUR -->
         <div class="bg-zinc-900 border border-amber-500/30 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
@@ -107,6 +119,7 @@
             <div class="grid grid-cols-2 gap-3 text-xs">
                 <!-- BASE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
+                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">RÉEL</div>
                     <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori)</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
@@ -141,20 +154,31 @@
                 </div>
             </div>
 
-            <!-- NOUVEL AFFICHAGE DES MISES MAX ET DÉFICITS -->
-            <div class="flex justify-between items-center text-[11px] bg-zinc-800/60 px-3 py-2 rounded-xl border border-zinc-700/50 text-zinc-300">
-                <div class="flex flex-col space-y-1 w-1/2">
-                    <span class="text-[9px] uppercase text-zinc-400 font-bold mb-0.5">Statistiques d'Investissement</span>
-                    <span><i class="fa-solid fa-wallet mr-1 text-emerald-400"></i> Joué: <strong id="totalSpentText" class="text-white">0.00 €</strong></span>
-                    <span><i class="fa-solid fa-chart-line mr-1 text-red-400"></i> Max Atteint: <strong id="maxStakeBaseText" class="text-zinc-300">0.00 €</strong></span>
-                </div>
-                <div class="flex flex-col items-end space-y-1 text-right w-1/2">
-                    <span class="text-[9px] uppercase text-zinc-400 font-bold mb-0.5">Situation Actuelle (Base)</span>
-                    <span id="deficitBaseText" class="text-red-400 font-medium">Déficit en cours: 0.00 €</span>
-                    <div class="flex items-center space-x-1 mt-1">
-                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-2 py-1 rounded border border-emerald-500/30 font-black text-xs shadow-md">Prochaine Mise: 5.00 €</strong>
+            <!-- MISE MAX ET DÉFICITS (SYMÉTRIQUE) -->
+            <div class="grid grid-cols-2 gap-3 text-[11px] bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 text-zinc-300">
+                
+                <!-- GAUCHE : BASE -->
+                <div class="flex flex-col space-y-1 border-r border-zinc-700/50 pr-3">
+                    <span class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement (Base)</span>
+                    <span class="flex justify-between">Joué: <strong id="totalSpentText" class="text-white">0.00 €</strong></span>
+                    <span class="flex justify-between">Max Atteint: <strong id="maxStakeBaseText" class="text-zinc-300">0.00 €</strong></span>
+                    <span class="flex justify-between">Déficit: <strong id="deficitBaseText" class="text-red-400">0.00 €</strong></span>
+                    <div class="pt-1.5">
+                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-2 py-1 rounded border border-emerald-500/30 font-black text-xs shadow-md block text-center">Mise: 5.00 €</strong>
                     </div>
                 </div>
+
+                <!-- DROITE : PÉPITE -->
+                <div class="flex flex-col space-y-1 pl-1">
+                    <span class="text-[9px] uppercase text-amber-400 font-bold mb-0.5">Investissement (Pépite)</span>
+                    <span class="flex justify-between">Joué: <strong id="totalSpentPepiteText" class="text-white">0.00 €</strong></span>
+                    <span class="flex justify-between">Max Atteint: <strong id="maxStakePepiteText" class="text-zinc-300">0.00 €</strong></span>
+                    <span class="flex justify-between">Déficit: <strong id="deficitPepiteText" class="text-red-400">0.00 €</strong></span>
+                    <div class="pt-1.5">
+                        <strong id="nextStakePepiteText" class="text-amber-400 bg-zinc-900 px-2 py-1 rounded border border-amber-500/30 font-black text-xs shadow-md block text-center">Mise: 5.00 €</strong>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -243,7 +267,6 @@
         
         let currentDisciplineMode = 'TROT'; 
         const BASE_STAKE = 5.0; 
-        
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
         let startAlarmEnabled = false;
@@ -274,12 +297,11 @@
             loadLivePmu();
         }
 
-        // Gardé en interne au cas où tu en aurais besoin via la console, mais supprimé de l'interface visuelle
         function resetAllCache() {
             notifiedArrivals = {};
             hasAutoTransitioned = {};
             Object.keys(localStorage).forEach(k => {
-                if (k.startsWith('race_cache_v20_') || k.startsWith('pmu_stats_')) {
+                if (k.startsWith('race_cache_') || k.startsWith('pmu_stats_')) {
                     localStorage.removeItem(k);
                 }
             });
@@ -297,11 +319,19 @@
             document.getElementById('gainBasePla').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
             document.getElementById('gainPepiteGag').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
             document.getElementById('gainPepitePla').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
+            
             document.getElementById('totalSpentText').textContent = "0.00 €";
+            document.getElementById('totalSpentPepiteText').textContent = "0.00 €";
+            
             document.getElementById('maxStakeBaseText').textContent = "0.00 €";
-            document.getElementById('deficitBaseText').textContent = "Déficit en cours: 0.00 €";
+            document.getElementById('maxStakePepiteText').textContent = "0.00 €";
+            
+            document.getElementById('deficitBaseText').textContent = "0.00 €";
+            document.getElementById('deficitPepiteText').textContent = "0.00 €";
+            
             document.getElementById('headerNextStake').textContent = "5.00 €";
-            document.getElementById('nextStakeBaseText').textContent = "Prochaine Mise: 5.00 €";
+            document.getElementById('nextStakeBaseText').textContent = "Mise: 5.00 €";
+            document.getElementById('nextStakePepiteText').textContent = "Mise: 5.00 €";
             loadLivePmu();
         }
 
@@ -990,7 +1020,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_multidis_v20_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_multidis_v21_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -1071,14 +1101,15 @@
             let gainPepiteGag = document.getElementById('gainPepiteGag');
             
             let totalSpentText = document.getElementById('totalSpentText');
-            let totalSpentPepiteText = document.getElementById('totalSpentPepiteText');
-            
             let maxStakeBaseText = document.getElementById('maxStakeBaseText');
-            let maxStakePepiteText = document.getElementById('maxStakePepiteText');
-            
             let deficitBaseText = document.getElementById('deficitBaseText');
             let nextStakeBaseText = document.getElementById('nextStakeBaseText');
+            
+            let totalSpentPepiteText = document.getElementById('totalSpentPepiteText');
+            let maxStakePepiteText = document.getElementById('maxStakePepiteText');
+            let deficitPepiteText = document.getElementById('deficitPepiteText');
             let nextStakePepiteText = document.getElementById('nextStakePepiteText');
+            
             let headerNextStake = document.getElementById('headerNextStake');
 
             let dateInput = document.getElementById('raceDate').value;
@@ -1135,7 +1166,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `race_cache_v20_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `race_cache_v21_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (statsProgress) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -1256,28 +1287,26 @@
 
             if (totalSpentText) totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
             if (maxStakeBaseText) maxStakeBaseText.textContent = `${maxStakeBase.toFixed(2)} €`;
+            if (deficitBaseText) deficitBaseText.textContent = `${deficitSerieBase.toFixed(2)} €`;
             
             if (totalSpentPepiteText) totalSpentPepiteText.textContent = `${totalSpentPepite.toFixed(2)} €`;
             if (maxStakePepiteText) maxStakePepiteText.textContent = `${maxStakePepite.toFixed(2)} €`;
-            
-            // AFFICHAGE DU DÉFICIT EN COURS
-            if (deficitBaseText) deficitBaseText.textContent = `Déficit en cours: ${deficitSerieBase.toFixed(2)} €`;
+            if (deficitPepiteText) deficitPepiteText.textContent = `${deficitSeriePepite.toFixed(2)} €`;
 
-            // AFFICHAGE DES MISES À JOUER
             let nextStakeBase = computeSmartStake(deficitSerieBase);
             let nextStakePepite = computeSmartStake(deficitSeriePepite);
             
-            if (nextStakeBaseText) nextStakeBaseText.textContent = `Prochaine Mise: ${nextStakeBase.toFixed(2)} €`;
-            if (nextStakePepiteText) nextStakePepiteText.textContent = `Prochaine Mise: ${nextStakePepite.toFixed(2)} €`;
+            if (nextStakeBaseText) nextStakeBaseText.textContent = `Mise: ${nextStakeBase.toFixed(2)} €`;
+            if (nextStakePepiteText) nextStakePepiteText.textContent = `Mise: ${nextStakePepite.toFixed(2)} €`;
             if (headerNextStake) headerNextStake.textContent = `${nextStakeBase.toFixed(2)} €`;
             
             if (coursesValidees > 0) {
-                localStorage.setItem(`pmu_stats_multidis_v20_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_multidis_v21_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
             }
             
-            if (statsProgress) statsProgress.textContent = `✅ ${coursesValidees}/${pastRacesToday.length} courses validées`;
+            if (statsProgress) statsProgress.textContent = `✅ ${coursesValidees}/${pastRacesToday.length} validées`;
             if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
             
             isCalculatingStats = false;
