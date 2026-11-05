@@ -749,16 +749,26 @@
                 
                 let musiqueScore = evaluateMusique(musique);
                 
-                let coteScore = 15;
-                if (cote >= 1.6 && cote <= 4.5) coteScore = 96;
-                else if (cote < 1.6) coteScore = 84;
-                else if (cote <= 7.0) coteScore = 82;
-                else if (cote <= 12) coteScore = 62;
-                else if (cote <= 20) coteScore = 35;
+                // ---- NOUVEL ALGO PÉPITE BASÉ SUR L'ESPÉRANCE DE GAIN PLACÉ ----
+                // 1. Estimation du rapport placé potentiel (formule mathématique standard)
+                let potentielPlace = Math.max(1.10, 1 + ((cote - 1) / 3.5));
+                
+                // 2. Croisement avec la probabilité de réussite (musique) = Espérance
+                let expectedPlaceValue = (musiqueScore / 100) * potentielPlace;
 
-                let nuggetRaw = (cote >= 4.5 && cote <= 20) 
-                    ? Math.round((musiqueScore * 0.75) + (coteScore * 0.25) + 12) 
-                    : Math.round(musiqueScore * 0.5);
+                let nuggetRaw = 0;
+                if (cote >= 5.0 && cote <= 40.0) {
+                    // Cœur de cible Pépite : on valorise grandement l'espérance de gain placé
+                    // Formule calibrée pour donner un beau score (~70-95) aux cotes rentables
+                    nuggetRaw = Math.round((expectedPlaceValue * 18) + 15);
+                } else if (cote < 5.0) {
+                    // Les favoris ne sont pas des pépites (rapport placé trop faible)
+                    nuggetRaw = Math.round(musiqueScore * 0.3);
+                } else {
+                    // Les tocards extrêmes (> 40) ont une musique qui ment souvent ou 0 chance
+                    nuggetRaw = Math.round(expectedPlaceValue * 5);
+                }
+                // ----------------------------------------------------------------
 
                 return {
                     num: parseInt(p.numPmu || p.numOrdre, 10) || (idx+1),
