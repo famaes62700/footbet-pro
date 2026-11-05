@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro - Europe (Anti-Défilement)</title>
+    <title>FootBet Pro - Europe (Stable & Sans Défilement)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -92,13 +92,6 @@
     </main>
 
     <script>
-        function getLocalYYYYMMDD(d) {
-            const yr = d.getFullYear();
-            const mo = String(d.getMonth() + 1).padStart(2, '0');
-            const da = String(d.getDate()).padStart(2, '0');
-            return `${yr}${mo}${da}`;
-        }
-
         const todayInputStr = new Date().toISOString().split('T')[0];
         document.getElementById('matchDate').value = todayInputStr;
 
@@ -158,13 +151,6 @@
             }
             return 0;
         }
-
-        // Rafraîchissement silencieux en arrière-plan toutes les 15s (ne reconstruit PAS la liste si elle est déjà affichée)
-        setInterval(() => {
-            if (document.getElementById('matchDate').value === new Date().toISOString().split('T')[0] || isLiveFilterActive) {
-                loadFootballMatches(true);
-            }
-        }, 15000);
 
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
@@ -367,7 +353,6 @@
             });
             let currentStake = Math.max(0.5, runningBankroll * STAKE_PERCENT);
 
-            // GESTION INTELLIGENTE : Met à jour uniquement les cartes existantes en arrière-plan sans effacer la page
             let existingCardsMap = new Map();
             Array.from(container.children).forEach(child => {
                 if (child.dataset && child.dataset.matchId) {
