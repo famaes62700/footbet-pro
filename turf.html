@@ -24,12 +24,23 @@
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center">
                 <i class="fa-solid fa-horse-head mr-2"></i>Fab Turf (100% Trot)
             </h1>
-            <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-2 sm:space-x-3">
                 <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-emerald-400 font-bold flex flex-col items-end">
                     <span class="text-[9px] text-zinc-400 font-normal">Bankroll (Trot Placé)</span>
                     <span id="headerBankroll">500.00 €</span>
                 </div>
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-amber-500" onchange="loadLivePmu()">
+                
+                <!-- BOUTON ALERTE DÉPART -->
+                <button id="btnStartAlarm" onclick="toggleStartAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Alerte Départ de course (1min30 avant)">
+                    <i id="iconStartAlarm" class="fa-solid fa-bell-slash"></i>
+                </button>
+
+                <!-- BOUTON ALERTE ARRIVÉE OFFICIELLE -->
+                <button id="btnArrivalAlarm" onclick="toggleArrivalAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Alerte Arrivée Officielle">
+                    <i id="iconArrivalAlarm" class="fa-solid fa-flag-checkered"></i>
+                </button>
+
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg border border-zinc-700 font-bold transition flex items-center shadow relative" title="Historique Mensuel">
                     <i class="fa-solid fa-calendar-days"></i>
                 </button>
@@ -221,11 +232,92 @@
         const INITIAL_BANKROLL = 500.0;
         const BASE_STAKE = 5.0;
 
+        // --- SYSTÈME D'ALERTES SÉPARÉES (DÉPART & ARRIVÉE OFFICIELLE) ---
+        let startAlarmEnabled = false;
+        let arrivalAlarmEnabled = false;
+        let lastStartAlarmKey = "";
+        let notifiedArrivals = {};
+        
+        let audioStart = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        let audioArrival = new Audio('https://assets.mixkit.co/active_storage/sfx/2870/2870-preview.mp3');
+
+        function toggleStartAlarm() {
+            startAlarmEnabled = !startAlarmEnabled;
+            let btn = document.getElementById('btnStartAlarm');
+            let icon = document.getElementById('iconStartAlarm');
+            if (startAlarmEnabled) {
+                btn.classList.replace('text-zinc-500', 'text-amber-400');
+                btn.classList.replace('bg-zinc-800', 'bg-amber-900/40');
+                btn.classList.replace('border-zinc-700', 'border-amber-500/50');
+                icon.classList.replace('fa-bell-slash', 'fa-bell');
+                showToast("Alerte Départ activée (1min30 avant)", "success");
+                audioStart.volume = 0.01;
+                audioStart.play().then(() => {
+                    setTimeout(() => { audioStart.pause(); audioStart.currentTime = 0; audioStart.volume = 1.0; }, 300);
+                }).catch(() => {});
+            } else {
+                btn.classList.replace('text-amber-400', 'text-zinc-500');
+                btn.classList.replace('bg-amber-900/40', 'bg-zinc-800');
+                btn.classList.replace('border-amber-500/50', 'border-zinc-700');
+                icon.classList.replace('fa-bell', 'fa-bell-slash');
+                showToast("Alerte Départ désactivée");
+            }
+        }
+
+        function toggleArrivalAlarm() {
+            arrivalAlarmEnabled = !arrivalAlarmEnabled;
+            let btn = document.getElementById('btnArrivalAlarm');
+            if (arrivalAlarmEnabled) {
+                btn.classList.replace('text-zinc-500', 'text-blue-400');
+                btn.classList.replace('bg-zinc-800', 'bg-blue-900/40');
+                btn.classList.replace('border-zinc-700', 'border-blue-500/50');
+                showToast("Alerte Arrivée Officielle activée", "success");
+                audioArrival.volume = 0.01;
+                audioArrival.play().then(() => {
+                    setTimeout(() => { audioArrival.pause(); audioArrival.currentTime = 0; audioArrival.volume = 1.0; }, 300);
+                }).catch(() => {});
+            } else {
+                btn.classList.replace('text-blue-400', 'text-zinc-500');
+                btn.classList.replace('bg-blue-900/40', 'bg-zinc-800');
+                btn.classList.replace('border-blue-500/50', 'border-zinc-700');
+                showToast("Alerte Arrivée Officielle désactivée");
+            }
+        }
+
+        function checkStartAlarm() {
+            if (!startAlarmEnabled || liveMeetingsData.length === 0) return;
+            let now = new Date().getTime();
+            let sortedRaces = getSortedRacesList();
+            let nextRace = sortedRaces.find(r => r.time > now);
+            if (nextRace) {
+                let diff = nextRace.time - now;
+                if (diff > 60000 && diff <= 120000) {
+                    let raceKey = `${nextRace.mIdx}_${nextRace.cIdx}`;
+                    if (lastStartAlarmKey !== raceKey) {
+                        lastStartAlarmKey = raceKey;
+                        audioStart.play().catch(() => {});
+                        showToast(`🚨 DÉPART IMMINENT ! (R${nextRace.mIdx+1}C${nextRace.cIdx+1})`, "error");
+                        
+                        let currentM = document.getElementById('meetingSelect').value;
+                        let currentC = document.getElementById('raceSelect').value;
+                        if (currentM != nextRace.mIdx || currentC != nextRace.cIdx) {
+                            document.getElementById('meetingSelect').value = nextRace.mIdx;
+                            onMeetingChange();
+                            document.getElementById('raceSelect').value = nextRace.cIdx;
+                            autoTransitionDone = false;
+                            fetchRaceData();
+                        }
+                    }
+                }
+            }
+        }
+
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
             let cIdx = document.getElementById('raceSelect').value;
             if (mIdx !== "" && cIdx !== "") fetchRaceData(true); 
             calculateDailyStats(true);
+            checkStartAlarm();
         }, 20000);
 
         function isTrotRace(course) {
@@ -680,6 +772,7 @@
             let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
             let rNum = meeting.numOfficiel || (parseInt(mIdx, 10) + 1);
             let cNum = race.numOrdre || (parseInt(rIdx, 10) + 1);
+            let currentRaceKey = `${ddmmyyyy}_R${rNum}_C${cNum}`;
 
             try {
                 let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, rNum, cNum);
@@ -697,6 +790,15 @@
                         div.innerHTML = `<span class="text-blue-300">${p.ordreArrivee}e:</span> N°${p.numPmu || p.numOrdre} ${p.nom}`;
                         arrivalList.appendChild(div);
                     });
+
+                    // ALERTE ARRIVÉE OFFICIELLE : Sonne uniquement si l'arrivée tombe en direct sur la course affichée
+                    if (!notifiedArrivals[currentRaceKey]) {
+                        notifiedArrivals[currentRaceKey] = true;
+                        if (isBackground && arrivalAlarmEnabled) {
+                            audioArrival.play().catch(() => {});
+                            showToast(`🏁 Arrivée Officielle publiée (R${rNum}C${cNum}) !`, "success");
+                        }
+                    }
 
                     if (!autoTransitionDone) {
                         autoTransitionDone = true;
@@ -960,6 +1062,16 @@
 
                 if (raceData && raceData.arrivees.length > 0) {
                     if (raceData.rapportsList.length === 0) continue; 
+
+                    // ALERTE ARRIVÉE OFFICIELLE EN ARRIÈRE-PLAN
+                    let bgRaceKey = `${ddmmyyyy}_R${r.rNum}_C${r.cNum}`;
+                    if (!notifiedArrivals[bgRaceKey]) {
+                        notifiedArrivals[bgRaceKey] = true;
+                        if (isAuto && arrivalAlarmEnabled && (now - r.time < 3600000)) {
+                            audioArrival.play().catch(() => {});
+                            showToast(`🏁 Arrivée Officielle publiée (${r.name}) !`, "success");
+                        }
+                    }
 
                     let algoResult = computeAlgorithm(raceData.partants);
                     let baseH = algoResult.baseHorse;
