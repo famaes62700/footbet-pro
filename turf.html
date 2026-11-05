@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro - Europe (Rafraîchissement Fluide)</title>
+    <title>FootBet Pro - Europe (Anti-Défilement)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -159,12 +159,12 @@
             return 0;
         }
 
-        // Rafraîchissement automatique optimisé toutes les 10 secondes SANS réinitialiser la liste (évite le défilement)
+        // Rafraîchissement silencieux en arrière-plan toutes les 15s (ne reconstruit PAS la liste si elle est déjà affichée)
         setInterval(() => {
             if (document.getElementById('matchDate').value === new Date().toISOString().split('T')[0] || isLiveFilterActive) {
                 loadFootballMatches(true);
             }
-        }, 10000);
+        }, 15000);
 
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
@@ -367,12 +367,11 @@
             });
             let currentStake = Math.max(0.5, runningBankroll * STAKE_PERCENT);
 
-            // Création ou mise à jour intelligente pour éviter les sauts visuels
-            let existingCards = Array.from(container.children);
-            let mapCards = new Map();
-            existingCards.forEach(card => {
-                if (card.dataset && card.dataset.matchId) {
-                    mapCards.set(card.dataset.matchId, card);
+            // GESTION INTELLIGENTE : Met à jour uniquement les cartes existantes en arrière-plan sans effacer la page
+            let existingCardsMap = new Map();
+            Array.from(container.children).forEach(child => {
+                if (child.dataset && child.dataset.matchId) {
+                    existingCardsMap.set(child.dataset.matchId, child);
                 }
             });
 
@@ -426,8 +425,11 @@
                     ? "text-base font-black text-red-400 px-3 py-1 bg-red-950/40 rounded-lg border border-red-500/40 whitespace-nowrap cursor-pointer hover:bg-red-900/50 transition"
                     : "text-base font-black text-blue-400 px-3 py-1 bg-zinc-950 rounded-lg border border-zinc-800 whitespace-nowrap cursor-pointer hover:bg-zinc-800 transition";
 
-                let card = mapCards.get(match.id) || document.createElement('div');
-                card.dataset.matchId = match.id;
+                let card = existingCardsMap.get(match.id);
+                if (!card) {
+                    card = document.createElement('div');
+                    card.dataset.matchId = match.id;
+                }
                 card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-xl space-y-4";
 
                 card.innerHTML = `
