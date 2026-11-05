@@ -217,13 +217,17 @@
                         let awayRecord = away.records?.[0]?.summary || "0-0-0";
 
                         let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
-                        let sHome = parseInt(home.score) || 0;
-                        let sAway = parseInt(away.score) || 0;
+                        
+                        // FIX: On affiche "-" si le match n'a pas commencé, sinon on récupère le score
+                        let sHome = state === 'pre' ? '-' : (home.score !== undefined ? home.score : '0');
+                        let sAway = state === 'pre' ? '-' : (away.score !== undefined ? away.score : '0');
 
                         let winner = null;
                         if (isCompleted) {
-                            if (sHome > sAway) winner = 'HOME';
-                            else if (sAway > sHome) winner = 'AWAY';
+                            let ptsHome = parseInt(home.score) || 0;
+                            let ptsAway = parseInt(away.score) || 0;
+                            if (ptsHome > ptsAway) winner = 'HOME';
+                            else if (ptsAway > ptsHome) winner = 'AWAY';
                             else winner = 'DRAW';
                         }
 
@@ -324,7 +328,6 @@
         function renderMatches(matchesToRender) {
             const container = document.getElementById('matchesContainer');
             const dateStr = document.getElementById('matchDate').value;
-            // NOUVELLE CLÉ DE SAUVEGARDE POUR FOOTBET PRO V3
             let savedBets = JSON.parse(localStorage.getItem(`footbet_pro_v3_${dateStr}`)) || {};
 
             container.innerHTML = '';
@@ -350,8 +353,10 @@
                 let awayName = match.awayTeam.name;
                 let homeLogo = match.homeTeam.logo;
                 let awayLogo = match.awayTeam.logo;
+                
+                // FIX: On récupère correctement le score de l'équipe Extérieure (le bug était là)
                 let sHome = match.homeTeam.score;
-                let sAway = match.homeTeam.score;
+                let sAway = match.awayTeam.score;
 
                 let algoPrediction = getAlgoPick(match.homeTeam.name, match.awayTeam.name, match.homeTeam.record, match.awayTeam.record);
                 let badgeAlgo = `<span class="mt-1.5 text-[9px] text-white bg-zinc-950/40 px-1.5 py-0.5 rounded font-black tracking-wider"><i class="fa-solid fa-bolt mr-1 text-amber-400"></i>PRONO V3</span>`;
