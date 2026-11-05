@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V18 Interface Épurée</title>
+    <title>Turf - V19 Interface Finale</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -25,9 +25,8 @@
                 <i class="fa-solid fa-horse-head mr-1 sm:mr-2"></i><span class="hidden sm:inline">Turf</span>
             </h1>
             
-            <!-- ALIGNEMENT UNIQUE : Date + Drapeau + Corbeille + Cloche + Calendrier -->
+            <!-- ALIGNEMENT : Drapeau + Corbeille + Cloche + Calendrier + Date (À droite) -->
             <div class="flex items-center space-x-1.5 sm:space-x-2">
-                <input type="date" id="raceDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-amber-500" onchange="onDateChange()">
                 
                 <button id="btnArrivalAlarm" onclick="toggleArrivalAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0" title="Alerte Arrivée Officielle">
                     <i id="iconArrivalAlarm" class="fa-solid fa-flag-checkered"></i>
@@ -44,28 +43,15 @@
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0" title="Historique des Gains">
                     <i class="fa-solid fa-calendar-days"></i>
                 </button>
+
+                <input type="date" id="raceDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-amber-500" onchange="onDateChange()">
+                
             </div>
         </div>
     </header>
 
     <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4">
         
-        <!-- MENU NAVIGATION MULTI-SPORTS ÉPURÉ -->
-        <div class="bg-zinc-900/50 p-1.5 rounded-xl border border-zinc-800 flex justify-between space-x-1.5 overflow-x-auto shadow-inner">
-            <button onclick="showToast('Section Foot en développement ⚽', 'info')" class="flex-1 bg-zinc-800 text-zinc-400 hover:text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center min-w-[70px]">
-                <i class="fa-solid fa-futbol mr-1.5"></i> Foot
-            </button>
-            <button class="flex-1 bg-amber-500 text-zinc-950 py-2 rounded-lg text-xs font-black shadow transition flex items-center justify-center min-w-[70px]">
-                <i class="fa-solid fa-horse-head mr-1.5"></i> Turf
-            </button>
-            <button onclick="showToast('Section NBA en développement 🏀', 'info')" class="flex-1 bg-zinc-800 text-zinc-400 hover:text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center min-w-[70px]">
-                <i class="fa-solid fa-basketball mr-1.5"></i> NBA
-            </button>
-            <button onclick="showToast('Section Tennis en développement 🎾', 'info')" class="flex-1 bg-zinc-800 text-zinc-400 hover:text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center min-w-[70px]">
-                <i class="fa-solid fa-table-tennis-paddle-ball mr-1.5"></i> Tennis
-            </button>
-        </div>
-
         <!-- SÉLECTEUR DE DISCIPLINE -->
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-2 flex items-center justify-between text-xs">
             <span class="text-zinc-400 font-bold ml-2"><i class="fa-solid fa-filter mr-1.5 text-amber-400"></i> Mode :</span>
@@ -293,7 +279,7 @@
             notifiedArrivals = {};
             hasAutoTransitioned = {};
             Object.keys(localStorage).forEach(k => {
-                if (k.startsWith('race_cache_v16_') || k.startsWith('pmu_stats_')) {
+                if (k.startsWith('race_cache_') || k.startsWith('pmu_stats_')) {
                     localStorage.removeItem(k);
                 }
             });
@@ -1001,7 +987,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_multidis_v16_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_multidis_v19_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -1135,7 +1121,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `race_cache_v16_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `race_cache_v19_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 if (statsProgress) {
                     statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
@@ -1253,7 +1239,7 @@
             if (totalSpentPepiteText) totalSpentPepiteText.textContent = `${totalSpentPepite.toFixed(2)} €`;
             
             if (coursesValidees > 0) {
-                localStorage.setItem(`pmu_stats_multidis_v16_${String(new Date(dateInput).getDate()).padStart(2, '0')}${String(new Date(dateInput).getMonth()+1).padStart(2, '0')}${new Date(dateInput).getFullYear()}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_multidis_v19_${String(new Date(dateInput).getDate()).padStart(2, '0')}${String(new Date(dateInput).getMonth()+1).padStart(2, '0')}${new Date(dateInput).getFullYear()}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
             }
