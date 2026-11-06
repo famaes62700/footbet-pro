@@ -391,7 +391,7 @@
             }
         }
 
-        // RAFRAÎCHISSEMENT AUTOMATIQUE TOUTES LES 10 SECONDES SANS FAIRE DÉFILER LES CHIFFRES
+        // RAFRAÎCHISSEMENT AUTOMATIQUE TOUTES LES 10 SECONDES
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
             let cIdx = document.getElementById('raceSelect').value;
@@ -734,6 +734,7 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
+        // VOTRE ALGORITHME D'ORIGINE CONSERVÉ INTÉGRALEMENT
         function computeAlgorithm(partants) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
@@ -750,19 +751,16 @@
                 
                 let musiqueScore = evaluateMusique(musique);
                 
-                // CIBLE PÉPITE : Rapport Placé estimé entre 2.00 € et 2.50 €
-                let potentielPlace = Math.max(1.10, 1 + ((cote - 1) / 3.5));
-                let nuggetRaw = 0;
-                
-                if (potentielPlace >= 1.8 && potentielPlace <= 2.8) {
-                    nuggetRaw = Math.round((musiqueScore * 0.8) + 20);
-                } else if (potentielPlace > 2.8 && potentielPlace <= 4.0) {
-                    nuggetRaw = Math.round((musiqueScore * 0.5) + 10);
-                } else if (potentielPlace < 1.8) {
-                    nuggetRaw = Math.round(musiqueScore * 0.2);
-                } else {
-                    nuggetRaw = Math.round(musiqueScore * 0.1);
-                }
+                let coteScore = 15;
+                if (cote >= 1.6 && cote <= 4.5) coteScore = 96;
+                else if (cote < 1.6) coteScore = 84;
+                else if (cote <= 7.0) coteScore = 82;
+                else if (cote <= 12) coteScore = 62;
+                else if (cote <= 20) coteScore = 35;
+
+                let nuggetRaw = (cote >= 4.5 && cote <= 20) 
+                    ? Math.round((musiqueScore * 0.75) + (coteScore * 0.25) + 12) 
+                    : Math.round(musiqueScore * 0.5);
 
                 return {
                     num: parseInt(p.numPmu || p.numOrdre, 10) || (idx+1),
@@ -872,7 +870,7 @@
                 arrivalList.innerHTML = '';
                 let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0).sort((a, b) => a.ordreArrivee - b.ordreArrivee);
 
-                // GESTION DE L'ARRIVÉE OFFICIELLE : Sonnerie et Bascule Automatique immédiate
+                // GESTION DE L'ARRIVÉE OFFICIELLE : Sonnerie et Bascule Automatique
                 if (arrivees.length > 0) {
                     arrivalBlock.classList.remove('hidden');
                     arrivees.slice(0, 5).forEach((p) => {
@@ -882,16 +880,16 @@
                         arrivalList.appendChild(div);
                     });
 
-                    // 1. Alarme sonore déclenchée dès l'arrivée officielle
+                    // 1. Sonnerie Alerte Arrivée (Dès l'arrivée officielle)
                     if (!notifiedArrivals[currentRaceKey]) {
                         notifiedArrivals[currentRaceKey] = true;
                         if (isBackground && arrivalAlarmEnabled) {
                             audioArrival.play().catch(() => {});
-                            showToast(`🏁 Arrivée Officielle validée (R${rNum}C${cNum}) !`, "success");
+                            showToast(`🏁 Arrivée Officielle publiée (R${rNum}C${cNum}) !`, "success");
                         }
                     }
 
-                    // 2. Bascule automatique de 30 secondes dès l'arrivée officielle
+                    // 2. Bascule Automatique à la course suivante (30s après l'arrivée officielle)
                     if (!hasAutoTransitioned[currentRaceKey]) {
                         hasAutoTransitioned[currentRaceKey] = true; 
                         
@@ -917,7 +915,7 @@
                     arrivalBlock.classList.add('hidden');
                 }
 
-                // RAPPORTS DÉFINITIFS
+                // GESTION DES RAPPORTS DÉFINITIFS
                 let reportsBlock = document.getElementById('reportsBlock');
                 let reportsGrid = document.getElementById('reportsGrid');
                 reportsGrid.innerHTML = '';
@@ -1158,7 +1156,7 @@
             let deficitSerieBase = 0;
             let deficitSeriePepite = 0;
 
-            // CALCUL EN MÉMOIRE (Sans toucher à l'affichage des gains pendant la boucle pour éviter le défilement)
+            // CALCUL EN ARRIÈRE-PLAN SANS FAIRE DÉFILER LES CHIFFRES À CHAQUE ITÉRATION
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
                 let cacheKey = `race_cache_v21_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
@@ -1270,12 +1268,11 @@
                 }
             }
 
-            // MISE À JOUR UNIQUE ET FIXE UNE FOIS LE CALCUL TERMINÉ
+            // MISE À JOUR UNIQUE À LA FIN DU CALCUL (Affichage fixe)
             statBaseGag.textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
             statBasePla.textContent = `${baseWinsPla} / ${coursesValidees}`;
             statPepiteGag.textContent = `${pepiteWinsGag} / ${coursesGagnantBaseValidees}`;
             statPepitePla.textContent = `${pepiteWinsPla} / ${coursesValidees}`;
-            
             gainBasePla.innerHTML = formatMoneyHTML(totalProfitBasePla);
             gainBaseGag.innerHTML = formatMoneyHTML(totalProfitBaseGag);
             gainPepitePla.innerHTML = formatMoneyHTML(totalProfitPepitePla);
