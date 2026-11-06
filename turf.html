@@ -1058,4 +1058,257 @@
                 }
 
                 if (mBase !== 0 || mPep !== 0) {
-                    let div = document
+                    let div = document.createElement('div');
+                    let isCurrentViewMonth = (m === currentViewDate.getMonth());
+                    div.className = isCurrentViewMonth 
+                        ? "bg-zinc-800 p-2.5 rounded-xl border border-emerald-500/50 mb-2 flex justify-between items-center text-xs" 
+                        : "bg-zinc-800/50 p-2.5 rounded-xl border border-zinc-700/50 mb-2 flex justify-between items-center text-xs";
+
+                    div.innerHTML = `
+                        <span class="font-bold ${isCurrentViewMonth ? 'text-white' : 'text-zinc-300'}">${monthNames[m]}</span>
+                        <div class="space-x-2">
+                            <span>Base: ${formatMoneyHTML(mBase)}</span>
+                            <span>Pépite: ${formatMoneyHTML(mPep)}</span>
+                        </div>
+                    `;
+                    monthsGrid.appendChild(div);
+                }
+            }
+            if(monthsGrid.innerHTML === '') {
+                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Aucune donnée calculée pour cette année.</div>';
+            }
+        }
+
+        async function calculateDailyStats(isAuto = false) {
+            if (isCalculatingStats) return;
+            isCalculatingStats = true;
+            
+            let statsProgress = document.getElementById('statsProgress');
+            let statBaseGag = document.getElementById('statBaseGag');
+            let statBasePla = document.getElementById('statBasePla');
+            let statPepiteGag = document.getElementById('statPepiteGag');
+            let statPepitePla = document.getElementById('statPepitePla');
+            
+            let gainBasePla = document.getElementById('gainBasePla');
+            let gainBaseGag = document.getElementById('gainBaseGag');
+            let gainPepitePla = document.getElementById('gainPepitePla');
+            let gainPepiteGag = document.getElementById('gainPepiteGag');
+            
+            let totalSpentText = document.getElementById('totalSpentText');
+            let maxStakeBaseText = document.getElementById('maxStakeBaseText');
+            let deficitBaseText = document.getElementById('deficitBaseText');
+            let nextStakeBaseText = document.getElementById('nextStakeBaseText');
+            
+            let totalSpentPepiteText = document.getElementById('totalSpentPepiteText');
+            let maxStakePepiteText = document.getElementById('maxStakePepiteText');
+            let deficitPepiteText = document.getElementById('deficitPepiteText');
+            let nextStakePepiteText = document.getElementById('nextStakePepiteText');
+            
+            let headerNextStake = document.getElementById('headerNextStake');
+
+            let dateInput = document.getElementById('raceDate').value;
+            let parts = dateInput.split('-');
+            let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
+            
+            let now = new Date().getTime();
+            let todayStr = new Date().toISOString().split('T')[0];
+            let isPastDate = dateInput < todayStr;
+
+            let pastRacesToday = [];
+            liveMeetingsData.forEach((m, mIdx) => {
+                let rNum = m.numOfficiel || (mIdx + 1);
+                let courses = m.courses || [];
+                courses.forEach((c, cIdx) => {
+                    let cNum = c.numOrdre || (cIdx + 1);
+                    if (c.heureDepart) {
+                        let departTime = new Date(c.heureDepart).getTime();
+                        if (isPastDate || (departTime > 0 && departTime < (now - 10 * 60 * 1000))) {
+                            pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime });
+                        }
+                    }
+                });
+            });
+
+            pastRacesToday.sort((a, b) => a.time - b.time);
+
+            if (pastRacesToday.length === 0) {
+                if (!isAuto && statsProgress) statsProgress.textContent = "Aucune course passée.";
+                isCalculatingStats = false;
+                return;
+            }
+
+            let baseWinsGag = 0, baseWinsPla = 0;
+            let pepiteWinsGag = 0, pepiteWinsPla = 0;
+            
+            let totalSpentBase = 0; 
+            let totalSpentPepite = 0;
+            
+            let maxStakeBase = 0;
+            let maxStakePepite = 0;
+            
+            let totalProfitBasePla = 0;
+            let totalProfitBaseGag = 0;
+            
+            let totalProfitPepitePla = 0;
+            let totalProfitPepiteGag = 0;
+
+            let coursesValidees = 0;
+            let coursesGagnantBaseValidees = 0;
+            
+            let deficitSerieBase = 0;
+            let deficitSeriePepite = 0;
+
+            // CALCUL EN MÉMOIRE (Sans toucher à l'affichage des gains pendant la boucle pour éviter le défilement)
+            for (let i = 0; i < pastRacesToday.length; i++) {
+                let r = pastRacesToday[i];
+                let cacheKey = `race_cache_v21_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+
+                let raceData = null;
+                let savedData = localStorage.getItem(cacheKey);
+                
+                if (savedData) {
+                    raceData = JSON.parse(savedData);
+                } else {
+                    if (!isAuto && statsProgress) {
+                        statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
+                    }
+                    await sleep(150); 
+                    let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum);
+                    
+                    let isComplete = (rapportsList.length > 0);
+                    raceData = { partants, rapportsList, isComplete };
+                    
+                    if (raceData.isComplete && partants.length > 0) {
+                        try { localStorage.setItem(cacheKey, JSON.stringify(raceData)); } catch(e) {}
+                    }
+                }
+
+                if (!raceData || !raceData.partants || raceData.partants.length === 0) continue;
+                
+                let hasReports = raceData.rapportsList && raceData.rapportsList.length > 0;
+                if (!hasReports) continue;
+
+                let algoResult = computeAlgorithm(raceData.partants);
+                let baseH = algoResult.baseHorse;
+                let nuggetH = algoResult.nuggetHorse;
+                let maxPaidPlaces = algoResult.processed.length >= 8 ? 3 : 2;
+
+                let baseArr = baseH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === baseH.num)?.ordreArrivee || 99) : 99;
+                let nuggetArr = nuggetH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === nuggetH.num)?.ordreArrivee || 99) : 99;
+
+                if (baseH) {
+                    coursesGagnantBaseValidees++;
+                    let gGagBase = extractGainFromRapports(raceData.rapportsList, baseH.num, 'GAGNANT');
+                    if (gGagBase === 0 && baseArr === 1 && baseH.cote < 999) gGagBase = baseH.cote; 
+                    
+                    if (gGagBase > 0) {
+                        baseWinsGag++;
+                        totalProfitBaseGag += (gGagBase * 1.0) - 1.0;
+                    } else {
+                        totalProfitBaseGag -= 1.0;
+                    }
+                }
+
+                if (nuggetH) {
+                    let gGagPepite = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
+                    if (gGagPepite === 0 && nuggetArr === 1 && nuggetH.cote < 999) gGagPepite = nuggetH.cote; 
+                    
+                    if (gGagPepite > 0) {
+                        pepiteWinsGag++;
+                        totalProfitPepiteGag += (gGagPepite * 1.0) - 1.0;
+                    } else {
+                        totalProfitPepiteGag -= 1.0;
+                    }
+                }
+
+                if (baseH) {
+                    coursesValidees++;
+                    
+                    let actualStakeBase = computeSmartStake(deficitSerieBase);
+                    
+                    totalSpentBase += actualStakeBase;
+                    if (actualStakeBase > maxStakeBase) maxStakeBase = actualStakeBase;
+
+                    let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
+                    if (gPla === 0 && baseArr >= 1 && baseArr <= maxPaidPlaces && baseH.cote < 999) {
+                        gPla = Math.max(1.10, parseFloat((1 + ((baseH.cote - 1) / 3.5)).toFixed(2)));
+                    } 
+                    
+                    let netBasePla = 0;
+                    if (gPla > 0) {
+                        baseWinsPla++; 
+                        netBasePla = (gPla * actualStakeBase) - actualStakeBase;
+                        totalProfitBasePla += netBasePla;
+                        deficitSerieBase = Math.max(0, deficitSerieBase - netBasePla);
+                    } else {
+                        totalProfitBasePla -= actualStakeBase;
+                        netBasePla = -actualStakeBase;
+                        deficitSerieBase += actualStakeBase;
+                    }
+                }
+
+                if (nuggetH) {
+                    let simStakePepite = computeSmartStake(deficitSeriePepite);
+                    
+                    totalSpentPepite += simStakePepite;
+                    if (simStakePepite > maxStakePepite) maxStakePepite = simStakePepite;
+
+                    let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
+                    if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= maxPaidPlaces && nuggetH.cote < 999) {
+                        gPla = Math.max(1.10, parseFloat((1 + ((nuggetH.cote - 1) / 3.5)).toFixed(2)));
+                    } 
+                    
+                    if (gPla > 0) { 
+                        pepiteWinsPla++; 
+                        let netPepitePla = (gPla * simStakePepite) - simStakePepite;
+                        totalProfitPepitePla += netPepitePla; 
+                        deficitSeriePepite = Math.max(0, deficitSeriePepite - netPepitePla);
+                    } else { 
+                        totalProfitPepitePla -= simStakePepite; 
+                        deficitSeriePepite += simStakePepite;
+                    }
+                }
+            }
+
+            // MISE À JOUR UNIQUE ET FIXE UNE FOIS LE CALCUL TERMINÉ
+            statBaseGag.textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
+            statBasePla.textContent = `${baseWinsPla} / ${coursesValidees}`;
+            statPepiteGag.textContent = `${pepiteWinsGag} / ${coursesGagnantBaseValidees}`;
+            statPepitePla.textContent = `${pepiteWinsPla} / ${coursesValidees}`;
+            
+            gainBasePla.innerHTML = formatMoneyHTML(totalProfitBasePla);
+            gainBaseGag.innerHTML = formatMoneyHTML(totalProfitBaseGag);
+            gainPepitePla.innerHTML = formatMoneyHTML(totalProfitPepitePla);
+            gainPepiteGag.innerHTML = formatMoneyHTML(totalProfitPepiteGag);
+
+            if (totalSpentText) totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
+            if (maxStakeBaseText) maxStakeBaseText.textContent = `${maxStakeBase.toFixed(2)} €`;
+            if (deficitBaseText) deficitBaseText.textContent = `${deficitSerieBase.toFixed(2)} €`;
+            
+            if (totalSpentPepiteText) totalSpentPepiteText.textContent = `${totalSpentPepite.toFixed(2)} €`;
+            if (maxStakePepiteText) maxStakePepiteText.textContent = `${maxStakePepite.toFixed(2)} €`;
+            if (deficitPepiteText) deficitPepiteText.textContent = `${deficitSeriePepite.toFixed(2)} €`;
+
+            let nextStakeBase = computeSmartStake(deficitSerieBase);
+            let nextStakePepite = computeSmartStake(deficitSeriePepite);
+            
+            if (nextStakeBaseText) nextStakeBaseText.textContent = `Mise: ${nextStakeBase.toFixed(2)} €`;
+            if (nextStakePepiteText) nextStakePepiteText.textContent = `Mise: ${nextStakePepite.toFixed(2)} €`;
+            if (headerNextStake) headerNextStake.textContent = `${nextStakeBase.toFixed(2)} €`;
+            
+            if (coursesValidees > 0) {
+                localStorage.setItem(`pmu_stats_multidis_v21_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
+                    baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
+                }));
+            }
+            
+            if (statsProgress) statsProgress.textContent = `✅ ${coursesValidees}/${pastRacesToday.length} validées`;
+            if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
+            
+            isCalculatingStats = false;
+        }
+
+        window.onload = loadLivePmu;
+    </script>
+</body>
+</html>
