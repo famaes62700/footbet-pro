@@ -59,7 +59,7 @@
                     100% Trot
                 </button>
                 <button id="btnFilterAll" onclick="setDisciplineMode('ALL')" class="bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition">
-                    Toutes Courses
+                    Toutes Courses (Galop FR)
                 </button>
             </div>
         </div>
@@ -273,11 +273,11 @@
             if (mode === 'TROT') {
                 btnTrot.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow";
                 btnAll.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition";
-                showToast("Mode 100% Trot activé");
+                showToast("Mode 100% Trot (FR + Étranger) activé");
             } else {
                 btnAll.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow";
                 btnTrot.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition";
-                showToast("Mode Toutes Courses activé");
+                showToast("Mode Toutes Courses (Trot Monde + Galop FR) activé");
             }
             loadLivePmu();
         }
@@ -400,14 +400,30 @@
             checkStartAlarm();
         }, 10000);
 
-        function isTargetDisciplineRace(course) {
+        // FILTRE DES COURSES : Trot (Tous pays) | Plat & Obstacle (France uniquement)
+        function isTargetDisciplineRace(course, reunion) {
             let d = String(course.discipline || '').toUpperCase();
             let s = String(course.specialite || '').toUpperCase();
+            
+            let isTrot = d.includes('TROT') || d.includes('ATTEL') || d.includes('MONTE') || 
+                         s.includes('TROT') || s.includes('ATTEL') || s.includes('MONTE');
+
+            // En mode 100% Trot : toutes les courses de trot (France + Étranger)
             if (currentDisciplineMode === 'TROT') {
-                return d.includes('TROT') || d.includes('ATTEL') || d.includes('MONTE') || 
-                       s.includes('TROT') || s.includes('ATTEL') || s.includes('MONTE');
+                return isTrot;
             } else {
-                return true; 
+                // En mode Toutes Courses :
+                // 1. Si c'est du Trot (Attelé/Monté), on garde même à l'étranger
+                if (isTrot) return true;
+
+                // 2. Si c'est du Plat ou de l'Obstacle, uniquement en France (FRA)
+                let pays = String(reunion?.hippodrome?.codePays || reunion?.pays?.code || 'FRA').toUpperCase().trim();
+                let isFrance = (pays === 'FRA' || pays === 'FR' || pays === 'FRANCE');
+                
+                let isGalopOuObstacle = d.includes('PLAT') || d.includes('OBST') || d.includes('HAIE') || d.includes('STEEPLE') || d.includes('CROSS') ||
+                                        s.includes('PLAT') || s.includes('OBST') || s.includes('HAIE') || s.includes('STEEPLE') || s.includes('CROSS');
+
+                return isFrance && isGalopOuObstacle;
             }
         }
 
@@ -453,7 +469,7 @@
             if (s.includes('MONTE')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">MONTÉ</span>';
             if (s.includes('ATTEL')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">ATTELÉ</span>';
             if (s.includes('PLAT')) return '<span class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">PLAT</span>';
-            if (s.includes('HAIES') || s.includes('STEEPLE') || s.includes('OBST')) return '<span class="bg-purple-500/20 text-purple-400 border border-purple-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">OBSTACLE</span>';
+            if (s.includes('HAIES') || s.includes('STEEPLE') || s.includes('OBST') || s.includes('CROSS')) return '<span class="bg-purple-500/20 text-purple-400 border border-purple-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">OBSTACLE</span>';
             return `<span class="bg-zinc-500/20 text-zinc-300 border border-zinc-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">${s}</span>`;
         }
 
@@ -526,7 +542,7 @@
                 let filteredReunions = [];
                 rawReunions.forEach(r => {
                     let allCourses = r.courses || r.races || r.lesCourses || [];
-                    let targetCourses = allCourses.filter(c => isTargetDisciplineRace(c));
+                    let targetCourses = allCourses.filter(c => isTargetDisciplineRace(c, r));
                     if (targetCourses.length > 0) {
                         let rCopy = Object.assign({}, r);
                         rCopy.courses = targetCourses;
@@ -1012,7 +1028,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_multidis_v21_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_multidis_v22_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -1113,6 +1129,7 @@
             let isPastDate = dateInput < todayStr;
 
             let pastRacesToday = [];
+            // liveMeetingsData contient déjà uniquement les courses filtrées par isTargetDisciplineRace
             liveMeetingsData.forEach((m, mIdx) => {
                 let rNum = m.numOfficiel || (mIdx + 1);
                 let courses = m.courses || [];
@@ -1159,7 +1176,7 @@
             // CALCUL EN ARRIÈRE-PLAN SANS FAIRE DÉFILER LES CHIFFRES À CHAQUE ITÉRATION
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `race_cache_v21_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `race_cache_v22_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 let raceData = null;
                 let savedData = localStorage.getItem(cacheKey);
@@ -1294,7 +1311,7 @@
             if (headerNextStake) headerNextStake.textContent = `${nextStakeBase.toFixed(2)} €`;
             
             if (coursesValidees > 0) {
-                localStorage.setItem(`pmu_stats_multidis_v21_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_multidis_v22_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
             }
