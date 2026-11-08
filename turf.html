@@ -408,15 +408,11 @@
             let isTrot = d.includes('TROT') || d.includes('ATTEL') || d.includes('MONTE') || 
                          s.includes('TROT') || s.includes('ATTEL') || s.includes('MONTE');
 
-            // En mode 100% Trot : toutes les courses de trot (France + Étranger)
             if (currentDisciplineMode === 'TROT') {
                 return isTrot;
             } else {
-                // En mode Toutes Courses :
-                // 1. Si c'est du Trot (Attelé/Monté), on garde même à l'étranger
                 if (isTrot) return true;
 
-                // 2. Si c'est du Plat ou de l'Obstacle, uniquement en France (FRA)
                 let pays = String(reunion?.hippodrome?.codePays || reunion?.pays?.code || 'FRA').toUpperCase().trim();
                 let isFrance = (pays === 'FRA' || pays === 'FR' || pays === 'FRANCE');
                 
@@ -504,7 +500,71 @@
             throw new Error("PMU bloqué");
         }
 
-        async function getFullRaceData(dateStr, rNum, cNum) {
+        // EXTRACTION MULTI-SOURCES DE L'ARRIVÉE (Participants + Objet Course + Rapports)
+        function consolidateArrivals(partants, courseObj, rapportsList) {
+            if (!Array.isArray(partants) || partants.length === 0) return partants;
+
+            let hasArrivalInPartants = partants.some(p => p.ordreArrivee && parseInt(p.ordreArrivee, 10) > 0);
+            if (hasArrivalInPartants) return partants;
+
+            // Source 2 : Tableau ordreArrivee dans l'objet course du programme PMU (ex: [[12], [5], [8]])
+            if (courseObj && Array.isArray(courseObj.ordreArrivee) && courseObj.ordreArrivee.length > 0) {
+                courseObj.ordreArrivee.forEach((item, index) => {
+                    let rank = index + 1;
+                    let nums = Array.isArray(item) ? item : [item];
+                    nums.forEach(n => {
+                        let horseNum = parseInt(n, 10);
+                        let targetP = partants.find(p => parseInt(p.numPmu || p.numOrdre, 10) === horseNum);
+                        if (targetP && !targetP.ordreArrivee) {
+                            targetP.ordreArrivee = rank;
+                        }
+                    });
+                });
+            }
+
+            // Source 3 : Reconstruction depuis les rapports définitifs si l'arrivée n'est toujours pas marquée
+            let stillNoArrival = !partants.some(p => p.ordreArrivee && parseInt(p.ordreArrivee, 10) > 0);
+            if (stillNoArrival && Array.isArray(rapportsList) && rapportsList.length > 0) {
+                let winnerNum = -1;
+                let placedNums = [];
+
+                rapportsList.forEach(group => {
+                    let pType = String(group.typePari || group.codePari || "").toUpperCase();
+                    if (pType.includes('SIMPLE') || pType === 'SG' || pType === 'SP' || pType === 'E_SG' || pType === 'E_SP') {
+                        let details = group.rapports || group.dividendes || group.lesRapports || [];
+                        details.forEach(item => {
+                            let hNum = extractHorseNumFromCombo(item.combinaison !== undefined ? item.combinaison : item.cheval);
+                            if (hNum > 0) {
+                                let lib = String(item.libelleRapport || item.libelle || pType).toUpperCase();
+                                if (lib.includes('GAGN') || pType === 'SG' || pType === 'E_SG') {
+                                    winnerNum = hNum;
+                                } else if (lib.includes('PLAC') || pType === 'SP' || pType === 'E_SP') {
+                                    if (!placedNums.includes(hNum)) placedNums.push(hNum);
+                                }
+                            }
+                        });
+                    }
+                });
+
+                if (winnerNum > 0) {
+                    let winP = partants.find(p => parseInt(p.numPmu || p.numOrdre, 10) === winnerNum);
+                    if (winP) winP.ordreArrivee = 1;
+                }
+                let nextRank = 2;
+                placedNums.forEach(num => {
+                    if (num !== winnerNum) {
+                        let plaP = partants.find(p => parseInt(p.numPmu || p.numOrdre, 10) === num);
+                        if (plaP && !plaP.ordreArrivee) {
+                            plaP.ordreArrivee = nextRank++;
+                        }
+                    }
+                });
+            }
+
+            return partants;
+        }
+
+        async function getFullRaceData(dateStr, rNum, cNum, courseObj = null) {
             let partants = [];
             let rapportsList = [];
             try {
@@ -519,6 +579,16 @@
                     else rapportsList = rData.rapports || rData.lesRapports || [];
                 }
             } catch(e) {}
+
+            // Si les partants n'ont pas encore l'arrivée, on vérifie aussi le programme en direct
+            if (partants.length > 0 && !partants.some(p => p.ordreArrivee && p.ordreArrivee > 0) && !courseObj) {
+                let m = liveMeetingsData.find(reun => (reun.numOfficiel || 0) == rNum);
+                if (m && m.courses) {
+                    courseObj = m.courses.find(c => (c.numOrdre || 0) == cNum);
+                }
+            }
+
+            partants = consolidateArrivals(partants, courseObj, rapportsList);
 
             return { partants, rapportsList };
         }
@@ -879,14 +949,28 @@
             let now = new Date().getTime();
 
             try {
-                let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, rNum, cNum);
+                // Si la course est en cours ou vient de se terminer, on rafraîchit aussi l'objet course du programme pour capter ordreArrivee en direct
+                let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
+                if (isBackground && raceStartTime > 0 && now >= raceStartTime && (now - raceStartTime) < 45 * 60 * 1000) {
+                    try {
+                        let progData = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
+                        let rawR = progData.programme?.reunions || progData.reunions || [];
+                        let updatedM = rawR.find(r => (r.numOfficiel || 0) == rNum);
+                        if (updatedM && updatedM.courses) {
+                            let updatedC = updatedM.courses.find(c => (c.numOrdre || 0) == cNum);
+                            if (updatedC) race = updatedC;
+                        }
+                    } catch(e) {}
+                }
+
+                let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, rNum, cNum, race);
 
                 let arrivalBlock = document.getElementById('arrivalBlock');
                 let arrivalList = document.getElementById('arrivalList');
                 arrivalList.innerHTML = '';
-                let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0).sort((a, b) => a.ordreArrivee - b.ordreArrivee);
+                let arrivees = partants.filter(p => p.ordreArrivee && parseInt(p.ordreArrivee, 10) > 0).sort((a, b) => parseInt(a.ordreArrivee, 10) - parseInt(b.ordreArrivee, 10));
 
-                // GESTION DE L'ARRIVÉE OFFICIELLE : Sonnerie et Bascule Automatique
+                // GESTION DE L'ARRIVÉE OFFICIELLE : Affichage, Sonnerie et Bascule Automatique
                 if (arrivees.length > 0) {
                     arrivalBlock.classList.remove('hidden');
                     arrivees.slice(0, 5).forEach((p) => {
@@ -896,10 +980,12 @@
                         arrivalList.appendChild(div);
                     });
 
-                    // 1. Sonnerie Alerte Arrivée (Dès l'arrivée officielle)
+                    let isRecentRace = raceStartTime > 0 && (now - raceStartTime) <= 45 * 60 * 1000;
+
+                    // 1. Sonnerie Alerte Arrivée (Dès que l'arrivée officielle est détectée sur une course récente)
                     if (!notifiedArrivals[currentRaceKey]) {
                         notifiedArrivals[currentRaceKey] = true;
-                        if (isBackground && arrivalAlarmEnabled) {
+                        if (arrivalAlarmEnabled && (isBackground || isRecentRace)) {
                             audioArrival.play().catch(() => {});
                             showToast(`🏁 Arrivée Officielle publiée (R${rNum}C${cNum}) !`, "success");
                         }
@@ -908,11 +994,8 @@
                     // 2. Bascule Automatique à la course suivante (30s après l'arrivée officielle)
                     if (!hasAutoTransitioned[currentRaceKey]) {
                         hasAutoTransitioned[currentRaceKey] = true; 
-                        
-                        let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
-                        let isOldRace = raceStartTime > 0 && (now - raceStartTime) > 60 * 60 * 1000; 
 
-                        if (!isOldRace) {
+                        if (isRecentRace) {
                             showToast(`Bascule à la course suivante dans 30 secondes... ⏱️`, "info");
                             
                             if (autoTransitionTimer) clearTimeout(autoTransitionTimer);
@@ -1028,7 +1111,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_multidis_v22_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_multidis_v23_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -1129,7 +1212,6 @@
             let isPastDate = dateInput < todayStr;
 
             let pastRacesToday = [];
-            // liveMeetingsData contient déjà uniquement les courses filtrées par isTargetDisciplineRace
             liveMeetingsData.forEach((m, mIdx) => {
                 let rNum = m.numOfficiel || (mIdx + 1);
                 let courses = m.courses || [];
@@ -1138,7 +1220,7 @@
                     if (c.heureDepart) {
                         let departTime = new Date(c.heureDepart).getTime();
                         if (isPastDate || (departTime > 0 && departTime < (now - 10 * 60 * 1000))) {
-                            pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime });
+                            pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime, courseObj: c });
                         }
                     }
                 });
@@ -1176,7 +1258,7 @@
             // CALCUL EN ARRIÈRE-PLAN SANS FAIRE DÉFILER LES CHIFFRES À CHAQUE ITÉRATION
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `race_cache_v22_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `race_cache_v23_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 let raceData = null;
                 let savedData = localStorage.getItem(cacheKey);
@@ -1188,7 +1270,7 @@
                         statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
                     }
                     await sleep(150); 
-                    let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum);
+                    let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum, r.courseObj);
                     
                     let isComplete = (rapportsList.length > 0);
                     raceData = { partants, rapportsList, isComplete };
@@ -1311,7 +1393,7 @@
             if (headerNextStake) headerNextStake.textContent = `${nextStakeBase.toFixed(2)} €`;
             
             if (coursesValidees > 0) {
-                localStorage.setItem(`pmu_stats_multidis_v22_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_multidis_v23_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
             }
