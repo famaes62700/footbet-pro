@@ -391,7 +391,7 @@
             }
         }
 
-        // RAFRAÎCHISSEMENT AUTOMATIQUE TOUTES LES 10 SECONDES
+        // RAFRAÎCHISSEMENT AUTOMATIQUE TOUTES LES 10 SECONDES (SANS BLOQUER)
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
             let cIdx = document.getElementById('raceSelect').value;
@@ -400,7 +400,6 @@
             checkStartAlarm();
         }, 10000);
 
-        // TOUTES LES COURSES SONT PRISES EN COMPTE (FRANCE ET ÉTRANGER)
         function isTargetDisciplineRace(course, reunion) {
             if (currentDisciplineMode === 'TROT') {
                 let d = String(course.discipline || '').toUpperCase();
@@ -408,7 +407,7 @@
                 return d.includes('TROT') || d.includes('ATTEL') || d.includes('MONTE') || 
                        s.includes('TROT') || s.includes('ATTEL') || s.includes('MONTE');
             } else {
-                return true; // Toutes les courses de toutes les disciplines et tous les pays
+                return true; 
             }
         }
 
@@ -855,7 +854,6 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
-        // VOTRE ALGORITHME D'ORIGINE CONSERVÉ INTÉGRALEMENT
         function computeAlgorithm(partants) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
@@ -1149,7 +1147,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_multidis_v24_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_multidis_v25_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -1295,7 +1293,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `race_cache_v24_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `race_cache_v25_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 let raceData = null;
                 let savedData = localStorage.getItem(cacheKey);
@@ -1429,7 +1427,7 @@
             if (headerNextStake) headerNextStake.textContent = `${nextStakeBase.toFixed(2)} €`;
             
             if (coursesValidees > 0) {
-                localStorage.setItem(`pmu_stats_multidis_v24_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_multidis_v25_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
             }
