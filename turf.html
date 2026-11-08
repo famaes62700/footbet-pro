@@ -59,7 +59,7 @@
                     100% Trot
                 </button>
                 <button id="btnFilterAll" onclick="setDisciplineMode('ALL')" class="bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition">
-                    Toutes Courses (Galop FR)
+                    Toutes Courses
                 </button>
             </div>
         </div>
@@ -273,11 +273,11 @@
             if (mode === 'TROT') {
                 btnTrot.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow";
                 btnAll.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition";
-                showToast("Mode 100% Trot (FR + Étranger) activé");
+                showToast("Mode 100% Trot activé");
             } else {
                 btnAll.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow";
                 btnTrot.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition";
-                showToast("Mode Toutes Courses (Trot Monde + Galop FR) activé");
+                showToast("Mode Toutes Courses activé");
             }
             loadLivePmu();
         }
@@ -376,7 +376,7 @@
                     if (lastStartAlarmKey !== raceKey) {
                         lastStartAlarmKey = raceKey;
                         audioStart.play().catch(() => {});
-                        showToast(`🚨 DÉPART IMMINENT ! (${nextRace.label})`, "error");
+                        showToast(`🚨 DÉPART IMMINENT ! (R${nextRace.mIdx+1}C${nextRace.cIdx+1})`, "error");
                         
                         let currentM = document.getElementById('meetingSelect').value;
                         let currentC = document.getElementById('raceSelect').value;
@@ -391,35 +391,22 @@
             }
         }
 
-        // RAFRAÎCHISSEMENT AUTOMATIQUE TOUTES LES 10 SECONDES
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
             let cIdx = document.getElementById('raceSelect').value;
             if (mIdx !== "" && cIdx !== "") fetchRaceData(true); 
             calculateDailyStats(true);
             checkStartAlarm();
-        }, 10000);
+        }, 25000);
 
-        // FILTRE DES COURSES : Trot (Tous pays) | Plat & Obstacle (France uniquement)
-        function isTargetDisciplineRace(course, reunion) {
+        function isTargetDisciplineRace(course) {
             let d = String(course.discipline || '').toUpperCase();
             let s = String(course.specialite || '').toUpperCase();
-            
-            let isTrot = d.includes('TROT') || d.includes('ATTEL') || d.includes('MONTE') || 
-                         s.includes('TROT') || s.includes('ATTEL') || s.includes('MONTE');
-
             if (currentDisciplineMode === 'TROT') {
-                return isTrot;
+                return d.includes('TROT') || d.includes('ATTEL') || d.includes('MONTE') || 
+                       s.includes('TROT') || s.includes('ATTEL') || s.includes('MONTE');
             } else {
-                if (isTrot) return true;
-
-                let pays = String(reunion?.hippodrome?.codePays || reunion?.pays?.code || 'FRA').toUpperCase().trim();
-                let isFrance = (pays === 'FRA' || pays === 'FR' || pays === 'FRANCE');
-                
-                let isGalopOuObstacle = d.includes('PLAT') || d.includes('OBST') || d.includes('HAIE') || d.includes('STEEPLE') || d.includes('CROSS') ||
-                                        s.includes('PLAT') || s.includes('OBST') || s.includes('HAIE') || s.includes('STEEPLE') || s.includes('CROSS');
-
-                return isFrance && isGalopOuObstacle;
+                return true; 
             }
         }
 
@@ -465,7 +452,7 @@
             if (s.includes('MONTE')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">MONTÉ</span>';
             if (s.includes('ATTEL')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">ATTELÉ</span>';
             if (s.includes('PLAT')) return '<span class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">PLAT</span>';
-            if (s.includes('HAIES') || s.includes('STEEPLE') || s.includes('OBST') || s.includes('CROSS')) return '<span class="bg-purple-500/20 text-purple-400 border border-purple-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">OBSTACLE</span>';
+            if (s.includes('HAIES') || s.includes('STEEPLE') || s.includes('OBST')) return '<span class="bg-purple-500/20 text-purple-400 border border-purple-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">OBSTACLE</span>';
             return `<span class="bg-zinc-500/20 text-zinc-300 border border-zinc-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">${s}</span>`;
         }
 
@@ -500,69 +487,7 @@
             throw new Error("PMU bloqué");
         }
 
-        // EXTRACTION MULTI-SOURCES DE L'ARRIVÉE (Participants + Objet Course + Rapports)
-        function consolidateArrivals(partants, courseObj, rapportsList) {
-            if (!Array.isArray(partants) || partants.length === 0) return partants;
-
-            let hasArrivalInPartants = partants.some(p => p.ordreArrivee && parseInt(p.ordreArrivee, 10) > 0);
-            if (hasArrivalInPartants) return partants;
-
-            if (courseObj && Array.isArray(courseObj.ordreArrivee) && courseObj.ordreArrivee.length > 0) {
-                courseObj.ordreArrivee.forEach((item, index) => {
-                    let rank = index + 1;
-                    let nums = Array.isArray(item) ? item : [item];
-                    nums.forEach(n => {
-                        let horseNum = parseInt(n, 10);
-                        let targetP = partants.find(p => parseInt(p.numPmu || p.numOrdre, 10) === horseNum);
-                        if (targetP && !targetP.ordreArrivee) {
-                            targetP.ordreArrivee = rank;
-                        }
-                    });
-                });
-            }
-
-            let stillNoArrival = !partants.some(p => p.ordreArrivee && parseInt(p.ordreArrivee, 10) > 0);
-            if (stillNoArrival && Array.isArray(rapportsList) && rapportsList.length > 0) {
-                let winnerNum = -1;
-                let placedNums = [];
-
-                rapportsList.forEach(group => {
-                    let pType = String(group.typePari || group.codePari || "").toUpperCase();
-                    if (pType.includes('SIMPLE') || pType === 'SG' || pType === 'SP' || pType === 'E_SG' || pType === 'E_SP') {
-                        let details = group.rapports || group.dividendes || group.lesRapports || [];
-                        details.forEach(item => {
-                            let hNum = extractHorseNumFromCombo(item.combinaison !== undefined ? item.combinaison : item.cheval);
-                            if (hNum > 0) {
-                                let lib = String(item.libelleRapport || item.libelle || pType).toUpperCase();
-                                if (lib.includes('GAGN') || pType === 'SG' || pType === 'E_SG') {
-                                    winnerNum = hNum;
-                                } else if (lib.includes('PLAC') || pType === 'SP' || pType === 'E_SP') {
-                                    if (!placedNums.includes(hNum)) placedNums.push(hNum);
-                                }
-                            }
-                        });
-                    }
-                });
-
-                if (winnerNum > 0) {
-                    let winP = partants.find(p => parseInt(p.numPmu || p.numOrdre, 10) === winnerNum);
-                    if (winP) winP.ordreArrivee = 1;
-                }
-                let nextRank = 2;
-                placedNums.forEach(num => {
-                    if (num !== winnerNum) {
-                        let plaP = partants.find(p => parseInt(p.numPmu || p.numOrdre, 10) === num);
-                        if (plaP && !plaP.ordreArrivee) {
-                            plaP.ordreArrivee = nextRank++;
-                        }
-                    }
-                });
-            }
-
-            return partants;
-        }
-
-        async function getFullRaceData(dateStr, rNum, cNum, courseObj = null) {
+        async function getFullRaceData(dateStr, rNum, cNum) {
             let partants = [];
             let rapportsList = [];
             try {
@@ -577,15 +502,6 @@
                     else rapportsList = rData.rapports || rData.lesRapports || [];
                 }
             } catch(e) {}
-
-            if (partants.length > 0 && !partants.some(p => p.ordreArrivee && p.ordreArrivee > 0) && !courseObj) {
-                let m = liveMeetingsData.find(reun => (reun.numOfficiel || 0) == rNum);
-                if (m && m.courses) {
-                    courseObj = m.courses.find(c => (c.numOrdre || 0) == cNum);
-                }
-            }
-
-            partants = consolidateArrivals(partants, courseObj, rapportsList);
 
             return { partants, rapportsList };
         }
@@ -609,7 +525,7 @@
                 let filteredReunions = [];
                 rawReunions.forEach(r => {
                     let allCourses = r.courses || r.races || r.lesCourses || [];
-                    let targetCourses = allCourses.filter(c => isTargetDisciplineRace(c, r));
+                    let targetCourses = allCourses.filter(c => isTargetDisciplineRace(c));
                     if (targetCourses.length > 0) {
                         let rCopy = Object.assign({}, r);
                         rCopy.courses = targetCourses;
@@ -672,99 +588,43 @@
         function autoSelectCurrentRace() {
             if (liveMeetingsData.length === 0) return;
             let now = new Date().getTime();
-            let sorted = getSortedRacesList();
-            if (sorted.length === 0) return;
+            let bestMIdx = 0, bestCIdx = 0;
+            let minDiff = Infinity, minPastDiff = Infinity;
+            let pastMIdx = 0, pastCIdx = 0;
+            let bufferTemps = 20 * 60 * 1000; 
 
-            // Cherche la première course dont le départ est à venir (ou parti depuis moins de 3 minutes)
-            let upcoming = sorted.find(r => r.time >= (now - 3 * 60 * 1000));
-            let target = upcoming || sorted[sorted.length - 1];
-
-            document.getElementById('meetingSelect').value = target.mIdx;
-            onMeetingChange();
-            document.getElementById('raceSelect').value = target.cIdx;
-            fetchRaceData();
-        }
-
-        // LISTE STRICTEMENT TRIÉE PAR ORDRE CHRONOLOGIQUE DES DÉPARTS
-        function getSortedRacesList() {
-            let list = [];
             liveMeetingsData.forEach((m, mIdx) => {
-                let rNum = parseInt(m.numOfficiel || (mIdx + 1), 10);
                 let courses = m.courses || [];
                 courses.forEach((c, cIdx) => {
-                    let cNum = parseInt(c.numOrdre || (cIdx + 1), 10);
-                    let rawTime = c.heureDepart ? Number(c.heureDepart) : 0;
-                    let timeMs = !isNaN(rawTime) && rawTime > 0 ? rawTime : new Date(c.heureDepart || 0).getTime();
-                    
-                    let isFinished = Array.isArray(c.ordreArrivee) && c.ordreArrivee.length > 0;
-                    let statutStr = String(c.statut || '').toUpperCase();
-                    if (statutStr.includes('ARRIVEE') || statutStr.includes('TERMIN') || statutStr.includes('DEFINITIF')) {
-                        isFinished = true;
-                    }
-
-                    if (timeMs > 0) {
-                        list.push({
-                            mIdx: mIdx,
-                            cIdx: cIdx,
-                            rNum: rNum,
-                            cNum: cNum,
-                            time: timeMs,
-                            isFinished: isFinished,
-                            label: `R${rNum}C${cNum} (${formatTime(timeMs)})`
-                        });
+                    if (c.heureDepart) {
+                        let diff = (new Date(c.heureDepart).getTime() + bufferTemps) - now;
+                        if (diff > 0 && diff < minDiff) { 
+                            minDiff = diff; bestMIdx = mIdx; bestCIdx = cIdx;
+                        } else if (diff <= 0 && Math.abs(diff) < minPastDiff) {
+                            minPastDiff = Math.abs(diff); pastMIdx = mIdx; pastCIdx = cIdx;
+                        }
                     }
                 });
             });
 
-            return list.sort((a, b) => {
-                if (a.time !== b.time) return a.time - b.time;
-                if (a.rNum !== b.rNum) return a.rNum - b.rNum;
-                return a.cNum - b.cNum;
-            });
+            if (minDiff === Infinity) { bestMIdx = pastMIdx; bestCIdx = pastCIdx; }
+            if (liveMeetingsData[bestMIdx]) {
+                document.getElementById('meetingSelect').value = bestMIdx;
+                onMeetingChange();
+                document.getElementById('raceSelect').value = bestCIdx;
+                fetchRaceData();
+            }
         }
 
-        // BASCULE AUTOMATIQUE INTELLIGENTE VERS LE PROCHAIN DÉPART CHRONOLOGIQUE
-        function autoJumpToNextUpcomingRace(finishedMIdx, finishedCIdx, finishedRaceTime) {
-            if (autoTransitionTimer) { clearTimeout(autoTransitionTimer); autoTransitionTimer = null; }
-            
-            let sortedRaces = getSortedRacesList();
-            if (sortedRaces.length === 0) return;
-
-            let now = Date.now();
-            let currentIndex = sortedRaces.findIndex(r => r.mIdx === finishedMIdx && r.cIdx === finishedCIdx);
-
-            // 1. On cherche la course suivante dans l'ordre chronologique qui n'est pas encore terminée
-            // et dont le départ est dans le futur (ou parti il y a moins de 2 minutes)
-            let targetRace = sortedRaces.find((r, idx) => {
-                if (r.mIdx === finishedMIdx && r.cIdx === finishedCIdx) return false;
-                if (r.isFinished) return false;
-                return r.time >= Math.max(finishedRaceTime, now - 2 * 60 * 1000);
+        function getSortedRacesList() {
+            let list = [];
+            liveMeetingsData.forEach((m, mIdx) => {
+                let courses = m.courses || [];
+                courses.forEach((c, cIdx) => {
+                    if (c.heureDepart) list.push({ mIdx: mIdx, cIdx: cIdx, time: new Date(c.heureDepart).getTime() });
+                });
             });
-
-            // 2. Si toutes les courses proches sont déjà parties, on prend la suivante directe dans la liste chronologique non terminée
-            if (!targetRace && currentIndex !== -1) {
-                for (let i = currentIndex + 1; i < sortedRaces.length; i++) {
-                    if (!sortedRaces[i].isFinished) {
-                        targetRace = sortedRaces[i];
-                        break;
-                    }
-                }
-            }
-
-            // 3. Fallback : course adjacente +1 dans le tableau trié
-            if (!targetRace && currentIndex !== -1 && (currentIndex + 1) < sortedRaces.length) {
-                targetRace = sortedRaces[currentIndex + 1];
-            }
-
-            if (targetRace) {
-                document.getElementById('meetingSelect').value = targetRace.mIdx;
-                onMeetingChange();
-                document.getElementById('raceSelect').value = targetRace.cIdx;
-                showToast(`➡️ Bascule sur ${targetRace.label}`, "info");
-                fetchRaceData();
-            } else {
-                showToast("Dernière course de la journée atteinte", "info");
-            }
+            return list.sort((a, b) => a.time - b.time);
         }
 
         function navigateAdjacentRace(direction) { 
@@ -783,7 +643,6 @@
                     document.getElementById('meetingSelect').value = targetRace.mIdx;
                     onMeetingChange();
                     document.getElementById('raceSelect').value = targetRace.cIdx;
-                    showToast(`Course : ${targetRace.label}`, 'info');
                     fetchRaceData();
                 } else {
                     showToast(direction === 1 ? "Dernière course atteinte" : "Première course atteinte", 'error');
@@ -874,7 +733,6 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
-        // VOTRE ALGORITHME D'ORIGINE CONSERVÉ INTÉGRALEMENT
         function computeAlgorithm(partants) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
@@ -988,52 +846,30 @@
             let rIdxStr = document.getElementById('raceSelect').value;
             if (mIdxStr === "" || rIdxStr === "") return;
 
-            let mIdxNum = parseInt(mIdxStr, 10);
-            let rIdxNum = parseInt(rIdxStr, 10);
-
-            let meeting = liveMeetingsData[mIdxNum];
+            let meeting = liveMeetingsData[mIdxStr];
             if (!meeting) return;
             let courses = meeting.courses || [];
-            let race = courses[rIdxNum];
+            let race = courses[rIdxStr];
             if (!race) return;
 
             let dateInput = document.getElementById('raceDate').value;
             let parts = dateInput.split('-');
             let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
-            let rNum = meeting.numOfficiel || (mIdxNum + 1);
-            let cNum = race.numOrdre || (rIdxNum + 1);
+            let rNum = meeting.numOfficiel || (parseInt(mIdxStr, 10) + 1);
+            let cNum = race.numOrdre || (parseInt(rIdxStr, 10) + 1);
             let currentRaceKey = `${ddmmyyyy}_R${rNum}_C${cNum}`;
             let now = new Date().getTime();
 
             try {
-                let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
-                if (isBackground && raceStartTime > 0 && now >= raceStartTime && (now - raceStartTime) < 45 * 60 * 1000) {
-                    try {
-                        let progData = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
-                        let rawR = progData.programme?.reunions || progData.reunions || [];
-                        let updatedM = rawR.find(r => (r.numOfficiel || 0) == rNum);
-                        if (updatedM && updatedM.courses) {
-                            let updatedC = updatedM.courses.find(c => (c.numOrdre || 0) == cNum);
-                            if (updatedC) {
-                                race = updatedC;
-                                courses[rIdxNum] = updatedC;
-                            }
-                        }
-                    } catch(e) {}
-                }
-
-                let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, rNum, cNum, race);
+                let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, rNum, cNum);
 
                 let arrivalBlock = document.getElementById('arrivalBlock');
                 let arrivalList = document.getElementById('arrivalList');
                 arrivalList.innerHTML = '';
-                let arrivees = partants.filter(p => p.ordreArrivee && parseInt(p.ordreArrivee, 10) > 0).sort((a, b) => parseInt(a.ordreArrivee, 10) - parseInt(b.ordreArrivee, 10));
+                let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0).sort((a, b) => a.ordreArrivee - b.ordreArrivee);
 
-                // GESTION DE L'ARRIVÉE OFFICIELLE : Affichage, Sonnerie et Bascule Automatique
+                // GESTION DE L'ARRIVÉE OFFICIELLE : Sonnerie et Bascule Automatique
                 if (arrivees.length > 0) {
-                    // On marque la course comme terminée dans les données locales pour éviter d'y revenir
-                    race.ordreArrivee = arrivees.map(p => [p.numPmu || p.numOrdre]);
-
                     arrivalBlock.classList.remove('hidden');
                     arrivees.slice(0, 5).forEach((p) => {
                         let div = document.createElement('div');
@@ -1042,23 +878,24 @@
                         arrivalList.appendChild(div);
                     });
 
-                    let isRecentRace = raceStartTime > 0 && (now - raceStartTime) <= 45 * 60 * 1000;
-
                     // 1. Sonnerie Alerte Arrivée (Dès l'arrivée officielle)
                     if (!notifiedArrivals[currentRaceKey]) {
                         notifiedArrivals[currentRaceKey] = true;
-                        if (arrivalAlarmEnabled && (isBackground || isRecentRace)) {
+                        if (isBackground && arrivalAlarmEnabled) {
                             audioArrival.play().catch(() => {});
                             showToast(`🏁 Arrivée Officielle publiée (R${rNum}C${cNum}) !`, "success");
                         }
                     }
 
-                    // 2. Bascule Automatique vers le prochain départ chronologique (30s après l'arrivée officielle)
+                    // 2. Bascule Automatique à la course suivante (30s après l'arrivée officielle)
                     if (!hasAutoTransitioned[currentRaceKey]) {
                         hasAutoTransitioned[currentRaceKey] = true; 
+                        
+                        let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
+                        let isOldRace = raceStartTime > 0 && (now - raceStartTime) > 60 * 60 * 1000; 
 
-                        if (isRecentRace) {
-                            showToast(`Bascule vers le prochain départ dans 30 secondes... ⏱️`, "info");
+                        if (!isOldRace) {
+                            showToast(`Bascule à la course suivante dans 30 secondes... ⏱️`, "info");
                             
                             if (autoTransitionTimer) clearTimeout(autoTransitionTimer);
                             autoTransitionTimer = setTimeout(() => {
@@ -1066,7 +903,7 @@
                                 let currentM = document.getElementById('meetingSelect').value;
                                 let currentC = document.getElementById('raceSelect').value;
                                 if (currentM === mIdxStr && currentC === rIdxStr) {
-                                    autoJumpToNextUpcomingRace(mIdxNum, rIdxNum, raceStartTime);
+                                    goToNextRace();
                                 }
                             }, 30000); 
                         }
@@ -1173,7 +1010,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_multidis_v23_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_multidis_v21_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -1282,7 +1119,7 @@
                     if (c.heureDepart) {
                         let departTime = new Date(c.heureDepart).getTime();
                         if (isPastDate || (departTime > 0 && departTime < (now - 10 * 60 * 1000))) {
-                            pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime, courseObj: c });
+                            pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime });
                         }
                     }
                 });
@@ -1317,10 +1154,13 @@
             let deficitSerieBase = 0;
             let deficitSeriePepite = 0;
 
-            // CALCUL EN ARRIÈRE-PLAN SANS FAIRE DÉFILER LES CHIFFRES À CHAQUE ITÉRATION
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `race_cache_v23_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `race_cache_v21_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+
+                if (statsProgress) {
+                    statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
+                }
 
                 let raceData = null;
                 let savedData = localStorage.getItem(cacheKey);
@@ -1328,11 +1168,8 @@
                 if (savedData) {
                     raceData = JSON.parse(savedData);
                 } else {
-                    if (!isAuto && statsProgress) {
-                        statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
-                    }
                     await sleep(150); 
-                    let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum, r.courseObj);
+                    let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum);
                     
                     let isComplete = (rapportsList.length > 0);
                     raceData = { partants, rapportsList, isComplete };
@@ -1427,17 +1264,16 @@
                         deficitSeriePepite += simStakePepite;
                     }
                 }
+                
+                statBaseGag.textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
+                statBasePla.textContent = `${baseWinsPla} / ${coursesValidees}`;
+                statPepiteGag.textContent = `${pepiteWinsGag} / ${coursesGagnantBaseValidees}`;
+                statPepitePla.textContent = `${pepiteWinsPla} / ${coursesValidees}`;
+                gainBasePla.innerHTML = formatMoneyHTML(totalProfitBasePla);
+                gainBaseGag.innerHTML = formatMoneyHTML(totalProfitBaseGag);
+                gainPepitePla.innerHTML = formatMoneyHTML(totalProfitPepitePla);
+                gainPepiteGag.innerHTML = formatMoneyHTML(totalProfitPepiteGag);
             }
-
-            // MISE À JOUR UNIQUE À LA FIN DU CALCUL (Affichage fixe)
-            statBaseGag.textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
-            statBasePla.textContent = `${baseWinsPla} / ${coursesValidees}`;
-            statPepiteGag.textContent = `${pepiteWinsGag} / ${coursesGagnantBaseValidees}`;
-            statPepitePla.textContent = `${pepiteWinsPla} / ${coursesValidees}`;
-            gainBasePla.innerHTML = formatMoneyHTML(totalProfitBasePla);
-            gainBaseGag.innerHTML = formatMoneyHTML(totalProfitBaseGag);
-            gainPepitePla.innerHTML = formatMoneyHTML(totalProfitPepitePla);
-            gainPepiteGag.innerHTML = formatMoneyHTML(totalProfitPepiteGag);
 
             if (totalSpentText) totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
             if (maxStakeBaseText) maxStakeBaseText.textContent = `${maxStakeBase.toFixed(2)} €`;
@@ -1455,7 +1291,7 @@
             if (headerNextStake) headerNextStake.textContent = `${nextStakeBase.toFixed(2)} €`;
             
             if (coursesValidees > 0) {
-                localStorage.setItem(`pmu_stats_multidis_v23_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
+                localStorage.setItem(`pmu_stats_multidis_v21_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
                     baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                 }));
             }
