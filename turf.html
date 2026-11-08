@@ -59,7 +59,7 @@
                     100% Trot
                 </button>
                 <button id="btnFilterAll" onclick="setDisciplineMode('ALL')" class="bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition">
-                    Toutes Courses
+                    Toutes Courses (Monde)
                 </button>
             </div>
         </div>
@@ -488,7 +488,7 @@
             throw new Error("PMU bloqué");
         }
 
-        async function getFullRaceData(dateStr, rNum, cNum) {
+        async function getFullRaceData(dateStr, rNum, cNum, courseObj = null) {
             let partants = [];
             let rapportsList = [];
             try {
@@ -503,6 +503,28 @@
                     else rapportsList = rData.rapports || rData.lesRapports || [];
                 }
             } catch(e) {}
+
+            if (partants.length > 0 && !partants.some(p => p.ordreArrivee && p.ordreArrivee > 0) && !courseObj) {
+                let m = liveMeetingsData.find(reun => (reun.numOfficiel || 0) == rNum);
+                if (m && m.courses) {
+                    courseObj = m.courses.find(c => (c.numOrdre || 0) == cNum);
+                }
+            }
+
+            // Consolidate arrivals from courseObj if present
+            if (courseObj && Array.isArray(courseObj.ordreArrivee) && courseObj.ordreArrivee.length > 0) {
+                courseObj.ordreArrivee.forEach((item, index) => {
+                    let rank = index + 1;
+                    let nums = Array.isArray(item) ? item : [item];
+                    nums.forEach(n => {
+                        let horseNum = parseInt(n, 10);
+                        let targetP = partants.find(p => parseInt(p.numPmu || p.numOrdre, 10) === horseNum);
+                        if (targetP && !targetP.ordreArrivee) {
+                            targetP.ordreArrivee = rank;
+                        }
+                    });
+                });
+            }
 
             return { partants, rapportsList };
         }
@@ -848,29 +870,48 @@
             let rIdxStr = document.getElementById('raceSelect').value;
             if (mIdxStr === "" || rIdxStr === "") return;
 
-            let meeting = liveMeetingsData[mIdxStr];
+            let mIdxNum = parseInt(mIdxStr, 10);
+            let rIdxNum = parseInt(rIdxStr, 10);
+
+            let meeting = liveMeetingsData[mIdxNum];
             if (!meeting) return;
             let courses = meeting.courses || [];
-            let race = courses[rIdxStr];
+            let race = courses[rIdxNum];
             if (!race) return;
 
             let dateInput = document.getElementById('raceDate').value;
             let parts = dateInput.split('-');
             let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
-            let rNum = meeting.numOfficiel || (parseInt(mIdxStr, 10) + 1);
-            let cNum = race.numOrdre || (parseInt(rIdxStr, 10) + 1);
+            let rNum = meeting.numOfficiel || (mIdxNum + 1);
+            let cNum = race.numOrdre || (rIdxNum + 1);
             let currentRaceKey = `${ddmmyyyy}_R${rNum}_C${cNum}`;
             let now = new Date().getTime();
 
             try {
-                let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, rNum, cNum);
+                let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
+                if (isBackground && raceStartTime > 0 && now >= raceStartTime && (now - raceStartTime) < 45 * 60 * 1000) {
+                    try {
+                        let progData = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
+                        let rawR = progData.programme?.reunions || progData.reunions || [];
+                        let updatedM = rawR.find(r => (r.numOfficiel || 0) == rNum);
+                        if (updatedM && updatedM.courses) {
+                            let updatedC = updatedM.courses.find(c => (c.numOrdre || 0) == cNum);
+                            if (updatedC) {
+                                race = updatedC;
+                                courses[rIdxNum] = updatedC;
+                            }
+                        }
+                    } catch(e) {}
+                }
+
+                let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, rNum, cNum, race);
 
                 let arrivalBlock = document.getElementById('arrivalBlock');
                 let arrivalList = document.getElementById('arrivalList');
                 arrivalList.innerHTML = '';
-                let arrivees = partants.filter(p => p.ordreArrivee && p.ordreArrivee > 0).sort((a, b) => a.ordreArrivee - b.ordreArrivee);
+                let arrivees = partants.filter(p => p.ordreArrivee && parseInt(p.ordreArrivee, 10) > 0).sort((a, b) => parseInt(a.ordreArrivee, 10) - parseInt(b.ordreArrivee, 10));
 
-                // GESTION DE L'ARRIVÉE OFFICIELLE : Sonnerie et Bascule Automatique
+                // GESTION DE L'ARRIVÉE OFFICIELLE : Affichage, Sonnerie et Bascule Automatique
                 if (arrivees.length > 0) {
                     arrivalBlock.classList.remove('hidden');
                     arrivees.slice(0, 5).forEach((p) => {
@@ -880,10 +921,10 @@
                         arrivalList.appendChild(div);
                     });
 
-                    // 1. Sonnerie Alerte Arrivée (Dès l'arrivée officielle)
+                    // 1. Sonnerie Alerte Arrivée (Dès que l'arrivée officielle est détectée)
                     if (!notifiedArrivals[currentRaceKey]) {
                         notifiedArrivals[currentRaceKey] = true;
-                        if (isBackground && arrivalAlarmEnabled) {
+                        if (arrivalAlarmEnabled) {
                             audioArrival.play().catch(() => {});
                             showToast(`🏁 Arrivée Officielle publiée (R${rNum}C${cNum}) !`, "success");
                         }
@@ -893,22 +934,17 @@
                     if (!hasAutoTransitioned[currentRaceKey]) {
                         hasAutoTransitioned[currentRaceKey] = true; 
                         
-                        let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
-                        let isOldRace = raceStartTime > 0 && (now - raceStartTime) > 60 * 60 * 1000; 
-
-                        if (!isOldRace) {
-                            showToast(`Bascule à la course suivante dans 30 secondes... ⏱️`, "info");
-                            
-                            if (autoTransitionTimer) clearTimeout(autoTransitionTimer);
-                            autoTransitionTimer = setTimeout(() => {
-                                autoTransitionTimer = null;
-                                let currentM = document.getElementById('meetingSelect').value;
-                                let currentC = document.getElementById('raceSelect').value;
-                                if (currentM === mIdxStr && currentC === rIdxStr) {
-                                    goToNextRace();
-                                }
-                            }, 30000); 
-                        }
+                        showToast(`Bascule à la course suivante dans 30 secondes... ⏱️`, "info");
+                        
+                        if (autoTransitionTimer) clearTimeout(autoTransitionTimer);
+                        autoTransitionTimer = setTimeout(() => {
+                            autoTransitionTimer = null;
+                            let currentM = document.getElementById('meetingSelect').value;
+                            let currentC = document.getElementById('raceSelect').value;
+                            if (currentM === mIdxStr && currentC === rIdxStr) {
+                                goToNextRace();
+                            }
+                        }, 30000); 
                     }
 
                 } else {
@@ -1156,7 +1192,6 @@
             let deficitSerieBase = 0;
             let deficitSeriePepite = 0;
 
-            // CALCUL EN ARRIÈRE-PLAN SANS FAIRE DÉFILER LES CHIFFRES À CHAQUE ITÉRATION
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
                 let cacheKey = `race_cache_v21_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
@@ -1268,7 +1303,6 @@
                 }
             }
 
-            // MISE À JOUR UNIQUE À LA FIN DU CALCUL (Affichage fixe)
             statBaseGag.textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
             statBasePla.textContent = `${baseWinsPla} / ${coursesValidees}`;
             statPepiteGag.textContent = `${pepiteWinsGag} / ${coursesGagnantBaseValidees}`;
