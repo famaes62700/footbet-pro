@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro V21 - Algorithme FabTurf</title>
+    <title>FootBet Pro V21 - Algorithme FabTurf & Ticket Détaillé</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,7 +13,7 @@
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-28">
+<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-32">
 
     <div id="toastContainer" class="fixed bottom-24 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
@@ -158,47 +158,84 @@
 
         <!-- ACTIONS RAPIDES (SÉLECTION COMBINÉS) -->
         <div class="flex flex-wrap gap-2 justify-between items-center bg-zinc-900/90 border border-zinc-800 p-2.5 rounded-xl text-xs">
-            <span class="text-zinc-400 font-bold text-[11px]"><i class="fa-solid fa-wand-magic-sparkles text-blue-400 mr-1.5"></i>Tickets (Combinés) :</span>
+            <span class="text-zinc-400 font-bold text-[11px]"><i class="fa-solid fa-wand-magic-sparkles text-blue-400 mr-1.5"></i>Sélections Multiples :</span>
             <div class="flex gap-1.5">
                 <button onclick="selectAllAlgo('BASE')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-2.5 py-1 rounded-lg font-bold text-[11px] transition">+ Bases</button>
                 <button onclick="selectAllAlgo('PEPITE')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-lg font-bold text-[11px] transition">+ Pépites</button>
-                <button onclick="clearManualBets()" class="bg-zinc-800 hover:bg-red-900/40 text-zinc-400 hover:text-red-300 border border-zinc-700 px-2.5 py-1 rounded-lg font-bold text-[11px] transition" title="Vider le ticket complet"><i class="fa-solid fa-trash"></i></button>
             </div>
         </div>
 
         <div id="matchesContainer" class="space-y-3"></div>
     </main>
 
-    <!-- TICKET FLOTTANT POUR LES PARIS COMBINÉS -->
-    <div id="betSlipBar" class="hidden fixed bottom-0 left-0 right-0 z-50 bg-zinc-900/95 backdrop-blur-lg border-t-2 border-blue-500 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] p-3">
-        <div class="max-w-3xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
-            <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
-                <div class="flex items-center space-x-2">
-                    <span id="slipCountBadge" class="bg-blue-600 text-white font-black text-xs px-2.5 py-1 rounded-lg shadow">0</span>
-                    <div>
-                        <div class="text-xs font-black text-white uppercase tracking-wider">Ticket Multi-Matchs</div>
-                        <div class="text-[10px] text-zinc-400">Mise match : <strong>5.00 €</strong> | Combiné : <strong>5.00 €</strong></div>
-                    </div>
-                </div>
-                <button onclick="clearManualBets()" class="sm:hidden text-zinc-400 hover:text-red-400 text-xs px-2 py-1"><i class="fa-solid fa-trash"></i></button>
-            </div>
-
-            <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-800 text-xs">
-                <div class="border-r border-zinc-800 pr-3">
-                    <span class="text-[9px] text-zinc-400 uppercase block">Simples Cumulés</span>
-                    <span id="slipSimpleGain" class="font-black text-emerald-400">0.00 €</span>
-                    <span id="slipSimpleNet" class="text-[10px] ml-1 text-zinc-400">(0.00 €)</span>
+    <!-- NOUVEAU TICKET FLOTTANT DÉTAILLÉ (SIMPLES ET COMBINÉS) -->
+    <div id="betSlipBar" class="hidden fixed bottom-0 left-0 right-0 z-50 bg-zinc-900/95 backdrop-blur-lg border-t-2 border-blue-500 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] flex flex-col max-h-[80vh] transition-all duration-300">
+        
+        <!-- HEADER DU TICKET (Toujours visible) -->
+        <div class="p-3 max-w-3xl mx-auto w-full flex justify-between items-center cursor-pointer" onclick="toggleTicket()">
+            <div class="flex items-center space-x-3">
+                <div class="relative">
+                    <i class="fa-solid fa-ticket text-blue-500 text-2xl"></i>
+                    <span id="slipCountBadge" class="absolute -top-2 -right-2 bg-red-500 text-white font-black text-[10px] w-4 h-4 flex items-center justify-center rounded-full shadow">0</span>
                 </div>
                 <div>
-                    <span class="text-[9px] text-amber-400 uppercase font-bold block">Cote Combiné : <span id="slipComboOdds">1.00</span></span>
-                    <span class="text-[10px] text-zinc-400">Gain Pot. : </span><strong id="slipComboGain" class="text-amber-400 font-black">0.00 €</strong>
+                    <div class="text-xs font-black text-white uppercase tracking-wider">Votre Panier <i id="ticketChevron" class="fa-solid fa-chevron-up ml-1 text-zinc-500 transition-transform"></i></div>
+                    <div class="text-[10px] text-zinc-400">Voir les gains Simples et Combiné</div>
                 </div>
             </div>
+            <div class="flex items-center space-x-4">
+                 <div class="text-right">
+                    <span class="text-[9px] text-amber-400 uppercase font-bold block">Gain Max Combiné</span>
+                    <strong id="slipComboGainMini" class="text-amber-400 font-black text-sm">0.00 €</strong>
+                 </div>
+                 <button onclick="clearManualBets(); event.stopPropagation();" class="text-zinc-500 hover:text-red-400 p-2 transition" title="Vider le ticket"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        </div>
+
+        <!-- CONTENU DÉTAILLÉ DU TICKET (Masqué par défaut) -->
+        <div id="ticketDetails" class="hidden flex-col max-w-3xl mx-auto w-full px-3 pb-4 overflow-y-auto border-t border-zinc-800 pt-3">
+            
+            <div class="text-[11px] uppercase font-bold text-zinc-400 mb-2">Détail Match par Match (Simples)</div>
+            <div id="ticketMatchesList" class="space-y-2 mb-4">
+                <!-- Rempli dynamiquement -->
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <!-- RÉSUMÉ SIMPLES -->
+                <div class="bg-zinc-950 border border-emerald-500/30 rounded-xl p-3">
+                    <div class="text-[10px] uppercase font-bold text-emerald-400 mb-1">Option 1 : Paris Simples</div>
+                    <div class="text-[10px] text-zinc-400 mb-2 leading-tight">5€ misés séparément sur chaque match</div>
+                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2 mt-2">
+                        <span class="text-[10px] text-zinc-500">Mise Totale:</span>
+                        <span id="ticketSimpleStake" class="font-bold text-white text-xs">0.00 €</span>
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-[10px] text-zinc-500">Gain Potentiel max:</span>
+                        <span id="ticketSimpleGain" class="font-black text-emerald-400 text-sm">0.00 €</span>
+                    </div>
+                </div>
+
+                <!-- RÉSUMÉ COMBINÉ -->
+                <div class="bg-zinc-950 border border-amber-500/30 rounded-xl p-3 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 text-amber-500/10 text-6xl"><i class="fa-solid fa-fire"></i></div>
+                    <div class="text-[10px] uppercase font-bold text-amber-400 mb-1 relative z-10">Option 2 : Pari Combiné</div>
+                    <div class="text-[10px] text-zinc-400 mb-2 leading-tight relative z-10">Une seule mise de 5€. Cotes multipliées !</div>
+                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2 mt-2 relative z-10">
+                        <span class="text-[10px] text-zinc-500">Cote Totale:</span>
+                        <span id="ticketComboOdds" class="font-bold text-white text-xs">1.00</span>
+                    </div>
+                    <div class="flex justify-between items-center mt-1 relative z-10">
+                        <span class="text-[10px] text-zinc-500">Gain Pot. (pour 5€):</span>
+                        <span id="ticketComboGain" class="font-black text-amber-400 text-sm">0.00 €</span>
+                    </div>
+                </div>
+            </div>
+            
         </div>
     </div>
 
     <script>
-        // Fonctions utilitaires
+        // --- UTILITAIRES ---
         function getLocalYYYYMMDD(d) {
             const yr = d.getFullYear();
             const mo = String(d.getMonth() + 1).padStart(2, '0');
@@ -207,7 +244,10 @@
         }
 
         function safeGetLocal(key) {
-            try { let i = localStorage.getItem(key); return i ? JSON.parse(i) : {}; } catch(e) { return {}; }
+            try { 
+                let item = localStorage.getItem(key);
+                return item ? JSON.parse(item) : {}; 
+            } catch(e) { return {}; }
         }
 
         function safeSetLocal(key, val) {
@@ -216,13 +256,14 @@
 
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-        // Initialisation de la date au jour actuel
+        // --- VARIABLES GLOBALES ---
         document.getElementById('matchDate').value = getLocalYYYYMMDD(new Date());
         let currentMatches = [];
         let isLiveFilterActive = false;
         const BASE_STAKE = 5.0;
+        let isTicketExpanded = false;
 
-        // Dictionnaire de puissance ELO pour l'algorithme des cotes fixes
+        // --- ALGORITHME DES COTES (FABTURF) ---
         const topTeams = {
             "Real Madrid":95, "Manchester City":95, "Bayern Munich":94, "Liverpool":93, "Arsenal":92, "Barcelona":92,
             "Paris Saint-Germain":91, "PSG":91, "Inter Milan":90, "Bayer Leverkusen":88, "Borussia Dortmund":85,
@@ -276,7 +317,7 @@
             return Math.min(150, Math.max(BASE_STAKE + 2, Math.ceil((deficit / Math.max(0.55, targetOdd - 1)) + BASE_STAKE)));
         }
 
-        // CHARGEMENT API ROBUSTE (Recherche l'API ESPN sans proxy d'abord)
+        // --- RESEAU & CHARGEMENT ---
         async function smartFetchESPN(leagueCode, apiDate) {
             const url = "https://site.api.espn.com/apis/site/v2/sports/soccer/" + leagueCode + "/scoreboard?dates=" + apiDate;
             try { 
@@ -382,15 +423,15 @@
                                     winner: winner, algo: lockedOdds[ev.id]
                                 });
                                 seenIds.add(String(ev.id));
-                            } catch (e) {}
+                            } catch (matchErr) {}
                         });
                     }
-                    await sleep(250); 
+                    await sleep(200);
                 }
 
                 if (validMatches.length === 0) {
                     validMatches = getFallbackMatches(dateInputVal);
-                    if(!isSilent) statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> 0 match. Mode Démo activé.</span>`;
+                    if(!isSilent) statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> 0 match officiel. Mode Démo activé.</span>`;
                 } else {
                     safeSetLocal("foot_fixed_odds_v21_" + apiDate, lockedOdds);
                     const lc = validMatches.filter(m => m.status === 'IN_PLAY').length;
@@ -401,13 +442,13 @@
                 
                 populateCompetitions(currentMatches);
                 
-                // Uniquement au chargement initial ou changement de filtre complet
+                // On affiche la liste des matchs (si ce n'est pas un refresh silencieux de score)
                 if (!isSilent) renderMatches(currentMatches);
+                
                 calculateAllStats();
 
             } catch (error) {
-                console.error(error);
-                statusText.innerHTML = `<span class="text-red-400 font-semibold">Mode hors-ligne.</span>`;
+                statusText.innerHTML = `<span class="text-red-400 font-semibold">Mode hors-ligne (Sécurité activée).</span>`;
                 currentMatches = getFallbackMatches(dateInputVal);
                 populateCompetitions(currentMatches);
                 if (!isSilent) renderMatches(currentMatches);
@@ -420,14 +461,13 @@
             loadFootballMatches(false);
         }
 
-        // RAFRAICHISSEMENT AUTO SILENCIEUX 
-        // Ne recrée plus le DOM complet, recalcule juste les stats si le score change.
         setInterval(() => {
             if (document.getElementById('matchDate').value === getLocalYYYYMMDD(new Date()) || isLiveFilterActive) {
-                loadFootballMatches(true);
+                loadFootballMatches(true); // refresh silencieux
             }
         }, 15000);
 
+        // --- FILTRES ---
         function populateCompetitions(matches) {
             const select = document.getElementById('compSelect');
             const cur = select.value;
@@ -477,22 +517,18 @@
             }, 3000);
         }
 
-        // CRÉATION INITIALE DES MATCHS (OU LORS DES FILTRES)
+        // --- AFFICHAGE DES MATCHS ---
         function renderMatches(matchesToRender) {
             const container = document.getElementById('matchesContainer');
             const dateStr = document.getElementById('matchDate').value;
             let savedBets = safeGetLocal("footbet_v21_bets_" + dateStr);
 
             if (matchesToRender.length === 0) {
-                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match.</div>`;
+                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match trouvé pour ce filtre.</div>`;
                 return;
             }
 
-            let existingCardsMap = new Map();
-            Array.from(container.children).forEach(c => { if (c.dataset && c.dataset.matchId) existingCardsMap.set(c.dataset.matchId, c); });
-            
-            // Pour ne pas perdre le focus lors du rafraîchissement auto silencieux
-            let currentIndex = 0;
+            let frag = document.createDocumentFragment();
 
             matchesToRender.forEach(m => {
                 let isFin = m.status === 'FINISHED', isLive = m.status === 'IN_PLAY';
@@ -502,7 +538,6 @@
 
                 let myB = savedBets[m.id];
                 
-                // Construction des 3 boutons
                 let btnsHTML = ['HOME', 'DRAW', 'AWAY'].map(k => {
                     let lbl = (k==='HOME')?'1':(k==='DRAW'?'N':'2');
                     let nm = (k==='HOME')?m.homeTeam.name:(k==='DRAW'?'Nul':m.awayTeam.name);
@@ -519,7 +554,10 @@
                     resHTML = `<div class="grid grid-cols-2 gap-2 pt-1 text-[10px]"><div class="bg-zinc-950 px-2 py-1.5 rounded-lg border ${m.winner===basePick.key?'border-emerald-500/40 text-emerald-400':'border-zinc-800 text-zinc-500'} flex justify-between"><span>Sûre :</span><strong>${m.winner===basePick.key?'+'+((basePick.odd-1)*5).toFixed(2):'-5.00'} €</strong></div><div class="bg-zinc-950 px-2 py-1.5 rounded-lg border ${m.winner===pepitePick.key?'border-amber-500/40 text-amber-400':'border-zinc-800 text-zinc-500'} flex justify-between"><span>Pépite :</span><strong>${m.winner===pepitePick.key?'+'+((pepitePick.odd-1)*5).toFixed(2):'-5.00'} €</strong></div></div>`;
                 }
 
-                let cardHTML = `
+                let card = document.createElement('div');
+                card.dataset.matchId = m.id;
+                card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-3 sm:p-4 shadow-xl space-y-3";
+                card.innerHTML = `
                     <div class="flex justify-between items-center border-b border-zinc-800 pb-2">${sBadge}<span class="text-[10px] text-zinc-300 font-bold flex items-center w-1/2 justify-end truncate"><i class="fa-solid fa-trophy text-blue-400 mr-1.5"></i>${m.competition.name}</span></div>
                     <div class="flex justify-between items-center px-1 gap-2">
                         <div class="flex items-center space-x-2 w-2/5 overflow-hidden"><img src="${m.homeTeam.logo||''}" class="w-6 sm:w-8 h-6 sm:h-8 object-contain" onerror="this.style.display='none'"><span class="text-[11px] sm:text-xs font-black text-white truncate">${m.homeTeam.name}</span></div>
@@ -529,63 +567,67 @@
                     <div id="btns_${m.id}" class="flex gap-1 sm:gap-2 pt-1">${btnsHTML}</div>
                     ${resHTML}
                 `;
-
-                let card = existingCardsMap.get(m.id);
-                if (!card) {
-                    card = document.createElement('div');
-                    card.dataset.matchId = m.id;
-                    card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-3 sm:p-4 shadow-xl space-y-3";
-                    card.innerHTML = cardHTML;
-                    if (currentIndex >= container.children.length) container.appendChild(card);
-                    else container.insertBefore(card, container.children[currentIndex]);
-                } else {
-                    if (container.children[currentIndex] !== card) container.insertBefore(card, container.children[currentIndex]);
-                    if (card.innerHTML !== cardHTML) card.innerHTML = cardHTML; // Ne met à jour que si nécessaire
-                    existingCardsMap.delete(m.id);
-                }
-                currentIndex++;
+                frag.appendChild(card);
             });
-
-            // Supprimer les cartes restantes (hors filtres)
-            existingCardsMap.forEach(c => c.remove());
+            container.innerHTML = ''; 
+            container.appendChild(frag);
         }
 
-        // MISE A JOUR CIBLÉE DES BOUTONS LORS D'UN CLIC (Empêche le reset de l'écran et permet le multi-pari fluide)
+        // Met à jour l'état visuel d'un match (Fluidité lors du clic)
         function updateMatchButtonsDOM(mId, myB) {
             let btnsContainer = document.getElementById('btns_' + mId);
             if (!btnsContainer) return;
-            
             let m = currentMatches.find(x => x.id === mId);
             if (!m) return;
             
             let isFin = m.status === 'FINISHED';
             let { odds, basePick, pepitePick } = m.algo;
-            let winner = m.winner;
 
             btnsContainer.innerHTML = ['HOME', 'DRAW', 'AWAY'].map(k => {
                 let lbl = (k==='HOME')?'1':(k==='DRAW'?'N':'2');
                 let nm = (k==='HOME')?m.homeTeam.name:(k==='DRAW'?'Nul':m.awayTeam.name);
-                let sel = (myB === k), bas = (basePick.key === k), pep = (pepitePick.key === k), win = (isFin && winner === k);
+                let sel = (myB === k), bas = (basePick.key === k), pep = (pepitePick.key === k), win = (isFin && m.winner === k);
                 let cls = `relative flex-1 py-2.5 px-1 sm:px-2 rounded-xl text-xs transition-all border flex flex-col items-center justify-between shadow-sm ${sel?'bg-blue-600 text-white border-blue-400 ring-2 ring-blue-400/50 scale-[1.02]':(bas?'bg-emerald-950/50 text-emerald-200 border-emerald-500/50 hover:bg-emerald-900/60':(pep?'bg-amber-950/50 text-amber-200 border-amber-500/50 hover:bg-amber-900/60':'bg-zinc-800/70 text-zinc-300 border-zinc-700 hover:bg-zinc-800'))}`;
                 let tTag = bas ? `<span class="text-[8px] bg-emerald-500 text-zinc-950 font-black px-1.5 rounded uppercase mb-1">★ Sûre</span>` : (pep ? `<span class="text-[8px] bg-amber-500 text-zinc-950 font-black px-1.5 rounded uppercase mb-1">💎 Pépite</span>` : `<span class="text-[8px] text-zinc-500 uppercase font-bold mb-1">Outsider</span>`);
                 return `<button onclick="placeBet('${m.id}', '${k}')" class="${cls}">${tTag}<span class="truncate w-full text-[10px] sm:text-[11px] font-bold text-center">${lbl} - ${nm}</span><span class="mt-1 text-sm font-black ${sel?'text-white':(bas?'text-emerald-400':(pep?'text-amber-400':'text-blue-400'))} bg-zinc-950/70 px-2.5 py-0.5 rounded-lg border border-zinc-800">${odds[k].toFixed(2)}</span>${win?'<span class="mt-1 text-[9px] bg-blue-500/30 text-blue-200 border border-blue-400/40 px-1 rounded font-black mt-1">✅ GAGNANT</span>':''}</button>`;
             }).join('');
         }
 
-        // L'ACTION PLACEBET N'APPELLE PLUS RENDERMATCHES !
+        // --- GESTION DES PARIS (TICKET FLOTTANT DÉTAILLÉ) ---
+        function toggleTicket() {
+            let ticket = document.getElementById('betSlipBar');
+            let details = document.getElementById('ticketDetails');
+            let chevron = document.getElementById('ticketChevron');
+            isTicketExpanded = !isTicketExpanded;
+            
+            if (isTicketExpanded) {
+                details.classList.remove('hidden');
+                details.classList.add('flex');
+                chevron.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                ticket.classList.remove('bg-zinc-900/95');
+                ticket.classList.add('bg-zinc-900', 'border-t-4');
+            } else {
+                details.classList.add('hidden');
+                details.classList.remove('flex');
+                chevron.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                ticket.classList.add('bg-zinc-900/95');
+                ticket.classList.remove('bg-zinc-900', 'border-t-4');
+            }
+        }
+
         function placeBet(mId, pick) {
             let d = document.getElementById('matchDate').value;
             let b = safeGetLocal("footbet_v21_bets_" + d);
             if (b[mId] === pick) { 
                 delete b[mId]; 
-                showToast("Match retiré du combiné"); 
+                // showToast("Match retiré du combiné"); 
             } else { 
                 b[mId] = pick; 
-                showToast("Match ajouté au Combiné !", "success"); 
+                // showToast("Match ajouté au Combiné !", "success"); 
             }
             safeSetLocal("footbet_v21_bets_" + d, b);
-            updateMatchButtonsDOM(mId, b[mId]); // Met à jour uniquement la carte cliquée
-            calculateAllStats(); // Recalcule le ticket en bas
+            updateMatchButtonsDOM(mId, b[mId]);
+            calculateAllStats();
         }
 
         function selectAllAlgo(type) {
@@ -596,7 +638,7 @@
                 updateMatchButtonsDOM(m.id, b[m.id]);
             });
             safeSetLocal("footbet_v21_bets_" + d, b);
-            showToast("Sélection Combiné de groupe validée !", "success");
+            showToast("Sélection de groupe validée !", "success");
             calculateAllStats();
         }
 
@@ -604,8 +646,9 @@
             let d = document.getElementById('matchDate').value;
             localStorage.removeItem(`footbet_v21_bets_${d}`);
             currentMatches.forEach(m => updateMatchButtonsDOM(m.id, undefined));
-            showToast("Ticket Combiné vidé", "info"); 
+            showToast("Ticket de paris vidé"); 
             calculateAllStats();
+            if (isTicketExpanded) toggleTicket();
         }
 
         function calculateAllStats() {
@@ -661,30 +704,75 @@
             document.getElementById('headerNextStake').textContent = `${nBase.toFixed(2)} €`;
             document.getElementById('statsProgress').textContent = `✅ ${fin}/${currentMatches.length} terminés`;
 
-            // TICKET MULTI / COMBINÉ EN BAS
+            // === CALCUL DU TICKET MULTI-PARIS ===
             let slipC = 0, simGross = 0, simNet = 0, cOdd = 1.0, cLost = false;
+            let ticketListHTML = '';
+
             currentMatches.forEach(m => {
                 let pick = savedBets[m.id];
                 if (!pick) return;
-                slipC++; let o = m.algo.odds[pick]; cOdd *= o;
+                slipC++; 
+                let o = m.algo.odds[pick]; 
+                cOdd *= o;
+                
+                let pickLabel = (pick === 'HOME') ? '1' : (pick === 'DRAW' ? 'N' : '2');
+                let pickName = (pick === 'HOME') ? m.homeTeam.name : (pick === 'DRAW' ? 'Nul' : m.awayTeam.name);
+                
+                let mIcon = '<i class="fa-solid fa-clock text-zinc-500"></i>';
+                let mColor = "text-zinc-300";
+                
                 if (m.status === 'FINISHED' && m.winner) {
-                    if (m.winner === pick) { simGross += (o*BASE_STAKE); simNet += (o*BASE_STAKE)-BASE_STAKE; }
-                    else { simNet -= BASE_STAKE; cLost = true; }
-                } else { simGross += (o*BASE_STAKE); }
+                    if (m.winner === pick) {
+                        simGross += (o*BASE_STAKE); simNet += (o*BASE_STAKE)-BASE_STAKE;
+                        mIcon = '<i class="fa-solid fa-check text-emerald-400"></i>'; mColor = "text-emerald-400 font-bold";
+                    } else {
+                        simNet -= BASE_STAKE; cLost = true;
+                        mIcon = '<i class="fa-solid fa-xmark text-red-500"></i>'; mColor = "text-red-500 line-through opacity-60";
+                    }
+                } else {
+                    simGross += (o*BASE_STAKE);
+                }
+
+                // Lignes de détail pour le Panier
+                ticketListHTML += `
+                    <div class="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-2.5 flex justify-between items-center text-[11px]">
+                        <div class="flex items-center space-x-2.5 w-2/3">
+                            <span class="w-4 text-center text-sm">${mIcon}</span>
+                            <div class="truncate">
+                                <div class="font-bold text-white truncate">${m.homeTeam.name} - ${m.awayTeam.name}</div>
+                                <div class="text-zinc-400">Pari : <strong class="text-blue-400">${pickLabel} (${pickName})</strong></div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-zinc-500">Cote: <span class="text-white font-bold">${o.toFixed(2)}</span></div>
+                            <div class="${mColor} text-[10px]">Pot. ${(o*BASE_STAKE).toFixed(2)} €</div>
+                        </div>
+                    </div>
+                `;
             });
 
             document.getElementById('gainManualTotal').innerHTML = formatMoneyHTML(simNet);
             let bar = document.getElementById('betSlipBar');
+            
             if (slipC > 0) {
                 bar.classList.remove('hidden');
                 document.getElementById('slipCountBadge').textContent = slipC;
-                document.getElementById('slipSimpleGain').textContent = `${simGross.toFixed(2)} €`;
-                document.getElementById('slipSimpleNet').innerHTML = `(${formatMoneyHTML(simNet)})`;
-                document.getElementById('slipComboOdds').textContent = cOdd.toFixed(2);
+                document.getElementById('ticketMatchesList').innerHTML = ticketListHTML;
+                
+                // Maj Option 1 : Simples
+                document.getElementById('ticketSimpleStake').textContent = `${(slipC * BASE_STAKE).toFixed(2)} €`;
+                document.getElementById('ticketSimpleGain').textContent = `${simGross.toFixed(2)} €`;
+                
+                // Maj Option 2 : Combiné
                 let cPot = cLost ? 0 : (cOdd*BASE_STAKE);
-                document.getElementById('slipComboGain').textContent = cLost ? "Perdu (0.00 €)" : `${cPot.toFixed(2)} €`;
-                document.getElementById('slipComboGain').className = cLost ? "text-red-400 font-black" : "text-amber-400 font-black";
-            } else { bar.classList.add('hidden'); }
+                document.getElementById('ticketComboOdds').textContent = cOdd.toFixed(2);
+                document.getElementById('ticketComboGain').textContent = cLost ? "Perdu" : `${cPot.toFixed(2)} €`;
+                document.getElementById('slipComboGainMini').textContent = cLost ? "Perdu" : `${cPot.toFixed(2)} €`;
+
+            } else { 
+                bar.classList.add('hidden'); 
+                if(isTicketExpanded) toggleTicket();
+            }
 
             if (fin > 0 || slipC > 0) {
                 let hist = safeGetLocal('footbet_v21_history');
@@ -694,6 +782,7 @@
             if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
         }
 
+        // --- STATS ET AJUSTEMENTS MANUELS ---
         function editScoreManual(mId, hName, aName) {
             let d = document.getElementById('matchDate').value;
             let mScores = safeGetLocal("foot_manual_scores_" + d);
