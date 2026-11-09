@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet V21 - Algorithme FabTurf & Multi-Paris</title>
+    <title>FootBet V21 - Clubs & Sélections Nationales</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,7 +23,6 @@
 
     <div id="toastContainer" class="fixed bottom-24 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
-    <!-- HEADER STYLE FABTURF -->
     <header class="bg-zinc-900/95 backdrop-blur-md border-b border-zinc-800 p-3 sm:p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center mb-2.5">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-blue-400 flex items-center">
@@ -59,7 +58,6 @@
 
     <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4">
         
-        <!-- BARRE DE STATUT -->
         <div class="flex justify-between items-center bg-zinc-950 border border-zinc-800 p-2 rounded-xl">
             <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center truncate">
                 <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion aux serveurs...
@@ -67,7 +65,7 @@
             <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded flex-shrink-0">Prêt</div>
         </div>
 
-        <!-- HISTORIQUE CUMULÉ SEMAINE & MOIS -->
+        <!-- HISTORIQUE CUMULÉ -->
         <div id="historyBlock" class="hidden bg-zinc-900 border border-blue-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
@@ -105,7 +103,6 @@
             </div>
 
             <div class="grid grid-cols-2 gap-3 text-xs">
-                <!-- VALEUR SÛRE (BASE) -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
                     <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-950 text-[8px] font-black px-1.5 py-0.5 rounded shadow">AUTO BASE</div>
                     <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Valeurs Sûres (Favori)</div>
@@ -123,7 +120,6 @@
                     </div>
                 </div>
 
-                <!-- PÉPITE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-amber-500/40 relative flex flex-col justify-between">
                     <div class="absolute -top-2 -right-2 bg-amber-500 text-zinc-950 text-[8px] font-black px-1.5 py-0.5 rounded shadow">AUTO PÉPITE</div>
                     <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Pépites (Cote 2.10 - 3.90)</div>
@@ -142,7 +138,6 @@
                 </div>
             </div>
 
-            <!-- MISE MAX ET DÉFICITS -->
             <div class="grid grid-cols-2 gap-3 text-[11px] bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 text-zinc-300">
                 <div class="flex flex-col space-y-1 border-r border-zinc-700/50 pr-3">
                     <span class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Gestion (Valeur Sûre)</span>
@@ -166,7 +161,7 @@
             </div>
         </div>
 
-        <!-- BOUTONS D'ACTIONS MULTI-PARIS RAPIDES -->
+        <!-- ACTIONS MULTI-PARIS RAPIDES -->
         <div class="flex flex-wrap gap-2 justify-between items-center bg-zinc-900/90 border border-zinc-800 p-2.5 rounded-xl text-xs">
             <span class="text-zinc-400 font-bold text-[11px]"><i class="fa-solid fa-wand-magic-sparkles text-blue-400 mr-1.5"></i>Sélection Multi-Matchs :</span>
             <div class="flex gap-1.5">
@@ -182,12 +177,11 @@
             </div>
         </div>
 
-        <!-- LISTE DES MATCHS -->
         <div id="matchesContainer" class="space-y-3"></div>
 
     </main>
 
-    <!-- TICKET MULTI-PARIS & COMBINÉ FLOTTANT -->
+    <!-- TICKET MULTI-PARIS FLOTTANT -->
     <div id="betSlipBar" class="hidden fixed bottom-0 left-0 right-0 z-50 bg-zinc-900/95 backdrop-blur-lg border-t-2 border-blue-500 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] p-3">
         <div class="max-w-3xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
             <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
@@ -236,8 +230,7 @@
             "Juventus": 85, "AC Milan": 85, "Atletico Madrid": 85, "Napoli": 84, "Chelsea": 83, "Tottenham": 83, 
             "Aston Villa": 82, "Marseille": 80, "Monaco": 80, "Lille": 79, "Lens": 76, "Lyon": 76, "Nice": 75,
             "Sporting CP": 82, "Benfica": 81, "FC Porto": 80, "PSV Eindhoven": 79, "Atalanta": 83, "RB Leipzig": 82,
-            "Newcastle": 80, "Manchester United": 80, "Roma": 79, "Lazio": 78, "Fiorentina": 77, "Villarreal": 78, "Real Sociedad": 77,
-            "France": 95, "Brazil": 93, "Argentina": 94, "England": 93, "Spain": 94, "Germany": 91, "Italy": 90, "Portugal": 92, "Belgium": 88, "Netherlands": 89
+            "France": 96, "Brazil": 94, "Argentina": 95, "England": 94, "Spain": 95, "Germany": 92, "Italy": 91, "Portugal": 93, "Belgium": 89, "Netherlands": 90
         };
 
         function hashString(str) {
@@ -383,7 +376,7 @@
         }
 
         function onDateChange() {
-            document.getElementById('compSelect').innerHTML = '<option value="ALL">Toutes les Compétitions</option>';
+            document.getElementById('compSelect').innerHTML = '<option value="ALL">Toutes Compétitions & Sélections</option>';
             loadFootballMatches(false);
         }
 
@@ -393,41 +386,17 @@
             }
         }, 12000);
 
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            let bgClass = type === 'success' ? 'bg-emerald-900/95 border-emerald-500/50 text-emerald-200' : (type === 'error' ? 'bg-red-900/95 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
-            toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 flex items-center ${bgClass}`;
-            toast.innerHTML = `<span>${message}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => toast.classList.remove('opacity-0', 'translate-y-2'), 10);
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-2');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        function toggleHistoryStats() {
-            let block = document.getElementById('historyBlock');
-            if (block.classList.contains('hidden')) {
-                block.classList.remove('hidden');
-                showHistoryStats();
-            } else {
-                block.classList.add('hidden');
-            }
-        }
-
         async function loadFootballMatches(isSilent = false) {
             const dateInputVal = document.getElementById('matchDate').value;
             const apiDate = dateInputVal.replace(/-/g, '');
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des championnats & sélections...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Recherche de tous les matchs (Clubs & Sélections)...';
             }
             
             try {
-                // LISTE ÉLARGIE INCLUANT LIGUE 1, PREMIER LEAGUE, LIGA, SERIE A, BUNDESLIGA, COUPS D'EUROPE ET SÉLECTIONS INTERNATIONALES
+                // LISTE COMPLÈTE INCLUANT LES SÉLECTIONS NATIONALES / AMICAUX / QUALIFICATIONS
                 const leagues = [
                     { code: 'fra.1', name: 'LIGUE 1' },
                     { code: 'fra.2', name: 'LIGUE 2' },
@@ -442,7 +411,8 @@
                     { code: 'uefa.europa.conf', name: 'CONFERENCE LEAGUE' },
                     { code: 'fifa.friendlies', name: 'MATCHS INTERNATIONAUX' },
                     { code: 'fifa.world', name: 'COUPE DU MONDE' },
-                    { code: 'uefa.euro', name: 'EURO' }
+                    { code: 'uefa.euro', name: 'CHAMPIONNAT D\'EUROPE' },
+                    { code: 'fifa.nations', name: 'NATIONS LEAGUE' }
                 ];
 
                 const results = await Promise.all(
@@ -555,7 +525,7 @@
         function populateCompetitions(matches) {
             const select = document.getElementById('compSelect');
             const currentSelection = select.value;
-            select.innerHTML = '<option value="ALL">Toutes les Compétitions</option>';
+            select.innerHTML = '<option value="ALL">Toutes Compétitions & Sélections</option>';
             const compsMap = new Map();
             
             matches.forEach(m => {
