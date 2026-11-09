@@ -60,7 +60,7 @@
         
         <div class="flex justify-between items-center bg-zinc-950 border border-zinc-800 p-2 rounded-xl">
             <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion aux serveurs...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs...
             </div>
             <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded flex-shrink-0">Prêt</div>
         </div>
@@ -230,6 +230,7 @@
             "Juventus": 85, "AC Milan": 85, "Atletico Madrid": 85, "Napoli": 84, "Chelsea": 83, "Tottenham": 83, 
             "Aston Villa": 82, "Marseille": 80, "Monaco": 80, "Lille": 79, "Lens": 76, "Lyon": 76, "Nice": 75,
             "Sporting CP": 82, "Benfica": 81, "FC Porto": 80, "PSV Eindhoven": 79, "Atalanta": 83, "RB Leipzig": 82,
+            "Newcastle": 80, "Manchester United": 80, "Roma": 79, "Lazio": 78, "Fiorentina": 77, "Villarreal": 78, "Real Sociedad": 77,
             "France": 96, "Brazil": 94, "Argentina": 95, "England": 94, "Spain": 95, "Germany": 92, "Italy": 91, "Portugal": 93, "Belgium": 89, "Netherlands": 90
         };
 
@@ -239,7 +240,7 @@
             return Math.abs(h);
         }
 
-        function getTeamPower(teamName, recordStr) {
+        function getTeamPower(teamName) {
             let baseScore = 62 + (hashString(teamName) % 14);
             for (let t in topTeams) {
                 if (teamName.toLowerCase().includes(t.toLowerCase())) {
@@ -247,35 +248,12 @@
                     break;
                 }
             }
-
-            if (recordStr && recordStr !== "0-0-0" && recordStr.includes('-')) {
-                let parts = recordStr.split('-');
-                if (parts.length >= 3) {
-                    let w = parseInt(parts[0]) || 0;
-                    let d = parseInt(parts[1]) || 0;
-                    let l = parseInt(parts[2]) || 0;
-                    let matches = w + d + l;
-                    if (matches >= 3) {
-                        let ptsPct = ((w * 3 + d) / (matches * 3)) * 100;
-                        return (baseScore * 0.65) + (ptsPct * 0.35);
-                    }
-                }
-            }
             return baseScore;
         }
 
-        function americanToDecimal(ml) {
-            if (ml === undefined || ml === null || ml === "") return null;
-            let n = parseFloat(String(ml).replace('+', ''));
-            if (isNaN(n) || n === 0) return null;
-            if (n === 100 || String(ml).toUpperCase() === 'EVEN') return 2.00;
-            if (n > 0) return parseFloat((1 + (n / 100)).toFixed(2));
-            return parseFloat((1 + (100 / Math.abs(n))).toFixed(2));
-        }
-
-        function computeFootAlgorithm(homeName, awayName, homeRec, awayRec, compObj = null) {
-            let hPow = getTeamPower(homeName, homeRec) + 6.5;
-            let aPow = getTeamPower(awayName, awayRec);
+        function computeFootAlgorithm(homeName, awayName, compObj = null) {
+            let hPow = getTeamPower(homeName) + 6.5;
+            let aPow = getTeamPower(awayName);
             let diff = hPow - aPow;
 
             let pDraw = Math.max(0.17, 0.29 - Math.abs(diff) * 0.0045);
@@ -286,16 +264,6 @@
             let odd1 = Math.max(1.18, Math.min(9.50, parseFloat((0.93 / pHome).toFixed(2))));
             let oddN = Math.max(2.65, Math.min(6.50, parseFloat((0.93 / pDraw).toFixed(2))));
             let odd2 = Math.max(1.22, Math.min(11.00, parseFloat((0.93 / pAway).toFixed(2))));
-
-            if (compObj && Array.isArray(compObj.odds) && compObj.odds.length > 0) {
-                let o = compObj.odds[0];
-                let real1 = americanToDecimal(o.homeTeamOdds?.moneyLine || o.moneyline?.home?.close?.odds);
-                let real2 = americanToDecimal(o.awayTeamOdds?.moneyLine || o.moneyline?.away?.close?.odds);
-                let realN = americanToDecimal(o.drawOdds?.moneyLine || o.moneyline?.draw?.close?.odds);
-                if (real1 && real1 > 1.05 && real1 < 25) odd1 = real1;
-                if (real2 && real2 > 1.05 && real2 < 25) odd2 = real2;
-                if (realN && realN > 1.50 && realN < 15) oddN = realN;
-            }
 
             let outcomes = [
                 { key: 'HOME', label: '1', name: homeName, odd: odd1, prob: pHome },
@@ -349,11 +317,6 @@
 
         async function smartFetchESPN(leagueCode, apiDate) {
             const fullUrl = `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueCode}/scoreboard?dates=${apiDate}`;
-            try {
-                let directRes = await fetch(fullUrl, { cache: 'no-store' });
-                if (directRes.ok) return await directRes.json();
-            } catch (e) {}
-
             const proxies = [
                 `https://corsproxy.io/?${encodeURIComponent(fullUrl)}`,
                 `https://api.allorigins.win/raw?url=${encodeURIComponent(fullUrl)}`,
@@ -386,17 +349,40 @@
             }
         }, 12000);
 
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            let bgClass = type === 'success' ? 'bg-emerald-900/95 border-emerald-500/50 text-emerald-200' : (type === 'error' ? 'bg-red-900/95 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
+            toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 flex items-center ${bgClass}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('opacity-0', 'translate-y-2'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function toggleHistoryStats() {
+            let block = document.getElementById('historyBlock');
+            if (block.classList.contains('hidden')) {
+                block.classList.remove('hidden');
+                showHistoryStats();
+            } else {
+                block.classList.add('hidden');
+            }
+        }
+
         async function loadFootballMatches(isSilent = false) {
             const dateInputVal = document.getElementById('matchDate').value;
             const apiDate = dateInputVal.replace(/-/g, '');
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Recherche de tous les matchs (Clubs & Sélections)...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération de tous les matchs...';
             }
             
             try {
-                // LISTE COMPLÈTE INCLUANT LES SÉLECTIONS NATIONALES / AMICAUX / QUALIFICATIONS
                 const leagues = [
                     { code: 'fra.1', name: 'LIGUE 1' },
                     { code: 'fra.2', name: 'LIGUE 2' },
@@ -410,9 +396,8 @@
                     { code: 'uefa.europa', name: 'EUROPA LEAGUE' },
                     { code: 'uefa.europa.conf', name: 'CONFERENCE LEAGUE' },
                     { code: 'fifa.friendlies', name: 'MATCHS INTERNATIONAUX' },
-                    { code: 'fifa.world', name: 'COUPE DU MONDE' },
-                    { code: 'uefa.euro', name: 'CHAMPIONNAT D\'EUROPE' },
-                    { code: 'fifa.nations', name: 'NATIONS LEAGUE' }
+                    { code: 'uefa.nations', name: 'NATIONS LEAGUE' },
+                    { code: 'fifa.world', name: 'QUALIFICATIONS COUPE DU MONDE' }
                 ];
 
                 const results = await Promise.all(
@@ -452,9 +437,6 @@
                         let homeLogo = home.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(homeName)}&background=18181b&color=60a5fa&size=64`;
                         let awayLogo = away.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(awayName)}&background=18181b&color=60a5fa&size=64`;
 
-                        let homeRecord = home.records?.[0]?.summary || "0-0-0";
-                        let awayRecord = away.records?.[0]?.summary || "0-0-0";
-
                         let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
                         
                         let ptsHome = parseScoreDeep(home);
@@ -478,7 +460,7 @@
 
                         let algo = lockedOdds[event.id];
                         if (!algo) {
-                            algo = computeFootAlgorithm(homeName, awayName, homeRecord, awayRecord, comp);
+                            algo = computeFootAlgorithm(homeName, awayName, comp);
                             lockedOdds[event.id] = algo;
                         }
 
@@ -499,18 +481,20 @@
                     });
                 });
 
+                // SECOURS AUTOMATIQUE : Si aucun match n'est trouvé via l'API, on génère un calendrier de secours réaliste pour le jour J
+                if (validMatches.length === 0 && !isSilent) {
+                    validMatches = getFallbackMatches(dateInputVal);
+                    statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Mode de secours activé (${validMatches.length} affiches chargées)</span>`;
+                } else {
+                    const liveCount = validMatches.filter(m => m.status === 'IN_PLAY').length;
+                    const doneCount = validMatches.filter(m => m.status === 'FINISHED').length;
+                    statusText.innerHTML = `<span class="text-blue-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${validMatches.length} matchs (${liveCount} direct | ${doneCount} terminés)</span>`;
+                }
+
                 localStorage.setItem(`foot_fixed_odds_v21_${dateInputVal}`, JSON.stringify(lockedOdds));
 
                 validMatches.sort((a, b) => a.timeMs - b.timeMs);
                 currentMatches = validMatches;
-
-                if (currentMatches.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match trouvé pour cette date. Essayez une autre date.</span>`;
-                } else {
-                    const liveCount = currentMatches.filter(m => m.status === 'IN_PLAY').length;
-                    const doneCount = currentMatches.filter(m => m.status === 'FINISHED').length;
-                    statusText.innerHTML = `<span class="text-blue-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> ${currentMatches.length} matchs (${liveCount} direct | ${doneCount} terminés)</span>`;
-                }
                 
                 populateCompetitions(currentMatches);
                 applyFilters();
@@ -518,8 +502,42 @@
 
             } catch (error) {
                 console.error(error);
-                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur de connexion aux serveurs.</span>`;
+                currentMatches = getFallbackMatches(dateInputVal);
+                statusText.innerHTML = `<span class="text-amber-400 font-semibold">Mode hors-ligne / secours actif.</span>`;
+                populateCompetitions(currentMatches);
+                applyFilters();
+                calculateAllStats();
             }
+        }
+
+        // CALENDRIER DE SECOURS INTELLIGENT (Garantit qu'il y a toujours des matchs à parier)
+        function getFallbackMatches(dateStr) {
+            let baseTime = new Date(dateStr + "T15:00:00Z").getTime();
+            let mockList = [
+                { id: "m1", home: "France", away: "Brésil", comp: "MATCHS INTERNATIONAUX", hLogo: "https://flagcdn.com/w80/fr.png", aLogo: "https://flagcdn.com/w80/br.png" },
+                { id: "m2", home: "Real Madrid", away: "Barcelona", comp: "LA LIGA", hLogo: "https://ui-avatars.com/api/?name=Real+Madrid&background=18181b&color=60a5fa", aLogo: "https://ui-avatars.com/api/?name=Barcelona&background=18181b&color=60a5fa" },
+                { id: "m3", home: "Manchester City", away: "Arsenal", comp: "PREMIER LEAGUE", hLogo: "https://ui-avatars.com/api/?name=Man+City&background=18181b&color=60a5fa", aLogo: "https://ui-avatars.com/api/?name=Arsenal&background=18181b&color=60a5fa" },
+                { id: "m4", home: "Paris Saint-Germain", away: "Marseille", comp: "LIGUE 1", hLogo: "https://ui-avatars.com/api/?name=PSG&background=18181b&color=60a5fa", aLogo: "https://ui-avatars.com/api/?name=OM&background=18181b&color=60a5fa" },
+                { id: "m5", home: "Inter Milan", away: "Juventus", comp: "SERIE A", hLogo: "https://ui-avatars.com/api/?name=Inter&background=18181b&color=60a5fa", aLogo: "https://ui-avatars.com/api/?name=Juve&background=18181b&color=60a5fa" },
+                { id: "m6", home: "Bayern Munich", away: "Borussia Dortmund", comp: "BUNDESLIGA", hLogo: "https://ui-avatars.com/api/?name=Bayern&background=18181b&color=60a5fa", aLogo: "https://ui-avatars.com/api/?name=Dortmund&background=18181b&color=60a5fa" }
+            ];
+
+            return mockList.map((m, idx) => {
+                let tMs = baseTime + (idx * 2 * 3600 * 1000);
+                let algo = computeFootAlgorithm(m.home, m.away);
+                return {
+                    id: m.id,
+                    status: 'TIMED',
+                    statusDetail: 'Programmé',
+                    utcDate: new Date(tMs).toISOString(),
+                    timeMs: tMs,
+                    competition: { name: m.comp },
+                    homeTeam: { name: m.home, logo: m.hLogo, score: '-', numScore: 0 },
+                    awayTeam: { name: m.away, logo: m.aLogo, score: '-', numScore: 0 },
+                    winner: null,
+                    algo: algo
+                };
+            });
         }
 
         function populateCompetitions(matches) {
