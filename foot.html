@@ -58,7 +58,7 @@
         </div>
 
         <!-- HISTORIQUE CUMULÉ -->
-        <div id="historyBlock" class="hidden bg-zinc-900 border border-blue-500/30 rounded-2xl p-4 shadow-xl mb-2">
+        <div id="historyBlock" style="display: none;" class="bg-zinc-900 border border-blue-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
                     <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés
@@ -160,10 +160,9 @@
         <div class="flex flex-wrap gap-2 justify-between items-center bg-zinc-900/90 border border-zinc-800 p-2.5 rounded-xl text-xs">
             <span class="text-zinc-400 font-bold text-[11px]"><i class="fa-solid fa-wand-magic-sparkles text-blue-400 mr-1.5"></i>Tickets :</span>
             <div class="flex gap-1.5">
-                <button onclick="selectAllAlgo('BASE')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-2.5 py-1 rounded-lg font-bold text-[11px] transition">+ Bases</button>
-                <button onclick="selectAllAlgo('PEPITE')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-lg font-bold text-[11px] transition">+ Pépites</button>
-                <!-- BOUTON VIDER CLAIR ET VISIBLE -->
-                <button onclick="clearManualBets()" class="bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/50 px-3 py-1 rounded-lg font-bold text-[11px] transition flex items-center shadow" title="Vider complètement le ticket">
+                <button onclick="selectAllAlgo('BASE')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow">+ Bases</button>
+                <button onclick="selectAllAlgo('PEPITE')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow">+ Pépites</button>
+                <button onclick="clearManualBets()" class="bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/50 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow flex items-center" title="Vider mes sélections">
                     <i class="fa-solid fa-trash mr-1.5"></i> Vider
                 </button>
             </div>
@@ -173,7 +172,7 @@
     </main>
 
     <!-- TICKET FLOTTANT DÉTAILLÉ (PANIER) EN BAS D'ÉCRAN -->
-    <div id="betSlipBar" class="hidden fixed bottom-0 left-0 right-0 z-50 bg-zinc-900/95 backdrop-blur-lg border-t-2 border-blue-500 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] flex flex-col max-h-[85vh] transition-all duration-300">
+    <div id="betSlipBar" class="fixed bottom-0 left-0 right-0 z-50 bg-zinc-900/95 backdrop-blur-lg border-t-2 border-blue-500 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] flex-col max-h-[85vh] transition-all duration-300" style="display: none;">
         
         <!-- HEADER DU TICKET -->
         <div class="p-3 max-w-3xl mx-auto w-full flex justify-between items-center cursor-pointer" onclick="toggleTicket()">
@@ -192,13 +191,12 @@
                     <span class="text-[9px] text-amber-400 uppercase font-bold block">Gain Max Combiné</span>
                     <strong id="slipComboGainMini" class="text-amber-400 font-black text-sm">0.00 €</strong>
                  </div>
-                 <!-- Petite icône corbeille secondaire -->
                  <button onclick="clearManualBets(); event.stopPropagation();" class="text-zinc-500 hover:text-red-400 p-2 transition" title="Vider le ticket"><i class="fa-solid fa-trash"></i></button>
             </div>
         </div>
 
         <!-- CONTENU DÉTAILLÉ DU TICKET -->
-        <div id="ticketDetails" class="hidden flex-col max-w-3xl mx-auto w-full px-3 pb-4 overflow-y-auto border-t border-zinc-800 pt-3">
+        <div id="ticketDetails" class="flex-col max-w-3xl mx-auto w-full px-3 pb-4 overflow-y-auto border-t border-zinc-800 pt-3" style="display: none;">
             
             <div class="text-[11px] uppercase font-bold text-zinc-400 mb-2">Détail Match par Match</div>
             <div id="ticketMatchesList" class="mb-4 space-y-2">
@@ -253,10 +251,13 @@
             return `${yr}-${mo}-${da}`;
         }
 
+        // Sécurisation extrême de l'accès au localStorage pour éviter tout crash
         function safeGetLocal(key) {
             try { 
                 let item = localStorage.getItem(key);
-                return item ? JSON.parse(item) : {}; 
+                let parsed = item ? JSON.parse(item) : {}; 
+                if (typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+                return parsed;
             } catch(e) { return {}; }
         }
 
@@ -327,8 +328,15 @@
         // --- FETCH ET CHARGEMENT ---
         async function smartFetchESPN(leagueCode, apiDate) {
             const url = "https://site.api.espn.com/apis/site/v2/sports/soccer/" + leagueCode + "/scoreboard?dates=" + apiDate;
-            try { let res = await fetch(url, {cache: 'no-store'}); if (res.ok) return await res.json(); } catch(e) {}
-            try { let pRes = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url)); if (pRes.ok) return await pRes.json(); } catch(e) {}
+            try { 
+                let res = await fetch(url, {cache: 'no-store'}); 
+                if (res.ok) return await res.json(); 
+            } catch(e) {}
+            
+            try { 
+                let pRes = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url)); 
+                if (pRes.ok) return await pRes.json(); 
+            } catch(e) {}
             return null;
         }
 
@@ -383,6 +391,7 @@
                     if (!isSilent) statusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion ${lg.n}...`;
                     
                     let data = await smartFetchESPN(lg.c, apiDate);
+                    
                     if (data && data.events && Array.isArray(data.events)) {
                         data.events.forEach(ev => {
                             try {
@@ -441,10 +450,10 @@
                 
                 populateCompetitions(currentMatches);
                 
-                // On affiche la liste des matchs (si ce n'est pas un refresh silencieux de score)
+                // Ne redessine le DOM qu'au chargement complet initial
                 if (!isSilent) renderMatches(currentMatches);
                 
-                calculateAllStats(); // Ceci mettra à jour le ticket !
+                calculateAllStats(); // Force l'affichage du ticket s'il y a des paris sauvegardés
 
             } catch (error) {
                 statusText.innerHTML = `<span class="text-red-400 font-semibold">Mode hors-ligne (Sécurité activée).</span>`;
@@ -460,13 +469,14 @@
             loadFootballMatches(false);
         }
 
-        // Rafraîchissement silencieux 
+        // Rafraîchissement silencieux des scores
         setInterval(() => {
             if (document.getElementById('matchDate').value === getLocalYYYYMMDD(new Date()) || isLiveFilterActive) {
                 loadFootballMatches(true);
             }
         }, 15000);
 
+        // --- FILTRES ---
         function populateCompetitions(matches) {
             const select = document.getElementById('compSelect');
             const cur = select.value;
@@ -600,14 +610,12 @@
             isTicketExpanded = !isTicketExpanded;
             
             if (isTicketExpanded) {
-                details.classList.remove('hidden');
-                details.classList.add('flex');
+                details.style.display = 'flex';
                 chevron.classList.replace('fa-chevron-up', 'fa-chevron-down');
                 ticket.classList.remove('bg-zinc-900/95');
                 ticket.classList.add('bg-zinc-900', 'border-t-4');
             } else {
-                details.classList.add('hidden');
-                details.classList.remove('flex');
+                details.style.display = 'none';
                 chevron.classList.replace('fa-chevron-down', 'fa-chevron-up');
                 ticket.classList.add('bg-zinc-900/95');
                 ticket.classList.remove('bg-zinc-900', 'border-t-4');
@@ -675,7 +683,7 @@
             if (!bar) return simNet;
             
             if (slipC > 0) {
-                bar.classList.remove('hidden');
+                bar.style.display = 'flex'; // FORCÉ EN JAVASCRIPT PUR
                 
                 if (document.getElementById('slipCountBadge')) document.getElementById('slipCountBadge').textContent = slipC;
                 if (document.getElementById('ticketMatchesList')) document.getElementById('ticketMatchesList').innerHTML = ticketListHTML;
@@ -706,7 +714,7 @@
                 if(miniGain) { miniGain.textContent = cText; miniGain.className = cClass + " text-sm"; }
 
             } else { 
-                bar.classList.add('hidden'); 
+                bar.style.display = 'none'; // FORCÉ EN JAVASCRIPT PUR
                 if(isTicketExpanded) toggleTicket();
             }
 
@@ -726,6 +734,7 @@
             
             // On met à jour seulement les boutons du match cliqué
             updateMatchButtonsDOM(mId, b[mId]);
+            
             // On met à jour la barre de ticket en bas
             calculateAllStats();
         }
@@ -748,9 +757,10 @@
             currentMatches.forEach(m => updateMatchButtonsDOM(m.id, undefined));
             showToast("Ticket complètement vidé", "info"); 
             calculateAllStats();
+            if (isTicketExpanded) toggleTicket();
         }
 
-        // --- CALCUL DES STATS AUTO (TICKET ET BILAN) ---
+        // --- CALCUL DES STATS AUTO ---
         function calculateAllStats() {
             const dateStr = document.getElementById('matchDate').value;
             let chronologicalMatches = [...currentMatches].sort((a, b) => a.timeMs - b.timeMs);
