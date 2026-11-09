@@ -27,7 +27,7 @@
     <header class="bg-zinc-900/95 backdrop-blur-md border-b border-zinc-800 p-3 sm:p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center mb-2.5">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-blue-400 flex items-center">
-                <i class="fa-solid fa-futbol mr-2 text-blue-500"></i>FootBet <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">Algo V21</span>
+                <i class="fa-solid fa-futbol mr-2 text-blue-500"></i>FootBet <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">Pro V21</span>
             </h1>
             
             <div class="flex items-center space-x-1.5 sm:space-x-2">
@@ -49,7 +49,7 @@
                 <i class="fa-solid fa-fire mr-1.5"></i> En Direct
             </button>
             <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 focus:outline-none focus:border-blue-500 flex-grow">
-                <option value="ALL">Toutes les Compétitions</option>
+                <option value="ALL">Toutes Compétitions & Sélections</option>
             </select>
             <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-xs font-bold transition flex items-center shadow flex-shrink-0" title="Actualiser">
                 <i class="fa-solid fa-rotate"></i>
@@ -62,7 +62,7 @@
         <!-- BARRE DE STATUT -->
         <div class="flex justify-between items-center bg-zinc-950 border border-zinc-800 p-2 rounded-xl">
             <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion aux championnats...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion aux serveurs...
             </div>
             <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded flex-shrink-0">Prêt</div>
         </div>
@@ -91,7 +91,7 @@
             </div>
         </div>
 
-        <!-- BILAN DU JOUR SYMÉTRIQUE (COMME FABTURF) -->
+        <!-- BILAN DU JOUR SYMÉTRIQUE -->
         <div class="bg-zinc-900 border border-blue-500/30 rounded-2xl p-4 shadow-xl space-y-3">
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
@@ -123,7 +123,7 @@
                     </div>
                 </div>
 
-                <!-- PÉPITE (OUTSIDER / VALUE) -->
+                <!-- PÉPITE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-amber-500/40 relative flex flex-col justify-between">
                     <div class="absolute -top-2 -right-2 bg-amber-500 text-zinc-950 text-[8px] font-black px-1.5 py-0.5 rounded shadow">AUTO PÉPITE</div>
                     <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Pépites (Cote 2.10 - 3.90)</div>
@@ -142,7 +142,7 @@
                 </div>
             </div>
 
-            <!-- MISE MAX ET DÉFICITS SYMÉTRIQUES -->
+            <!-- MISE MAX ET DÉFICITS -->
             <div class="grid grid-cols-2 gap-3 text-[11px] bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 text-zinc-300">
                 <div class="flex flex-col space-y-1 border-r border-zinc-700/50 pr-3">
                     <span class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Gestion (Valeur Sûre)</span>
@@ -187,7 +187,7 @@
 
     </main>
 
-    <!-- TICKET MULTI-PARIS & COMBINÉ FLOTTANT EN BAS D'ÉCRAN -->
+    <!-- TICKET MULTI-PARIS & COMBINÉ FLOTTANT -->
     <div id="betSlipBar" class="hidden fixed bottom-0 left-0 right-0 z-50 bg-zinc-900/95 backdrop-blur-lg border-t-2 border-blue-500 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] p-3">
         <div class="max-w-3xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
             <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
@@ -230,7 +230,6 @@
         let isLiveFilterActive = false;
         const BASE_STAKE = 5.0;
 
-        // DICTIONNAIRE PUISSANCE DES CLUBS EUROPÉENS
         const topTeams = {
             "Real Madrid": 95, "Manchester City": 95, "Bayern Munich": 94, "Liverpool": 93, "Arsenal": 92, "Barcelona": 92,
             "Paris Saint-Germain": 91, "PSG": 91, "Inter Milan": 90, "Internazionale": 90, "Bayer Leverkusen": 88, "Borussia Dortmund": 85,
@@ -238,7 +237,7 @@
             "Aston Villa": 82, "Marseille": 80, "Monaco": 80, "Lille": 79, "Lens": 76, "Lyon": 76, "Nice": 75,
             "Sporting CP": 82, "Benfica": 81, "FC Porto": 80, "PSV Eindhoven": 79, "Atalanta": 83, "RB Leipzig": 82,
             "Newcastle": 80, "Manchester United": 80, "Roma": 79, "Lazio": 78, "Fiorentina": 77, "Villarreal": 78, "Real Sociedad": 77,
-            "Ajax": 79, "Feyenoord": 79, "Brest": 75, "Rennes": 75, "Strasbourg": 73, "Nantes": 71, "Toulouse": 73
+            "France": 95, "Brazil": 93, "Argentina": 94, "England": 93, "Spain": 94, "Germany": 91, "Italy": 90, "Portugal": 92, "Belgium": 88, "Netherlands": 89
         };
 
         function hashString(str) {
@@ -272,7 +271,6 @@
             return baseScore;
         }
 
-        // Conversion cote américaine (+150 / -200) en cote décimale européenne (2.50 / 1.50)
         function americanToDecimal(ml) {
             if (ml === undefined || ml === null || ml === "") return null;
             let n = parseFloat(String(ml).replace('+', ''));
@@ -282,7 +280,6 @@
             return parseFloat((1 + (100 / Math.abs(n))).toFixed(2));
         }
 
-        // --- ALGORITHME FABTURF ADAPTÉ AU FOOTBALL (Cotes Fixes + Valeur Sûre + Pépite) ---
         function computeFootAlgorithm(homeName, awayName, homeRec, awayRec, compObj = null) {
             let hPow = getTeamPower(homeName, homeRec) + 6.5;
             let aPow = getTeamPower(awayName, awayRec);
@@ -297,7 +294,6 @@
             let oddN = Math.max(2.65, Math.min(6.50, parseFloat((0.93 / pDraw).toFixed(2))));
             let odd2 = Math.max(1.22, Math.min(11.00, parseFloat((0.93 / pAway).toFixed(2))));
 
-            // Si ESPN fournit les vraies cotes des bookmakers, on les récupère en priorité
             if (compObj && Array.isArray(compObj.odds) && compObj.odds.length > 0) {
                 let o = compObj.odds[0];
                 let real1 = americanToDecimal(o.homeTeamOdds?.moneyLine || o.moneyline?.home?.close?.odds);
@@ -314,12 +310,10 @@
                 { key: 'AWAY', label: '2', name: awayName, odd: odd2, prob: pAway }
             ];
 
-            // 1. VALEUR SÛRE (BASE) = Le favori des cotes
             let sortedByOdd = [...outcomes].sort((a, b) => a.odd - b.odd);
             let basePick = sortedByOdd[0];
             basePick.confidence = Math.min(98, Math.max(48, Math.round((1 / basePick.odd) * 112)));
 
-            // 2. PÉPITE = Meilleur outsider ou nul (cible idéale entre 2.10 et 3.90)
             let remaining = outcomes.filter(o => o.key !== basePick.key);
             remaining.forEach(o => {
                 let targetBonus = (o.odd >= 2.00 && o.odd <= 3.95) ? 28 : (o.odd <= 5.20 ? 12 : -15);
@@ -360,17 +354,13 @@
             return 0;
         }
 
-        // CONNEXION MULTI-PROXIES ROBUSTE (COMME SUR FABTURF)
         async function smartFetchESPN(leagueCode, apiDate) {
             const fullUrl = `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueCode}/scoreboard?dates=${apiDate}`;
-            
-            // 1. Essai direct rapide
             try {
                 let directRes = await fetch(fullUrl, { cache: 'no-store' });
                 if (directRes.ok) return await directRes.json();
             } catch (e) {}
 
-            // 2. Proxies de secours si le navigateur bloque la requête directe
             const proxies = [
                 `https://corsproxy.io/?${encodeURIComponent(fullUrl)}`,
                 `https://api.allorigins.win/raw?url=${encodeURIComponent(fullUrl)}`,
@@ -433,11 +423,11 @@
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des championnats européens...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des championnats & sélections...';
             }
             
             try {
-                // Liste complète des compétitions européennes fiables sur ESPN
+                // LISTE ÉLARGIE INCLUANT LIGUE 1, PREMIER LEAGUE, LIGA, SERIE A, BUNDESLIGA, COUPS D'EUROPE ET SÉLECTIONS INTERNATIONALES
                 const leagues = [
                     { code: 'fra.1', name: 'LIGUE 1' },
                     { code: 'fra.2', name: 'LIGUE 2' },
@@ -447,10 +437,12 @@
                     { code: 'ger.1', name: 'BUNDESLIGA' },
                     { code: 'por.1', name: 'LIGA PORTUGAL' },
                     { code: 'ned.1', name: 'EREDIVISIE' },
-                    { code: 'bel.1', name: 'JUPILER PRO LEAGUE' },
                     { code: 'uefa.champions', name: 'CHAMPIONS LEAGUE' },
                     { code: 'uefa.europa', name: 'EUROPA LEAGUE' },
-                    { code: 'uefa.europa.conf', name: 'CONFERENCE LEAGUE' }
+                    { code: 'uefa.europa.conf', name: 'CONFERENCE LEAGUE' },
+                    { code: 'fifa.friendlies', name: 'MATCHS INTERNATIONAUX' },
+                    { code: 'fifa.world', name: 'COUPE DU MONDE' },
+                    { code: 'uefa.euro', name: 'EURO' }
                 ];
 
                 const results = await Promise.all(
@@ -514,7 +506,6 @@
                             else winner = 'DRAW';
                         }
 
-                        // Cotes fixes verrouillées
                         let algo = lockedOdds[event.id];
                         if (!algo) {
                             algo = computeFootAlgorithm(homeName, awayName, homeRecord, awayRecord, comp);
@@ -544,7 +535,7 @@
                 currentMatches = validMatches;
 
                 if (currentMatches.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match européen programmé à cette date.</span>`;
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match trouvé pour cette date. Essayez une autre date.</span>`;
                 } else {
                     const liveCount = currentMatches.filter(m => m.status === 'IN_PLAY').length;
                     const doneCount = currentMatches.filter(m => m.status === 'FINISHED').length;
@@ -557,7 +548,7 @@
 
             } catch (error) {
                 console.error(error);
-                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur de connexion aux serveurs sportifs.</span>`;
+                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur de connexion aux serveurs.</span>`;
             }
         }
 
@@ -641,7 +632,6 @@
                 let pepitePick = m.algo.pepitePick.key;
                 let pepiteOdd = m.algo.odds[pepitePick];
 
-                // 1. Calcul Valeur Sûre (Base)
                 let stakeBase = computeSmartStake(deficitBase, baseOdd);
                 totalSpentBase += stakeBase;
                 if (stakeBase > maxStakeBase) maxStakeBase = stakeBase;
@@ -658,7 +648,6 @@
                     deficitBase += stakeBase;
                 }
 
-                // 2. Calcul Pépite
                 let stakePep = computeSmartStake(deficitPepite, pepiteOdd);
                 totalSpentPepite += stakePep;
                 if (stakePep > maxStakePepite) maxStakePepite = stakePep;
@@ -702,7 +691,6 @@
             document.getElementById('headerNextStake').textContent = `${nextStakeBase.toFixed(2)} €`;
             document.getElementById('statsProgress').textContent = `✅ ${finishedCount}/${currentMatches.length} terminés`;
 
-            // 3. Calcul Ticket Multi-Matchs Personnel
             let slipCount = 0;
             let simpleGrossGain = 0;
             let simpleNetProfitFinished = 0;
