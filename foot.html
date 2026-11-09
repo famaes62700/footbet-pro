@@ -156,12 +156,16 @@
             </div>
         </div>
 
-        <!-- ACTIONS RAPIDES (SÉLECTION COMBINÉS) -->
+        <!-- ACTIONS RAPIDES (SÉLECTION COMBINÉS + VIDER) -->
         <div class="flex flex-wrap gap-2 justify-between items-center bg-zinc-900/90 border border-zinc-800 p-2.5 rounded-xl text-xs">
-            <span class="text-zinc-400 font-bold text-[11px]"><i class="fa-solid fa-wand-magic-sparkles text-blue-400 mr-1.5"></i>Sélections Multiples :</span>
+            <span class="text-zinc-400 font-bold text-[11px]"><i class="fa-solid fa-wand-magic-sparkles text-blue-400 mr-1.5"></i>Tickets :</span>
             <div class="flex gap-1.5">
                 <button onclick="selectAllAlgo('BASE')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-2.5 py-1 rounded-lg font-bold text-[11px] transition">+ Bases</button>
                 <button onclick="selectAllAlgo('PEPITE')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-lg font-bold text-[11px] transition">+ Pépites</button>
+                <!-- BOUTON VIDER CLAIR ET VISIBLE -->
+                <button onclick="clearManualBets()" class="bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/50 px-3 py-1 rounded-lg font-bold text-[11px] transition flex items-center shadow" title="Vider complètement le ticket">
+                    <i class="fa-solid fa-trash mr-1.5"></i> Vider
+                </button>
             </div>
         </div>
 
@@ -188,6 +192,7 @@
                     <span class="text-[9px] text-amber-400 uppercase font-bold block">Gain Max Combiné</span>
                     <strong id="slipComboGainMini" class="text-amber-400 font-black text-sm">0.00 €</strong>
                  </div>
+                 <!-- Petite icône corbeille secondaire -->
                  <button onclick="clearManualBets(); event.stopPropagation();" class="text-zinc-500 hover:text-red-400 p-2 transition" title="Vider le ticket"><i class="fa-solid fa-trash"></i></button>
             </div>
         </div>
@@ -265,7 +270,7 @@
         let isTicketExpanded = false;
         const BASE_STAKE = 5.0;
 
-        // --- ALGORITHME FABTURF ADAPTE AU FOOTBALL ---
+        // --- ALGORITHME DES COTES ---
         const topTeams = {
             "Real Madrid":95, "Manchester City":95, "Bayern Munich":94, "Liverpool":93, "Arsenal":92, "Barcelona":92,
             "Paris Saint-Germain":91, "PSG":91, "Inter Milan":90, "Bayer Leverkusen":88, "Borussia Dortmund":85,
@@ -322,15 +327,8 @@
         // --- FETCH ET CHARGEMENT ---
         async function smartFetchESPN(leagueCode, apiDate) {
             const url = "https://site.api.espn.com/apis/site/v2/sports/soccer/" + leagueCode + "/scoreboard?dates=" + apiDate;
-            try { 
-                let res = await fetch(url, {cache: 'no-store'}); 
-                if (res.ok) return await res.json(); 
-            } catch(e) {}
-            
-            try { 
-                let pRes = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url)); 
-                if (pRes.ok) return await pRes.json(); 
-            } catch(e) {}
+            try { let res = await fetch(url, {cache: 'no-store'}); if (res.ok) return await res.json(); } catch(e) {}
+            try { let pRes = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url)); if (pRes.ok) return await pRes.json(); } catch(e) {}
             return null;
         }
 
@@ -343,6 +341,7 @@
                 { id: "mock4", home: "Manchester City", away: "Arsenal", comp: "PREMIER LEAGUE" },
                 { id: "mock5", home: "Bayern Munich", away: "Borussia Dortmund", comp: "BUNDESLIGA" }
             ];
+
             let lockedOdds = safeGetLocal("foot_fixed_odds_v21_" + dateStr.replace(/-/g,''));
             let mocks = mockList.map((m, idx) => {
                 let tMs = baseTime + (idx * 30 * 60000); 
@@ -439,14 +438,16 @@
                 }
 
                 currentMatches = validMatches.sort((a, b) => a.timeMs - b.timeMs);
+                
                 populateCompetitions(currentMatches);
                 
                 // On affiche la liste des matchs (si ce n'est pas un refresh silencieux de score)
                 if (!isSilent) renderMatches(currentMatches);
-                calculateAllStats();
+                
+                calculateAllStats(); // Ceci mettra à jour le ticket !
 
             } catch (error) {
-                statusText.innerHTML = `<span class="text-red-400 font-semibold">Mode hors-ligne.</span>`;
+                statusText.innerHTML = `<span class="text-red-400 font-semibold">Mode hors-ligne (Sécurité activée).</span>`;
                 currentMatches = getFallbackMatches(dateInputVal);
                 populateCompetitions(currentMatches);
                 if (!isSilent) renderMatches(currentMatches);
@@ -459,13 +460,13 @@
             loadFootballMatches(false);
         }
 
+        // Rafraîchissement silencieux 
         setInterval(() => {
             if (document.getElementById('matchDate').value === getLocalYYYYMMDD(new Date()) || isLiveFilterActive) {
                 loadFootballMatches(true);
             }
         }, 15000);
 
-        // --- FILTRES ---
         function populateCompetitions(matches) {
             const select = document.getElementById('compSelect');
             const cur = select.value;
@@ -522,7 +523,7 @@
             let savedBets = safeGetLocal("footbet_v21_bets_" + dateStr);
 
             if (matchesToRender.length === 0) {
-                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match.</div>`;
+                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match trouvé pour ce filtre.</div>`;
                 return;
             }
 
@@ -613,7 +614,7 @@
             }
         }
 
-        // C'EST CETTE FONCTION QUI MET A JOUR LE TICKET ET CALCULE LES GAINS EN TEMPS REEL
+        // C'EST CETTE FONCTION QUI MET A JOUR LE TICKET EN BAS EN TEMPS REEL
         function updateBetSlipOnly() {
             const dateStr = document.getElementById('matchDate').value;
             let savedBets = safeGetLocal("footbet_v21_bets_" + dateStr);
@@ -676,24 +677,24 @@
             if (slipC > 0) {
                 bar.classList.remove('hidden');
                 
-                document.getElementById('slipCountBadge').textContent = slipC;
-                document.getElementById('ticketMatchesList').innerHTML = ticketListHTML;
+                if (document.getElementById('slipCountBadge')) document.getElementById('slipCountBadge').textContent = slipC;
+                if (document.getElementById('ticketMatchesList')) document.getElementById('ticketMatchesList').innerHTML = ticketListHTML;
                 
                 // Maj Option 1 : Simples
-                document.getElementById('ticketSimpleStake').textContent = `${(slipC * BASE_STAKE).toFixed(2)} €`;
-                document.getElementById('ticketSimpleGain').textContent = `${simGross.toFixed(2)} €`;
-                document.getElementById('ticketSimpleNet').textContent = `${simNet > 0 ? '+':''}${simNet.toFixed(2)} €`;
+                if (document.getElementById('ticketSimpleStake')) document.getElementById('ticketSimpleStake').textContent = `${(slipC * BASE_STAKE).toFixed(2)} €`;
+                if (document.getElementById('ticketSimpleGain')) document.getElementById('ticketSimpleGain').textContent = `${simGross.toFixed(2)} €`;
+                if (document.getElementById('ticketSimpleNet')) document.getElementById('ticketSimpleNet').textContent = `${simNet > 0 ? '+':''}${simNet.toFixed(2)} €`;
                 
-                document.getElementById('slipSimpleGain').textContent = `${simGross.toFixed(2)} €`;
-                document.getElementById('slipSimpleNet').innerHTML = `(${formatMoneyHTML(simNet)})`;
+                if (document.getElementById('slipSimpleGain')) document.getElementById('slipSimpleGain').textContent = `${simGross.toFixed(2)} €`;
+                if (document.getElementById('slipSimpleNet')) document.getElementById('slipSimpleNet').innerHTML = `(${formatMoneyHTML(simNet)})`;
                 
                 // Maj Option 2 : Combiné
                 let cPot = cLost ? 0 : (cOdd*BASE_STAKE);
                 let cText = cLost ? "Perdu (0.00 €)" : `${cPot.toFixed(2)} €`;
                 let cClass = cLost ? "text-red-400 font-black" : "text-amber-400 font-black";
                 
-                document.getElementById('ticketComboOdds').textContent = cOdd.toFixed(2);
-                document.getElementById('slipComboOdds').textContent = cOdd.toFixed(2);
+                if (document.getElementById('ticketComboOdds')) document.getElementById('ticketComboOdds').textContent = cOdd.toFixed(2);
+                if (document.getElementById('slipComboOdds')) document.getElementById('slipComboOdds').textContent = cOdd.toFixed(2);
                 
                 let mainCombo = document.getElementById('ticketComboGain');
                 if(mainCombo) { mainCombo.textContent = cText; mainCombo.className = cClass + " text-sm"; }
@@ -725,7 +726,6 @@
             
             // On met à jour seulement les boutons du match cliqué
             updateMatchButtonsDOM(mId, b[mId]);
-            
             // On met à jour la barre de ticket en bas
             calculateAllStats();
         }
@@ -748,10 +748,9 @@
             currentMatches.forEach(m => updateMatchButtonsDOM(m.id, undefined));
             showToast("Ticket complètement vidé", "info"); 
             calculateAllStats();
-            if (isTicketExpanded) toggleTicket();
         }
 
-        // --- CALCUL DES STATS AUTO ---
+        // --- CALCUL DES STATS AUTO (TICKET ET BILAN) ---
         function calculateAllStats() {
             const dateStr = document.getElementById('matchDate').value;
             let chronologicalMatches = [...currentMatches].sort((a, b) => a.timeMs - b.timeMs);
@@ -804,7 +803,7 @@
             document.getElementById('headerNextStake').textContent = `${nBase.toFixed(2)} €`;
             document.getElementById('statsProgress').textContent = `✅ ${fin}/${currentMatches.length} terminés`;
 
-            // On appelle l'actualisation du Ticket Panier
+            // Appel pour mettre à jour le ticket !
             let manualNet = updateBetSlipOnly();
 
             if (fin > 0 || manualNet !== 0) {
