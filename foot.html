@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro V21 - Ticket Interactif</title>
+    <title>FootBet Pro V21 - Ticket Garanti</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -58,7 +58,7 @@
         </div>
 
         <!-- HISTORIQUE CUMULÉ -->
-        <div id="historyBlock" class="hidden bg-zinc-900 border border-blue-500/30 rounded-2xl p-4 shadow-xl mb-2">
+        <div id="historyBlock" style="display: none;" class="bg-zinc-900 border border-blue-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
                     <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés
@@ -162,7 +162,8 @@
             <div class="flex gap-1.5">
                 <button onclick="selectAllAlgo('BASE')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow">+ Bases</button>
                 <button onclick="selectAllAlgo('PEPITE')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow">+ Pépites</button>
-                <button onclick="clearManualBets()" class="bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/50 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow flex items-center" title="Vider mes sélections">
+                <!-- BOUTON VIDER CLAIR ET VISIBLE -->
+                <button onclick="clearManualBets()" class="bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/50 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow flex items-center" title="Vider le ticket">
                     <i class="fa-solid fa-trash mr-1.5"></i> Vider
                 </button>
             </div>
@@ -172,7 +173,8 @@
     </main>
 
     <!-- TICKET FLOTTANT DÉTAILLÉ (PANIER) EN BAS D'ÉCRAN -->
-    <div id="betSlipBar" class="hidden fixed bottom-0 left-0 right-0 z-50 bg-zinc-900/95 backdrop-blur-lg border-t-2 border-blue-500 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] flex-col max-h-[85vh] transition-all duration-300">
+    <!-- FORCÉ EN STYLE INLINE POUR EVITER LE BLOCAGE TAILWIND -->
+    <div id="betSlipBar" class="fixed bottom-0 left-0 right-0 z-50 bg-zinc-900/95 backdrop-blur-lg border-t-2 border-blue-500 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] flex-col max-h-[85vh] transition-all duration-300" style="display: none;">
         
         <!-- HEADER DU TICKET -->
         <div class="p-3 max-w-3xl mx-auto w-full flex justify-between items-center cursor-pointer" onclick="toggleTicket()">
@@ -191,13 +193,13 @@
                     <span class="text-[9px] text-amber-400 uppercase font-bold block">Gain Max Combiné</span>
                     <strong id="slipComboGainMini" class="text-amber-400 font-black text-sm">0.00 €</strong>
                  </div>
-                 <!-- Bouton vider directement sur le ticket -->
+                 <!-- Petite icône corbeille secondaire -->
                  <button onclick="clearManualBets(); event.stopPropagation();" class="text-zinc-500 hover:text-red-400 p-2 transition" title="Vider le ticket"><i class="fa-solid fa-trash"></i></button>
             </div>
         </div>
 
         <!-- CONTENU DÉTAILLÉ DU TICKET -->
-        <div id="ticketDetails" class="hidden flex-col max-w-3xl mx-auto w-full px-3 pb-4 overflow-y-auto border-t border-zinc-800 pt-3">
+        <div id="ticketDetails" class="flex-col max-w-3xl mx-auto w-full px-3 pb-4 overflow-y-auto border-t border-zinc-800 pt-3" style="display: none;">
             
             <div class="text-[11px] uppercase font-bold text-zinc-400 mb-2">Détail Match par Match</div>
             <div id="ticketMatchesList" class="mb-4 space-y-2">
@@ -241,9 +243,8 @@
         </div>
     </div>
 
-    <!-- SCRIPT COMPLET -->
     <script>
-        // --- UTILITAIRES ---
+        // --- UTILITAIRES ET VARIABLES ---
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
         function getLocalYYYYMMDD(d) {
@@ -253,7 +254,7 @@
             return `${yr}-${mo}-${da}`;
         }
 
-        // Accès robuste à la mémoire locale
+        // Sécurité maximale sur le stockage local pour éviter les crashs
         function safeGetLocal(key) {
             try { 
                 let item = localStorage.getItem(key);
@@ -269,11 +270,12 @@
 
         document.getElementById('matchDate').value = getLocalYYYYMMDD(new Date());
         let currentMatches = [];
+        let globalBets = {}; // VARIABLE GLOBALE EN MEMOIRE VIVE
         let isLiveFilterActive = false;
         let isTicketExpanded = false;
         const BASE_STAKE = 5.0;
 
-        // --- ALGORITHME DES COTES ---
+        // --- ALGORITHME DES COTES (FABTURF) ---
         const topTeams = {
             "Real Madrid":95, "Manchester City":95, "Bayern Munich":94, "Liverpool":93, "Arsenal":92, "Barcelona":92,
             "Paris Saint-Germain":91, "PSG":91, "Inter Milan":90, "Bayer Leverkusen":88, "Borussia Dortmund":85,
@@ -373,6 +375,9 @@
             const apiDate = dateInputVal.replace(/-/g, '');
             const statusText = document.getElementById('statusText');
             
+            // Chargement des paris globaux en mémoire
+            globalBets = safeGetLocal("footbet_v21_bets_" + dateInputVal);
+
             if (!isSilent) statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Recherche des matchs...';
             
             const leagues = [
@@ -471,6 +476,7 @@
             loadFootballMatches(false);
         }
 
+        // Rafraîchissement silencieux 
         setInterval(() => {
             if (document.getElementById('matchDate').value === getLocalYYYYMMDD(new Date()) || isLiveFilterActive) {
                 loadFootballMatches(true);
@@ -526,12 +532,10 @@
             }, 3000);
         }
 
-        // --- AFFICHAGE DES MATCHS (DOM) ---
+        // --- AFFICHAGE DES MATCHS (DOM INITIAL) ---
         function renderMatches(matchesToRender) {
             const container = document.getElementById('matchesContainer');
-            const dateStr = document.getElementById('matchDate').value;
-            let savedBets = safeGetLocal("footbet_v21_bets_" + dateStr);
-
+            
             if (matchesToRender.length === 0) {
                 container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match trouvé pour ce filtre.</div>`;
                 return;
@@ -545,7 +549,7 @@
                 let tStr = new Date(m.timeMs || m.utcDate).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
                 let sBadge = isLive ? `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold animate-pulse">🔴 ${m.statusDetail}</span>` : (isFin ? `<span class="bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">🏁 Terminé</span>` : `<span class="bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">${tStr}</span>`);
 
-                let myB = savedBets[m.id];
+                let myB = globalBets[m.id];
                 
                 let btnsHTML = ['HOME', 'DRAW', 'AWAY'].map(k => {
                     let lbl = (k==='HOME')?'1':(k==='DRAW'?'N':'2');
@@ -582,6 +586,7 @@
             container.appendChild(frag);
         }
 
+        // C'EST CETTE FONCTION QUI MET A JOUR LES BOUTONS LORS D'UN CLIC SANS SAUT DE PAGE
         function updateMatchButtonsDOM(mId, myB) {
             let btnsContainer = document.getElementById('btns_' + mId);
             if (!btnsContainer) return;
@@ -601,18 +606,34 @@
             }).join('');
         }
 
-        // --- GESTION DU TICKET (PANIER) ET CLICS ---
-        
-        // C'EST CETTE FONCTION QUI FAIT APPARAITRE LE TICKET ET CALCULE LES GAINS EN TEMPS REEL
-        function updateBetSlipOnly() {
-            const dateStr = document.getElementById('matchDate').value;
-            let savedBets = safeGetLocal("footbet_v21_bets_" + dateStr);
+        // --- GESTION DU TICKET DE PARI DÉTAILLÉ (PANIER) ---
+        function toggleTicket() {
+            let details = document.getElementById('ticketDetails');
+            let chevron = document.getElementById('ticketChevron');
+            let ticket = document.getElementById('betSlipBar');
             
+            isTicketExpanded = !isTicketExpanded;
+            
+            if (isTicketExpanded) {
+                details.style.display = 'flex';
+                chevron.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                ticket.classList.remove('bg-zinc-900/95');
+                ticket.classList.add('bg-zinc-900', 'border-t-4');
+            } else {
+                details.style.display = 'none';
+                chevron.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                ticket.classList.add('bg-zinc-900/95');
+                ticket.classList.remove('bg-zinc-900', 'border-t-4');
+            }
+        }
+
+        // C'EST CETTE FONCTION QUI MET A JOUR LE TICKET EN BAS EN TEMPS REEL
+        function updateBetSlipOnly() {
             let slipC = 0, simGross = 0, simNet = 0, cOdd = 1.0, cLost = false;
             let ticketListHTML = '';
 
             currentMatches.forEach(m => {
-                let pick = savedBets[m.id];
+                let pick = globalBets[m.id];
                 if (!pick) return;
                 slipC++; 
                 let o = m.algo.odds[pick]; 
@@ -640,7 +661,7 @@
                 }
 
                 ticketListHTML += `
-                    <div class="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-2.5 flex justify-between items-center text-[11px]">
+                    <div class="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-2.5 flex justify-between items-center text-[11px] mb-2">
                         <div class="flex items-center space-x-2.5 w-2/3">
                             <span class="w-4 text-center text-sm">${mIcon}</span>
                             <div class="truncate">
@@ -657,111 +678,93 @@
             });
 
             // Met à jour le gain total au dessus
-            let elGainTotal = document.getElementById('gainManualTotal');
-            if (elGainTotal) elGainTotal.innerHTML = formatMoneyHTML(simNet);
+            try { document.getElementById('gainManualTotal').innerHTML = formatMoneyHTML(simNet); } catch(e){}
             
             let bar = document.getElementById('betSlipBar');
             if (!bar) return simNet;
             
             if (slipC > 0) {
-                // AFFICHE LE TICKET
-                bar.classList.remove('hidden');
-                bar.classList.add('flex');
+                // FORCE L'AFFICHAGE DU TICKET
+                bar.style.display = 'flex';
                 
-                if (document.getElementById('slipCountBadge')) document.getElementById('slipCountBadge').textContent = slipC;
-                if (document.getElementById('ticketMatchesList')) document.getElementById('ticketMatchesList').innerHTML = ticketListHTML;
+                try { document.getElementById('slipCountBadge').textContent = slipC; } catch(e){}
+                try { document.getElementById('ticketMatchesList').innerHTML = ticketListHTML; } catch(e){}
                 
                 // Maj Option 1 : Simples
-                if (document.getElementById('ticketSimpleStake')) document.getElementById('ticketSimpleStake').textContent = `${(slipC * BASE_STAKE).toFixed(2)} €`;
-                if (document.getElementById('ticketSimpleGain')) document.getElementById('ticketSimpleGain').textContent = `${simGross.toFixed(2)} €`;
-                if (document.getElementById('ticketSimpleNet')) document.getElementById('ticketSimpleNet').textContent = `${simNet > 0 ? '+':''}${simNet.toFixed(2)} €`;
+                try { document.getElementById('ticketSimpleStake').textContent = `${(slipC * BASE_STAKE).toFixed(2)} €`; } catch(e){}
+                try { document.getElementById('ticketSimpleGain').textContent = `${simGross.toFixed(2)} €`; } catch(e){}
+                try { document.getElementById('ticketSimpleNet').textContent = `${simNet > 0 ? '+':''}${simNet.toFixed(2)} €`; } catch(e){}
                 
-                if (document.getElementById('slipSimpleGain')) document.getElementById('slipSimpleGain').textContent = `${simGross.toFixed(2)} €`;
-                if (document.getElementById('slipSimpleNet')) document.getElementById('slipSimpleNet').innerHTML = `(${formatMoneyHTML(simNet)})`;
+                try { document.getElementById('slipSimpleGain').textContent = `${simGross.toFixed(2)} €`; } catch(e){}
+                try { document.getElementById('slipSimpleNet').innerHTML = `(${formatMoneyHTML(simNet)})`; } catch(e){}
                 
                 // Maj Option 2 : Combiné
                 let cPot = cLost ? 0 : (cOdd*BASE_STAKE);
                 let cText = cLost ? "Perdu (0.00 €)" : `${cPot.toFixed(2)} €`;
                 let cClass = cLost ? "text-red-400 font-black" : "text-amber-400 font-black";
                 
-                if (document.getElementById('ticketComboOdds')) document.getElementById('ticketComboOdds').textContent = cOdd.toFixed(2);
-                if (document.getElementById('slipComboOdds')) document.getElementById('slipComboOdds').textContent = cOdd.toFixed(2);
+                try { document.getElementById('ticketComboOdds').textContent = cOdd.toFixed(2); } catch(e){}
+                try { document.getElementById('slipComboOdds').textContent = cOdd.toFixed(2); } catch(e){}
                 
-                let mainCombo = document.getElementById('ticketComboGain');
-                if(mainCombo) { mainCombo.textContent = cText; mainCombo.className = cClass + " text-sm"; }
-                
-                let miniCombo = document.getElementById('slipComboGain');
-                if(miniCombo) { miniCombo.textContent = cText; miniCombo.className = cClass; }
-                
-                let miniGain = document.getElementById('slipComboGainMini');
-                if(miniGain) { miniGain.textContent = cText; miniGain.className = cClass + " text-sm"; }
+                try {
+                    let mainCombo = document.getElementById('ticketComboGain');
+                    mainCombo.textContent = cText; mainCombo.className = cClass + " text-sm";
+                } catch(e){}
+                try {
+                    let miniCombo = document.getElementById('slipComboGain');
+                    miniCombo.textContent = cText; miniCombo.className = cClass;
+                } catch(e){}
+                try {
+                    let miniGain = document.getElementById('slipComboGainMini');
+                    miniGain.textContent = cText; miniGain.className = cClass + " text-sm";
+                } catch(e){}
 
             } else { 
                 // MASQUE LE TICKET
-                bar.classList.add('hidden'); 
-                bar.classList.remove('flex');
+                bar.style.display = 'none';
                 if(isTicketExpanded) toggleTicket();
             }
 
             return simNet; 
         }
 
-        function toggleTicket() {
-            let ticket = document.getElementById('betSlipBar');
-            let details = document.getElementById('ticketDetails');
-            let chevron = document.getElementById('ticketChevron');
-            isTicketExpanded = !isTicketExpanded;
-            
-            if (isTicketExpanded) {
-                details.classList.remove('hidden');
-                details.classList.add('flex');
-                chevron.classList.replace('fa-chevron-up', 'fa-chevron-down');
-                ticket.classList.remove('bg-zinc-900/95');
-                ticket.classList.add('bg-zinc-900', 'border-t-4');
-            } else {
-                details.classList.add('hidden');
-                details.classList.remove('flex');
-                chevron.classList.replace('fa-chevron-down', 'fa-chevron-up');
-                ticket.classList.add('bg-zinc-900/95');
-                ticket.classList.remove('bg-zinc-900', 'border-t-4');
-            }
-        }
-
+        // --- L'ACTION DU CLIC SUR UN PARI ---
         function placeBet(mId, pick) {
             let d = document.getElementById('matchDate').value;
-            let b = safeGetLocal("footbet_v21_bets_" + d);
-            if (b[mId] === pick) { 
-                delete b[mId]; 
+            if (globalBets[mId] === pick) { 
+                delete globalBets[mId]; 
             } else { 
-                b[mId] = pick; 
+                globalBets[mId] = pick; 
             }
-            safeSetLocal("footbet_v21_bets_" + d, b);
-            updateMatchButtonsDOM(mId, b[mId]);
-            calculateAllStats(); 
+            safeSetLocal("footbet_v21_bets_" + d, globalBets);
+            
+            // On met à jour seulement les boutons du match cliqué
+            updateMatchButtonsDOM(mId, globalBets[mId]);
+            // On met à jour la barre de ticket en bas
+            calculateAllStats();
         }
 
         function selectAllAlgo(type) {
             let d = document.getElementById('matchDate').value;
-            let b = safeGetLocal("footbet_v21_bets_" + d);
             currentMatches.forEach(m => {
-                b[m.id] = (type === 'BASE') ? m.algo.basePick.key : m.algo.pepitePick.key;
-                updateMatchButtonsDOM(m.id, b[m.id]);
+                globalBets[m.id] = (type === 'BASE') ? m.algo.basePick.key : m.algo.pepitePick.key;
+                updateMatchButtonsDOM(m.id, globalBets[m.id]);
             });
-            safeSetLocal("footbet_v21_bets_" + d, b);
+            safeSetLocal("footbet_v21_bets_" + d, globalBets);
             showToast("Sélection de groupe validée !", "success");
             calculateAllStats();
         }
 
         function clearManualBets() {
             let d = document.getElementById('matchDate').value;
-            localStorage.removeItem(`footbet_v21_bets_${d}`);
+            globalBets = {};
+            safeSetLocal("footbet_v21_bets_" + d, globalBets);
             currentMatches.forEach(m => updateMatchButtonsDOM(m.id, undefined));
             showToast("Ticket complètement vidé", "info"); 
             calculateAllStats();
-            if (isTicketExpanded) toggleTicket();
         }
 
-        // --- CALCUL DES STATS AUTO (BILAN) ET MAJ DU TICKET ---
+        // --- CALCUL DES STATS AUTO ---
         function calculateAllStats() {
             const dateStr = document.getElementById('matchDate').value;
             let chronologicalMatches = [...currentMatches].sort((a, b) => a.timeMs - b.timeMs);
@@ -791,30 +794,33 @@
                 } else { flatPep -= BASE_STAKE; progPep -= stkPep; defPep += stkPep; }
             });
 
-            document.getElementById('statBaseFlat').textContent = `${baseWins}/${fin}`;
-            document.getElementById('statBaseProg').textContent = `${baseWins}/${fin}`;
-            document.getElementById('gainBaseFlat').innerHTML = formatMoneyHTML(flatBase);
-            document.getElementById('gainBaseProg').innerHTML = formatMoneyHTML(progBase);
+            // Sauvegarde UI avec try/catch global
+            try {
+                document.getElementById('statBaseFlat').textContent = `${baseWins}/${fin}`;
+                document.getElementById('statBaseProg').textContent = `${baseWins}/${fin}`;
+                document.getElementById('gainBaseFlat').innerHTML = formatMoneyHTML(flatBase);
+                document.getElementById('gainBaseProg').innerHTML = formatMoneyHTML(progBase);
 
-            document.getElementById('statPepiteFlat').textContent = `${pepiteWins}/${fin}`;
-            document.getElementById('statPepiteProg').textContent = `${pepiteWins}/${fin}`;
-            document.getElementById('gainPepiteFlat').innerHTML = formatMoneyHTML(flatPep);
-            document.getElementById('gainPepiteProg').innerHTML = formatMoneyHTML(progPep);
+                document.getElementById('statPepiteFlat').textContent = `${pepiteWins}/${fin}`;
+                document.getElementById('statPepiteProg').textContent = `${pepiteWins}/${fin}`;
+                document.getElementById('gainPepiteFlat').innerHTML = formatMoneyHTML(flatPep);
+                document.getElementById('gainPepiteProg').innerHTML = formatMoneyHTML(progPep);
 
-            document.getElementById('totalSpentBaseText').textContent = `${spBase.toFixed(2)} €`;
-            document.getElementById('maxStakeBaseText').textContent = `${maxBase.toFixed(2)} €`;
-            document.getElementById('deficitBaseText').textContent = `${defBase.toFixed(2)} €`;
-            document.getElementById('totalSpentPepiteText').textContent = `${spPep.toFixed(2)} €`;
-            document.getElementById('maxStakePepiteText').textContent = `${maxPep.toFixed(2)} €`;
-            document.getElementById('deficitPepiteText').textContent = `${defPep.toFixed(2)} €`;
+                document.getElementById('totalSpentBaseText').textContent = `${spBase.toFixed(2)} €`;
+                document.getElementById('maxStakeBaseText').textContent = `${maxBase.toFixed(2)} €`;
+                document.getElementById('deficitBaseText').textContent = `${defBase.toFixed(2)} €`;
+                document.getElementById('totalSpentPepiteText').textContent = `${spPep.toFixed(2)} €`;
+                document.getElementById('maxStakePepiteText').textContent = `${maxPep.toFixed(2)} €`;
+                document.getElementById('deficitPepiteText').textContent = `${defPep.toFixed(2)} €`;
 
-            let nBase = computeSmartStake(defBase, 1.65), nPep = computeSmartStake(defPep, 2.70);
-            document.getElementById('nextStakeBaseText').textContent = `Prochaine Mise: ${nBase.toFixed(2)} €`;
-            document.getElementById('nextStakePepiteText').textContent = `Prochaine Mise: ${nPep.toFixed(2)} €`;
-            document.getElementById('headerNextStake').textContent = `${nBase.toFixed(2)} €`;
-            document.getElementById('statsProgress').textContent = `✅ ${fin}/${currentMatches.length} terminés`;
+                let nBase = computeSmartStake(defBase, 1.65), nPep = computeSmartStake(defPep, 2.70);
+                document.getElementById('nextStakeBaseText').textContent = `Prochaine Mise: ${nBase.toFixed(2)} €`;
+                document.getElementById('nextStakePepiteText').textContent = `Prochaine Mise: ${nPep.toFixed(2)} €`;
+                document.getElementById('headerNextStake').textContent = `${nBase.toFixed(2)} €`;
+                document.getElementById('statsProgress').textContent = `✅ ${fin}/${currentMatches.length} terminés`;
+            } catch(e) {}
 
-            // === MISE A JOUR DU TICKET !!! ===
+            // Appel pour mettre à jour le ticket !
             let manualNet = updateBetSlipOnly();
 
             if (fin > 0 || manualNet !== 0) {
@@ -822,7 +828,7 @@
                 hist[dateStr] = { baseProfit: progBase, pepiteProfit: progPep, manualProfit: manualNet };
                 safeSetLocal('footbet_v21_history', hist);
             }
-            if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
+            if (document.getElementById('historyBlock') && !document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
         }
 
         function editScoreManual(mId, hName, aName) {
@@ -837,11 +843,11 @@
 
         function toggleHistoryStats() {
             let block = document.getElementById('historyBlock');
-            if (block.classList.contains('hidden')) {
-                block.classList.remove('hidden');
+            if (block.style.display === 'none' || block.style.display === '') {
+                block.style.display = 'block';
                 showHistoryStats();
             } else {
-                block.classList.add('hidden');
+                block.style.display = 'none';
             }
         }
 
