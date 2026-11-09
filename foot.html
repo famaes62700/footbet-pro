@@ -52,7 +52,7 @@
         
         <div class="flex justify-between items-center bg-zinc-950 border border-zinc-800 p-2 rounded-xl">
             <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des compétitions...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Démarrage...
             </div>
             <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded flex-shrink-0">Prêt</div>
         </div>
@@ -198,6 +198,8 @@
     </div>
 
     <script>
+        const sleep = ms => new Promise(res => setTimeout(res, ms));
+
         function getLocalYYYYMMDD(d) {
             const yr = d.getFullYear();
             const mo = String(d.getMonth() + 1).padStart(2, '0');
@@ -280,12 +282,39 @@
             return null;
         }
 
+        function getFallbackMatches(dateStr) {
+            let baseTime = new Date(dateStr + "T18:00:00").getTime();
+            let mockList = [
+                { id: "mock1", home: "France", away: "Italie", comp: "NATIONS LEAGUE" },
+                { id: "mock2", home: "Paris Saint-Germain", away: "Marseille", comp: "LIGUE 1" },
+                { id: "mock3", home: "Real Madrid", away: "Barcelona", comp: "LA LIGA" },
+                { id: "mock4", home: "Manchester City", away: "Arsenal", comp: "PREMIER LEAGUE" },
+                { id: "mock5", home: "Bayern Munich", away: "Borussia Dortmund", comp: "BUNDESLIGA" }
+            ];
+
+            let lockedOdds = JSON.parse(localStorage.getItem(`foot_fixed_odds_v21_${dateStr.replace(/-/g,'')}`)) || {};
+
+            let mocks = mockList.map((m, idx) => {
+                let tMs = baseTime + (idx * 30 * 60000); 
+                if (!lockedOdds[m.id]) lockedOdds[m.id] = computeFootAlgorithm(m.home, m.away);
+                return {
+                    id: m.id, status: 'TIMED', statusDetail: 'Prévu',
+                    utcDate: new Date(tMs).toISOString(), timeMs: tMs, competition: { name: m.comp },
+                    homeTeam: { name: m.home, logo: `https://ui-avatars.com/api/?name=${encodeURIComponent(m.home)}&background=18181b&color=60a5fa`, score: '-', numScore: 0 },
+                    awayTeam: { name: m.away, logo: `https://ui-avatars.com/api/?name=${encodeURIComponent(m.away)}&background=18181b&color=60a5fa`, score: '-', numScore: 0 },
+                    winner: null, algo: lockedOdds[m.id]
+                };
+            });
+            localStorage.setItem(`foot_fixed_odds_v21_${dateStr.replace(/-/g,'')}`, JSON.stringify(lockedOdds));
+            return mocks;
+        }
+
         async function loadFootballMatches(isSilent = false) {
             const dateInputVal = document.getElementById('matchDate').value;
             const apiDate = dateInputVal.replace(/-/g, '');
             const statusText = document.getElementById('statusText');
             
-            if (!isSilent) statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs...';
+            if (!isSilent) statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Recherche des matchs...';
             
             const leagues = [
                 { c: 'fra.1', n: 'LIGUE 1' },
@@ -301,63 +330,63 @@
             ];
 
             try {
-                const results = await Promise.all(
-                    leagues.map(async (lg) => {
-                        let data = await fetchLeagueData(lg.c, apiDate);
-                        return { lgName: lg.n, data: data };
-                    })
-                );
-
                 let validMatches = [];
                 let seenIds = new Set();
                 let manualScores = JSON.parse(localStorage.getItem(`foot_manual_scores_${dateInputVal}`)) || {};
-                let lockedOdds = JSON.parse(localStorage.getItem(`foot_fixed_odds_v21_${dateInputVal}`)) || {};
+                let lockedOdds = JSON.parse(localStorage.getItem(`foot_fixed_odds_v21_${apiDate}`)) || {};
 
-                results.forEach(({ lgName, data }) => {
-                    if (!data || !Array.isArray(data.events)) return;
+                for (let i = 0; i < leagues.length; i++) {
+                    let lg = leagues[i];
+                    if (!isSilent) statusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion ${lg.n}...`;
+                    
+                    let data = await smartFetchESPN(lg.c, apiDate);
+                    
+                    if (data && data.events) {
+                        data.events.forEach(ev => {
+                            if (!ev.id || seenIds.has(String(ev.id))) return;
+                            let comp = ev.competitions?.[0];
+                            if (!comp || !comp.competitors || comp.competitors.length < 2) return;
 
-                    data.events.forEach(ev => {
-                        if (!ev.id || seenIds.has(String(ev.id))) return;
-                        let comp = ev.competitions?.[0];
-                        if (!comp || !comp.competitors || comp.competitors.length < 2) return;
+                            let s = String(comp.status?.type?.state || 'pre').toLowerCase();
+                            let isLive = (s === 'in');
+                            let isCompleted = Boolean(comp.status?.type?.completed || s === 'post');
+                            
+                            let home = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'home') || comp.competitors[0];
+                            let away = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'away') || comp.competitors[1];
 
-                        let s = String(comp.status?.type?.state || 'pre').toLowerCase();
-                        let isLive = (s === 'in');
-                        let isCompleted = Boolean(comp.status?.type?.completed || s === 'post');
-                        
-                        let home = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'home') || comp.competitors[0];
-                        let away = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'away') || comp.competitors[1];
+                            let hName = home.team?.name || "Domicile";
+                            let aName = away.team?.name || "Extérieur";
+                            
+                            let ptsH = manualScores[ev.id]?.home !== undefined ? manualScores[ev.id].home : (parseInt(home.score) || 0);
+                            let ptsA = manualScores[ev.id]?.away !== undefined ? manualScores[ev.id].away : (parseInt(away.score) || 0);
+                            
+                            let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
+                            let winner = (status === 'FINISHED') ? (ptsH > ptsA ? 'HOME' : (ptsA > ptsH ? 'AWAY' : 'DRAW')) : null;
 
-                        let hName = home.team?.name || "Domicile";
-                        let aName = away.team?.name || "Extérieur";
-                        
-                        let ptsH = manualScores[ev.id]?.home !== undefined ? manualScores[ev.id].home : (parseInt(home.score) || 0);
-                        let ptsA = manualScores[ev.id]?.away !== undefined ? manualScores[ev.id].away : (parseInt(away.score) || 0);
-                        
-                        let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
-                        let winner = (status === 'FINISHED') ? (ptsH > ptsA ? 'HOME' : (ptsA > ptsH ? 'AWAY' : 'DRAW')) : null;
+                            if (!lockedOdds[ev.id]) lockedOdds[ev.id] = computeFootAlgorithm(hName, aName);
 
-                        if (!lockedOdds[ev.id]) lockedOdds[ev.id] = computeFootAlgorithm(hName, aName);
-
-                        validMatches.push({
-                            id: String(ev.id), status: status, statusDetail: comp.status?.displayClock || "En cours",
-                            utcDate: ev.date, timeMs: new Date(ev.date).getTime(), competition: { name: lgName },
-                            homeTeam: { name: hName, logo: home.team?.logo, score: status==='TIMED'?'-':ptsH, numScore: ptsH },
-                            awayTeam: { name: aName, logo: away.team?.logo, score: status==='TIMED'?'-':ptsA, numScore: ptsA },
-                            winner: winner, algo: lockedOdds[ev.id]
+                            validMatches.push({
+                                id: String(ev.id), status: status, statusDetail: comp.status?.displayClock || "En cours",
+                                utcDate: ev.date, timeMs: new Date(ev.date).getTime(), competition: { name: lg.n },
+                                homeTeam: { name: hName, logo: home.team?.logo, score: status==='TIMED'?'-':ptsH, numScore: ptsH },
+                                awayTeam: { name: aName, logo: away.team?.logo, score: status==='TIMED'?'-':ptsA, numScore: ptsA },
+                                winner: winner, algo: lockedOdds[ev.id]
+                            });
+                            seenIds.add(String(ev.id));
                         });
-                        seenIds.add(String(ev.id));
-                    });
-                });
-
-                if (validMatches.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match disponible à cette date (0 trouvé).</span>`;
-                } else {
-                    const lc = validMatches.filter(m => m.status === 'IN_PLAY').length;
-                    statusText.innerHTML = `<span class="text-blue-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${validMatches.length} matchs chargés (${lc} en direct)</span>`;
+                    }
+                    await sleep(150);
                 }
 
-                localStorage.setItem(`foot_fixed_odds_v21_${dateInputVal}`, JSON.stringify(lockedOdds));
+                if (validMatches.length === 0) {
+                    validMatches = getFallbackMatches(dateInputVal);
+                    if(!isSilent) statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> 0 match officiel. Mode Démo activé.</span>`;
+                } else {
+                    localStorage.setItem(`foot_fixed_odds_v21_${apiDate}`, JSON.stringify(lockedOdds));
+                    const lc = validMatches.filter(m => m.status === 'IN_PLAY').length;
+                    if(!isSilent) statusText.innerHTML = `<span class="text-blue-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${validMatches.length} matchs trouvés (${lc} en direct)</span>`;
+                }
+
                 currentMatches = validMatches.sort((a, b) => a.timeMs - b.timeMs);
                 
                 populateCompetitions(currentMatches);
@@ -365,13 +394,13 @@
                 calculateAllStats();
 
             } catch (error) {
-                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur réseau.</span>`;
+                console.error(error);
+                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur réseau critique.</span>`;
+                currentMatches = getFallbackMatches(dateInputVal);
+                populateCompetitions(currentMatches);
+                applyFilters();
+                calculateAllStats();
             }
-        }
-
-        // Utilise smartFetchESPN mais avec un wrappeur
-        async function fetchLeagueData(c, apiDate) {
-            return await smartFetchESPN(c, apiDate);
         }
 
         function onDateChange() {
@@ -383,7 +412,7 @@
             if (document.getElementById('matchDate').value === getLocalYYYYMMDD(new Date()) || isLiveFilterActive) {
                 loadFootballMatches(true);
             }
-        }, 12000);
+        }, 15000);
 
         function populateCompetitions(matches) {
             const select = document.getElementById('compSelect');
@@ -418,6 +447,20 @@
 
         function formatMoneyHTML(val) {
             return `<span class="${val > 0 ? 'text-emerald-400' : (val < 0 ? 'text-red-400' : 'text-zinc-400')}">${val > 0 ? '+' : ''}${val.toFixed(2)} €</span>`;
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            let bgClass = type === 'success' ? 'bg-emerald-900/95 border-emerald-500/50 text-emerald-200' : (type === 'error' ? 'bg-red-900/95 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
+            toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 flex items-center ${bgClass}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('opacity-0', 'translate-y-2'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
         function calculateAllStats() {
@@ -511,7 +554,7 @@
             let savedBets = JSON.parse(localStorage.getItem(`footbet_v21_bets_${dateStr}`)) || {};
 
             if (matchesToRender.length === 0) {
-                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match.</div>`;
+                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match pour ce filtre.</div>`;
                 return;
             }
 
@@ -522,7 +565,10 @@
             matchesToRender.forEach(m => {
                 let isFin = m.status === 'FINISHED', isLive = m.status === 'IN_PLAY';
                 let { odds, basePick, pepitePick } = m.algo;
-                let tStr = new Date(m.utcDate).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+                
+                let tMs = m.timeMs ? m.timeMs : new Date(m.utcDate).getTime();
+                let tStr = new Date(tMs).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+                
                 let sBadge = isLive ? `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold animate-pulse">🔴 ${m.statusDetail}</span>` : (isFin ? `<span class="bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">🏁 Terminé</span>` : `<span class="bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">${tStr}</span>`);
 
                 let myB = savedBets[m.id];
@@ -589,41 +635,6 @@
             mScores[mId] = { home: parseInt(ih,10)||0, away: parseInt(ia,10)||0 };
             localStorage.setItem(`foot_manual_scores_${d}`, JSON.stringify(mScores));
             showToast("Score mis à jour !", "success"); loadFootballMatches(true);
-        }
-
-        function showHistoryStats() {
-            let year = new Date(document.getElementById('matchDate').value).getFullYear();
-            document.getElementById('currentYearText').textContent = year;
-            let h = JSON.parse(localStorage.getItem('footbet_v21_history')) || {};
-            
-            let mon = new Date(document.getElementById('matchDate').value);
-            mon.setDate(mon.getDate() - ((mon.getDay()||7) - 1));
-            
-            let wB=0, wP=0, wM=0;
-            for (let i=0; i<7; i++) {
-                let d = new Date(mon); d.setDate(mon.getDate() + i);
-                let day = h[getLocalYYYYMMDD(d)];
-                if (day) { wB += day.baseProfit||0; wP += day.pepiteProfit||0; wM += day.manualProfit||0; }
-            }
-            document.getElementById('weekBase').innerHTML = formatMoneyHTML(wB);
-            document.getElementById('weekPepite').innerHTML = formatMoneyHTML(wP);
-            document.getElementById('weekManual').innerHTML = formatMoneyHTML(wM);
-
-            const mNames = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
-            let grid = document.getElementById('monthsGrid'); grid.innerHTML = '';
-            for (let m=0; m<12; m++) {
-                let mB=0, mP=0, has=false;
-                for (let d=1; d<=new Date(year, m+1, 0).getDate(); d++) {
-                    let day = h[`${year}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`];
-                    if (day) { has = true; mB += day.baseProfit||0; mP += day.pepiteProfit||0; }
-                }
-                if (has) {
-                    let div = document.createElement('div');
-                    div.className = "bg-zinc-800/80 p-2.5 rounded-xl border border-zinc-700 mb-2 flex justify-between items-center text-xs";
-                    div.innerHTML = `<span class="font-bold text-zinc-300">${mNames[m]}</span><div class="space-x-2"><span>Sûre: ${formatMoneyHTML(mB)}</span><span>Pépite: ${formatMoneyHTML(mP)}</span></div>`;
-                    grid.appendChild(div);
-                }
-            }
         }
 
         window.onload = () => loadFootballMatches(false);
