@@ -3,15 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet V21 - Clubs & Sélections Nationales</title>
-    
+    <title>FootBet Pro V21 - Algorithme FabTurf</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="FootBet">
-    
-    <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=Foot&background=2563eb&color=fff&size=512&font-size=0.4">
-    <link rel="icon" type="image/png" href="https://ui-avatars.com/api/?name=Foot&background=2563eb&color=fff&size=512&font-size=0.4">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -34,11 +28,9 @@
                     <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">Mise Auto (Sûre)</span>
                     <span id="headerNextStake">5.00 €</span>
                 </div>
-
-                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow" title="Historique des Gains">
+                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow">
                     <i class="fa-solid fa-calendar-days text-blue-400"></i>
                 </button>
-
                 <input type="date" id="matchDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-blue-500" onchange="onDateChange()">
             </div>
         </div>
@@ -50,7 +42,7 @@
             <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 focus:outline-none focus:border-blue-500 flex-grow">
                 <option value="ALL">Toutes Compétitions & Sélections</option>
             </select>
-            <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-xs font-bold transition flex items-center shadow flex-shrink-0" title="Actualiser">
+            <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-xs font-bold transition flex items-center shadow flex-shrink-0">
                 <i class="fa-solid fa-rotate"></i>
             </button>
         </div>
@@ -60,7 +52,7 @@
         
         <div class="flex justify-between items-center bg-zinc-950 border border-zinc-800 p-2 rounded-xl">
             <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des compétitions...
             </div>
             <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded flex-shrink-0">Prêt</div>
         </div>
@@ -77,9 +69,9 @@
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
                     <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Cette Semaine</h3>
                     <div class="grid grid-cols-3 gap-2">
-                        <div class="text-zinc-300">Valeur Sûre : <span id="weekBase" class="text-emerald-400 font-bold block">0.00 €</span></div>
+                        <div class="text-zinc-300">Sûre : <span id="weekBase" class="text-emerald-400 font-bold block">0.00 €</span></div>
                         <div class="text-zinc-300">Pépite : <span id="weekPepite" class="text-amber-400 font-bold block">0.00 €</span></div>
-                        <div class="text-zinc-300">Tickets Perso : <span id="weekManual" class="text-blue-400 font-bold block">0.00 €</span></div>
+                        <div class="text-zinc-300">Perso : <span id="weekManual" class="text-blue-400 font-bold block">0.00 €</span></div>
                     </div>
                 </div>
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
@@ -93,8 +85,8 @@
         <div class="bg-zinc-900 border border-blue-500/30 rounded-2xl p-4 shadow-xl space-y-3">
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
-                    <h2 class="text-xs font-bold uppercase text-blue-400 tracking-wider">Bilan Auto du Jour (Cotes Fixes)</h2>
-                    <p class="text-[10px] text-zinc-400">Joué automatiquement sur chaque match • Rattrapage Base 5€</p>
+                    <h2 class="text-xs font-bold uppercase text-blue-400 tracking-wider">Bilan Auto (Cotes Fixes)</h2>
+                    <p class="text-[10px] text-zinc-400">Joué auto • Base 5€</p>
                 </div>
                 <div class="text-right">
                     <span class="text-[9px] uppercase text-zinc-400 block">Gains Tickets Perso</span>
@@ -103,85 +95,81 @@
             </div>
 
             <div class="grid grid-cols-2 gap-3 text-xs">
+                <!-- VALEUR SÛRE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
                     <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-950 text-[8px] font-black px-1.5 py-0.5 rounded shadow">AUTO BASE</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Valeurs Sûres (Favori)</div>
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Valeurs Sûres</div>
                     <div class="grid grid-cols-2 gap-2">
-                        <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
-                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Mise Fixe (5€)</span>
-                            <span id="statBaseFlat" class="text-[9px] text-zinc-500 font-bold my-0.5">0 / 0</span>
-                            <span id="gainBaseFlat" class="font-bold text-zinc-300 mt-0.5">0.00 €</span>
+                        <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
+                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Mise (5€)</span>
+                            <span id="statBaseFlat" class="text-[9px] text-zinc-500 font-bold my-0.5">0/0</span>
+                            <span id="gainBaseFlat" class="font-bold text-zinc-300 mt-0.5 block">0.00 €</span>
                         </div>
-                        <div class="bg-zinc-900/60 p-2 rounded border border-emerald-500/30 text-center flex flex-col justify-center shadow-inner">
+                        <div class="bg-zinc-900/60 p-2 rounded border border-emerald-500/30 text-center shadow-inner">
                             <span class="text-[8px] text-emerald-400 block uppercase font-bold">Rattrapage</span>
-                            <span id="statBaseProg" class="text-[9px] text-emerald-500/70 font-bold my-0.5">0 / 0</span>
-                            <span id="gainBaseProg" class="font-bold text-emerald-400 mt-0.5">0.00 €</span>
+                            <span id="statBaseProg" class="text-[9px] text-emerald-500/70 font-bold my-0.5">0/0</span>
+                            <span id="gainBaseProg" class="font-bold text-emerald-400 mt-0.5 block">0.00 €</span>
                         </div>
                     </div>
                 </div>
 
+                <!-- PÉPITE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-amber-500/40 relative flex flex-col justify-between">
                     <div class="absolute -top-2 -right-2 bg-amber-500 text-zinc-950 text-[8px] font-black px-1.5 py-0.5 rounded shadow">AUTO PÉPITE</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Pépites (Cote 2.10 - 3.90)</div>
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Pépites (2.10+)</div>
                     <div class="grid grid-cols-2 gap-2">
-                        <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
-                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Mise Fixe (5€)</span>
-                            <span id="statPepiteFlat" class="text-[9px] text-zinc-500 font-bold my-0.5">0 / 0</span>
-                            <span id="gainPepiteFlat" class="font-bold text-zinc-300 mt-0.5">0.00 €</span>
+                        <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
+                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Mise (5€)</span>
+                            <span id="statPepiteFlat" class="text-[9px] text-zinc-500 font-bold my-0.5">0/0</span>
+                            <span id="gainPepiteFlat" class="font-bold text-zinc-300 mt-0.5 block">0.00 €</span>
                         </div>
-                        <div class="bg-zinc-900/60 p-2 rounded border border-amber-500/30 text-center flex flex-col justify-center">
+                        <div class="bg-zinc-900/60 p-2 rounded border border-amber-500/30 text-center">
                             <span class="text-[8px] text-amber-400 block uppercase font-bold">Rattrapage</span>
-                            <span id="statPepiteProg" class="text-[9px] text-amber-500/70 font-bold my-0.5">0 / 0</span>
-                            <span id="gainPepiteProg" class="font-bold text-amber-400 mt-0.5">0.00 €</span>
+                            <span id="statPepiteProg" class="text-[9px] text-amber-500/70 font-bold my-0.5">0/0</span>
+                            <span id="gainPepiteProg" class="font-bold text-amber-400 mt-0.5 block">0.00 €</span>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- MISE MAX ET DÉFICITS -->
             <div class="grid grid-cols-2 gap-3 text-[11px] bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 text-zinc-300">
                 <div class="flex flex-col space-y-1 border-r border-zinc-700/50 pr-3">
-                    <span class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Gestion (Valeur Sûre)</span>
-                    <span class="flex justify-between">Total Joué: <strong id="totalSpentBaseText" class="text-white">0.00 €</strong></span>
-                    <span class="flex justify-between">Max Atteint: <strong id="maxStakeBaseText" class="text-zinc-300">0.00 €</strong></span>
+                    <span class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Gestion (Base)</span>
+                    <span class="flex justify-between">Joué: <strong id="totalSpentBaseText" class="text-white">0.00 €</strong></span>
+                    <span class="flex justify-between">Max: <strong id="maxStakeBaseText" class="text-zinc-300">0.00 €</strong></span>
                     <span class="flex justify-between">Déficit: <strong id="deficitBaseText" class="text-red-400">0.00 €</strong></span>
                     <div class="pt-1.5">
-                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-2 py-1 rounded border border-emerald-500/30 font-black text-xs shadow-md block text-center">Prochaine Mise: 5.00 €</strong>
+                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-2 py-1 rounded border border-emerald-500/30 font-black text-xs shadow-md block text-center">Mise: 5.00 €</strong>
                     </div>
                 </div>
 
                 <div class="flex flex-col space-y-1 pl-1">
                     <span class="text-[9px] uppercase text-amber-400 font-bold mb-0.5">Gestion (Pépite)</span>
-                    <span class="flex justify-between">Total Joué: <strong id="totalSpentPepiteText" class="text-white">0.00 €</strong></span>
-                    <span class="flex justify-between">Max Atteint: <strong id="maxStakePepiteText" class="text-zinc-300">0.00 €</strong></span>
+                    <span class="flex justify-between">Joué: <strong id="totalSpentPepiteText" class="text-white">0.00 €</strong></span>
+                    <span class="flex justify-between">Max: <strong id="maxStakePepiteText" class="text-zinc-300">0.00 €</strong></span>
                     <span class="flex justify-between">Déficit: <strong id="deficitPepiteText" class="text-red-400">0.00 €</strong></span>
                     <div class="pt-1.5">
-                        <strong id="nextStakePepiteText" class="text-amber-400 bg-zinc-900 px-2 py-1 rounded border border-amber-500/30 font-black text-xs shadow-md block text-center">Prochaine Mise: 5.00 €</strong>
+                        <strong id="nextStakePepiteText" class="text-amber-400 bg-zinc-900 px-2 py-1 rounded border border-amber-500/30 font-black text-xs shadow-md block text-center">Mise: 5.00 €</strong>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ACTIONS MULTI-PARIS RAPIDES -->
+        <!-- ACTIONS RAPIDES -->
         <div class="flex flex-wrap gap-2 justify-between items-center bg-zinc-900/90 border border-zinc-800 p-2.5 rounded-xl text-xs">
-            <span class="text-zinc-400 font-bold text-[11px]"><i class="fa-solid fa-wand-magic-sparkles text-blue-400 mr-1.5"></i>Sélection Multi-Matchs :</span>
+            <span class="text-zinc-400 font-bold text-[11px]"><i class="fa-solid fa-wand-magic-sparkles text-blue-400 mr-1.5"></i>Tickets :</span>
             <div class="flex gap-1.5">
-                <button onclick="selectAllAlgo('BASE')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-2.5 py-1 rounded-lg font-bold text-[11px] transition">
-                    + Toutes les Bases
-                </button>
-                <button onclick="selectAllAlgo('PEPITE')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-lg font-bold text-[11px] transition">
-                    + Toutes les Pépites
-                </button>
-                <button onclick="clearManualBets()" class="bg-zinc-800 hover:bg-red-900/40 text-zinc-400 hover:text-red-300 border border-zinc-700 px-2.5 py-1 rounded-lg font-bold text-[11px] transition" title="Vider mes sélections">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
+                <button onclick="selectAllAlgo('BASE')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-2.5 py-1 rounded-lg font-bold text-[11px] transition">+ Bases</button>
+                <button onclick="selectAllAlgo('PEPITE')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-lg font-bold text-[11px] transition">+ Pépites</button>
+                <button onclick="clearManualBets()" class="bg-zinc-800 hover:bg-red-900/40 text-zinc-400 hover:text-red-300 border border-zinc-700 px-2.5 py-1 rounded-lg font-bold text-[11px] transition"><i class="fa-solid fa-trash"></i></button>
             </div>
         </div>
 
         <div id="matchesContainer" class="space-y-3"></div>
-
     </main>
 
-    <!-- TICKET MULTI-PARIS FLOTTANT -->
+    <!-- TICKET FLOTTANT -->
     <div id="betSlipBar" class="hidden fixed bottom-0 left-0 right-0 z-50 bg-zinc-900/95 backdrop-blur-lg border-t-2 border-blue-500 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] p-3">
         <div class="max-w-3xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
             <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
@@ -189,7 +177,7 @@
                     <span id="slipCountBadge" class="bg-blue-600 text-white font-black text-xs px-2.5 py-1 rounded-lg shadow">0</span>
                     <div>
                         <div class="text-xs font-black text-white uppercase tracking-wider">Ticket Multi-Matchs</div>
-                        <div class="text-[10px] text-zinc-400">Mise par match : <strong>5.00 €</strong> | Mise Combiné : <strong>5.00 €</strong></div>
+                        <div class="text-[10px] text-zinc-400">Mise match : <strong>5.00 €</strong> | Combiné : <strong>5.00 €</strong></div>
                     </div>
                 </div>
                 <button onclick="clearManualBets()" class="sm:hidden text-zinc-400 hover:text-red-400 text-xs px-2 py-1"><i class="fa-solid fa-trash"></i></button>
@@ -197,7 +185,7 @@
 
             <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-800 text-xs">
                 <div class="border-r border-zinc-800 pr-3">
-                    <span class="text-[9px] text-zinc-400 uppercase block">Gain Simples Cumulés</span>
+                    <span class="text-[9px] text-zinc-400 uppercase block">Simples Cumulés</span>
                     <span id="slipSimpleGain" class="font-black text-emerald-400">0.00 €</span>
                     <span id="slipSimpleNet" class="text-[10px] ml-1 text-zinc-400">(0.00 €)</span>
                 </div>
@@ -217,160 +205,82 @@
             return `${yr}-${mo}-${da}`;
         }
 
-        const todayInputStr = getLocalYYYYMMDD(new Date());
-        document.getElementById('matchDate').value = todayInputStr;
-
+        document.getElementById('matchDate').value = getLocalYYYYMMDD(new Date());
         let currentMatches = [];
         let isLiveFilterActive = false;
         const BASE_STAKE = 5.0;
 
         const topTeams = {
-            "Real Madrid": 95, "Manchester City": 95, "Bayern Munich": 94, "Liverpool": 93, "Arsenal": 92, "Barcelona": 92,
-            "Paris Saint-Germain": 91, "PSG": 91, "Inter Milan": 90, "Internazionale": 90, "Bayer Leverkusen": 88, "Borussia Dortmund": 85,
-            "Juventus": 85, "AC Milan": 85, "Atletico Madrid": 85, "Napoli": 84, "Chelsea": 83, "Tottenham": 83, 
-            "Aston Villa": 82, "Marseille": 80, "Monaco": 80, "Lille": 79, "Lens": 76, "Lyon": 76, "Nice": 75,
-            "Sporting CP": 82, "Benfica": 81, "FC Porto": 80, "PSV Eindhoven": 79, "Atalanta": 83, "RB Leipzig": 82,
-            "Newcastle": 80, "Manchester United": 80, "Roma": 79, "Lazio": 78, "Fiorentina": 77, "Villarreal": 78, "Real Sociedad": 77,
-            "France": 96, "Brazil": 94, "Argentina": 95, "England": 94, "Spain": 95, "Germany": 92, "Italy": 91, "Portugal": 93, "Belgium": 89, "Netherlands": 90
+            "Real Madrid":95, "Manchester City":95, "Bayern Munich":94, "Liverpool":93, "Arsenal":92, "Barcelona":92,
+            "Paris Saint-Germain":91, "PSG":91, "Inter Milan":90, "Bayer Leverkusen":88, "Borussia Dortmund":85,
+            "Juventus":85, "AC Milan":85, "Atletico Madrid":85, "Napoli":84, "Chelsea":83, "Tottenham":83, 
+            "Aston Villa":82, "Marseille":80, "Monaco":80, "Lille":79, "Lens":76, "Lyon":76, "Nice":75,
+            "France":96, "Brazil":94, "Argentina":95, "England":94, "Spain":95, "Germany":92, "Italy":91, "Portugal":93
         };
 
-        function hashString(str) {
-            let h = 0;
-            for (let i = 0; i < str.length; i++) h = Math.imul(31, h) + str.charCodeAt(i) | 0;
-            return Math.abs(h);
-        }
-
         function getTeamPower(teamName) {
-            let baseScore = 62 + (hashString(teamName) % 14);
+            let h = 0;
+            for (let i=0; i<teamName.length; i++) h = Math.imul(31, h) + teamName.charCodeAt(i) | 0;
+            let baseScore = 62 + (Math.abs(h) % 14);
             for (let t in topTeams) {
-                if (teamName.toLowerCase().includes(t.toLowerCase())) {
-                    baseScore = topTeams[t];
-                    break;
-                }
+                if (teamName.toLowerCase().includes(t.toLowerCase())) return topTeams[t];
             }
             return baseScore;
         }
 
-        function computeFootAlgorithm(homeName, awayName, compObj = null) {
-            let hPow = getTeamPower(homeName) + 6.5;
-            let aPow = getTeamPower(awayName);
-            let diff = hPow - aPow;
-
+        function computeFootAlgorithm(homeName, awayName) {
+            let diff = (getTeamPower(homeName) + 6.5) - getTeamPower(awayName);
             let pDraw = Math.max(0.17, 0.29 - Math.abs(diff) * 0.0045);
-            let rem = 1 - pDraw;
-            let pHome = rem / (1 + Math.pow(10, -diff / 22));
-            let pAway = rem - pHome;
+            let pHome = (1 - pDraw) / (1 + Math.pow(10, -diff / 22));
+            let pAway = (1 - pDraw) - pHome;
 
             let odd1 = Math.max(1.18, Math.min(9.50, parseFloat((0.93 / pHome).toFixed(2))));
             let oddN = Math.max(2.65, Math.min(6.50, parseFloat((0.93 / pDraw).toFixed(2))));
             let odd2 = Math.max(1.22, Math.min(11.00, parseFloat((0.93 / pAway).toFixed(2))));
 
-            let outcomes = [
+            let out = [
                 { key: 'HOME', label: '1', name: homeName, odd: odd1, prob: pHome },
-                { key: 'DRAW', label: 'N', name: 'Match Nul', odd: oddN, prob: pDraw },
+                { key: 'DRAW', label: 'N', name: 'Nul', odd: oddN, prob: pDraw },
                 { key: 'AWAY', label: '2', name: awayName, odd: odd2, prob: pAway }
-            ];
+            ].sort((a, b) => a.odd - b.odd);
 
-            let sortedByOdd = [...outcomes].sort((a, b) => a.odd - b.odd);
-            let basePick = sortedByOdd[0];
+            let basePick = out[0];
             basePick.confidence = Math.min(98, Math.max(48, Math.round((1 / basePick.odd) * 112)));
 
-            let remaining = outcomes.filter(o => o.key !== basePick.key);
-            remaining.forEach(o => {
-                let targetBonus = (o.odd >= 2.00 && o.odd <= 3.95) ? 28 : (o.odd <= 5.20 ? 12 : -15);
-                o.nuggetScore = Math.min(97, Math.max(22, Math.round((o.prob * 120) + targetBonus)));
-            });
-            let pepitePick = remaining.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
+            let rem = out.filter(o => o.key !== basePick.key);
+            rem.forEach(o => o.nuggetScore = Math.min(97, Math.max(22, Math.round((o.prob * 120) + ((o.odd >= 2.0 && o.odd <= 4.0) ? 28 : 5)))));
+            let pepitePick = rem.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
 
-            return {
-                odds: { HOME: odd1, DRAW: oddN, AWAY: odd2 },
-                basePick: basePick,
-                pepitePick: pepitePick
-            };
+            return { odds: { HOME: odd1, DRAW: oddN, AWAY: odd2 }, basePick, pepitePick };
         }
 
         function computeSmartStake(deficit, targetOdd = 1.90) {
             if (deficit <= 0) return BASE_STAKE;
-            let netFactor = Math.max(0.55, targetOdd - 1);
-            let needed = Math.ceil((deficit / netFactor) + BASE_STAKE);
-            return Math.min(150, Math.max(BASE_STAKE + 2, needed));
+            return Math.min(150, Math.max(BASE_STAKE + 2, Math.ceil((deficit / Math.max(0.55, targetOdd - 1)) + BASE_STAKE)));
         }
 
-        function parseScoreDeep(competitor) {
-            if (!competitor) return 0;
-            let s = competitor.score;
-            if (s !== undefined && s !== null && s !== "") {
-                if (typeof s === 'number') return s;
-                let parsed = parseInt(typeof s === 'object' ? (s.value !== undefined ? s.value : s.displayValue) : String(s).trim(), 10);
-                if (!isNaN(parsed)) return parsed;
-            }
-            if (Array.isArray(competitor.linescores) && competitor.linescores.length > 0) {
-                let sum = 0, found = false;
-                competitor.linescores.forEach(ls => {
-                    let v = parseInt(ls.value !== undefined ? ls.value : ls.displayValue, 10);
-                    if (!isNaN(v)) { sum += v; found = true; }
-                });
-                if (found) return sum;
-            }
-            return 0;
-        }
+        // CHARGEMENT INTELLIGENT (SÉQUENTIEL POUR NE PAS BLOQUER LES PROXYS)
+        async function fetchLeagueData(leagueCode, apiDate) {
+            const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueCode}/scoreboard?dates=${apiDate}`;
+            try {
+                let res = await fetch(url, { cache: 'no-store' });
+                if (res.ok) return await res.json();
+            } catch (e) {}
 
-        async function smartFetchESPN(leagueCode, apiDate) {
-            const fullUrl = `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueCode}/scoreboard?dates=${apiDate}`;
-            const proxies = [
-                `https://corsproxy.io/?${encodeURIComponent(fullUrl)}`,
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(fullUrl)}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(fullUrl)}`
-            ];
-
+            const proxies = [`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, `https://corsproxy.io/?${encodeURIComponent(url)}`];
             for (let proxy of proxies) {
                 try {
                     let res = await fetch(proxy, { cache: 'no-store' });
                     if (res.ok) {
                         let text = await res.text();
-                        if (!text || text.trim() === "") continue;
-                        let json = JSON.parse(text);
-                        if (json && json.contents) json = JSON.parse(json.contents);
-                        return json;
+                        if (text) {
+                            let json = JSON.parse(text);
+                            return json.contents ? JSON.parse(json.contents) : json;
+                        }
                     }
                 } catch (e) {}
             }
             return null;
-        }
-
-        function onDateChange() {
-            document.getElementById('compSelect').innerHTML = '<option value="ALL">Toutes Compétitions & Sélections</option>';
-            loadFootballMatches(false);
-        }
-
-        setInterval(() => {
-            if (document.getElementById('matchDate').value === getLocalYYYYMMDD(new Date()) || isLiveFilterActive) {
-                loadFootballMatches(true);
-            }
-        }, 12000);
-
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            let bgClass = type === 'success' ? 'bg-emerald-900/95 border-emerald-500/50 text-emerald-200' : (type === 'error' ? 'bg-red-900/95 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
-            toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 flex items-center ${bgClass}`;
-            toast.innerHTML = `<span>${message}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => toast.classList.remove('opacity-0', 'translate-y-2'), 10);
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-2');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        function toggleHistoryStats() {
-            let block = document.getElementById('historyBlock');
-            if (block.classList.contains('hidden')) {
-                block.classList.remove('hidden');
-                showHistoryStats();
-            } else {
-                block.classList.add('hidden');
-            }
         }
 
         async function loadFootballMatches(isSilent = false) {
@@ -378,362 +288,213 @@
             const apiDate = dateInputVal.replace(/-/g, '');
             const statusText = document.getElementById('statusText');
             
-            if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Récupération de tous les matchs...';
-            }
+            if (!isSilent) statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement (Clubs & Sélections)...';
             
+            // Ligues gérées de manière séquentielle pour éviter l'erreur 429
+            const leagues = [
+                { c: 'fra.1', n: 'LIGUE 1' }, { c: 'eng.1', n: 'PREMIER LEAGUE' }, { c: 'esp.1', n: 'LA LIGA' },
+                { c: 'ita.1', n: 'SERIE A' }, { c: 'ger.1', n: 'BUNDESLIGA' }, { c: 'uefa.champions', n: 'CHAMPIONS LEAGUE' },
+                { c: 'uefa.europa', n: 'EUROPA LEAGUE' }, { c: 'fifa.friendlies', n: 'INT. AMICAUX' }, { c: 'uefa.nations', n: 'NATIONS LEAGUE' }, { c: 'fifa.worldq.uefa', n: 'QUALIFS CDM' }
+            ];
+
+            let validMatches = [];
+            let seenIds = new Set();
+            let manualScores = JSON.parse(localStorage.getItem(`foot_manual_scores_${dateInputVal}`)) || {};
+            let lockedOdds = JSON.parse(localStorage.getItem(`foot_fixed_odds_v21_${dateInputVal}`)) || {};
+
             try {
-                const leagues = [
-                    { code: 'fra.1', name: 'LIGUE 1' },
-                    { code: 'fra.2', name: 'LIGUE 2' },
-                    { code: 'eng.1', name: 'PREMIER LEAGUE' },
-                    { code: 'esp.1', name: 'LA LIGA' },
-                    { code: 'ita.1', name: 'SERIE A' },
-                    { code: 'ger.1', name: 'BUNDESLIGA' },
-                    { code: 'por.1', name: 'LIGA PORTUGAL' },
-                    { code: 'ned.1', name: 'EREDIVISIE' },
-                    { code: 'uefa.champions', name: 'CHAMPIONS LEAGUE' },
-                    { code: 'uefa.europa', name: 'EUROPA LEAGUE' },
-                    { code: 'uefa.europa.conf', name: 'CONFERENCE LEAGUE' },
-                    { code: 'fifa.friendlies', name: 'MATCHS INTERNATIONAUX' },
-                    { code: 'uefa.nations', name: 'NATIONS LEAGUE' },
-                    { code: 'fifa.world', name: 'QUALIFICATIONS COUPE DU MONDE' }
-                ];
+                for (let lg of leagues) {
+                    if(!isSilent) statusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Analyse: ${lg.n}...`;
+                    let data = await fetchLeagueData(lg.c, apiDate);
+                    
+                    if (data && data.events) {
+                        data.events.forEach(ev => {
+                            if (!ev.id || seenIds.has(String(ev.id))) return;
+                            let comp = ev.competitions?.[0];
+                            if (!comp || !comp.competitors || comp.competitors.length < 2) return;
 
-                const results = await Promise.all(
-                    leagues.map(lg => smartFetchESPN(lg.code, apiDate).then(data => ({ lgName: lg.name, data })))
-                );
+                            let s = String(comp.status?.type?.state || 'pre').toLowerCase();
+                            let isCompleted = Boolean(comp.status?.type?.completed || s === 'post');
+                            let isLive = (s === 'in');
+                            
+                            let home = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'home') || comp.competitors[0];
+                            let away = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'away') || comp.competitors[1];
 
-                let validMatches = [];
-                let seenIds = new Set();
-                let manualScores = JSON.parse(localStorage.getItem(`foot_manual_scores_${dateInputVal}`)) || {};
-                let lockedOdds = JSON.parse(localStorage.getItem(`foot_fixed_odds_v21_${dateInputVal}`)) || {};
+                            let hName = home.team?.name || "Domicile";
+                            let aName = away.team?.name || "Extérieur";
+                            let ptsH = manualScores[ev.id]?.home !== undefined ? manualScores[ev.id].home : (parseInt(home.score) || 0);
+                            let ptsA = manualScores[ev.id]?.away !== undefined ? manualScores[ev.id].away : (parseInt(away.score) || 0);
+                            
+                            let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
+                            let winner = (status === 'FINISHED') ? (ptsH > ptsA ? 'HOME' : (ptsA > ptsH ? 'AWAY' : 'DRAW')) : null;
 
-                results.forEach(({ lgName, data }) => {
-                    if (!data || !Array.isArray(data.events)) return;
+                            if (!lockedOdds[ev.id]) lockedOdds[ev.id] = computeFootAlgorithm(hName, aName);
 
-                    data.events.forEach(event => {
-                        if (!event.id || seenIds.has(String(event.id))) return;
+                            validMatches.push({
+                                id: String(ev.id), status: status, statusDetail: comp.status?.displayClock || "En cours",
+                                utcDate: ev.date, timeMs: new Date(ev.date).getTime(), competition: { name: lg.n },
+                                homeTeam: { name: hName, logo: home.team?.logo, score: status==='TIMED'?'-':ptsH, numScore: ptsH },
+                                awayTeam: { name: aName, logo: away.team?.logo, score: status==='TIMED'?'-':ptsA, numScore: ptsA },
+                                winner: winner, algo: lockedOdds[ev.id]
+                            });
+                            seenIds.add(String(ev.id));
+                        });
+                    }
+                }
 
-                        let comp = event.competitions?.[0];
-                        if (!comp || !comp.competitors || comp.competitors.length < 2) return;
-
-                        let eventDateObj = event.date ? new Date(event.date) : new Date();
-                        let matchDateLocal = getLocalYYYYMMDD(eventDateObj);
-                        let statusObj = comp.status || event.status || {};
-                        let statusType = statusObj.type || {};
-                        const state = String(statusType.state || 'pre').toLowerCase();
-                        const isCompleted = Boolean(statusType.completed || state === 'post');
-                        const isLive = (state === 'in');
-
-                        if (matchDateLocal !== dateInputVal && !isLive) return;
-                        seenIds.add(String(event.id));
-
-                        let home = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'home') || comp.competitors[0];
-                        let away = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'away') || comp.competitors[1];
-
-                        let homeName = home.team?.shortDisplayName || home.team?.name || home.team?.displayName || "Domicile";
-                        let awayName = away.team?.shortDisplayName || away.team?.name || away.team?.displayName || "Extérieur";
-                        let homeLogo = home.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(homeName)}&background=18181b&color=60a5fa&size=64`;
-                        let awayLogo = away.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(awayName)}&background=18181b&color=60a5fa&size=64`;
-
-                        let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
-                        
-                        let ptsHome = parseScoreDeep(home);
-                        let ptsAway = parseScoreDeep(away);
-
-                        if (manualScores[event.id] && manualScores[event.id].home !== undefined) {
-                            ptsHome = manualScores[event.id].home;
-                            ptsAway = manualScores[event.id].away;
-                            if (status === 'TIMED') status = 'FINISHED';
-                        }
-
-                        let sHomeDisplay = (status === 'TIMED') ? '-' : String(ptsHome);
-                        let sAwayDisplay = (status === 'TIMED') ? '-' : String(ptsAway);
-
-                        let winner = null;
-                        if (status === 'FINISHED') {
-                            if (ptsHome > ptsAway) winner = 'HOME';
-                            else if (ptsAway > ptsHome) winner = 'AWAY';
-                            else winner = 'DRAW';
-                        }
-
-                        let algo = lockedOdds[event.id];
-                        if (!algo) {
-                            algo = computeFootAlgorithm(homeName, awayName, comp);
-                            lockedOdds[event.id] = algo;
-                        }
-
-                        let detailClock = statusObj.displayClock || statusType.shortDetail || "En cours";
-
+                // Génération de secours s'il n'y a AUCUN match trouvé (pour éviter un écran vide)
+                if (validMatches.length === 0 && !isSilent) {
+                    let baseT = new Date(dateInputVal + "T18:00:00Z").getTime();
+                    let mock = [
+                        { h: "France", a: "Italie", c: "NATIONS LEAGUE" }, { h: "PSG", a: "Marseille", c: "LIGUE 1" },
+                        { h: "Real Madrid", a: "Barcelona", c: "LA LIGA" }, { h: "Arsenal", a: "Chelsea", c: "PREMIER LEAGUE" }
+                    ];
+                    mock.forEach((m, i) => {
+                        let id = "mock"+i;
+                        if (!lockedOdds[id]) lockedOdds[id] = computeFootAlgorithm(m.h, m.a);
                         validMatches.push({
-                            id: String(event.id),
-                            status: status,
-                            statusDetail: detailClock,
-                            utcDate: event.date,
-                            timeMs: eventDateObj.getTime(),
-                            competition: { name: lgName },
-                            homeTeam: { name: homeName, logo: homeLogo, score: sHomeDisplay, numScore: ptsHome },
-                            awayTeam: { name: awayName, logo: awayLogo, score: sAwayDisplay, numScore: ptsAway },
-                            winner: winner,
-                            algo: algo
+                            id: id, status: 'TIMED', statusDetail: '', utcDate: new Date(baseT+(i*7200000)).toISOString(),
+                            timeMs: baseT+(i*7200000), competition: { name: m.c },
+                            homeTeam: { name: m.h, score: '-', numScore: 0 }, awayTeam: { name: m.a, score: '-', numScore: 0 },
+                            winner: null, algo: lockedOdds[id]
                         });
                     });
-                });
-
-                // SECOURS AUTOMATIQUE : Si aucun match n'est trouvé via l'API, on génère un calendrier de secours réaliste pour le jour J
-                if (validMatches.length === 0 && !isSilent) {
-                    validMatches = getFallbackMatches(dateInputVal);
-                    statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Mode de secours activé (${validMatches.length} affiches chargées)</span>`;
+                    statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Mode de secours (API indisponible)</span>`;
                 } else {
-                    const liveCount = validMatches.filter(m => m.status === 'IN_PLAY').length;
-                    const doneCount = validMatches.filter(m => m.status === 'FINISHED').length;
-                    statusText.innerHTML = `<span class="text-blue-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${validMatches.length} matchs (${liveCount} direct | ${doneCount} terminés)</span>`;
+                    const lc = validMatches.filter(m => m.status === 'IN_PLAY').length;
+                    statusText.innerHTML = `<span class="text-blue-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${validMatches.length} matchs (${lc} en direct)</span>`;
                 }
 
                 localStorage.setItem(`foot_fixed_odds_v21_${dateInputVal}`, JSON.stringify(lockedOdds));
-
-                validMatches.sort((a, b) => a.timeMs - b.timeMs);
-                currentMatches = validMatches;
+                currentMatches = validMatches.sort((a, b) => a.timeMs - b.timeMs);
                 
                 populateCompetitions(currentMatches);
                 applyFilters();
                 calculateAllStats();
 
             } catch (error) {
-                console.error(error);
-                currentMatches = getFallbackMatches(dateInputVal);
-                statusText.innerHTML = `<span class="text-amber-400 font-semibold">Mode hors-ligne / secours actif.</span>`;
-                populateCompetitions(currentMatches);
-                applyFilters();
-                calculateAllStats();
+                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur réseau.</span>`;
             }
-        }
-
-        // CALENDRIER DE SECOURS INTELLIGENT (Garantit qu'il y a toujours des matchs à parier)
-        function getFallbackMatches(dateStr) {
-            let baseTime = new Date(dateStr + "T15:00:00Z").getTime();
-            let mockList = [
-                { id: "m1", home: "France", away: "Brésil", comp: "MATCHS INTERNATIONAUX", hLogo: "https://flagcdn.com/w80/fr.png", aLogo: "https://flagcdn.com/w80/br.png" },
-                { id: "m2", home: "Real Madrid", away: "Barcelona", comp: "LA LIGA", hLogo: "https://ui-avatars.com/api/?name=Real+Madrid&background=18181b&color=60a5fa", aLogo: "https://ui-avatars.com/api/?name=Barcelona&background=18181b&color=60a5fa" },
-                { id: "m3", home: "Manchester City", away: "Arsenal", comp: "PREMIER LEAGUE", hLogo: "https://ui-avatars.com/api/?name=Man+City&background=18181b&color=60a5fa", aLogo: "https://ui-avatars.com/api/?name=Arsenal&background=18181b&color=60a5fa" },
-                { id: "m4", home: "Paris Saint-Germain", away: "Marseille", comp: "LIGUE 1", hLogo: "https://ui-avatars.com/api/?name=PSG&background=18181b&color=60a5fa", aLogo: "https://ui-avatars.com/api/?name=OM&background=18181b&color=60a5fa" },
-                { id: "m5", home: "Inter Milan", away: "Juventus", comp: "SERIE A", hLogo: "https://ui-avatars.com/api/?name=Inter&background=18181b&color=60a5fa", aLogo: "https://ui-avatars.com/api/?name=Juve&background=18181b&color=60a5fa" },
-                { id: "m6", home: "Bayern Munich", away: "Borussia Dortmund", comp: "BUNDESLIGA", hLogo: "https://ui-avatars.com/api/?name=Bayern&background=18181b&color=60a5fa", aLogo: "https://ui-avatars.com/api/?name=Dortmund&background=18181b&color=60a5fa" }
-            ];
-
-            return mockList.map((m, idx) => {
-                let tMs = baseTime + (idx * 2 * 3600 * 1000);
-                let algo = computeFootAlgorithm(m.home, m.away);
-                return {
-                    id: m.id,
-                    status: 'TIMED',
-                    statusDetail: 'Programmé',
-                    utcDate: new Date(tMs).toISOString(),
-                    timeMs: tMs,
-                    competition: { name: m.comp },
-                    homeTeam: { name: m.home, logo: m.hLogo, score: '-', numScore: 0 },
-                    awayTeam: { name: m.away, logo: m.aLogo, score: '-', numScore: 0 },
-                    winner: null,
-                    algo: algo
-                };
-            });
         }
 
         function populateCompetitions(matches) {
             const select = document.getElementById('compSelect');
-            const currentSelection = select.value;
+            const cur = select.value;
             select.innerHTML = '<option value="ALL">Toutes Compétitions & Sélections</option>';
-            const compsMap = new Map();
-            
-            matches.forEach(m => {
-                if (m.competition?.name) {
-                    compsMap.set(m.competition.name, (compsMap.get(m.competition.name) || 0) + 1);
-                }
+            let cMap = new Map();
+            matches.forEach(m => cMap.set(m.competition.name, (cMap.get(m.competition.name)||0)+1));
+            Array.from(cMap.keys()).sort().forEach(c => {
+                let opt = document.createElement('option'); opt.value = c; opt.textContent = `${c} (${cMap.get(c)})`; select.appendChild(opt);
             });
-            
-            Array.from(compsMap.keys()).sort().forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c;
-                opt.textContent = `${c} (${compsMap.get(c)})`;
-                select.appendChild(opt);
-            });
-            
-            if (Array.from(compsMap.keys()).includes(currentSelection)) {
-                select.value = currentSelection;
-            }
+            if (Array.from(cMap.keys()).includes(cur)) select.value = cur;
         }
 
         function toggleLiveFilter() {
             isLiveFilterActive = !isLiveFilterActive;
             const btn = document.getElementById('btnFilterLive');
-            if (isLiveFilterActive) {
-                btn.classList.replace('bg-red-900/40', 'bg-red-600');
-                btn.classList.replace('text-red-400', 'text-white');
-            } else {
-                btn.classList.replace('bg-red-600', 'bg-red-900/40');
-                btn.classList.replace('text-white', 'text-red-400');
-            }
+            btn.className = isLiveFilterActive ? "bg-red-600 text-white border border-red-500/50 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center whitespace-nowrap" : "bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-500/50 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center whitespace-nowrap";
             applyFilters();
         }
 
         function applyFilters() {
-            let filtered = [...currentMatches];
-            filtered.sort((a, b) => {
+            let filtered = [...currentMatches].sort((a, b) => {
                 if (a.status === 'IN_PLAY' && b.status !== 'IN_PLAY') return -1;
                 if (b.status === 'IN_PLAY' && a.status !== 'IN_PLAY') return 1;
                 return a.timeMs - b.timeMs;
             });
             if (isLiveFilterActive) filtered = filtered.filter(m => m.status === 'IN_PLAY');
-            const selectedComp = document.getElementById('compSelect').value;
-            if (selectedComp !== "ALL") filtered = filtered.filter(m => m.competition?.name === selectedComp);
+            const sel = document.getElementById('compSelect').value;
+            if (sel !== "ALL") filtered = filtered.filter(m => m.competition.name === sel);
             renderMatches(filtered);
         }
 
         function formatMoneyHTML(val) {
-            if (val === 0) return `<span class="text-zinc-400">0.00 €</span>`;
-            let color = val > 0 ? 'text-emerald-400' : 'text-red-400';
-            let sign = val > 0 ? '+' : '';
-            return `<span class="${color}">${sign}${val.toFixed(2)} €</span>`;
+            return `<span class="${val > 0 ? 'text-emerald-400' : (val < 0 ? 'text-red-400' : 'text-zinc-400')}">${val > 0 ? '+' : ''}${val.toFixed(2)} €</span>`;
         }
 
         function calculateAllStats() {
             const dateStr = document.getElementById('matchDate').value;
             let savedBets = JSON.parse(localStorage.getItem(`footbet_v21_bets_${dateStr}`)) || {};
-
             let chronologicalMatches = [...currentMatches].sort((a, b) => a.timeMs - b.timeMs);
 
-            let baseWins = 0, pepiteWins = 0, finishedCount = 0;
-            let flatProfitBase = 0, flatProfitPepite = 0;
-            let progProfitBase = 0, progProfitPepite = 0;
-
-            let totalSpentBase = 0, totalSpentPepite = 0;
-            let maxStakeBase = 0, maxStakePepite = 0;
-            let deficitBase = 0, deficitPepite = 0;
+            let baseWins = 0, pepiteWins = 0, fin = 0;
+            let flatBase = 0, flatPep = 0, progBase = 0, progPep = 0;
+            let spBase = 0, spPep = 0, maxBase = 0, maxPep = 0, defBase = 0, defPep = 0;
 
             chronologicalMatches.forEach(m => {
                 if (m.status !== 'FINISHED' || !m.winner) return;
-                finishedCount++;
+                fin++;
+                let bKey = m.algo.basePick.key, bOdd = m.algo.odds[bKey];
+                let pKey = m.algo.pepitePick.key, pOdd = m.algo.odds[pKey];
 
-                let basePick = m.algo.basePick.key;
-                let baseOdd = m.algo.odds[basePick];
-                let pepitePick = m.algo.pepitePick.key;
-                let pepiteOdd = m.algo.odds[pepitePick];
+                let stkBase = computeSmartStake(defBase, bOdd);
+                spBase += stkBase; if (stkBase > maxBase) maxBase = stkBase;
+                if (m.winner === bKey) {
+                    baseWins++; flatBase += (bOdd*BASE_STAKE)-BASE_STAKE;
+                    let net = (bOdd*stkBase)-stkBase; progBase += net; defBase = Math.max(0, defBase - net);
+                } else { flatBase -= BASE_STAKE; progBase -= stkBase; defBase += stkBase; }
 
-                let stakeBase = computeSmartStake(deficitBase, baseOdd);
-                totalSpentBase += stakeBase;
-                if (stakeBase > maxStakeBase) maxStakeBase = stakeBase;
-
-                if (m.winner === basePick) {
-                    baseWins++;
-                    flatProfitBase += (baseOdd * BASE_STAKE) - BASE_STAKE;
-                    let netWin = (baseOdd * stakeBase) - stakeBase;
-                    progProfitBase += netWin;
-                    deficitBase = Math.max(0, deficitBase - netWin);
-                } else {
-                    flatProfitBase -= BASE_STAKE;
-                    progProfitBase -= stakeBase;
-                    deficitBase += stakeBase;
-                }
-
-                let stakePep = computeSmartStake(deficitPepite, pepiteOdd);
-                totalSpentPepite += stakePep;
-                if (stakePep > maxStakePepite) maxStakePepite = stakePep;
-
-                if (m.winner === pepitePick) {
-                    pepiteWins++;
-                    flatProfitPepite += (pepiteOdd * BASE_STAKE) - BASE_STAKE;
-                    let netWinPep = (pepiteOdd * stakePep) - stakePep;
-                    progProfitPepite += netWinPep;
-                    deficitPepite = Math.max(0, deficitPepite - netWinPep);
-                } else {
-                    flatProfitPepite -= BASE_STAKE;
-                    progProfitPepite -= stakePep;
-                    deficitPepite += stakePep;
-                }
+                let stkPep = computeSmartStake(defPep, pOdd);
+                spPep += stkPep; if (stkPep > maxPep) maxPep = stkPep;
+                if (m.winner === pKey) {
+                    pepiteWins++; flatPep += (pOdd*BASE_STAKE)-BASE_STAKE;
+                    let net = (pOdd*stkPep)-stkPep; progPep += net; defPep = Math.max(0, defPep - net);
+                } else { flatPep -= BASE_STAKE; progPep -= stkPep; defPep += stkPep; }
             });
 
-            document.getElementById('statBaseFlat').textContent = `${baseWins} / ${finishedCount}`;
-            document.getElementById('statBaseProg').textContent = `${baseWins} / ${finishedCount}`;
-            document.getElementById('gainBaseFlat').innerHTML = formatMoneyHTML(flatProfitBase);
-            document.getElementById('gainBaseProg').innerHTML = formatMoneyHTML(progProfitBase);
+            document.getElementById('statBaseFlat').textContent = `${baseWins}/${fin}`;
+            document.getElementById('statBaseProg').textContent = `${baseWins}/${fin}`;
+            document.getElementById('gainBaseFlat').innerHTML = formatMoneyHTML(flatBase);
+            document.getElementById('gainBaseProg').innerHTML = formatMoneyHTML(progBase);
 
-            document.getElementById('statPepiteFlat').textContent = `${pepiteWins} / ${finishedCount}`;
-            document.getElementById('statPepiteProg').textContent = `${pepiteWins} / ${finishedCount}`;
-            document.getElementById('gainPepiteFlat').innerHTML = formatMoneyHTML(flatProfitPepite);
-            document.getElementById('gainPepiteProg').innerHTML = formatMoneyHTML(progProfitPepite);
+            document.getElementById('statPepiteFlat').textContent = `${pepiteWins}/${fin}`;
+            document.getElementById('statPepiteProg').textContent = `${pepiteWins}/${fin}`;
+            document.getElementById('gainPepiteFlat').innerHTML = formatMoneyHTML(flatPep);
+            document.getElementById('gainPepiteProg').innerHTML = formatMoneyHTML(progPep);
 
-            document.getElementById('totalSpentBaseText').textContent = `${totalSpentBase.toFixed(2)} €`;
-            document.getElementById('maxStakeBaseText').textContent = `${maxStakeBase.toFixed(2)} €`;
-            document.getElementById('deficitBaseText').textContent = `${deficitBase.toFixed(2)} €`;
+            document.getElementById('totalSpentBaseText').textContent = `${spBase.toFixed(2)} €`;
+            document.getElementById('maxStakeBaseText').textContent = `${maxBase.toFixed(2)} €`;
+            document.getElementById('deficitBaseText').textContent = `${defBase.toFixed(2)} €`;
+            document.getElementById('totalSpentPepiteText').textContent = `${spPep.toFixed(2)} €`;
+            document.getElementById('maxStakePepiteText').textContent = `${maxPep.toFixed(2)} €`;
+            document.getElementById('deficitPepiteText').textContent = `${defPep.toFixed(2)} €`;
 
-            document.getElementById('totalSpentPepiteText').textContent = `${totalSpentPepite.toFixed(2)} €`;
-            document.getElementById('maxStakePepiteText').textContent = `${maxStakePepite.toFixed(2)} €`;
-            document.getElementById('deficitPepiteText').textContent = `${deficitPepite.toFixed(2)} €`;
+            let nBase = computeSmartStake(defBase, 1.65), nPep = computeSmartStake(defPep, 2.70);
+            document.getElementById('nextStakeBaseText').textContent = `Prochaine Mise: ${nBase.toFixed(2)} €`;
+            document.getElementById('nextStakePepiteText').textContent = `Prochaine Mise: ${nPep.toFixed(2)} €`;
+            document.getElementById('headerNextStake').textContent = `${nBase.toFixed(2)} €`;
+            document.getElementById('statsProgress').textContent = `✅ ${fin}/${currentMatches.length} terminés`;
 
-            let nextStakeBase = computeSmartStake(deficitBase, 1.65);
-            let nextStakePepite = computeSmartStake(deficitPepite, 2.70);
-
-            document.getElementById('nextStakeBaseText').textContent = `Prochaine Mise: ${nextStakeBase.toFixed(2)} €`;
-            document.getElementById('nextStakePepiteText').textContent = `Prochaine Mise: ${nextStakePepite.toFixed(2)} €`;
-            document.getElementById('headerNextStake').textContent = `${nextStakeBase.toFixed(2)} €`;
-            document.getElementById('statsProgress').textContent = `✅ ${finishedCount}/${currentMatches.length} terminés`;
-
-            let slipCount = 0;
-            let simpleGrossGain = 0;
-            let simpleNetProfitFinished = 0;
-            let comboOdds = 1.0;
-            let comboLost = false;
-
+            // TICKET MULTI
+            let slipC = 0, simGross = 0, simNet = 0, cOdd = 1.0, cLost = false;
             currentMatches.forEach(m => {
                 let pick = savedBets[m.id];
                 if (!pick) return;
-                slipCount++;
-                let pickOdd = m.algo.odds[pick];
-                comboOdds *= pickOdd;
-
+                slipC++; let o = m.algo.odds[pick]; cOdd *= o;
                 if (m.status === 'FINISHED' && m.winner) {
-                    if (m.winner === pick) {
-                        simpleGrossGain += (pickOdd * BASE_STAKE);
-                        simpleNetProfitFinished += (pickOdd * BASE_STAKE) - BASE_STAKE;
-                    } else {
-                        simpleNetProfitFinished -= BASE_STAKE;
-                        comboLost = true;
-                    }
-                } else {
-                    simpleGrossGain += (pickOdd * BASE_STAKE);
-                }
+                    if (m.winner === pick) { simGross += (o*BASE_STAKE); simNet += (o*BASE_STAKE)-BASE_STAKE; }
+                    else { simNet -= BASE_STAKE; cLost = true; }
+                } else { simGross += (o*BASE_STAKE); }
             });
 
-            document.getElementById('gainManualTotal').innerHTML = formatMoneyHTML(simpleNetProfitFinished);
+            document.getElementById('gainManualTotal').innerHTML = formatMoneyHTML(simNet);
+            let bar = document.getElementById('betSlipBar');
+            if (slipC > 0) {
+                bar.classList.remove('hidden');
+                document.getElementById('slipCountBadge').textContent = slipC;
+                document.getElementById('slipSimpleGain').textContent = `${simGross.toFixed(2)} €`;
+                document.getElementById('slipSimpleNet').innerHTML = `(${formatMoneyHTML(simNet)})`;
+                document.getElementById('slipComboOdds').textContent = cOdd.toFixed(2);
+                document.getElementById('slipComboGain').textContent = cLost ? "Perdu (0.00 €)" : `${(cOdd*BASE_STAKE).toFixed(2)} €`;
+                document.getElementById('slipComboGain').className = cLost ? "text-red-400 font-black" : "text-amber-400 font-black";
+            } else { bar.classList.add('hidden'); }
 
-            let slipBar = document.getElementById('betSlipBar');
-            if (slipCount > 0) {
-                slipBar.classList.remove('hidden');
-                document.getElementById('slipCountBadge').textContent = slipCount;
-                document.getElementById('slipSimpleGain').textContent = `${simpleGrossGain.toFixed(2)} €`;
-                document.getElementById('slipSimpleNet').innerHTML = `(${formatMoneyHTML(simpleNetProfitFinished)})`;
-                document.getElementById('slipComboOdds').textContent = comboOdds.toFixed(2);
-                let comboPot = comboLost ? 0 : (comboOdds * BASE_STAKE);
-                document.getElementById('slipComboGain').textContent = comboLost ? "Perdu (0.00 €)" : `${comboPot.toFixed(2)} €`;
-                document.getElementById('slipComboGain').className = comboLost ? "text-red-400 font-black" : "text-amber-400 font-black";
-            } else {
-                slipBar.classList.add('hidden');
+            if (fin > 0 || slipC > 0) {
+                let hist = JSON.parse(localStorage.getItem('footbet_v21_history')) || {};
+                hist[dateStr] = { baseProfit: progBase, pepiteProfit: progPep, manualProfit: simNet };
+                localStorage.setItem('footbet_v21_history', JSON.stringify(hist));
             }
-
-            if (finishedCount > 0 || slipCount > 0) {
-                let history = JSON.parse(localStorage.getItem('footbet_v21_history')) || {};
-                history[dateStr] = {
-                    baseProfit: progProfitBase,
-                    pepiteProfit: progProfitPepite,
-                    manualProfit: simpleNetProfitFinished
-                };
-                localStorage.setItem('footbet_v21_history', JSON.stringify(history));
-            }
-
-            if (!document.getElementById('historyBlock').classList.contains('hidden')) {
-                showHistoryStats();
-            }
+            if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
         }
 
         function renderMatches(matchesToRender) {
@@ -742,271 +503,122 @@
             let savedBets = JSON.parse(localStorage.getItem(`footbet_v21_bets_${dateStr}`)) || {};
 
             if (matchesToRender.length === 0) {
-                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match pour ce filtre.</div>`;
+                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match.</div>`;
                 return;
             }
 
-            let existingCardsMap = new Map();
-            Array.from(container.children).forEach(child => {
-                if (child.dataset && child.dataset.matchId) {
-                    existingCardsMap.set(child.dataset.matchId, child);
+            let map = new Map();
+            Array.from(container.children).forEach(c => { if(c.dataset?.matchId) map.set(c.dataset.matchId, c); });
+            let frag = document.createDocumentFragment();
+
+            matchesToRender.forEach(m => {
+                let isFin = m.status === 'FINISHED', isLive = m.status === 'IN_PLAY';
+                let { odds, basePick, pepitePick } = m.algo;
+                let tStr = new Date(m.utcDate).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+                let sBadge = isLive ? `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold animate-pulse">🔴 ${m.statusDetail}</span>` : (isFin ? `<span class="bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">🏁 Terminé</span>` : `<span class="bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">${tStr}</span>`);
+
+                let myB = savedBets[m.id];
+
+                function bBtn(k, lbl, nm) {
+                    let sel = (myB === k), bas = (basePick.key === k), pep = (pepitePick.key === k), win = (isFin && m.winner === k);
+                    let cls = `relative flex-1 py-2.5 px-1 sm:px-2 rounded-xl text-xs transition-all border flex flex-col items-center justify-between shadow-sm ${sel?'bg-blue-600 text-white border-blue-400 ring-2 ring-blue-400/50 scale-[1.02]':(bas?'bg-emerald-950/50 text-emerald-200 border-emerald-500/50':(pep?'bg-amber-950/50 text-amber-200 border-amber-500/50':'bg-zinc-800/70 text-zinc-300 border-zinc-700'))}`;
+                    let tTag = bas ? `<span class="text-[8px] bg-emerald-500 text-zinc-950 font-black px-1.5 rounded uppercase mb-1">★ Sûre</span>` : (pep ? `<span class="text-[8px] bg-amber-500 text-zinc-950 font-black px-1.5 rounded uppercase mb-1">💎 Pépite</span>` : `<span class="text-[8px] text-zinc-500 uppercase font-bold mb-1">Outsider</span>`);
+                    return `<button onclick="placeBet('${m.id}', '${k}')" class="${cls}">${tTag}<span class="truncate w-full text-[10px] sm:text-[11px] font-bold text-center">${lbl} - ${nm}</span><span class="mt-1 text-sm font-black ${sel?'text-white':(bas?'text-emerald-400':(pep?'text-amber-400':'text-blue-400'))} bg-zinc-950/70 px-2.5 py-0.5 rounded-lg border border-zinc-800">${odds[k].toFixed(2)}</span>${win?'<span class="mt-1 text-[9px] bg-blue-500/30 text-blue-200 border border-blue-400/40 px-1 rounded font-black">✅ GAGNANT</span>':''}</button>`;
                 }
-            });
 
-            let fragment = document.createDocumentFragment();
-
-            matchesToRender.forEach(match => {
-                let isFinished = match.status === 'FINISHED';
-                let isLive = match.status === 'IN_PLAY';
+                let sCls = isLive ? "text-base font-black text-red-400 px-3 py-1 bg-red-950/40 rounded-lg border border-red-500/40 cursor-pointer" : "text-base font-black text-blue-400 px-3 py-1 bg-zinc-950 rounded-lg border border-zinc-800 cursor-pointer";
+                let card = map.get(m.id) || document.createElement('div');
+                card.dataset.matchId = m.id; card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-3 sm:p-4 shadow-xl space-y-3";
                 
-                let homeName = match.homeTeam.name;
-                let awayName = match.awayTeam.name;
-                let homeLogo = match.homeTeam.logo;
-                let awayLogo = match.awayTeam.logo;
-                let sHome = match.homeTeam.score;
-                let sAway = match.awayTeam.score;
-
-                let { odds, basePick, pepitePick } = match.algo;
-
-                let timeStr = new Date(match.utcDate).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
-
-                let statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">${timeStr}</span>`;
-                if (isLive) statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold animate-pulse">🔴 Direct (${match.statusDetail})</span>`;
-                if (isFinished) statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">🏁 Terminé</span>`;
-
-                let winner = match.winner;
-                let myBet = savedBets[match.id];
-
-                function buildBtn(key, label, title) {
-                    let isSelected = (myBet === key);
-                    let isBase = (basePick.key === key);
-                    let isPepite = (pepitePick.key === key);
-                    let isWinner = (isFinished && winner === key);
-                    let oddVal = odds[key].toFixed(2);
-
-                    let cls = "relative flex-1 py-2.5 px-2 rounded-xl text-xs transition-all duration-150 border flex flex-col items-center justify-between shadow-sm ";
-                    if (isSelected) {
-                        cls += "bg-blue-600 text-white border-blue-400 ring-2 ring-blue-400/50 scale-[1.02] ";
-                    } else if (isBase) {
-                        cls += "bg-emerald-950/50 text-emerald-200 border-emerald-500/50 hover:bg-emerald-900/60 ";
-                    } else if (isPepite) {
-                        cls += "bg-amber-950/50 text-amber-200 border-amber-500/50 hover:bg-amber-900/60 ";
-                    } else {
-                        cls += "bg-zinc-800/70 text-zinc-300 border-zinc-700 hover:bg-zinc-800 ";
-                    }
-
-                    let topTag = '';
-                    if (isBase) topTag = `<span class="text-[8px] bg-emerald-500 text-zinc-950 font-black px-1.5 py-0.2 rounded uppercase tracking-wider mb-1">★ Valeur Sûre (${basePick.confidence}%)</span>`;
-                    else if (isPepite) topTag = `<span class="text-[8px] bg-amber-500 text-zinc-950 font-black px-1.5 py-0.2 rounded uppercase tracking-wider mb-1">💎 Pépite (${pepitePick.nuggetScore}%)</span>`;
-                    else topTag = `<span class="text-[8px] text-zinc-500 uppercase font-bold mb-1">Outsider</span>`;
-
-                    let winBadge = isWinner ? `<span class="mt-1 text-[9px] bg-blue-500/30 text-blue-200 border border-blue-400/40 px-1.5 py-0.2 rounded font-black">✅ GAGNANT</span>` : '';
-
-                    return `
-                        <button onclick="placeBet('${match.id}', '${key}')" class="${cls}">
-                            ${topTag}
-                            <span class="truncate w-full text-[11px] font-bold text-center">${label} - ${title}</span>
-                            <span class="mt-1 text-sm font-black ${isSelected ? 'text-white' : (isBase ? 'text-emerald-400' : (isPepite ? 'text-amber-400' : 'text-blue-400'))} bg-zinc-950/70 px-2.5 py-0.5 rounded-lg border border-zinc-800">${oddVal}</span>
-                            ${winBadge}
-                        </button>
-                    `;
-                }
-
-                let scoreBadgeClass = isLive 
-                    ? "text-base font-black text-red-400 px-3 py-1 bg-red-950/40 rounded-lg border border-red-500/40 whitespace-nowrap cursor-pointer hover:bg-red-900/50 transition"
-                    : "text-base font-black text-blue-400 px-3 py-1 bg-zinc-950 rounded-lg border border-zinc-800 whitespace-nowrap cursor-pointer hover:bg-zinc-800 transition";
-
-                let card = existingCardsMap.get(match.id);
-                if (!card) {
-                    card = document.createElement('div');
-                    card.dataset.matchId = match.id;
-                }
-                card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-xl space-y-3";
-
-                let autoResultHTML = '';
-                if (isFinished && winner) {
-                    let baseWon = (winner === basePick.key);
-                    let pepWon = (winner === pepitePick.key);
-                    autoResultHTML = `
-                        <div class="grid grid-cols-2 gap-2 pt-1 text-[10px]">
-                            <div class="bg-zinc-950 px-2.5 py-1.5 rounded-lg border ${baseWon ? 'border-emerald-500/40 text-emerald-400' : 'border-zinc-800 text-zinc-500'} flex justify-between">
-                                <span>Auto Sûre (${basePick.label}) :</span>
-                                <strong>${baseWon ? `+${((basePick.odd - 1) * 5).toFixed(2)} €` : '-5.00 €'}</strong>
-                            </div>
-                            <div class="bg-zinc-950 px-2.5 py-1.5 rounded-lg border ${pepWon ? 'border-amber-500/40 text-amber-400' : 'border-zinc-800 text-zinc-500'} flex justify-between">
-                                <span>Auto Pépite (${pepitePick.label}) :</span>
-                                <strong>${pepWon ? `+${((pepitePick.odd - 1) * 5).toFixed(2)} €` : '-5.00 €'}</strong>
-                            </div>
-                        </div>
-                    `;
+                let resHTML = '';
+                if (isFin && m.winner) {
+                    resHTML = `<div class="grid grid-cols-2 gap-2 pt-1 text-[10px]"><div class="bg-zinc-950 px-2 py-1.5 rounded-lg border ${m.winner===basePick.key?'border-emerald-500/40 text-emerald-400':'border-zinc-800 text-zinc-500'} flex justify-between"><span>Sûre :</span><strong>${m.winner===basePick.key?'+'+((basePick.odd-1)*5).toFixed(2):'-5.00'} €</strong></div><div class="bg-zinc-950 px-2 py-1.5 rounded-lg border ${m.winner===pepitePick.key?'border-amber-500/40 text-amber-400':'border-zinc-800 text-zinc-500'} flex justify-between"><span>Pépite :</span><strong>${m.winner===pepitePick.key?'+'+((pepitePick.odd-1)*5).toFixed(2):'-5.00'} €</strong></div></div>`;
                 }
 
                 card.innerHTML = `
-                    <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
-                        ${statusBadge}
-                        <span class="text-[10px] text-zinc-300 font-bold tracking-wider flex items-center text-right w-2/3 truncate justify-end"><i class="fa-solid fa-trophy text-blue-400 mr-1.5"></i>${match.competition.name}</span>
-                    </div>
-                    
+                    <div class="flex justify-between items-center border-b border-zinc-800 pb-2">${sBadge}<span class="text-[10px] text-zinc-300 font-bold flex items-center w-1/2 justify-end truncate"><i class="fa-solid fa-trophy text-blue-400 mr-1.5"></i>${m.competition.name}</span></div>
                     <div class="flex justify-between items-center px-1 gap-2">
-                        <div class="flex items-center space-x-2.5 w-2/5 overflow-hidden">
-                            <img src="${homeLogo}" class="w-8 h-8 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=H&background=18181b&color=60a5fa'">
-                            <span class="text-xs font-black text-white truncate">${homeName}</span>
-                        </div>
-                        <span onclick="editScoreManual('${match.id}', '${homeName}', '${awayName}')" title="Cliquer pour corriger le score manuellement" class="${scoreBadgeClass}">${sHome} - ${sAway} <i class="fa-solid fa-pen text-[10px] ml-1 opacity-60"></i></span>
-                        <div class="flex items-center justify-end space-x-2.5 w-2/5 overflow-hidden">
-                            <span class="text-xs font-black text-white truncate text-right">${awayName}</span>
-                            <img src="${awayLogo}" class="w-8 h-8 object-contain flex-shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=A&background=18181b&color=60a5fa'">
-                        </div>
+                        <div class="flex items-center space-x-2 w-2/5 overflow-hidden"><img src="${m.homeTeam.logo||''}" class="w-6 sm:w-8 h-6 sm:h-8 object-contain" onerror="this.style.display='none'"><span class="text-[11px] sm:text-xs font-black text-white truncate">${m.homeTeam.name}</span></div>
+                        <span onclick="editScoreManual('${m.id}', '${m.homeTeam.name}', '${m.awayTeam.name}')" class="${sCls}">${m.homeTeam.score} - ${m.awayTeam.score}</span>
+                        <div class="flex items-center justify-end space-x-2 w-2/5 overflow-hidden"><span class="text-[11px] sm:text-xs font-black text-white truncate text-right">${m.awayTeam.name}</span><img src="${m.awayTeam.logo||''}" class="w-6 sm:w-8 h-6 sm:h-8 object-contain" onerror="this.style.display='none'"></div>
                     </div>
-
-                    <div class="flex gap-2 pt-1">
-                        ${buildBtn('HOME', '1', homeName)}
-                        ${buildBtn('DRAW', 'N', 'Nul')}
-                        ${buildBtn('AWAY', '2', awayName)}
-                    </div>
-
-                    ${autoResultHTML}
+                    <div class="flex gap-1 sm:gap-2 pt-1">${bBtn('HOME','1',m.homeTeam.name)}${bBtn('DRAW','N','Nul')}${bBtn('AWAY','2',m.awayTeam.name)}</div>
+                    ${resHTML}
                 `;
-                fragment.appendChild(card);
+                frag.appendChild(card);
             });
-
-            container.innerHTML = '';
-            container.appendChild(fragment);
+            container.innerHTML = ''; container.appendChild(frag);
         }
 
-        function placeBet(matchId, pick) {
-            const dateStr = document.getElementById('matchDate').value;
-            let savedBets = JSON.parse(localStorage.getItem(`footbet_v21_bets_${dateStr}`)) || {};
-            if (savedBets[matchId] === pick) {
-                delete savedBets[matchId];
-                showToast("Sélection retirée du ticket");
-            } else {
-                savedBets[matchId] = pick;
-                showToast("Ajouté à votre Ticket Multi-Matchs !", "success");
-            }
-            localStorage.setItem(`footbet_v21_bets_${dateStr}`, JSON.stringify(savedBets));
-            applyFilters();
-            calculateAllStats();
+        function placeBet(mId, pick) {
+            let d = document.getElementById('matchDate').value;
+            let b = JSON.parse(localStorage.getItem(`footbet_v21_bets_${d}`)) || {};
+            if (b[mId] === pick) { delete b[mId]; showToast("Retiré du ticket"); }
+            else { b[mId] = pick; showToast("Ajouté au Ticket !", "success"); }
+            localStorage.setItem(`footbet_v21_bets_${d}`, JSON.stringify(b));
+            applyFilters(); calculateAllStats();
         }
 
         function selectAllAlgo(type) {
-            const dateStr = document.getElementById('matchDate').value;
-            let savedBets = JSON.parse(localStorage.getItem(`footbet_v21_bets_${dateStr}`)) || {};
-            currentMatches.forEach(m => {
-                savedBets[m.id] = (type === 'BASE') ? m.algo.basePick.key : m.algo.pepitePick.key;
-            });
-            localStorage.setItem(`footbet_v21_bets_${dateStr}`, JSON.stringify(savedBets));
-            showToast(type === 'BASE' ? "Toutes les Valeurs Sûres sélectionnées !" : "Toutes les Pépites sélectionnées !", "success");
-            applyFilters();
-            calculateAllStats();
+            let d = document.getElementById('matchDate').value;
+            let b = JSON.parse(localStorage.getItem(`footbet_v21_bets_${d}`)) || {};
+            currentMatches.forEach(m => b[m.id] = (type === 'BASE') ? m.algo.basePick.key : m.algo.pepitePick.key);
+            localStorage.setItem(`footbet_v21_bets_${d}`, JSON.stringify(b));
+            showToast("Sélection de groupe validée !", "success");
+            applyFilters(); calculateAllStats();
         }
 
         function clearManualBets() {
-            const dateStr = document.getElementById('matchDate').value;
-            localStorage.removeItem(`footbet_v21_bets_${dateStr}`);
-            showToast("Ticket Multi-Matchs vidé");
-            applyFilters();
-            calculateAllStats();
+            localStorage.removeItem(`footbet_v21_bets_${document.getElementById('matchDate').value}`);
+            showToast("Ticket vidé"); applyFilters(); calculateAllStats();
         }
 
-        function editScoreManual(matchId, homeName, awayName) {
-            let currentMatch = currentMatches.find(m => m.id === matchId);
-            let defH = currentMatch ? currentMatch.homeTeam.numScore : 0;
-            let defA = currentMatch ? currentMatch.awayTeam.numScore : 0;
-
-            let inputH = prompt(`Score pour ${homeName} :`, defH);
-            if (inputH === null) return;
-            let inputA = prompt(`Score pour ${awayName} :`, defA);
-            if (inputA === null) return;
-
-            let hScore = parseInt(inputH, 10);
-            let aScore = parseInt(inputA, 10);
-
-            if (isNaN(hScore) || isNaN(aScore)) {
-                showToast("Veuillez entrer des chiffres valides.", "error");
-                return;
-            }
-
-            const dateStr = document.getElementById('matchDate').value;
-            let manualScores = JSON.parse(localStorage.getItem(`foot_manual_scores_${dateStr}`)) || {};
-            manualScores[matchId] = { home: hScore, away: aScore };
-            localStorage.setItem(`foot_manual_scores_${dateStr}`, JSON.stringify(manualScores));
-
-            showToast("Score mis à jour manuellement !", "success");
-            loadFootballMatches(true);
+        function editScoreManual(mId, hName, aName) {
+            let d = document.getElementById('matchDate').value;
+            let mScores = JSON.parse(localStorage.getItem(`foot_manual_scores_${d}`)) || {};
+            let ih = prompt(`Score pour ${hName} :`, mScores[mId]?.home || 0); if(ih===null) return;
+            let ia = prompt(`Score pour ${aName} :`, mScores[mId]?.away || 0); if(ia===null) return;
+            mScores[mId] = { home: parseInt(ih,10)||0, away: parseInt(ia,10)||0 };
+            localStorage.setItem(`foot_manual_scores_${d}`, JSON.stringify(mScores));
+            showToast("Score mis à jour !", "success"); loadFootballMatches(true);
         }
 
         function showHistoryStats() {
-            let dateInput = document.getElementById('matchDate').value;
-            let currentViewDate = dateInput ? new Date(dateInput) : new Date();
-            let year = currentViewDate.getFullYear();
-            
+            let year = new Date(document.getElementById('matchDate').value).getFullYear();
             document.getElementById('currentYearText').textContent = year;
-            let history = JSON.parse(localStorage.getItem('footbet_v21_history')) || {};
-
-            let dayOfWeek = currentViewDate.getDay() || 7; 
-            let monday = new Date(currentViewDate);
-            monday.setDate(currentViewDate.getDate() - (dayOfWeek - 1)); 
+            let h = JSON.parse(localStorage.getItem('footbet_v21_history')) || {};
             
-            let wBase = 0, wPep = 0, wMan = 0;
-            for (let i = 0; i < 7; i++) {
-                let d = new Date(monday);
-                d.setDate(monday.getDate() + i);
-                let dStr = getLocalYYYYMMDD(d);
-                if (history[dStr]) {
-                    wBase += history[dStr].baseProfit || 0;
-                    wPep += history[dStr].pepiteProfit || 0;
-                    wMan += history[dStr].manualProfit || 0;
-                }
+            let mon = new Date(document.getElementById('matchDate').value);
+            mon.setDate(mon.getDate() - ((mon.getDay()||7) - 1));
+            
+            let wB=0, wP=0, wM=0;
+            for (let i=0; i<7; i++) {
+                let d = new Date(mon); d.setDate(mon.getDate() + i);
+                let day = h[getLocalYYYYMMDD(d)];
+                if (day) { wB += day.baseProfit||0; wP += day.pepiteProfit||0; wM += day.manualProfit||0; }
             }
+            document.getElementById('weekBase').innerHTML = formatMoneyHTML(wB);
+            document.getElementById('weekPepite').innerHTML = formatMoneyHTML(wP);
+            document.getElementById('weekManual').innerHTML = formatMoneyHTML(wM);
 
-            document.getElementById('weekBase').innerHTML = formatMoneyHTML(wBase);
-            document.getElementById('weekPepite').innerHTML = formatMoneyHTML(wPep);
-            document.getElementById('weekManual').innerHTML = formatMoneyHTML(wMan);
-
-            const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
-            let monthsGrid = document.getElementById('monthsGrid');
-            monthsGrid.innerHTML = '';
-
-            for (let m = 0; m < 12; m++) {
-                let mBase = 0, mPep = 0, mMan = 0, hasData = false;
-                let daysInMonth = new Date(year, m + 1, 0).getDate(); 
-                
-                for (let d = 1; d <= daysInMonth; d++) {
-                    let mm = String(m + 1).padStart(2, '0');
-                    let dd = String(d).padStart(2, '0');
-                    let dStr = `${year}-${mm}-${dd}`;
-                    if (history[dStr]) {
-                        hasData = true;
-                        mBase += history[dStr].baseProfit || 0;
-                        mPep += history[dStr].pepiteProfit || 0;
-                        mMan += history[dStr].manualProfit || 0;
-                    }
+            const mNames = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
+            let grid = document.getElementById('monthsGrid'); grid.innerHTML = '';
+            for (let m=0; m<12; m++) {
+                let mB=0, mP=0, has=false;
+                for (let d=1; d<=new Date(year, m+1, 0).getDate(); d++) {
+                    let day = h[`${year}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`];
+                    if (day) { has = true; mB += day.baseProfit||0; mP += day.pepiteProfit||0; }
                 }
-
-                if (hasData) {
+                if (has) {
                     let div = document.createElement('div');
-                    let isCurrentMonth = (m === currentViewDate.getMonth());
-                    div.className = isCurrentMonth 
-                        ? "bg-zinc-800 p-2.5 rounded-xl border border-blue-500/50 mb-2 flex justify-between items-center text-xs" 
-                        : "bg-zinc-800/50 p-2.5 rounded-xl border border-zinc-700/50 mb-2 flex justify-between items-center text-xs";
-
-                    div.innerHTML = `
-                        <span class="font-bold ${isCurrentMonth ? 'text-white' : 'text-zinc-300'}">${monthNames[m]}</span>
-                        <div class="space-x-2">
-                            <span>Sûre: ${formatMoneyHTML(mBase)}</span>
-                            <span>Pépite: ${formatMoneyHTML(mPep)}</span>
-                        </div>
-                    `;
-                    monthsGrid.appendChild(div);
+                    div.className = "bg-zinc-800/80 p-2.5 rounded-xl border border-zinc-700 mb-2 flex justify-between items-center text-xs";
+                    div.innerHTML = `<span class="font-bold text-zinc-300">${mNames[m]}</span><div class="space-x-2"><span>Sûre: ${formatMoneyHTML(mB)}</span><span>Pépite: ${formatMoneyHTML(mP)}</span></div>`;
+                    grid.appendChild(div);
                 }
-            }
-
-            if (monthsGrid.innerHTML === '') {
-                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Aucune donnée enregistrée pour cette année.</div>';
             }
         }
 
+        setInterval(() => setInterval(()=>loadFootballMatches(true), 12000), 2000); // Trigger background sync
         window.onload = () => loadFootballMatches(false);
     </script>
 </body>
