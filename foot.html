@@ -52,7 +52,7 @@
         
         <div class="flex justify-between items-center bg-zinc-950 border border-zinc-800 p-2 rounded-xl">
             <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des compétitions...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Démarrage...
             </div>
             <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded flex-shrink-0">Prêt</div>
         </div>
@@ -205,6 +205,8 @@
             return `${yr}-${mo}-${da}`;
         }
 
+        const sleep = ms => new Promise(res => setTimeout(res, ms));
+
         document.getElementById('matchDate').value = getLocalYYYYMMDD(new Date());
         let currentMatches = [];
         let isLiveFilterActive = false;
@@ -263,6 +265,7 @@
             return Math.min(150, Math.max(BASE_STAKE + 2, Math.ceil((deficit / Math.max(0.55, targetOdd - 1)) + BASE_STAKE)));
         }
 
+        // CHARGEMENT SÉQUENTIEL SÉCURISÉ (Contourne l'erreur 429 Too Many Requests)
         async function smartFetchESPN(leagueCode, apiDate) {
             const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueCode}/scoreboard?dates=${apiDate}`;
             try {
@@ -280,84 +283,108 @@
             return null;
         }
 
+        function getFallbackMatches(dateStr) {
+            let baseTime = new Date(dateStr + "T18:00:00").getTime();
+            let mockList = [
+                { id: "mock1", home: "France", away: "Italie", comp: "NATIONS LEAGUE" },
+                { id: "mock2", home: "Paris Saint-Germain", away: "Marseille", comp: "LIGUE 1" },
+                { id: "mock3", home: "Real Madrid", away: "Barcelona", comp: "LA LIGA" },
+                { id: "mock4", home: "Manchester City", away: "Arsenal", comp: "PREMIER LEAGUE" },
+                { id: "mock5", home: "Bayern Munich", away: "Borussia Dortmund", comp: "BUNDESLIGA" }
+            ];
+
+            let lockedOdds = JSON.parse(localStorage.getItem(`foot_fixed_odds_v21_${dateStr.replace(/-/g,'')}`)) || {};
+
+            let mocks = mockList.map((m, idx) => {
+                let tMs = baseTime + (idx * 30 * 60000); 
+                if (!lockedOdds[m.id]) lockedOdds[m.id] = computeFootAlgorithm(m.home, m.away);
+                return {
+                    id: m.id, status: 'TIMED', statusDetail: 'Prévu',
+                    utcDate: new Date(tMs).toISOString(), timeMs: tMs, competition: { name: m.comp },
+                    homeTeam: { name: m.home, logo: `https://ui-avatars.com/api/?name=${encodeURIComponent(m.home)}&background=18181b&color=60a5fa`, score: '-', numScore: 0 },
+                    awayTeam: { name: m.away, logo: `https://ui-avatars.com/api/?name=${encodeURIComponent(m.away)}&background=18181b&color=60a5fa`, score: '-', numScore: 0 },
+                    winner: null, algo: lockedOdds[m.id]
+                };
+            });
+            localStorage.setItem(`foot_fixed_odds_v21_${dateStr.replace(/-/g,'')}`, JSON.stringify(lockedOdds));
+            return mocks;
+        }
+
         async function loadFootballMatches(isSilent = false) {
             const dateInputVal = document.getElementById('matchDate').value;
             const apiDate = dateInputVal.replace(/-/g, '');
             const statusText = document.getElementById('statusText');
             
-            if (!isSilent) statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs...';
-            
+            // Liste complète incluant les compétitions de clubs et de pays
             const leagues = [
-                { c: 'fra.1', n: 'LIGUE 1' },
-                { c: 'eng.1', n: 'PREMIER LEAGUE' },
-                { c: 'esp.1', n: 'LA LIGA' },
-                { c: 'ita.1', n: 'SERIE A' },
-                { c: 'ger.1', n: 'BUNDESLIGA' },
-                { c: 'uefa.champions', n: 'CHAMPIONS LEAGUE' },
-                { c: 'uefa.europa', n: 'EUROPA LEAGUE' },
-                { c: 'uefa.nations', n: 'NATIONS LEAGUE' },
-                { c: 'fifa.friendly', n: 'MATCHS AMICAUX' },
-                { c: 'fifa.worldq.uefa', n: 'QUALIFS CDM EUROPE' }
+                { c: 'fra.1', n: 'LIGUE 1' }, { c: 'eng.1', n: 'PREMIER LEAGUE' }, 
+                { c: 'esp.1', n: 'LA LIGA' }, { c: 'ita.1', n: 'SERIE A' }, { c: 'ger.1', n: 'BUNDESLIGA' }, 
+                { c: 'uefa.champions', n: 'CHAMPIONS LEAGUE' }, { c: 'uefa.europa', n: 'EUROPA LEAGUE' }, 
+                { c: 'uefa.nations', n: 'NATIONS LEAGUE' }, { c: 'fifa.friendly', n: 'MATCHS AMICAUX' }, 
+                { c: 'fifa.worldq.uefa', n: 'QUALIFS CDM' }
             ];
 
+            let validMatches = [];
+            let seenIds = new Set();
+            let manualScores = JSON.parse(localStorage.getItem(`foot_manual_scores_${dateInputVal}`)) || {};
+            let lockedOdds = JSON.parse(localStorage.getItem(`foot_fixed_odds_v21_${apiDate}`)) || {};
+
             try {
-                const results = await Promise.all(
-                    leagues.map(async (lg) => {
-                        let data = await fetchLeagueData(lg.c, apiDate);
-                        return { lgName: lg.n, data: data };
-                    })
-                );
+                // BOUCLE SÉQUENTIELLE (Crucial pour éviter les erreurs réseau de surcharge)
+                for (let i = 0; i < leagues.length; i++) {
+                    let lg = leagues[i];
+                    if (!isSilent) statusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion ${lg.n} (${i+1}/${leagues.length})...`;
+                    
+                    let data = await smartFetchESPN(lg.c, apiDate);
+                    
+                    if (data && data.events) {
+                        data.events.forEach(ev => {
+                            if (!ev.id || seenIds.has(String(ev.id))) return;
+                            let comp = ev.competitions?.[0];
+                            if (!comp || !comp.competitors || comp.competitors.length < 2) return;
 
-                let validMatches = [];
-                let seenIds = new Set();
-                let manualScores = JSON.parse(localStorage.getItem(`foot_manual_scores_${dateInputVal}`)) || {};
-                let lockedOdds = JSON.parse(localStorage.getItem(`foot_fixed_odds_v21_${dateInputVal}`)) || {};
+                            let s = String(comp.status?.type?.state || 'pre').toLowerCase();
+                            let isLive = (s === 'in');
+                            let isCompleted = Boolean(comp.status?.type?.completed || s === 'post');
+                            
+                            let home = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'home') || comp.competitors[0];
+                            let away = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'away') || comp.competitors[1];
 
-                results.forEach(({ lgName, data }) => {
-                    if (!data || !Array.isArray(data.events)) return;
+                            let hName = home.team?.name || "Domicile";
+                            let aName = away.team?.name || "Extérieur";
+                            
+                            let ptsH = manualScores[ev.id]?.home !== undefined ? manualScores[ev.id].home : (parseInt(home.score) || 0);
+                            let ptsA = manualScores[ev.id]?.away !== undefined ? manualScores[ev.id].away : (parseInt(away.score) || 0);
+                            
+                            let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
+                            let winner = (status === 'FINISHED') ? (ptsH > ptsA ? 'HOME' : (ptsA > ptsH ? 'AWAY' : 'DRAW')) : null;
 
-                    data.events.forEach(ev => {
-                        if (!ev.id || seenIds.has(String(ev.id))) return;
-                        let comp = ev.competitions?.[0];
-                        if (!comp || !comp.competitors || comp.competitors.length < 2) return;
+                            if (!lockedOdds[ev.id]) lockedOdds[ev.id] = computeFootAlgorithm(hName, aName);
 
-                        let s = String(comp.status?.type?.state || 'pre').toLowerCase();
-                        let isLive = (s === 'in');
-                        let isCompleted = Boolean(comp.status?.type?.completed || s === 'post');
-                        
-                        let home = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'home') || comp.competitors[0];
-                        let away = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'away') || comp.competitors[1];
-
-                        let hName = home.team?.name || "Domicile";
-                        let aName = away.team?.name || "Extérieur";
-                        
-                        let ptsH = manualScores[ev.id]?.home !== undefined ? manualScores[ev.id].home : (parseInt(home.score) || 0);
-                        let ptsA = manualScores[ev.id]?.away !== undefined ? manualScores[ev.id].away : (parseInt(away.score) || 0);
-                        
-                        let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
-                        let winner = (status === 'FINISHED') ? (ptsH > ptsA ? 'HOME' : (ptsA > ptsH ? 'AWAY' : 'DRAW')) : null;
-
-                        if (!lockedOdds[ev.id]) lockedOdds[ev.id] = computeFootAlgorithm(hName, aName);
-
-                        validMatches.push({
-                            id: String(ev.id), status: status, statusDetail: comp.status?.displayClock || "En cours",
-                            utcDate: ev.date, timeMs: new Date(ev.date).getTime(), competition: { name: lgName },
-                            homeTeam: { name: hName, logo: home.team?.logo, score: status==='TIMED'?'-':ptsH, numScore: ptsH },
-                            awayTeam: { name: aName, logo: away.team?.logo, score: status==='TIMED'?'-':ptsA, numScore: ptsA },
-                            winner: winner, algo: lockedOdds[ev.id]
+                            validMatches.push({
+                                id: String(ev.id), status: status, statusDetail: comp.status?.displayClock || "En cours",
+                                utcDate: ev.date, timeMs: new Date(ev.date).getTime(), competition: { name: lg.n },
+                                homeTeam: { name: hName, logo: home.team?.logo, score: status==='TIMED'?'-':ptsH, numScore: ptsH },
+                                awayTeam: { name: aName, logo: away.team?.logo, score: status==='TIMED'?'-':ptsA, numScore: ptsA },
+                                winner: winner, algo: lockedOdds[ev.id]
+                            });
+                            seenIds.add(String(ev.id));
                         });
-                        seenIds.add(String(ev.id));
-                    });
-                });
-
-                if (validMatches.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match disponible à cette date (0 trouvé).</span>`;
-                } else {
-                    const lc = validMatches.filter(m => m.status === 'IN_PLAY').length;
-                    statusText.innerHTML = `<span class="text-blue-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${validMatches.length} matchs chargés (${lc} en direct)</span>`;
+                    }
+                    // Pause pour éviter le blocage API 429 Too Many Requests
+                    await sleep(300); 
                 }
 
-                localStorage.setItem(`foot_fixed_odds_v21_${dateInputVal}`, JSON.stringify(lockedOdds));
+                // MODE SECOURS SI AUCUN MATCH OFFICIEL CE JOUR LÀ
+                if (validMatches.length === 0) {
+                    validMatches = getFallbackMatches(dateInputVal);
+                    if(!isSilent) statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> 0 match officiel. Mode Démo activé.</span>`;
+                } else {
+                    localStorage.setItem(`foot_fixed_odds_v21_${apiDate}`, JSON.stringify(lockedOdds));
+                    const lc = validMatches.filter(m => m.status === 'IN_PLAY').length;
+                    if(!isSilent) statusText.innerHTML = `<span class="text-blue-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${validMatches.length} matchs trouvés (${lc} en direct)</span>`;
+                }
+
                 currentMatches = validMatches.sort((a, b) => a.timeMs - b.timeMs);
                 
                 populateCompetitions(currentMatches);
@@ -365,13 +392,13 @@
                 calculateAllStats();
 
             } catch (error) {
-                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur réseau.</span>`;
+                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur réseau critique.</span>`;
+                // Affichage du mode de secours en cas d'erreur de connexion totale
+                currentMatches = getFallbackMatches(dateInputVal);
+                populateCompetitions(currentMatches);
+                applyFilters();
+                calculateAllStats();
             }
-        }
-
-        // Utilise smartFetchESPN mais avec un wrappeur
-        async function fetchLeagueData(c, apiDate) {
-            return await smartFetchESPN(c, apiDate);
         }
 
         function onDateChange() {
@@ -383,7 +410,7 @@
             if (document.getElementById('matchDate').value === getLocalYYYYMMDD(new Date()) || isLiveFilterActive) {
                 loadFootballMatches(true);
             }
-        }, 12000);
+        }, 15000);
 
         function populateCompetitions(matches) {
             const select = document.getElementById('compSelect');
@@ -418,6 +445,20 @@
 
         function formatMoneyHTML(val) {
             return `<span class="${val > 0 ? 'text-emerald-400' : (val < 0 ? 'text-red-400' : 'text-zinc-400')}">${val > 0 ? '+' : ''}${val.toFixed(2)} €</span>`;
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            let bgClass = type === 'success' ? 'bg-emerald-900/95 border-emerald-500/50 text-emerald-200' : (type === 'error' ? 'bg-red-900/95 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
+            toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 flex items-center ${bgClass}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('opacity-0', 'translate-y-2'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
         function calculateAllStats() {
@@ -511,7 +552,7 @@
             let savedBets = JSON.parse(localStorage.getItem(`footbet_v21_bets_${dateStr}`)) || {};
 
             if (matchesToRender.length === 0) {
-                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match.</div>`;
+                container.innerHTML = `<div class="text-center text-zinc-500 py-6 text-sm border border-zinc-800 rounded-xl bg-zinc-900/50">Aucun match trouvé.</div>`;
                 return;
             }
 
@@ -558,37 +599,14 @@
             container.innerHTML = ''; container.appendChild(frag);
         }
 
-        function placeBet(mId, pick) {
-            let d = document.getElementById('matchDate').value;
-            let b = JSON.parse(localStorage.getItem(`footbet_v21_bets_${d}`)) || {};
-            if (b[mId] === pick) { delete b[mId]; showToast("Retiré du ticket"); }
-            else { b[mId] = pick; showToast("Ajouté au Ticket !", "success"); }
-            localStorage.setItem(`footbet_v21_bets_${d}`, JSON.stringify(b));
-            applyFilters(); calculateAllStats();
-        }
-
-        function selectAllAlgo(type) {
-            let d = document.getElementById('matchDate').value;
-            let b = JSON.parse(localStorage.getItem(`footbet_v21_bets_${d}`)) || {};
-            currentMatches.forEach(m => b[m.id] = (type === 'BASE') ? m.algo.basePick.key : m.algo.pepitePick.key);
-            localStorage.setItem(`footbet_v21_bets_${d}`, JSON.stringify(b));
-            showToast("Sélection de groupe validée !", "success");
-            applyFilters(); calculateAllStats();
-        }
-
-        function clearManualBets() {
-            localStorage.removeItem(`footbet_v21_bets_${document.getElementById('matchDate').value}`);
-            showToast("Ticket vidé"); applyFilters(); calculateAllStats();
-        }
-
-        function editScoreManual(mId, hName, aName) {
-            let d = document.getElementById('matchDate').value;
-            let mScores = JSON.parse(localStorage.getItem(`foot_manual_scores_${d}`)) || {};
-            let ih = prompt(`Score pour ${hName} :`, mScores[mId]?.home || 0); if(ih===null) return;
-            let ia = prompt(`Score pour ${aName} :`, mScores[mId]?.away || 0); if(ia===null) return;
-            mScores[mId] = { home: parseInt(ih,10)||0, away: parseInt(ia,10)||0 };
-            localStorage.setItem(`foot_manual_scores_${d}`, JSON.stringify(mScores));
-            showToast("Score mis à jour !", "success"); loadFootballMatches(true);
+        function toggleHistoryStats() {
+            let block = document.getElementById('historyBlock');
+            if (block.classList.contains('hidden')) {
+                block.classList.remove('hidden');
+                showHistoryStats();
+            } else {
+                block.classList.add('hidden');
+            }
         }
 
         function showHistoryStats() {
@@ -624,6 +642,39 @@
                     grid.appendChild(div);
                 }
             }
+        }
+
+        function placeBet(mId, pick) {
+            let d = document.getElementById('matchDate').value;
+            let b = JSON.parse(localStorage.getItem(`footbet_v21_bets_${d}`)) || {};
+            if (b[mId] === pick) { delete b[mId]; showToast("Retiré du ticket"); }
+            else { b[mId] = pick; showToast("Ajouté au Ticket !", "success"); }
+            localStorage.setItem(`footbet_v21_bets_${d}`, JSON.stringify(b));
+            applyFilters(); calculateAllStats();
+        }
+
+        function selectAllAlgo(type) {
+            let d = document.getElementById('matchDate').value;
+            let b = JSON.parse(localStorage.getItem(`footbet_v21_bets_${d}`)) || {};
+            currentMatches.forEach(m => b[m.id] = (type === 'BASE') ? m.algo.basePick.key : m.algo.pepitePick.key);
+            localStorage.setItem(`footbet_v21_bets_${d}`, JSON.stringify(b));
+            showToast("Sélection de groupe validée !", "success");
+            applyFilters(); calculateAllStats();
+        }
+
+        function clearManualBets() {
+            localStorage.removeItem(`footbet_v21_bets_${document.getElementById('matchDate').value}`);
+            showToast("Ticket vidé"); applyFilters(); calculateAllStats();
+        }
+
+        function editScoreManual(mId, hName, aName) {
+            let d = document.getElementById('matchDate').value;
+            let mScores = JSON.parse(localStorage.getItem(`foot_manual_scores_${d}`)) || {};
+            let ih = prompt(`Score pour ${hName} :`, mScores[mId]?.home || 0); if(ih===null) return;
+            let ia = prompt(`Score pour ${aName} :`, mScores[mId]?.away || 0); if(ia===null) return;
+            mScores[mId] = { home: parseInt(ih,10)||0, away: parseInt(ia,10)||0 };
+            localStorage.setItem(`foot_manual_scores_${d}`, JSON.stringify(mScores));
+            showToast("Score mis à jour !", "success"); loadFootballMatches(true);
         }
 
         window.onload = () => loadFootballMatches(false);
