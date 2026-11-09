@@ -52,7 +52,7 @@
         
         <div class="flex justify-between items-center bg-zinc-950 border border-zinc-800 p-2 rounded-xl">
             <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Démarrage...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des compétitions...
             </div>
             <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded flex-shrink-0">Prêt</div>
         </div>
@@ -263,42 +263,21 @@
             return Math.min(150, Math.max(BASE_STAKE + 2, Math.ceil((deficit / Math.max(0.55, targetOdd - 1)) + BASE_STAKE)));
         }
 
-        // CHARGEMENT DIRECT SANS PROXY POUR ÉVITER LE BLOCAGE (ESPN autorise le Cross-Origin)
         async function smartFetchESPN(leagueCode, apiDate) {
             const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueCode}/scoreboard?dates=${apiDate}`;
             try {
                 let res = await fetch(url);
                 if (res.ok) return await res.json();
             } catch (e) {}
+
+            try {
+                let pRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+                if (pRes.ok) {
+                    let d = await pRes.json();
+                    if (d.contents) return JSON.parse(d.contents);
+                }
+            } catch (e) {}
             return null;
-        }
-
-        // FAUSSES AFFICHES SI AUCUN MATCH DANS LE MONDE (Permet de tester l'interface à tout moment)
-        function getFallbackMatches(dateStr) {
-            let baseTime = new Date(dateStr + "T18:00:00").getTime();
-            let mockList = [
-                { id: "mock1", home: "France", away: "Italie", comp: "NATIONS LEAGUE" },
-                { id: "mock2", home: "Paris Saint-Germain", away: "Marseille", comp: "LIGUE 1" },
-                { id: "mock3", home: "Real Madrid", away: "Barcelona", comp: "LA LIGA" },
-                { id: "mock4", home: "Manchester City", away: "Arsenal", comp: "PREMIER LEAGUE" },
-                { id: "mock5", home: "Bayern Munich", away: "Borussia Dortmund", comp: "BUNDESLIGA" }
-            ];
-
-            let lockedOdds = JSON.parse(localStorage.getItem(`foot_fixed_odds_v21_${dateStr.replace(/-/g,'')}`)) || {};
-
-            let mocks = mockList.map((m, idx) => {
-                let tMs = baseTime + (idx * 30 * 60000); 
-                if (!lockedOdds[m.id]) lockedOdds[m.id] = computeFootAlgorithm(m.home, m.away);
-                return {
-                    id: m.id, status: 'TIMED', statusDetail: 'Prévu',
-                    utcDate: new Date(tMs).toISOString(), timeMs: tMs, competition: { name: m.comp },
-                    homeTeam: { name: m.home, logo: `https://ui-avatars.com/api/?name=${encodeURIComponent(m.home)}&background=18181b&color=60a5fa`, score: '-', numScore: 0 },
-                    awayTeam: { name: m.away, logo: `https://ui-avatars.com/api/?name=${encodeURIComponent(m.away)}&background=18181b&color=60a5fa`, score: '-', numScore: 0 },
-                    winner: null, algo: lockedOdds[m.id]
-                };
-            });
-            localStorage.setItem(`foot_fixed_odds_v21_${dateStr.replace(/-/g,'')}`, JSON.stringify(lockedOdds));
-            return mocks;
         }
 
         async function loadFootballMatches(isSilent = false) {
@@ -306,40 +285,52 @@
             const apiDate = dateInputVal.replace(/-/g, '');
             const statusText = document.getElementById('statusText');
             
-            // Liste des ligues exactes pour ESPN
+            if (!isSilent) statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs...';
+            
             const leagues = [
-                { c: 'fra.1', n: 'LIGUE 1' }, { c: 'eng.1', n: 'PREMIER LEAGUE' }, 
-                { c: 'esp.1', n: 'LA LIGA' }, { c: 'ita.1', n: 'SERIE A' }, { c: 'ger.1', n: 'BUNDESLIGA' }, 
-                { c: 'uefa.champions', n: 'CHAMPIONS LEAGUE' }, { c: 'uefa.europa', n: 'EUROPA LEAGUE' }, 
-                { c: 'uefa.nations', n: 'NATIONS LEAGUE' }, { c: 'fifa.friendly', n: 'MATCHS AMICAUX' }, 
-                { c: 'fifa.worldq.uefa', n: 'QUALIFS CDM' }
+                { c: 'fra.1', n: 'LIGUE 1' },
+                { c: 'eng.1', n: 'PREMIER LEAGUE' },
+                { c: 'esp.1', n: 'LA LIGA' },
+                { c: 'ita.1', n: 'SERIE A' },
+                { c: 'ger.1', n: 'BUNDESLIGA' },
+                { c: 'uefa.champions', n: 'CHAMPIONS LEAGUE' },
+                { c: 'uefa.europa', n: 'EUROPA LEAGUE' },
+                { c: 'uefa.nations', n: 'NATIONS LEAGUE' },
+                { c: 'fifa.friendly', n: 'MATCHS AMICAUX' },
+                { c: 'fifa.worldq.uefa', n: 'QUALIFS CDM EUROPE' }
             ];
 
-            let validMatches = [];
-            let seenIds = new Set();
-            let manualScores = JSON.parse(localStorage.getItem(`foot_manual_scores_${dateInputVal}`)) || {};
-            let lockedOdds = JSON.parse(localStorage.getItem(`foot_fixed_odds_v21_${apiDate}`)) || {};
+            try {
+                const results = await Promise.all(
+                    leagues.map(async (lg) => {
+                        let data = await fetchLeagueData(lg.c, apiDate);
+                        return { lgName: lg.n, data: data };
+                    })
+                );
 
-            // REQUÊTES SÉQUENTIELLES SÉCURISÉES (Empêche l'erreur 429)
-            for (let lg of leagues) {
-                if(!isSilent) statusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Recherche: ${lg.n}...`;
-                let data = await smartFetchESPN(lg.c, apiDate);
-                
-                if (data && data.events) {
+                let validMatches = [];
+                let seenIds = new Set();
+                let manualScores = JSON.parse(localStorage.getItem(`foot_manual_scores_${dateInputVal}`)) || {};
+                let lockedOdds = JSON.parse(localStorage.getItem(`foot_fixed_odds_v21_${dateInputVal}`)) || {};
+
+                results.forEach(({ lgName, data }) => {
+                    if (!data || !Array.isArray(data.events)) return;
+
                     data.events.forEach(ev => {
                         if (!ev.id || seenIds.has(String(ev.id))) return;
                         let comp = ev.competitions?.[0];
                         if (!comp || !comp.competitors || comp.competitors.length < 2) return;
 
                         let s = String(comp.status?.type?.state || 'pre').toLowerCase();
-                        let isCompleted = Boolean(comp.status?.type?.completed || s === 'post');
                         let isLive = (s === 'in');
+                        let isCompleted = Boolean(comp.status?.type?.completed || s === 'post');
                         
                         let home = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'home') || comp.competitors[0];
                         let away = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'away') || comp.competitors[1];
 
                         let hName = home.team?.name || "Domicile";
                         let aName = away.team?.name || "Extérieur";
+                        
                         let ptsH = manualScores[ev.id]?.home !== undefined ? manualScores[ev.id].home : (parseInt(home.score) || 0);
                         let ptsA = manualScores[ev.id]?.away !== undefined ? manualScores[ev.id].away : (parseInt(away.score) || 0);
                         
@@ -350,31 +341,49 @@
 
                         validMatches.push({
                             id: String(ev.id), status: status, statusDetail: comp.status?.displayClock || "En cours",
-                            utcDate: ev.date, timeMs: new Date(ev.date).getTime(), competition: { name: lg.n },
+                            utcDate: ev.date, timeMs: new Date(ev.date).getTime(), competition: { name: lgName },
                             homeTeam: { name: hName, logo: home.team?.logo, score: status==='TIMED'?'-':ptsH, numScore: ptsH },
                             awayTeam: { name: aName, logo: away.team?.logo, score: status==='TIMED'?'-':ptsA, numScore: ptsA },
                             winner: winner, algo: lockedOdds[ev.id]
                         });
                         seenIds.add(String(ev.id));
                     });
+                });
+
+                if (validMatches.length === 0) {
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match disponible à cette date (0 trouvé).</span>`;
+                } else {
+                    const lc = validMatches.filter(m => m.status === 'IN_PLAY').length;
+                    statusText.innerHTML = `<span class="text-blue-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${validMatches.length} matchs chargés (${lc} en direct)</span>`;
                 }
-            }
 
-            // MODE DÉMO SI 0 MATCH
-            if (validMatches.length === 0) {
-                validMatches = getFallbackMatches(dateInputVal);
-                if(!isSilent) statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> 0 match officiel. Mode Démo activé.</span>`;
-            } else {
-                localStorage.setItem(`foot_fixed_odds_v21_${apiDate}`, JSON.stringify(lockedOdds));
-                const lc = validMatches.filter(m => m.status === 'IN_PLAY').length;
-                if(!isSilent) statusText.innerHTML = `<span class="text-blue-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${validMatches.length} matchs trouvés (${lc} en direct)</span>`;
-            }
+                localStorage.setItem(`foot_fixed_odds_v21_${dateInputVal}`, JSON.stringify(lockedOdds));
+                currentMatches = validMatches.sort((a, b) => a.timeMs - b.timeMs);
+                
+                populateCompetitions(currentMatches);
+                applyFilters();
+                calculateAllStats();
 
-            currentMatches = validMatches.sort((a, b) => a.timeMs - b.timeMs);
-            populateCompetitions(currentMatches);
-            applyFilters();
-            calculateAllStats();
+            } catch (error) {
+                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur réseau.</span>`;
+            }
         }
+
+        // Utilise smartFetchESPN mais avec un wrappeur
+        async function fetchLeagueData(c, apiDate) {
+            return await smartFetchESPN(c, apiDate);
+        }
+
+        function onDateChange() {
+            document.getElementById('compSelect').innerHTML = '<option value="ALL">Toutes Compétitions & Sélections</option>';
+            loadFootballMatches(false);
+        }
+
+        setInterval(() => {
+            if (document.getElementById('matchDate').value === getLocalYYYYMMDD(new Date()) || isLiveFilterActive) {
+                loadFootballMatches(true);
+            }
+        }, 12000);
 
         function populateCompetitions(matches) {
             const select = document.getElementById('compSelect');
@@ -547,11 +556,6 @@
                 frag.appendChild(card);
             });
             container.innerHTML = ''; container.appendChild(frag);
-        }
-
-        function onDateChange() {
-            document.getElementById('compSelect').innerHTML = '<option value="ALL">Toutes Compétitions & Sélections</option>';
-            loadFootballMatches(false);
         }
 
         function placeBet(mId, pick) {
