@@ -40,7 +40,7 @@
                     <i class="fa-solid fa-calendar-days text-blue-400"></i>
                 </button>
 
-                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-blue-500" onchange="loadFootballMatches(false)">
+                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-blue-500" onchange="onDateChange()">
             </div>
         </div>
 
@@ -51,7 +51,7 @@
             <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 focus:outline-none focus:border-blue-500 flex-grow">
                 <option value="ALL">Toutes les Compétitions</option>
             </select>
-            <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-xs font-bold transition flex items-center shadow flex-shrink-0">
+            <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-xs font-bold transition flex items-center shadow flex-shrink-0" title="Actualiser">
                 <i class="fa-solid fa-rotate"></i>
             </button>
         </div>
@@ -62,7 +62,7 @@
         <!-- BARRE DE STATUT -->
         <div class="flex justify-between items-center bg-zinc-950 border border-zinc-800 p-2 rounded-xl">
             <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Analyse des cotes fixes...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion aux championnats...
             </div>
             <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded flex-shrink-0">Prêt</div>
         </div>
@@ -126,7 +126,7 @@
                 <!-- PÉPITE (OUTSIDER / VALUE) -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-amber-500/40 relative flex flex-col justify-between">
                     <div class="absolute -top-2 -right-2 bg-amber-500 text-zinc-950 text-[8px] font-black px-1.5 py-0.5 rounded shadow">AUTO PÉPITE</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Pépites (Cote 2.20 - 3.90)</div>
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Pépites (Cote 2.10 - 3.90)</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
                             <span class="text-[8px] text-zinc-400 block uppercase font-bold">Mise Fixe (5€)</span>
@@ -230,14 +230,15 @@
         let isLiveFilterActive = false;
         const BASE_STAKE = 5.0;
 
-        // DICTIONNAIRE PUISSANCE DES CLUBS
+        // DICTIONNAIRE PUISSANCE DES CLUBS EUROPÉENS
         const topTeams = {
             "Real Madrid": 95, "Manchester City": 95, "Bayern Munich": 94, "Liverpool": 93, "Arsenal": 92, "Barcelona": 92,
-            "Paris Saint-Germain": 91, "Inter Milan": 90, "Bayer Leverkusen": 88, "Borussia Dortmund": 85,
+            "Paris Saint-Germain": 91, "PSG": 91, "Inter Milan": 90, "Internazionale": 90, "Bayer Leverkusen": 88, "Borussia Dortmund": 85,
             "Juventus": 85, "AC Milan": 85, "Atletico Madrid": 85, "Napoli": 84, "Chelsea": 83, "Tottenham": 83, 
             "Aston Villa": 82, "Marseille": 80, "Monaco": 80, "Lille": 79, "Lens": 76, "Lyon": 76, "Nice": 75,
             "Sporting CP": 82, "Benfica": 81, "FC Porto": 80, "PSV Eindhoven": 79, "Atalanta": 83, "RB Leipzig": 82,
-            "Newcastle": 80, "Manchester United": 80, "Roma": 79, "Lazio": 78, "Fiorentina": 77, "Villarreal": 78, "Real Sociedad": 77
+            "Newcastle": 80, "Manchester United": 80, "Roma": 79, "Lazio": 78, "Fiorentina": 77, "Villarreal": 78, "Real Sociedad": 77,
+            "Ajax": 79, "Feyenoord": 79, "Brest": 75, "Rennes": 75, "Strasbourg": 73, "Nantes": 71, "Toulouse": 73
         };
 
         function hashString(str) {
@@ -247,7 +248,7 @@
         }
 
         function getTeamPower(teamName, recordStr) {
-            let baseScore = 62 + (hashString(teamName) % 14); // Entre 62 et 75 pour les équipes standards
+            let baseScore = 62 + (hashString(teamName) % 14);
             for (let t in topTeams) {
                 if (teamName.toLowerCase().includes(t.toLowerCase())) {
                     baseScore = topTeams[t];
@@ -271,22 +272,41 @@
             return baseScore;
         }
 
+        // Conversion cote américaine (+150 / -200) en cote décimale européenne (2.50 / 1.50)
+        function americanToDecimal(ml) {
+            if (ml === undefined || ml === null || ml === "") return null;
+            let n = parseFloat(String(ml).replace('+', ''));
+            if (isNaN(n) || n === 0) return null;
+            if (n === 100 || String(ml).toUpperCase() === 'EVEN') return 2.00;
+            if (n > 0) return parseFloat((1 + (n / 100)).toFixed(2));
+            return parseFloat((1 + (100 / Math.abs(n))).toFixed(2));
+        }
+
         // --- ALGORITHME FABTURF ADAPTÉ AU FOOTBALL (Cotes Fixes + Valeur Sûre + Pépite) ---
-        function computeFootAlgorithm(homeName, awayName, homeRec, awayRec, apiOddsObj = null) {
-            let hPow = getTeamPower(homeName, homeRec) + 6.5; // Avantage terrain
+        function computeFootAlgorithm(homeName, awayName, homeRec, awayRec, compObj = null) {
+            let hPow = getTeamPower(homeName, homeRec) + 6.5;
             let aPow = getTeamPower(awayName, awayRec);
             let diff = hPow - aPow;
 
-            // Probabilités mathématiques du match
             let pDraw = Math.max(0.17, 0.29 - Math.abs(diff) * 0.0045);
             let rem = 1 - pDraw;
             let pHome = rem / (1 + Math.pow(10, -diff / 22));
             let pAway = rem - pHome;
 
-            // Calcul des Cotes Fixes (Marge Bookmaker ~1.06)
             let odd1 = Math.max(1.18, Math.min(9.50, parseFloat((0.93 / pHome).toFixed(2))));
             let oddN = Math.max(2.65, Math.min(6.50, parseFloat((0.93 / pDraw).toFixed(2))));
             let odd2 = Math.max(1.22, Math.min(11.00, parseFloat((0.93 / pAway).toFixed(2))));
+
+            // Si ESPN fournit les vraies cotes des bookmakers, on les récupère en priorité
+            if (compObj && Array.isArray(compObj.odds) && compObj.odds.length > 0) {
+                let o = compObj.odds[0];
+                let real1 = americanToDecimal(o.homeTeamOdds?.moneyLine || o.moneyline?.home?.close?.odds);
+                let real2 = americanToDecimal(o.awayTeamOdds?.moneyLine || o.moneyline?.away?.close?.odds);
+                let realN = americanToDecimal(o.drawOdds?.moneyLine || o.moneyline?.draw?.close?.odds);
+                if (real1 && real1 > 1.05 && real1 < 25) odd1 = real1;
+                if (real2 && real2 > 1.05 && real2 < 25) odd2 = real2;
+                if (realN && realN > 1.50 && realN < 15) oddN = realN;
+            }
 
             let outcomes = [
                 { key: 'HOME', label: '1', name: homeName, odd: odd1, prob: pHome },
@@ -294,27 +314,26 @@
                 { key: 'AWAY', label: '2', name: awayName, odd: odd2, prob: pAway }
             ];
 
-            // 1. VALEUR SÛRE (BASE) = La cote la plus basse (le favori des parieurs)
+            // 1. VALEUR SÛRE (BASE) = Le favori des cotes
             let sortedByOdd = [...outcomes].sort((a, b) => a.odd - b.odd);
             let basePick = sortedByOdd[0];
-            basePick.confidence = Math.min(98, Math.max(45, Math.round(basePick.prob * 135)));
+            basePick.confidence = Math.min(98, Math.max(48, Math.round((1 / basePick.odd) * 112)));
 
-            // 2. PÉPITE (COUP DE CŒUR) = Parmi les 2 autres issues, celle qui offre le meilleur rapport Qualité/Cote (cible idéale 2.10€ - 3.90€)
+            // 2. PÉPITE = Meilleur outsider ou nul (cible idéale entre 2.10 et 3.90)
             let remaining = outcomes.filter(o => o.key !== basePick.key);
             remaining.forEach(o => {
                 let targetBonus = (o.odd >= 2.00 && o.odd <= 3.95) ? 28 : (o.odd <= 5.20 ? 12 : -15);
-                o.nuggetScore = Math.min(97, Math.max(20, Math.round((o.prob * 120) + targetBonus)));
+                o.nuggetScore = Math.min(97, Math.max(22, Math.round((o.prob * 120) + targetBonus)));
             });
             let pepitePick = remaining.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
 
             return {
                 odds: { HOME: odd1, DRAW: oddN, AWAY: odd2 },
-                basePick: basePick,     // { key: 'HOME'|'DRAW'|'AWAY', odd, confidence, name }
-                pepitePick: pepitePick  // { key: 'HOME'|'DRAW'|'AWAY', odd, nuggetScore, name }
+                basePick: basePick,
+                pepitePick: pepitePick
             };
         }
 
-        // Rattrapage intelligent FabTurf adapté aux cotes fixes du foot
         function computeSmartStake(deficit, targetOdd = 1.90) {
             if (deficit <= 0) return BASE_STAKE;
             let netFactor = Math.max(0.55, targetOdd - 1);
@@ -341,7 +360,43 @@
             return 0;
         }
 
-        // Rafraîchissement automatique en arrière-plan toutes les 12 secondes SANS défilement
+        // CONNEXION MULTI-PROXIES ROBUSTE (COMME SUR FABTURF)
+        async function smartFetchESPN(leagueCode, apiDate) {
+            const fullUrl = `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueCode}/scoreboard?dates=${apiDate}`;
+            
+            // 1. Essai direct rapide
+            try {
+                let directRes = await fetch(fullUrl, { cache: 'no-store' });
+                if (directRes.ok) return await directRes.json();
+            } catch (e) {}
+
+            // 2. Proxies de secours si le navigateur bloque la requête directe
+            const proxies = [
+                `https://corsproxy.io/?${encodeURIComponent(fullUrl)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(fullUrl)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(fullUrl)}`
+            ];
+
+            for (let proxy of proxies) {
+                try {
+                    let res = await fetch(proxy, { cache: 'no-store' });
+                    if (res.ok) {
+                        let text = await res.text();
+                        if (!text || text.trim() === "") continue;
+                        let json = JSON.parse(text);
+                        if (json && json.contents) json = JSON.parse(json.contents);
+                        return json;
+                    }
+                } catch (e) {}
+            }
+            return null;
+        }
+
+        function onDateChange() {
+            document.getElementById('compSelect').innerHTML = '<option value="ALL">Toutes les Compétitions</option>';
+            loadFootballMatches(false);
+        }
+
         setInterval(() => {
             if (document.getElementById('matchDate').value === getLocalYYYYMMDD(new Date()) || isLiveFilterActive) {
                 loadFootballMatches(true);
@@ -378,88 +433,108 @@
             const statusText = document.getElementById('statusText');
             
             if (!isSilent) {
-                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des matchs & cotes fixes...';
+                statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des championnats européens...';
             }
             
             try {
-                const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard?dates=${apiDate}`, { cache: 'no-store' });
-                if (!res.ok) throw new Error("Erreur réseau");
-                const data = await res.json();
+                // Liste complète des compétitions européennes fiables sur ESPN
+                const leagues = [
+                    { code: 'fra.1', name: 'LIGUE 1' },
+                    { code: 'fra.2', name: 'LIGUE 2' },
+                    { code: 'eng.1', name: 'PREMIER LEAGUE' },
+                    { code: 'esp.1', name: 'LA LIGA' },
+                    { code: 'ita.1', name: 'SERIE A' },
+                    { code: 'ger.1', name: 'BUNDESLIGA' },
+                    { code: 'por.1', name: 'LIGA PORTUGAL' },
+                    { code: 'ned.1', name: 'EREDIVISIE' },
+                    { code: 'bel.1', name: 'JUPILER PRO LEAGUE' },
+                    { code: 'uefa.champions', name: 'CHAMPIONS LEAGUE' },
+                    { code: 'uefa.europa', name: 'EUROPA LEAGUE' },
+                    { code: 'uefa.europa.conf', name: 'CONFERENCE LEAGUE' }
+                ];
+
+                const results = await Promise.all(
+                    leagues.map(lg => smartFetchESPN(lg.code, apiDate).then(data => ({ lgName: lg.name, data })))
+                );
 
                 let validMatches = [];
-                let events = data.events || [];
+                let seenIds = new Set();
                 let manualScores = JSON.parse(localStorage.getItem(`foot_manual_scores_${dateInputVal}`)) || {};
                 let lockedOdds = JSON.parse(localStorage.getItem(`foot_fixed_odds_v21_${dateInputVal}`)) || {};
 
-                events.forEach(event => {
-                    let comp = event.competitions?.[0];
-                    if (!comp || !comp.competitors || comp.competitors.length < 2) return;
+                results.forEach(({ lgName, data }) => {
+                    if (!data || !Array.isArray(data.events)) return;
 
-                    let eventDateObj = event.date ? new Date(event.date) : new Date();
-                    let matchDateLocal = getLocalYYYYMMDD(eventDateObj);
-                    let statusObj = comp.status || event.status || {};
-                    let statusType = statusObj.type || {};
-                    const state = String(statusType.state || 'pre').toLowerCase();
-                    const isCompleted = Boolean(statusType.completed || state === 'post');
-                    const isLive = (state === 'in');
+                    data.events.forEach(event => {
+                        if (!event.id || seenIds.has(String(event.id))) return;
 
-                    if (matchDateLocal !== dateInputVal && !isLive) return;
+                        let comp = event.competitions?.[0];
+                        if (!comp || !comp.competitors || comp.competitors.length < 2) return;
 
-                    let home = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'home') || comp.competitors[0];
-                    let away = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'away') || comp.competitors[1];
+                        let eventDateObj = event.date ? new Date(event.date) : new Date();
+                        let matchDateLocal = getLocalYYYYMMDD(eventDateObj);
+                        let statusObj = comp.status || event.status || {};
+                        let statusType = statusObj.type || {};
+                        const state = String(statusType.state || 'pre').toLowerCase();
+                        const isCompleted = Boolean(statusType.completed || state === 'post');
+                        const isLive = (state === 'in');
 
-                    let homeName = home.team?.shortDisplayName || home.team?.name || home.team?.displayName || "Domicile";
-                    let awayName = away.team?.shortDisplayName || away.team?.name || away.team?.displayName || "Extérieur";
-                    let homeLogo = home.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(homeName)}&background=18181b&color=60a5fa&size=64`;
-                    let awayLogo = away.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(awayName)}&background=18181b&color=60a5fa&size=64`;
+                        if (matchDateLocal !== dateInputVal && !isLive) return;
+                        seenIds.add(String(event.id));
 
-                    let homeRecord = home.records?.[0]?.summary || "0-0-0";
-                    let awayRecord = away.records?.[0]?.summary || "0-0-0";
+                        let home = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'home') || comp.competitors[0];
+                        let away = comp.competitors.find(c => String(c.homeAway).toLowerCase() === 'away') || comp.competitors[1];
 
-                    let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
-                    
-                    let ptsHome = parseScoreDeep(home);
-                    let ptsAway = parseScoreDeep(away);
+                        let homeName = home.team?.shortDisplayName || home.team?.name || home.team?.displayName || "Domicile";
+                        let awayName = away.team?.shortDisplayName || away.team?.name || away.team?.displayName || "Extérieur";
+                        let homeLogo = home.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(homeName)}&background=18181b&color=60a5fa&size=64`;
+                        let awayLogo = away.team?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(awayName)}&background=18181b&color=60a5fa&size=64`;
 
-                    if (manualScores[event.id] && manualScores[event.id].home !== undefined) {
-                        ptsHome = manualScores[event.id].home;
-                        ptsAway = manualScores[event.id].away;
-                        if (status === 'TIMED') status = 'FINISHED';
-                    }
+                        let homeRecord = home.records?.[0]?.summary || "0-0-0";
+                        let awayRecord = away.records?.[0]?.summary || "0-0-0";
 
-                    let sHomeDisplay = (status === 'TIMED') ? '-' : String(ptsHome);
-                    let sAwayDisplay = (status === 'TIMED') ? '-' : String(ptsAway);
+                        let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
+                        
+                        let ptsHome = parseScoreDeep(home);
+                        let ptsAway = parseScoreDeep(away);
 
-                    let winner = null;
-                    if (status === 'FINISHED') {
-                        if (ptsHome > ptsAway) winner = 'HOME';
-                        else if (ptsAway > ptsHome) winner = 'AWAY';
-                        else winner = 'DRAW';
-                    }
+                        if (manualScores[event.id] && manualScores[event.id].home !== undefined) {
+                            ptsHome = manualScores[event.id].home;
+                            ptsAway = manualScores[event.id].away;
+                            if (status === 'TIMED') status = 'FINISHED';
+                        }
 
-                    // COTES FIXES VERROUILLÉES (Ne bougent jamais pendant le match)
-                    let algo = lockedOdds[event.id];
-                    if (!algo) {
-                        algo = computeFootAlgorithm(homeName, awayName, homeRecord, awayRecord);
-                        lockedOdds[event.id] = algo;
-                    }
+                        let sHomeDisplay = (status === 'TIMED') ? '-' : String(ptsHome);
+                        let sAwayDisplay = (status === 'TIMED') ? '-' : String(ptsAway);
 
-                    let leagueName = event.season?.slug || comp.tournament?.name || data.leagues?.[0]?.name || "Football";
-                    leagueName = typeof leagueName === 'string' ? leagueName.toUpperCase() : "FOOTBALL";
+                        let winner = null;
+                        if (status === 'FINISHED') {
+                            if (ptsHome > ptsAway) winner = 'HOME';
+                            else if (ptsAway > ptsHome) winner = 'AWAY';
+                            else winner = 'DRAW';
+                        }
 
-                    let detailClock = statusObj.displayClock || statusType.shortDetail || "En cours";
+                        // Cotes fixes verrouillées
+                        let algo = lockedOdds[event.id];
+                        if (!algo) {
+                            algo = computeFootAlgorithm(homeName, awayName, homeRecord, awayRecord, comp);
+                            lockedOdds[event.id] = algo;
+                        }
 
-                    validMatches.push({
-                        id: String(event.id),
-                        status: status,
-                        statusDetail: detailClock,
-                        utcDate: event.date,
-                        timeMs: eventDateObj.getTime(),
-                        competition: { name: leagueName },
-                        homeTeam: { name: homeName, logo: homeLogo, score: sHomeDisplay, numScore: ptsHome },
-                        awayTeam: { name: awayName, logo: awayLogo, score: sAwayDisplay, numScore: ptsAway },
-                        winner: winner,
-                        algo: algo
+                        let detailClock = statusObj.displayClock || statusType.shortDetail || "En cours";
+
+                        validMatches.push({
+                            id: String(event.id),
+                            status: status,
+                            statusDetail: detailClock,
+                            utcDate: event.date,
+                            timeMs: eventDateObj.getTime(),
+                            competition: { name: lgName },
+                            homeTeam: { name: homeName, logo: homeLogo, score: sHomeDisplay, numScore: ptsHome },
+                            awayTeam: { name: awayName, logo: awayLogo, score: sAwayDisplay, numScore: ptsAway },
+                            winner: winner,
+                            algo: algo
+                        });
                     });
                 });
 
@@ -469,22 +544,20 @@
                 currentMatches = validMatches;
 
                 if (currentMatches.length === 0) {
-                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match trouvé pour cette date.</span>`;
+                    statusText.innerHTML = `<span class="text-zinc-400">Aucun match européen programmé à cette date.</span>`;
                 } else {
                     const liveCount = currentMatches.filter(m => m.status === 'IN_PLAY').length;
                     const doneCount = currentMatches.filter(m => m.status === 'FINISHED').length;
                     statusText.innerHTML = `<span class="text-blue-400 font-semibold"><i class="fa-solid fa-bolt mr-1"></i> ${currentMatches.length} matchs (${liveCount} direct | ${doneCount} terminés)</span>`;
                 }
                 
-                if (document.getElementById('compSelect').children.length <= 1) {
-                    populateCompetitions(currentMatches);
-                }
+                populateCompetitions(currentMatches);
                 applyFilters();
                 calculateAllStats();
 
             } catch (error) {
                 console.error(error);
-                statusText.innerHTML = `<span class="text-red-400 font-semibold">Impossible de récupérer les matchs.</span>`;
+                statusText.innerHTML = `<span class="text-red-400 font-semibold">Erreur de connexion aux serveurs sportifs.</span>`;
             }
         }
 
@@ -527,7 +600,6 @@
 
         function applyFilters() {
             let filtered = [...currentMatches];
-            // On met les matchs en direct en haut uniquement à l'affichage si souhaité, sinon tri horaire
             filtered.sort((a, b) => {
                 if (a.status === 'IN_PLAY' && b.status !== 'IN_PLAY') return -1;
                 if (b.status === 'IN_PLAY' && a.status !== 'IN_PLAY') return 1;
@@ -546,12 +618,10 @@
             return `<span class="${color}">${sign}${val.toFixed(2)} €</span>`;
         }
 
-        // CALCUL AUTOMATIQUE VALEUR SÛRE + PÉPITE + TICKET MULTI-MATCHS (SANS DÉFILEMENT)
         function calculateAllStats() {
             const dateStr = document.getElementById('matchDate').value;
             let savedBets = JSON.parse(localStorage.getItem(`footbet_v21_bets_${dateStr}`)) || {};
 
-            // Tri strictement chronologique pour le calcul des montantes Base & Pépite
             let chronologicalMatches = [...currentMatches].sort((a, b) => a.timeMs - b.timeMs);
 
             let baseWins = 0, pepiteWins = 0, finishedCount = 0;
@@ -606,7 +676,6 @@
                 }
             });
 
-            // Mise à jour fixe du Bilan Auto (Exactement comme FabTurf)
             document.getElementById('statBaseFlat').textContent = `${baseWins} / ${finishedCount}`;
             document.getElementById('statBaseProg').textContent = `${baseWins} / ${finishedCount}`;
             document.getElementById('gainBaseFlat').innerHTML = formatMoneyHTML(flatProfitBase);
@@ -633,8 +702,7 @@
             document.getElementById('headerNextStake').textContent = `${nextStakeBase.toFixed(2)} €`;
             document.getElementById('statsProgress').textContent = `✅ ${finishedCount}/${currentMatches.length} terminés`;
 
-            // 3. Calcul du Ticket Multi-Matchs Personnel (Simples cumulés + Combiné)
-            let selectedMatchIds = Object.keys(savedBets);
+            // 3. Calcul Ticket Multi-Matchs Personnel
             let slipCount = 0;
             let simpleGrossGain = 0;
             let simpleNetProfitFinished = 0;
@@ -657,7 +725,6 @@
                         comboLost = true;
                     }
                 } else {
-                    // Potentiel si pas encore terminé
                     simpleGrossGain += (pickOdd * BASE_STAKE);
                 }
             });
@@ -678,7 +745,6 @@
                 slipBar.classList.add('hidden');
             }
 
-            // Sauvegarde dans l'historique local
             if (finishedCount > 0 || slipCount > 0) {
                 let history = JSON.parse(localStorage.getItem('footbet_v21_history')) || {};
                 history[dateStr] = {
@@ -781,7 +847,6 @@
                 }
                 card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-xl space-y-3";
 
-                // Bilan auto du match s'il est terminé
                 let autoResultHTML = '';
                 if (isFinished && winner) {
                     let baseWon = (winner === basePick.key);
@@ -818,7 +883,6 @@
                         </div>
                     </div>
 
-                    <!-- BOUTONS DE PARI AVEC COTES FIXES + TAGS VALEUR SÛRE & PÉPITE -->
                     <div class="flex gap-2 pt-1">
                         ${buildBtn('HOME', '1', homeName)}
                         ${buildBtn('DRAW', 'N', 'Nul')}
@@ -834,7 +898,6 @@
             container.appendChild(fragment);
         }
 
-        // PARIER SUR PLUSIEURS MATCHS EN MÊME TEMPS
         function placeBet(matchId, pick) {
             const dateStr = document.getElementById('matchDate').value;
             let savedBets = JSON.parse(localStorage.getItem(`footbet_v21_bets_${dateStr}`)) || {};
@@ -850,7 +913,6 @@
             calculateAllStats();
         }
 
-        // SÉLECTIONNER TOUTES LES BASES OU PÉPITES EN 1 CLIC
         function selectAllAlgo(type) {
             const dateStr = document.getElementById('matchDate').value;
             let savedBets = JSON.parse(localStorage.getItem(`footbet_v21_bets_${dateStr}`)) || {};
