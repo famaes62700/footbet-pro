@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro V21 - Ticket Garanti</title>
+    <title>FootBet Pro V22 - Ticket Garanti PC</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,14 +13,14 @@
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-36">
+<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-40">
 
-    <div id="toastContainer" class="fixed bottom-24 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+    <div id="toastContainer" class="fixed bottom-24 right-4 z-[9999] flex flex-col space-y-2 pointer-events-none"></div>
 
     <header class="bg-zinc-900/95 backdrop-blur-md border-b border-zinc-800 p-3 sm:p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center mb-2.5">
-            <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-blue-400 flex items-center">
-                <i class="fa-solid fa-futbol mr-2 text-blue-500"></i>FootBet <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">Pro V21</span>
+            <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-blue-400 flex items-center bg-zinc-800/80 px-3.5 py-2 rounded-xl border border-zinc-700 shadow">
+                <i class="fa-solid fa-futbol mr-2 text-blue-500 text-lg"></i>FootBet <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">Pro V22</span>
             </h1>
             
             <div class="flex items-center space-x-1.5 sm:space-x-2">
@@ -28,7 +28,7 @@
                     <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">Mise Auto (Sûre)</span>
                     <span id="headerNextStake">5.00 €</span>
                 </div>
-                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow">
+                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow cursor-pointer">
                     <i class="fa-solid fa-calendar-days text-blue-400"></i>
                 </button>
                 <input type="date" id="matchDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-blue-500" onchange="onDateChange()">
@@ -36,13 +36,13 @@
         </div>
 
         <div class="max-w-3xl mx-auto flex items-center gap-2 overflow-x-auto scrollbar-hide">
-            <button id="btnFilterLive" onclick="toggleLiveFilter()" class="bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-500/50 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center whitespace-nowrap">
+            <button id="btnFilterLive" onclick="toggleLiveFilter()" class="bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-500/50 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center whitespace-nowrap cursor-pointer">
                 <i class="fa-solid fa-fire mr-1.5"></i> En Direct
             </button>
-            <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 focus:outline-none focus:border-blue-500 flex-grow">
+            <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 focus:outline-none focus:border-blue-500 flex-grow cursor-pointer">
                 <option value="ALL">Toutes Compétitions & Sélections</option>
             </select>
-            <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-xs font-bold transition flex items-center shadow flex-shrink-0" title="Actualiser">
+            <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-xs font-bold transition flex items-center shadow flex-shrink-0 cursor-pointer" title="Actualiser">
                 <i class="fa-solid fa-rotate"></i>
             </button>
         </div>
@@ -63,7 +63,7 @@
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
                     <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés
                 </h2>
-                <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
@@ -89,7 +89,7 @@
                     <p class="text-[10px] text-zinc-400">Joué auto • Base 5€</p>
                 </div>
                 <div class="text-right">
-                    <span class="text-[9px] uppercase text-zinc-400 block">Gains Tickets Perso</span>
+                    <span class="text-[9px] uppercase text-zinc-400 block mb-1">Gains Tickets Perso</span>
                     <span id="gainManualTotal" class="text-xs font-black text-blue-400">0.00 €</span>
                 </div>
             </div>
@@ -102,12 +102,12 @@
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
                             <span class="text-[8px] text-zinc-400 block uppercase font-bold">Mise (5€)</span>
-                            <span id="statBaseFlat" class="text-[9px] text-zinc-500 font-bold my-0.5">0/0</span>
+                            <span id="statBaseFlat" class="text-[9px] text-zinc-500 font-bold my-0.5 block">0/0</span>
                             <span id="gainBaseFlat" class="font-bold text-zinc-300 mt-0.5 block">0.00 €</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-emerald-500/30 text-center shadow-inner">
                             <span class="text-[8px] text-emerald-400 block uppercase font-bold">Rattrapage</span>
-                            <span id="statBaseProg" class="text-[9px] text-emerald-500/70 font-bold my-0.5">0/0</span>
+                            <span id="statBaseProg" class="text-[9px] text-emerald-500/70 font-bold my-0.5 block">0/0</span>
                             <span id="gainBaseProg" class="font-bold text-emerald-400 mt-0.5 block">0.00 €</span>
                         </div>
                     </div>
@@ -120,12 +120,12 @@
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
                             <span class="text-[8px] text-zinc-400 block uppercase font-bold">Mise (5€)</span>
-                            <span id="statPepiteFlat" class="text-[9px] text-zinc-500 font-bold my-0.5">0/0</span>
+                            <span id="statPepiteFlat" class="text-[9px] text-zinc-500 font-bold my-0.5 block">0/0</span>
                             <span id="gainPepiteFlat" class="font-bold text-zinc-300 mt-0.5 block">0.00 €</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-amber-500/30 text-center">
                             <span class="text-[8px] text-amber-400 block uppercase font-bold">Rattrapage</span>
-                            <span id="statPepiteProg" class="text-[9px] text-amber-500/70 font-bold my-0.5">0/0</span>
+                            <span id="statPepiteProg" class="text-[9px] text-amber-500/70 font-bold my-0.5 block">0/0</span>
                             <span id="gainPepiteProg" class="font-bold text-amber-400 mt-0.5 block">0.00 €</span>
                         </div>
                     </div>
@@ -156,87 +156,84 @@
             </div>
         </div>
 
-        <!-- ACTIONS RAPIDES (SÉLECTION COMBINÉS + VIDER) -->
+        <!-- ACTIONS RAPIDES -->
         <div class="flex flex-wrap gap-2 justify-between items-center bg-zinc-900/90 border border-zinc-800 p-2.5 rounded-xl text-xs">
             <span class="text-zinc-400 font-bold text-[11px]"><i class="fa-solid fa-wand-magic-sparkles text-blue-400 mr-1.5"></i>Tickets :</span>
             <div class="flex gap-1.5">
-                <button onclick="selectAllAlgo('BASE')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow">+ Bases</button>
-                <button onclick="selectAllAlgo('PEPITE')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow">+ Pépites</button>
-                <!-- BOUTON VIDER CLAIR ET VISIBLE -->
-                <button onclick="clearManualBets()" class="bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/50 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow flex items-center" title="Vider le ticket">
+                <button onclick="selectAllAlgo('BASE')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow cursor-pointer">+ Bases</button>
+                <button onclick="selectAllAlgo('PEPITE')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow cursor-pointer">+ Pépites</button>
+                <button onclick="clearManualBets()" class="bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/50 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow flex items-center cursor-pointer" title="Vider le ticket">
                     <i class="fa-solid fa-trash mr-1.5"></i> Vider
                 </button>
             </div>
         </div>
 
-        <div id="matchesContainer" class="space-y-3"></div>
+        <div id="matchesContainer" class="space-y-4"></div>
     </main>
 
-    <!-- TICKET FLOTTANT DÉTAILLÉ (PANIER) EN BAS D'ÉCRAN -->
-    <!-- FORCÉ EN STYLE INLINE POUR EVITER LE BLOCAGE TAILWIND -->
-    <div id="betSlipBar" class="fixed bottom-0 left-0 right-0 z-50 bg-zinc-900/95 backdrop-blur-lg border-t-2 border-blue-500 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] flex-col max-h-[85vh] transition-all duration-300" style="display: none;">
+    <!-- TICKET FLOTTANT DÉTAILLÉ (PANIER) ADAPTÉ POUR PC -->
+    <div id="betSlipBar" class="hidden fixed bottom-0 left-0 right-0 md:left-auto md:right-8 md:bottom-8 md:w-[400px] md:rounded-2xl z-50 bg-zinc-900 border-t-2 md:border-2 border-blue-500 shadow-[0_-10px_40px_rgba(0,0,0,0.9)] flex-col max-h-[85vh] md:max-h-[75vh] transition-all duration-300">
         
         <!-- HEADER DU TICKET -->
-        <div class="p-3 max-w-3xl mx-auto w-full flex justify-between items-center cursor-pointer" onclick="toggleTicket()">
-            <div class="flex items-center space-x-3">
+        <div class="p-4 w-full flex justify-between items-center cursor-pointer hover:bg-zinc-800/50 transition md:rounded-t-2xl" onclick="toggleTicket()">
+            <div class="flex items-center space-x-4">
                 <div class="relative">
-                    <i class="fa-solid fa-ticket text-blue-500 text-2xl"></i>
-                    <span id="slipCountBadge" class="absolute -top-2 -right-2 bg-red-500 text-white font-black text-[10px] w-4 h-4 flex items-center justify-center rounded-full shadow">0</span>
+                    <i class="fa-solid fa-ticket text-blue-500 text-3xl"></i>
+                    <span id="slipCountBadge" class="absolute -top-2 -right-2 bg-red-500 text-white font-black text-xs w-5 h-5 flex items-center justify-center rounded-full shadow">0</span>
                 </div>
                 <div>
-                    <div class="text-xs font-black text-white uppercase tracking-wider">Votre Panier <i id="ticketChevron" class="fa-solid fa-chevron-up ml-1 text-zinc-500 transition-transform"></i></div>
-                    <div class="text-[10px] text-zinc-400">Voir les gains Simples et Combiné</div>
+                    <div class="text-sm font-black text-white uppercase tracking-wider">Votre Ticket Foot <i id="ticketChevron" class="fa-solid fa-chevron-up ml-2 text-zinc-500 transition-transform"></i></div>
+                    <div class="text-xs text-zinc-400 mt-0.5">Cliquez pour voir les détails</div>
                 </div>
             </div>
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
                  <div class="text-right">
-                    <span class="text-[9px] text-amber-400 uppercase font-bold block">Gain Max Combiné</span>
-                    <strong id="slipComboGainMini" class="text-amber-400 font-black text-sm">0.00 €</strong>
+                    <span class="text-[10px] text-amber-400 uppercase font-bold block">Gain Max Combiné</span>
+                    <strong id="slipComboGainMini" class="text-amber-400 font-black text-base">0.00 €</strong>
                  </div>
-                 <!-- Petite icône corbeille secondaire -->
-                 <button onclick="clearManualBets(); event.stopPropagation();" class="text-zinc-500 hover:text-red-400 p-2 transition" title="Vider le ticket"><i class="fa-solid fa-trash"></i></button>
+                 <button onclick="clearManualBets(); event.stopPropagation();" class="text-zinc-500 hover:text-red-500 p-2 transition cursor-pointer" title="Vider le ticket"><i class="fa-solid fa-trash text-lg"></i></button>
             </div>
         </div>
 
         <!-- CONTENU DÉTAILLÉ DU TICKET -->
-        <div id="ticketDetails" class="flex-col max-w-3xl mx-auto w-full px-3 pb-4 overflow-y-auto border-t border-zinc-800 pt-3" style="display: none;">
+        <div id="ticketDetails" class="hidden flex-col w-full px-4 pb-5 overflow-y-auto border-t border-zinc-800 pt-4">
             
-            <div class="text-[11px] uppercase font-bold text-zinc-400 mb-2">Détail Match par Match</div>
-            <div id="ticketMatchesList" class="mb-4 space-y-2">
+            <div class="text-xs uppercase font-bold text-zinc-400 mb-3">Vos sélections</div>
+            <div id="ticketMatchesList" class="mb-5 space-y-2">
                 <!-- Rempli dynamiquement -->
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="space-y-4">
                 <!-- RÉSUMÉ SIMPLES -->
-                <div class="bg-zinc-950 border border-emerald-500/30 rounded-xl p-3 shadow-inner">
-                    <div class="text-[10px] uppercase font-bold text-emerald-400 mb-1">Option 1 : Paris Simples</div>
-                    <div class="text-[10px] text-zinc-400 mb-2 leading-tight">5€ misés séparément sur chaque match</div>
-                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2 mt-2">
-                        <span class="text-[10px] text-zinc-500">Mise Totale:</span>
-                        <span id="ticketSimpleStake" class="font-bold text-white text-xs">0.00 €</span>
+                <div class="bg-zinc-950 border border-emerald-500/30 rounded-xl p-4 shadow-inner">
+                    <div class="text-xs uppercase font-bold text-emerald-400 mb-1">Option 1 : Paris Simples</div>
+                    <div class="text-xs text-zinc-400 mb-3">5€ misés séparément sur chaque match</div>
+                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2">
+                        <span class="text-xs text-zinc-500">Mise Totale:</span>
+                        <span id="ticketSimpleStake" class="font-bold text-white text-sm">0.00 €</span>
                     </div>
                     <div class="flex justify-between items-center mt-1">
-                        <span class="text-[10px] text-zinc-500">Gain Pot. max:</span>
-                        <span id="ticketSimpleGain" class="font-black text-emerald-400 text-sm">0.00 €</span>
+                        <span class="text-xs text-zinc-500">Gain Pot. max:</span>
+                        <span id="ticketSimpleGain" class="font-black text-emerald-400 text-base">0.00 €</span>
                     </div>
                     <div class="flex justify-between items-center mt-1">
-                        <span class="text-[10px] text-zinc-500">Bénéfice Net Actuel:</span>
-                        <span id="ticketSimpleNet" class="font-bold text-emerald-400 text-[10px]">0.00 €</span>
+                        <span class="text-xs text-zinc-500">Bénéfice Net Actuel:</span>
+                        <span id="ticketSimpleNet" class="font-bold text-emerald-400 text-xs">0.00 €</span>
                     </div>
                 </div>
 
                 <!-- RÉSUMÉ COMBINÉ -->
-                <div class="bg-zinc-950 border border-amber-500/30 rounded-xl p-3 relative overflow-hidden shadow-inner">
-                    <div class="absolute -right-4 -top-4 text-amber-500/10 text-6xl"><i class="fa-solid fa-fire"></i></div>
-                    <div class="text-[10px] uppercase font-bold text-amber-400 mb-1 relative z-10">Option 2 : Pari Combiné</div>
-                    <div class="text-[10px] text-zinc-400 mb-2 leading-tight relative z-10">Une seule mise de 5€. Cotes multipliées !</div>
-                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2 mt-2 relative z-10">
-                        <span class="text-[10px] text-zinc-500">Cote Totale:</span>
-                        <span id="ticketComboOdds" class="font-bold text-white text-xs">1.00</span>
+                <div class="bg-zinc-950 border border-amber-500/30 rounded-xl p-4 relative overflow-hidden shadow-inner">
+                    <div class="absolute -right-4 -top-4 text-amber-500/5 text-6xl"><i class="fa-solid fa-fire"></i></div>
+                    <div class="text-xs uppercase font-bold text-amber-400 mb-1 relative z-10">Option 2 : Pari Combiné</div>
+                    <div class="text-xs text-zinc-400 mb-3 relative z-10">Une seule mise de 5€. Cotes multipliées !</div>
+                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2 relative z-10">
+                        <span class="text-xs text-zinc-500">Cote Totale:</span>
+                        <span id="ticketComboOdds" class="font-bold text-white text-sm">1.00</span>
                     </div>
                     <div class="flex justify-between items-center mt-1 relative z-10">
-                        <span class="text-[10px] text-zinc-500">Gain Pot. (pour 5€):</span>
-                        <span id="ticketComboGain" class="font-black text-amber-400 text-sm">0.00 €</span>
+                        <span class="text-xs text-zinc-500">Gain Pot. (pour 5€):</span>
+                        <span id="ticketComboGain" class="font-black text-amber-400 text-lg">0.00 €</span>
                     </div>
                 </div>
             </div>
@@ -254,7 +251,6 @@
             return `${yr}-${mo}-${da}`;
         }
 
-        // Sécurité maximale sur le stockage local pour éviter les crashs
         function safeGetLocal(key) {
             try { 
                 let item = localStorage.getItem(key);
@@ -270,12 +266,12 @@
 
         document.getElementById('matchDate').value = getLocalYYYYMMDD(new Date());
         let currentMatches = [];
-        let globalBets = {}; // VARIABLE GLOBALE EN MEMOIRE VIVE
+        let globalBets = {};
         let isLiveFilterActive = false;
         let isTicketExpanded = false;
         const BASE_STAKE = 5.0;
 
-        // --- ALGORITHME DES COTES (FABTURF) ---
+        // --- ALGORITHME DES COTES (FOOTBET) ---
         const topTeams = {
             "Real Madrid":95, "Manchester City":95, "Bayern Munich":94, "Liverpool":93, "Arsenal":92, "Barcelona":92,
             "Paris Saint-Germain":91, "PSG":91, "Inter Milan":90, "Bayer Leverkusen":88, "Borussia Dortmund":85,
@@ -354,7 +350,7 @@
                 { id: "mock5", home: "Bayern Munich", away: "Borussia Dortmund", comp: "BUNDESLIGA" }
             ];
 
-            let lockedOdds = safeGetLocal("foot_fixed_odds_v21_" + dateStr.replace(/-/g,''));
+            let lockedOdds = safeGetLocal("foot_fixed_odds_v22_" + dateStr.replace(/-/g,''));
             let mocks = mockList.map((m, idx) => {
                 let tMs = baseTime + (idx * 30 * 60000); 
                 if (!lockedOdds[m.id]) lockedOdds[m.id] = computeFootAlgorithm(m.home, m.away);
@@ -366,7 +362,7 @@
                     winner: null, algo: lockedOdds[m.id]
                 };
             });
-            safeSetLocal("foot_fixed_odds_v21_" + dateStr.replace(/-/g,''), lockedOdds);
+            safeSetLocal("foot_fixed_odds_v22_" + dateStr.replace(/-/g,''), lockedOdds);
             return mocks;
         }
 
@@ -375,8 +371,7 @@
             const apiDate = dateInputVal.replace(/-/g, '');
             const statusText = document.getElementById('statusText');
             
-            // Chargement des paris globaux en mémoire
-            globalBets = safeGetLocal("footbet_v21_bets_" + dateInputVal);
+            globalBets = safeGetLocal("footbet_v22_bets_" + dateInputVal);
 
             if (!isSilent) statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Recherche des matchs...';
             
@@ -390,7 +385,7 @@
             let validMatches = [];
             let seenIds = new Set();
             let manualScores = safeGetLocal("foot_manual_scores_" + dateInputVal);
-            let lockedOdds = safeGetLocal("foot_fixed_odds_v21_" + apiDate);
+            let lockedOdds = safeGetLocal("foot_fixed_odds_v22_" + apiDate);
 
             try {
                 for (let i = 0; i < leagues.length; i++) {
@@ -448,7 +443,7 @@
                     validMatches = getFallbackMatches(dateInputVal);
                     if(!isSilent) statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> 0 match officiel. Mode Démo activé.</span>`;
                 } else {
-                    safeSetLocal("foot_fixed_odds_v21_" + apiDate, lockedOdds);
+                    safeSetLocal("foot_fixed_odds_v22_" + apiDate, lockedOdds);
                     const lc = validMatches.filter(m => m.status === 'IN_PLAY').length;
                     if(!isSilent) statusText.innerHTML = `<span class="text-blue-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${validMatches.length} matchs trouvés (${lc} en direct)</span>`;
                 }
@@ -456,10 +451,7 @@
                 currentMatches = validMatches.sort((a, b) => a.timeMs - b.timeMs);
                 
                 populateCompetitions(currentMatches);
-                
-                // Ne redessine tout le DOM qu'au premier chargement
                 if (!isSilent) renderMatches(currentMatches);
-                
                 calculateAllStats();
 
             } catch (error) {
@@ -476,7 +468,6 @@
             loadFootballMatches(false);
         }
 
-        // Rafraîchissement silencieux 
         setInterval(() => {
             if (document.getElementById('matchDate').value === getLocalYYYYMMDD(new Date()) || isLiveFilterActive) {
                 loadFootballMatches(true);
@@ -498,7 +489,7 @@
         function toggleLiveFilter() {
             isLiveFilterActive = !isLiveFilterActive;
             const btn = document.getElementById('btnFilterLive');
-            btn.className = isLiveFilterActive ? "bg-red-600 text-white border border-red-500/50 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center whitespace-nowrap" : "bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-500/50 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center whitespace-nowrap";
+            btn.className = isLiveFilterActive ? "bg-red-600 text-white border border-red-500/50 px-4 py-2 rounded-lg text-sm font-bold transition flex items-center whitespace-nowrap cursor-pointer" : "bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-500/50 px-4 py-2 rounded-lg text-sm font-bold transition flex items-center whitespace-nowrap cursor-pointer";
             applyFilters();
         }
 
@@ -522,7 +513,7 @@
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             let bgClass = type === 'success' ? 'bg-emerald-900/95 border-emerald-500/50 text-emerald-200' : (type === 'error' ? 'bg-red-900/95 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
-            toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 flex items-center ${bgClass}`;
+            toast.className = `pointer-events-auto px-5 py-3 rounded-xl border shadow-2xl text-sm font-bold transition transform duration-300 opacity-0 translate-y-2 flex items-center ${bgClass}`;
             toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
             setTimeout(() => toast.classList.remove('opacity-0', 'translate-y-2'), 10);
@@ -532,7 +523,7 @@
             }, 3000);
         }
 
-        // --- AFFICHAGE DES MATCHS (DOM INITIAL) ---
+        // --- AFFICHAGE DES MATCHS ET BOUTONS ---
         function renderMatches(matchesToRender) {
             const container = document.getElementById('matchesContainer');
             
@@ -544,10 +535,13 @@
             let frag = document.createDocumentFragment();
 
             matchesToRender.forEach(m => {
-                let isFin = m.status === 'FINISHED', isLive = m.status === 'IN_PLAY';
+                let isFin = m.status === 'FINISHED';
+                let isLive = m.status === 'IN_PLAY';
+                let isLocked = (isFin || isLive); // VERROU ANTI-TRICHE
+                
                 let { odds, basePick, pepitePick } = m.algo;
                 let tStr = new Date(m.timeMs || m.utcDate).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-                let sBadge = isLive ? `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold animate-pulse">🔴 ${m.statusDetail}</span>` : (isFin ? `<span class="bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">🏁 Terminé</span>` : `<span class="bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold">${tStr}</span>`);
+                let sBadge = isLive ? `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-3 py-1 rounded-lg text-xs uppercase font-bold animate-pulse">🔴 ${m.statusDetail}</span>` : (isFin ? `<span class="bg-zinc-800 text-zinc-400 px-3 py-1 rounded-lg text-xs uppercase font-bold">🏁 Terminé</span>` : `<span class="bg-zinc-800 text-zinc-400 px-3 py-1 rounded-lg text-xs uppercase font-bold">${tStr}</span>`);
 
                 let myB = globalBets[m.id];
                 
@@ -555,29 +549,36 @@
                     let lbl = (k==='HOME')?'1':(k==='DRAW'?'N':'2');
                     let nm = (k==='HOME')?m.homeTeam.name:(k==='DRAW'?'Nul':m.awayTeam.name);
                     let sel = (myB === k), bas = (basePick.key === k), pep = (pepitePick.key === k), win = (isFin && m.winner === k);
-                    let cls = `relative flex-1 py-2.5 px-1 sm:px-2 rounded-xl text-xs transition-all border flex flex-col items-center justify-between shadow-sm ${sel?'bg-blue-600 text-white border-blue-400 ring-2 ring-blue-400/50 scale-[1.02]':(bas?'bg-emerald-950/50 text-emerald-200 border-emerald-500/50 hover:bg-emerald-900/60':(pep?'bg-amber-950/50 text-amber-200 border-amber-500/50 hover:bg-amber-900/60':'bg-zinc-800/70 text-zinc-300 border-zinc-700 hover:bg-zinc-800'))}`;
-                    let tTag = bas ? `<span class="text-[8px] bg-emerald-500 text-zinc-950 font-black px-1.5 rounded uppercase mb-1">★ Sûre</span>` : (pep ? `<span class="text-[8px] bg-amber-500 text-zinc-950 font-black px-1.5 rounded uppercase mb-1">💎 Pépite</span>` : `<span class="text-[8px] text-zinc-500 uppercase font-bold mb-1">Outsider</span>`);
-                    return `<button onclick="placeBet('${m.id}', '${k}')" class="${cls}">${tTag}<span class="truncate w-full text-[10px] sm:text-[11px] font-bold text-center">${lbl} - ${nm}</span><span class="mt-1 text-sm font-black ${sel?'text-white':(bas?'text-emerald-400':(pep?'text-amber-400':'text-blue-400'))} bg-zinc-950/70 px-2.5 py-0.5 rounded-lg border border-zinc-800">${odds[k].toFixed(2)}</span>${win?'<span class="mt-1 text-[9px] bg-blue-500/30 text-blue-200 border border-blue-400/40 px-1 rounded font-black mt-1">✅ GAGNANT</span>':''}</button>`;
+                    
+                    let cursorCls = isLocked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer';
+                    let hovBas = isLocked ? '' : 'hover:bg-emerald-900/60';
+                    let hovPep = isLocked ? '' : 'hover:bg-amber-900/60';
+                    let hovZin = isLocked ? '' : 'hover:bg-zinc-800';
+                    
+                    let cls = `relative flex-1 py-3 px-2 sm:px-4 rounded-xl text-sm transition-all border flex flex-col items-center justify-between shadow-sm ${cursorCls} ${sel?'bg-blue-600 text-white border-blue-400 ring-2 ring-blue-400/50 scale-[1.02]':(bas?'bg-emerald-950/50 text-emerald-200 border-emerald-500/50 '+hovBas:(pep?'bg-amber-950/50 text-amber-200 border-amber-500/50 '+hovPep:'bg-zinc-800/70 text-zinc-300 border-zinc-700 '+hovZin))}`;
+                    let tTag = bas ? `<span class="text-[9px] bg-emerald-500 text-zinc-950 font-black px-2 rounded uppercase mb-2">★ Sûre</span>` : (pep ? `<span class="text-[9px] bg-amber-500 text-zinc-950 font-black px-2 rounded uppercase mb-2">💎 Pépite</span>` : `<span class="text-[9px] text-zinc-500 uppercase font-bold mb-2">Outsider</span>`);
+                    
+                    return `<button onclick="placeBet('${m.id}', '${k}')" class="${cls}">${tTag}<span class="truncate w-full text-xs font-bold text-center">${lbl} - ${nm}</span><span class="mt-2 text-base font-black ${sel?'text-white':(bas?'text-emerald-400':(pep?'text-amber-400':'text-blue-400'))} bg-zinc-950/70 px-3 py-1 rounded-lg border border-zinc-800">${odds[k].toFixed(2)}</span>${win?'<span class="mt-2 text-[10px] bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 px-2 rounded font-black mt-1">✅ GAGNANT</span>':''}</button>`;
                 }).join('');
 
-                let sCls = isLive ? "text-base font-black text-red-400 px-3 py-1 bg-red-950/40 rounded-lg border border-red-500/40 cursor-pointer hover:bg-red-900/50" : "text-base font-black text-blue-400 px-3 py-1 bg-zinc-950 rounded-lg border border-zinc-800 cursor-pointer hover:bg-zinc-800";
+                let sCls = isLive ? "text-lg font-black text-red-400 px-4 py-1.5 bg-red-950/40 rounded-xl border border-red-500/40 cursor-pointer hover:bg-red-900/50" : "text-lg font-black text-blue-400 px-4 py-1.5 bg-zinc-950 rounded-xl border border-zinc-800 cursor-pointer hover:bg-zinc-800";
                 
                 let resHTML = '';
                 if (isFin && m.winner) {
-                    resHTML = `<div class="grid grid-cols-2 gap-2 pt-1 text-[10px]"><div class="bg-zinc-950 px-2 py-1.5 rounded-lg border ${m.winner===basePick.key?'border-emerald-500/40 text-emerald-400':'border-zinc-800 text-zinc-500'} flex justify-between"><span>Sûre :</span><strong>${m.winner===basePick.key?'+'+((basePick.odd-1)*5).toFixed(2):'-5.00'} €</strong></div><div class="bg-zinc-950 px-2 py-1.5 rounded-lg border ${m.winner===pepitePick.key?'border-amber-500/40 text-amber-400':'border-zinc-800 text-zinc-500'} flex justify-between"><span>Pépite :</span><strong>${m.winner===pepitePick.key?'+'+((pepitePick.odd-1)*5).toFixed(2):'-5.00'} €</strong></div></div>`;
+                    resHTML = `<div class="grid grid-cols-2 gap-3 pt-2 text-xs"><div class="bg-zinc-950 px-3 py-2 rounded-xl border ${m.winner===basePick.key?'border-emerald-500/40 text-emerald-400':'border-zinc-800 text-zinc-500'} flex justify-between"><span>Sûre :</span><strong>${m.winner===basePick.key?'+'+((basePick.odd-1)*5).toFixed(2):'-5.00'} €</strong></div><div class="bg-zinc-950 px-3 py-2 rounded-xl border ${m.winner===pepitePick.key?'border-amber-500/40 text-amber-400':'border-zinc-800 text-zinc-500'} flex justify-between"><span>Pépite :</span><strong>${m.winner===pepitePick.key?'+'+((pepitePick.odd-1)*5).toFixed(2):'-5.00'} €</strong></div></div>`;
                 }
 
                 let card = document.createElement('div');
                 card.dataset.matchId = m.id;
-                card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-3 sm:p-4 shadow-xl space-y-3";
+                card.className = "bg-zinc-900 border border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4";
                 card.innerHTML = `
-                    <div class="flex justify-between items-center border-b border-zinc-800 pb-2">${sBadge}<span class="text-[10px] text-zinc-300 font-bold flex items-center w-1/2 justify-end truncate"><i class="fa-solid fa-trophy text-blue-400 mr-1.5"></i>${m.competition.name}</span></div>
-                    <div class="flex justify-between items-center px-1 gap-2">
-                        <div class="flex items-center space-x-2 w-2/5 overflow-hidden"><img src="${m.homeTeam.logo||''}" class="w-6 sm:w-8 h-6 sm:h-8 object-contain" onerror="this.style.display='none'"><span class="text-[11px] sm:text-xs font-black text-white truncate">${m.homeTeam.name}</span></div>
+                    <div class="flex justify-between items-center border-b border-zinc-800 pb-3">${sBadge}<span class="text-xs text-zinc-300 font-bold flex items-center w-1/2 justify-end truncate"><i class="fa-solid fa-trophy text-blue-400 mr-2"></i>${m.competition.name}</span></div>
+                    <div class="flex justify-between items-center px-1 gap-3">
+                        <div class="flex items-center space-x-3 w-2/5 overflow-hidden"><img src="${m.homeTeam.logo||''}" class="w-8 h-8 object-contain" onerror="this.style.display='none'"><span class="text-xs sm:text-sm font-black text-white truncate">${m.homeTeam.name}</span></div>
                         <span onclick="editScoreManual('${m.id}', '${m.homeTeam.name}', '${m.awayTeam.name}')" class="${sCls}">${m.homeTeam.score} - ${m.awayTeam.score}</span>
-                        <div class="flex items-center justify-end space-x-2 w-2/5 overflow-hidden"><span class="text-[11px] sm:text-xs font-black text-white truncate text-right">${m.awayTeam.name}</span><img src="${m.awayTeam.logo||''}" class="w-6 sm:w-8 h-6 sm:h-8 object-contain" onerror="this.style.display='none'"></div>
+                        <div class="flex items-center justify-end space-x-3 w-2/5 overflow-hidden"><span class="text-xs sm:text-sm font-black text-white truncate text-right">${m.awayTeam.name}</span><img src="${m.awayTeam.logo||''}" class="w-8 h-8 object-contain" onerror="this.style.display='none'"></div>
                     </div>
-                    <div id="btns_${m.id}" class="flex gap-1 sm:gap-2 pt-1">${btnsHTML}</div>
+                    <div id="btns_${m.id}" class="flex gap-3 pt-2">${btnsHTML}</div>
                     ${resHTML}
                 `;
                 frag.appendChild(card);
@@ -586,7 +587,6 @@
             container.appendChild(frag);
         }
 
-        // C'EST CETTE FONCTION QUI MET A JOUR LES BOUTONS LORS D'UN CLIC SANS SAUT DE PAGE
         function updateMatchButtonsDOM(mId, myB) {
             let btnsContainer = document.getElementById('btns_' + mId);
             if (!btnsContainer) return;
@@ -594,19 +594,29 @@
             if (!m) return;
             
             let isFin = m.status === 'FINISHED';
+            let isLive = m.status === 'IN_PLAY';
+            let isLocked = (isFin || isLive); // VERROU
+            
             let { odds, basePick, pepitePick } = m.algo;
 
             btnsContainer.innerHTML = ['HOME', 'DRAW', 'AWAY'].map(k => {
                 let lbl = (k==='HOME')?'1':(k==='DRAW'?'N':'2');
                 let nm = (k==='HOME')?m.homeTeam.name:(k==='DRAW'?'Nul':m.awayTeam.name);
                 let sel = (myB === k), bas = (basePick.key === k), pep = (pepitePick.key === k), win = (isFin && m.winner === k);
-                let cls = `relative flex-1 py-2.5 px-1 sm:px-2 rounded-xl text-xs transition-all border flex flex-col items-center justify-between shadow-sm ${sel?'bg-blue-600 text-white border-blue-400 ring-2 ring-blue-400/50 scale-[1.02]':(bas?'bg-emerald-950/50 text-emerald-200 border-emerald-500/50 hover:bg-emerald-900/60':(pep?'bg-amber-950/50 text-amber-200 border-amber-500/50 hover:bg-amber-900/60':'bg-zinc-800/70 text-zinc-300 border-zinc-700 hover:bg-zinc-800'))}`;
-                let tTag = bas ? `<span class="text-[8px] bg-emerald-500 text-zinc-950 font-black px-1.5 rounded uppercase mb-1">★ Sûre</span>` : (pep ? `<span class="text-[8px] bg-amber-500 text-zinc-950 font-black px-1.5 rounded uppercase mb-1">💎 Pépite</span>` : `<span class="text-[8px] text-zinc-500 uppercase font-bold mb-1">Outsider</span>`);
-                return `<button onclick="placeBet('${m.id}', '${k}')" class="${cls}">${tTag}<span class="truncate w-full text-[10px] sm:text-[11px] font-bold text-center">${lbl} - ${nm}</span><span class="mt-1 text-sm font-black ${sel?'text-white':(bas?'text-emerald-400':(pep?'text-amber-400':'text-blue-400'))} bg-zinc-950/70 px-2.5 py-0.5 rounded-lg border border-zinc-800">${odds[k].toFixed(2)}</span>${win?'<span class="mt-1 text-[9px] bg-blue-500/30 text-blue-200 border border-blue-400/40 px-1 rounded font-black mt-1">✅ GAGNANT</span>':''}</button>`;
+                
+                let cursorCls = isLocked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer';
+                let hovBas = isLocked ? '' : 'hover:bg-emerald-900/60';
+                let hovPep = isLocked ? '' : 'hover:bg-amber-900/60';
+                let hovZin = isLocked ? '' : 'hover:bg-zinc-800';
+                
+                let cls = `relative flex-1 py-3 px-2 sm:px-4 rounded-xl text-sm transition-all border flex flex-col items-center justify-between shadow-sm ${cursorCls} ${sel?'bg-blue-600 text-white border-blue-400 ring-2 ring-blue-400/50 scale-[1.02]':(bas?'bg-emerald-950/50 text-emerald-200 border-emerald-500/50 '+hovBas:(pep?'bg-amber-950/50 text-amber-200 border-amber-500/50 '+hovPep:'bg-zinc-800/70 text-zinc-300 border-zinc-700 '+hovZin))}`;
+                let tTag = bas ? `<span class="text-[9px] bg-emerald-500 text-zinc-950 font-black px-2 rounded uppercase mb-2">★ Sûre</span>` : (pep ? `<span class="text-[9px] bg-amber-500 text-zinc-950 font-black px-2 rounded uppercase mb-2">💎 Pépite</span>` : `<span class="text-[9px] text-zinc-500 uppercase font-bold mb-2">Outsider</span>`);
+                
+                return `<button onclick="placeBet('${m.id}', '${k}')" class="${cls}">${tTag}<span class="truncate w-full text-xs font-bold text-center">${lbl} - ${nm}</span><span class="mt-2 text-base font-black ${sel?'text-white':(bas?'text-emerald-400':(pep?'text-amber-400':'text-blue-400'))} bg-zinc-950/70 px-3 py-1 rounded-lg border border-zinc-800">${odds[k].toFixed(2)}</span>${win?'<span class="mt-2 text-[10px] bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 px-2 rounded font-black mt-1">✅ GAGNANT</span>':''}</button>`;
             }).join('');
         }
 
-        // --- GESTION DU TICKET DE PARI DÉTAILLÉ (PANIER) ---
+        // --- GESTION DU TICKET (CLASS LIST + DISPLAY) ---
         function toggleTicket() {
             let details = document.getElementById('ticketDetails');
             let chevron = document.getElementById('ticketChevron');
@@ -615,19 +625,16 @@
             isTicketExpanded = !isTicketExpanded;
             
             if (isTicketExpanded) {
-                details.style.display = 'flex';
+                details.classList.remove('hidden');
+                details.classList.add('flex');
                 chevron.classList.replace('fa-chevron-up', 'fa-chevron-down');
-                ticket.classList.remove('bg-zinc-900/95');
-                ticket.classList.add('bg-zinc-900', 'border-t-4');
             } else {
-                details.style.display = 'none';
+                details.classList.add('hidden');
+                details.classList.remove('flex');
                 chevron.classList.replace('fa-chevron-down', 'fa-chevron-up');
-                ticket.classList.add('bg-zinc-900/95');
-                ticket.classList.remove('bg-zinc-900', 'border-t-4');
             }
         }
 
-        // C'EST CETTE FONCTION QUI MET A JOUR LE TICKET EN BAS EN TEMPS REEL
         function updateBetSlipOnly() {
             let slipC = 0, simGross = 0, simNet = 0, cOdd = 1.0, cLost = false;
             let ticketListHTML = '';
@@ -661,110 +668,120 @@
                 }
 
                 ticketListHTML += `
-                    <div class="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-2.5 flex justify-between items-center text-[11px] mb-2">
-                        <div class="flex items-center space-x-2.5 w-2/3">
-                            <span class="w-4 text-center text-sm">${mIcon}</span>
+                    <div class="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-3 flex justify-between items-center text-xs mb-2">
+                        <div class="flex items-center space-x-3 w-2/3">
+                            <span class="w-5 text-center text-base">${mIcon}</span>
                             <div class="truncate">
                                 <div class="font-bold text-white truncate">${m.homeTeam.name} - ${m.awayTeam.name}</div>
-                                <div class="text-zinc-400">Pari : <strong class="text-blue-400">${pickLabel} (${pickName})</strong></div>
+                                <div class="text-zinc-400 mt-0.5">Pari : <strong class="text-blue-400">${pickLabel} (${pickName})</strong></div>
                             </div>
                         </div>
                         <div class="text-right">
                             <div class="text-zinc-500">Cote: <span class="text-white font-bold">${o.toFixed(2)}</span></div>
-                            <div class="${mColor} text-[10px]">Pot. ${(o*BASE_STAKE).toFixed(2)} €</div>
+                            <div class="${mColor} text-[11px] mt-0.5">Pot. ${(o*BASE_STAKE).toFixed(2)} €</div>
                         </div>
                     </div>
                 `;
             });
 
-            // Met à jour le gain total au dessus
             try { document.getElementById('gainManualTotal').innerHTML = formatMoneyHTML(simNet); } catch(e){}
             
             let bar = document.getElementById('betSlipBar');
             if (!bar) return simNet;
             
             if (slipC > 0) {
-                // FORCE L'AFFICHAGE DU TICKET
-                bar.style.display = 'flex';
+                bar.classList.remove('hidden');
+                bar.classList.add('flex');
                 
                 try { document.getElementById('slipCountBadge').textContent = slipC; } catch(e){}
                 try { document.getElementById('ticketMatchesList').innerHTML = ticketListHTML; } catch(e){}
                 
-                // Maj Option 1 : Simples
                 try { document.getElementById('ticketSimpleStake').textContent = `${(slipC * BASE_STAKE).toFixed(2)} €`; } catch(e){}
                 try { document.getElementById('ticketSimpleGain').textContent = `${simGross.toFixed(2)} €`; } catch(e){}
                 try { document.getElementById('ticketSimpleNet').textContent = `${simNet > 0 ? '+':''}${simNet.toFixed(2)} €`; } catch(e){}
                 
-                try { document.getElementById('slipSimpleGain').textContent = `${simGross.toFixed(2)} €`; } catch(e){}
-                try { document.getElementById('slipSimpleNet').innerHTML = `(${formatMoneyHTML(simNet)})`; } catch(e){}
-                
-                // Maj Option 2 : Combiné
                 let cPot = cLost ? 0 : (cOdd*BASE_STAKE);
                 let cText = cLost ? "Perdu (0.00 €)" : `${cPot.toFixed(2)} €`;
                 let cClass = cLost ? "text-red-400 font-black" : "text-amber-400 font-black";
                 
                 try { document.getElementById('ticketComboOdds').textContent = cOdd.toFixed(2); } catch(e){}
-                try { document.getElementById('slipComboOdds').textContent = cOdd.toFixed(2); } catch(e){}
-                
                 try {
                     let mainCombo = document.getElementById('ticketComboGain');
-                    mainCombo.textContent = cText; mainCombo.className = cClass + " text-sm";
-                } catch(e){}
-                try {
-                    let miniCombo = document.getElementById('slipComboGain');
-                    miniCombo.textContent = cText; miniCombo.className = cClass;
+                    mainCombo.textContent = cText; mainCombo.className = cClass + " text-xl";
                 } catch(e){}
                 try {
                     let miniGain = document.getElementById('slipComboGainMini');
-                    miniGain.textContent = cText; miniGain.className = cClass + " text-sm";
+                    miniGain.textContent = cText; miniGain.className = cClass + " text-base";
                 } catch(e){}
 
             } else { 
-                // MASQUE LE TICKET
-                bar.style.display = 'none';
-                if(isTicketExpanded) toggleTicket();
+                bar.classList.add('hidden');
+                bar.classList.remove('flex');
+                
+                isTicketExpanded = false;
+                let details = document.getElementById('ticketDetails');
+                if(details) {
+                    details.classList.add('hidden');
+                    details.classList.remove('flex');
+                }
+                let chevron = document.getElementById('ticketChevron');
+                if(chevron) chevron.classList.replace('fa-chevron-down', 'fa-chevron-up');
             }
 
             return simNet; 
         }
 
-        // --- L'ACTION DU CLIC SUR UN PARI ---
         function placeBet(mId, pick) {
+            let m = currentMatches.find(x => x.id === mId);
+            
+            // VERROU ANTI-TRICHE
+            if (m && m.status !== 'TIMED') {
+                showToast("Les paris sont fermés (match commencé) 🔒", "error");
+                return;
+            }
+
             let d = document.getElementById('matchDate').value;
             if (globalBets[mId] === pick) { 
                 delete globalBets[mId]; 
             } else { 
                 globalBets[mId] = pick; 
             }
-            safeSetLocal("footbet_v21_bets_" + d, globalBets);
-            
-            // On met à jour seulement les boutons du match cliqué
+            safeSetLocal("footbet_v22_bets_" + d, globalBets);
             updateMatchButtonsDOM(mId, globalBets[mId]);
-            // On met à jour la barre de ticket en bas
             calculateAllStats();
         }
 
         function selectAllAlgo(type) {
             let d = document.getElementById('matchDate').value;
+            let count = 0;
+            
             currentMatches.forEach(m => {
-                globalBets[m.id] = (type === 'BASE') ? m.algo.basePick.key : m.algo.pepitePick.key;
-                updateMatchButtonsDOM(m.id, globalBets[m.id]);
+                // VERROU : Ne sélectionne que les matchs non commencés
+                if (m.status === 'TIMED') {
+                    globalBets[m.id] = (type === 'BASE') ? m.algo.basePick.key : m.algo.pepitePick.key;
+                    updateMatchButtonsDOM(m.id, globalBets[m.id]);
+                    count++;
+                }
             });
-            safeSetLocal("footbet_v21_bets_" + d, globalBets);
-            showToast("Sélection de groupe validée !", "success");
-            calculateAllStats();
+            
+            if (count > 0) {
+                safeSetLocal("footbet_v22_bets_" + d, globalBets);
+                showToast("Sélection Multiple validée !", "success");
+                calculateAllStats();
+            } else {
+                showToast("Aucun match disponible pour parier 🔒", "error");
+            }
         }
 
         function clearManualBets() {
             let d = document.getElementById('matchDate').value;
             globalBets = {};
-            safeSetLocal("footbet_v21_bets_" + d, globalBets);
+            safeSetLocal("footbet_v22_bets_" + d, globalBets);
             currentMatches.forEach(m => updateMatchButtonsDOM(m.id, undefined));
             showToast("Ticket complètement vidé", "info"); 
             calculateAllStats();
         }
 
-        // --- CALCUL DES STATS AUTO ---
         function calculateAllStats() {
             const dateStr = document.getElementById('matchDate').value;
             let chronologicalMatches = [...currentMatches].sort((a, b) => a.timeMs - b.timeMs);
@@ -794,7 +811,6 @@
                 } else { flatPep -= BASE_STAKE; progPep -= stkPep; defPep += stkPep; }
             });
 
-            // Sauvegarde UI avec try/catch global
             try {
                 document.getElementById('statBaseFlat').textContent = `${baseWins}/${fin}`;
                 document.getElementById('statBaseProg').textContent = `${baseWins}/${fin}`;
@@ -820,13 +836,12 @@
                 document.getElementById('statsProgress').textContent = `✅ ${fin}/${currentMatches.length} terminés`;
             } catch(e) {}
 
-            // Appel pour mettre à jour le ticket !
             let manualNet = updateBetSlipOnly();
 
             if (fin > 0 || manualNet !== 0) {
-                let hist = safeGetLocal('footbet_v21_history');
+                let hist = safeGetLocal('footbet_v22_history');
                 hist[dateStr] = { baseProfit: progBase, pepiteProfit: progPep, manualProfit: manualNet };
-                safeSetLocal('footbet_v21_history', hist);
+                safeSetLocal('footbet_v22_history', hist);
             }
             if (document.getElementById('historyBlock') && !document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
         }
@@ -843,18 +858,18 @@
 
         function toggleHistoryStats() {
             let block = document.getElementById('historyBlock');
-            if (block.style.display === 'none' || block.style.display === '') {
-                block.style.display = 'block';
+            if (block.classList.contains('hidden')) {
+                block.classList.remove('hidden');
                 showHistoryStats();
             } else {
-                block.style.display = 'none';
+                block.classList.add('hidden');
             }
         }
 
         function showHistoryStats() {
             let year = new Date(document.getElementById('matchDate').value).getFullYear();
             document.getElementById('currentYearText').textContent = year;
-            let h = safeGetLocal('footbet_v21_history');
+            let h = safeGetLocal('footbet_v22_history');
             
             let mon = new Date(document.getElementById('matchDate').value);
             mon.setDate(mon.getDate() - ((mon.getDay()||7) - 1));
@@ -879,8 +894,8 @@
                 }
                 if (has) {
                     let div = document.createElement('div');
-                    div.className = "bg-zinc-800/80 p-2.5 rounded-xl border border-zinc-700 mb-2 flex justify-between items-center text-xs";
-                    div.innerHTML = `<span class="font-bold text-zinc-300">${mNames[m]}</span><div class="space-x-2"><span>Sûre: ${formatMoneyHTML(mB)}</span><span>Pépite: ${formatMoneyHTML(mP)}</span></div>`;
+                    div.className = "bg-zinc-800/80 p-4 rounded-xl border border-zinc-700 mb-2 flex justify-between items-center text-sm";
+                    div.innerHTML = `<span class="font-bold text-zinc-300">${mNames[m]}</span><div class="space-x-3"><span>Sûre: ${formatMoneyHTML(mB)}</span><span>Pépite: ${formatMoneyHTML(mP)}</span></div>`;
                     grid.appendChild(div);
                 }
             }
