@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V30 Base 10€ & Pépite 5€</title>
+    <title>Turf - V31 Cumul Semaine & Mois Réparé</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -48,11 +48,11 @@
 
                 <!-- HISTORIQUE -->
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Historique des Gains">
-                    <i class="fa-solid fa-calendar-days"></i>
+                    <i class="fa-solid fa-calendar-days text-emerald-400"></i>
                 </button>
 
                 <!-- PURGE CACHE -->
-                <button onclick="resetAllCache()" class="bg-red-900/40 hover:bg-red-600 text-red-300 hover:text-white w-8 h-8 rounded-lg border border-red-500/40 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Purger le cache et recalculer">
+                <button onclick="resetAllCache()" class="bg-red-900/40 hover:bg-red-600 text-red-300 hover:text-white w-8 h-8 rounded-lg border border-red-500/40 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Recalculer les courses du jour">
                     <i class="fa-solid fa-arrows-rotate"></i>
                 </button>
 
@@ -83,23 +83,42 @@
             <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded">Prêt</div>
         </div>
 
-        <!-- HISTORIQUE CUMULÉ -->
-        <div id="historyBlock" style="display: none;" class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
-                    <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés
+        <!-- HISTORIQUE CUMULÉ AVEC SYNCHRONISATION SEMAINE & MOIS -->
+        <div id="historyBlock" style="display: none;" class="bg-zinc-900 border border-emerald-500/40 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
+            <div class="flex flex-wrap justify-between items-center gap-2 border-b border-zinc-800 pb-2.5">
+                <h2 class="text-xs font-bold uppercase text-zinc-200 tracking-wider flex items-center">
+                    <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés (<span id="histModeLabel" class="text-amber-400 ml-1">100% Trot</span>)
                 </h2>
-                <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
-                <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
-                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Cette Semaine (Placé Réel)</h3>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div class="text-zinc-300">Base (10€) : <span id="weekBase" class="text-emerald-400 font-bold block">0.00 €</span></div>
-                        <div class="text-zinc-300">Pépite (5€) : <span id="weekPepite" class="text-amber-400 font-bold block">0.00 €</span></div>
-                        <div class="text-zinc-300">Perso : <span id="weekManual" class="text-orange-400 font-bold block">0.00 €</span></div>
-                    </div>
+                <div class="flex items-center space-x-1.5">
+                    <button id="btnSyncWeek" onclick="syncPeriodHistory('WEEK')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer flex items-center">
+                        <i class="fa-solid fa-bolt mr-1"></i> Calculer la Semaine
+                    </button>
+                    <button id="btnSyncMonth" onclick="syncPeriodHistory('MONTH')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer flex items-center">
+                        <i class="fa-solid fa-calendar-check mr-1"></i> Calculer le Mois
+                    </button>
+                    <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
                 </div>
+            </div>
+
+            <div id="syncProgressBanner" style="display: none;" class="bg-zinc-950 border border-amber-500/40 text-amber-300 text-xs px-3 py-2 rounded-xl font-mono flex justify-between items-center">
+                <span id="syncProgressText"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Synchronisation en cours...</span>
+                <button onclick="cancelSyncPeriod()" class="text-[10px] bg-red-900/50 text-red-300 px-2 py-0.5 rounded border border-red-500/40 cursor-pointer">Stop</button>
+            </div>
+
+            <div class="space-y-4 max-h-[28rem] overflow-y-auto pr-1">
+                <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-[11px] uppercase font-bold text-zinc-300">Cette Semaine (Cumul Placé)</h3>
+                        <span id="weekDatesLabel" class="text-[10px] text-zinc-400 font-mono"></span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 bg-zinc-950/70 p-2.5 rounded-lg border border-zinc-800 mb-2.5">
+                        <div class="text-zinc-300">Base (10€) : <span id="weekBase" class="text-emerald-400 font-bold block text-sm mt-0.5">0.00 €</span></div>
+                        <div class="text-zinc-300">Pépite (5€) : <span id="weekPepite" class="text-amber-400 font-bold block text-sm mt-0.5">0.00 €</span></div>
+                        <div class="text-zinc-300">Perso : <span id="weekManual" class="text-orange-400 font-bold block text-sm mt-0.5">0.00 €</span></div>
+                    </div>
+                    <div id="weekDaysBreakdown" class="space-y-1 text-[11px]"></div>
+                </div>
+
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
                     <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Mois par Mois (<span id="currentYearText"></span>)</h3>
                     <div id="monthsGrid" class="space-y-2"></div>
@@ -326,12 +345,74 @@
     </div>
 
     <script>
-        const CACHE_VERSION = "v21";
+        const CACHE_VERSION = "v31";
         
         // MISES DIFFÉRENCIÉES : 10€ POUR LA BASE, 5€ POUR LA PÉPITE ET LE TICKET
         const STAKE_BASE = 10.0;
         const STAKE_PEPITE = 5.0;
         const BASE_STAKE = 5.0;
+
+        // NETTOYAGE INTELLIGENT DE LA MÉMOIRE AU DÉMARRAGE (Évite le blocage des 5 Mo tout en migrant l'historique)
+        function cleanupAndMigrateStorage() {
+            try {
+                let keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    let k = localStorage.key(i);
+                    if (!k) continue;
+                    // Supprime les anciens caches bruts de courses qui saturaient les 5 Mo
+                    if (k.startsWith('race_cache_') && !k.startsWith(`race_cache_${CACHE_VERSION}_`)) {
+                        keysToRemove.push(k);
+                    }
+                    // Migre les anciens historiques (v21, v24, v25, v26, v27) vers le stockage unifié s'ils n'y sont pas encore
+                    if (k.startsWith('pmu_stats_multidis_')) {
+                        let m = k.match(/^pmu_stats_multidis_v\d+_(TROT|ALL)_(\d{8})$/);
+                        if (m) {
+                            let mode = m[1];
+                            let ddmmyyyy = m[2];
+                            let unifiedKey = `pmu_stats_unified_${mode}_${ddmmyyyy}`;
+                            if (!localStorage.getItem(unifiedKey)) {
+                                try {
+                                    localStorage.setItem(unifiedKey, localStorage.getItem(k));
+                                } catch(e) {}
+                            }
+                        }
+                    }
+                }
+                keysToRemove.forEach(k => localStorage.removeItem(k));
+            } catch(e) {}
+        }
+
+        function safeSaveStatItem(key, valObj) {
+            let str = JSON.stringify(valObj);
+            try {
+                localStorage.setItem(key, str);
+            } catch (quotaErr) {
+                // Si la mémoire est pleine, on purge uniquement les caches de courses pour garantir la sauvegarde des gains
+                Object.keys(localStorage).forEach(k => {
+                    if (k.startsWith('race_cache_')) localStorage.removeItem(k);
+                });
+                try { localStorage.setItem(key, str); } catch(e) {}
+            }
+        }
+
+        // Compresse une course de 45 Ko à 1 Ko avant mise en cache
+        function slimRaceCacheData(partants, rapportsList, isComplete) {
+            let slimP = (partants || []).map(p => ({
+                numPmu: p.numPmu || p.numOrdre,
+                nom: p.nom,
+                statut: p.statut,
+                musique: p.musique || p.form,
+                dernierRapportDirect: p.dernierRapportDirect ? { rapport: p.dernierRapportDirect.rapport } : undefined,
+                probabiliteEvolution: p.probabiliteEvolution,
+                ordreArrivee: p.ordreArrivee
+            }));
+            let slimR = (rapportsList || []).filter(g => {
+                let pType = String(g.typePari || g.libellePari || g.codePari || "").toUpperCase();
+                let fam = String(g.famillePari || "").toUpperCase();
+                return pType.includes('SIMPLE') || pType.includes('SG') || pType.includes('SP') || fam.includes('SIMPLE');
+            });
+            return { partants: slimP, rapportsList: slimR.length > 0 ? slimR : (rapportsList || []).slice(0, 3), isComplete: Boolean(isComplete) };
+        }
         
         function safeGetLocal(key) {
             try { 
@@ -345,17 +426,22 @@
             try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
         }
         
-        function getLocalDateString() {
-            const d = new Date();
+        function getLocalDateString(d = new Date()) {
             const yr = d.getFullYear();
             const mo = String(d.getMonth() + 1).padStart(2, '0');
             const da = String(d.getDate()).padStart(2, '0');
             return `${yr}-${mo}-${da}`;
         }
 
+        function parseLocalYYYYMMDD(dateStr) {
+            if (!dateStr) return new Date();
+            let p = dateStr.split('-');
+            return new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10), 12, 0, 0);
+        }
+
         function formatMoneyHTML(val) {
             let num = Number(val) || 0;
-            if (num === 0) return `<span class="text-zinc-500">0.00 €</span>`;
+            if (Math.abs(num) < 0.005) return `<span class="text-zinc-500">0.00 €</span>`;
             let color = num > 0 ? 'text-emerald-400' : 'text-red-400';
             let sign = num > 0 ? '+' : '';
             return `<span class="${color}">${sign}${num.toFixed(2)} €</span>`;
@@ -387,8 +473,10 @@
             } catch(e) {}
         }
 
+        cleanupAndMigrateStorage();
         document.getElementById('raceDate').value = getLocalDateString();
         let liveMeetingsData = [];
+        let loadedProgrammeDate = "";
         let autoTransitionTimer = null;
         let autoCountdownInterval = null;
         let autoTransitionRaceKey = null;
@@ -406,6 +494,8 @@
         let currentCalcId = 0;
         let currentFetchRaceId = 0;
         let isTicketExpanded = false;
+        let isSyncingPeriod = false;
+        let cancelSyncFlag = false;
         
         let globalBets = {};
 
@@ -444,14 +534,17 @@
             currentDisciplineMode = mode;
             let btnTrot = document.getElementById('btnFilterTrot');
             let btnAll = document.getElementById('btnFilterAll');
+            let histLabel = document.getElementById('histModeLabel');
 
             if (mode === 'TROT') {
                 btnTrot.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow cursor-pointer";
                 btnAll.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer";
+                if (histLabel) histLabel.textContent = "100% Trot";
                 showToast("Mode 100% Trot activé");
             } else {
                 btnAll.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow cursor-pointer";
                 btnTrot.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer";
+                if (histLabel) histLabel.textContent = "Toutes Courses";
                 showToast("Mode Toutes Courses activé");
             }
             clearAutoTransition();
@@ -545,7 +638,7 @@
             let mIdx = document.getElementById('meetingSelect').value;
             let cIdx = document.getElementById('raceSelect').value;
             if (mIdx !== "" && cIdx !== "") fetchRaceData(true); 
-            calculateDailyStats(true);
+            if (!isSyncingPeriod) calculateDailyStats(true);
             checkStartAlarm();
         }, 10000);
 
@@ -625,8 +718,8 @@
             const fullPmuUrl = `https://online.turfinfo.api.pmu.fr/rest/client/61/programme/${cacheBusterPath}`;
             
             try {
-                let localRes = await fetchWithTimeout(`/api/pmu/${cacheBusterPath}`, 1500);
-                if (localRes.ok) return await localRes.json();
+                let directRes = await fetchWithTimeout(fullPmuUrl, 2500);
+                if (directRes.ok) return await directRes.json();
             } catch (e) {}
 
             const proxies = [
@@ -653,18 +746,20 @@
         async function getFullRaceData(dateStr, rNum, cNum, courseObj = null) {
             let partants = [];
             let rapportsList = [];
-            try {
-                let pData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/participants?specialisation=INTERNET`);
-                if(pData) partants = pData.participants || (Array.isArray(pData) ? pData : []);
-            } catch(e) {}
 
-            try {
-                let rData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs?specialisation=INTERNET`);
-                if (rData) {
-                    if (Array.isArray(rData)) rapportsList = rData;
-                    else rapportsList = rData.rapports || rData.lesRapports || [];
-                }
-            } catch(e) {}
+            const [pRes, rRes] = await Promise.allSettled([
+                smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/participants?specialisation=INTERNET`),
+                smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs?specialisation=INTERNET`)
+            ]);
+
+            if (pRes.status === 'fulfilled' && pRes.value) {
+                let pData = pRes.value;
+                partants = pData.participants || (Array.isArray(pData) ? pData : []);
+            }
+            if (rRes.status === 'fulfilled' && rRes.value) {
+                let rData = rRes.value;
+                rapportsList = Array.isArray(rData) ? rData : (rData.rapports || rData.lesRapports || []);
+            }
 
             if (partants.length > 0 && !partants.some(p => p.ordreArrivee && p.ordreArrivee > 0) && !courseObj) {
                 let m = liveMeetingsData.find(reun => (reun.numOfficiel || 0) == rNum);
@@ -696,7 +791,7 @@
             const statusText = document.getElementById('statusText');
             statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des courses...';
 
-            globalBets = safeGetLocal(`fabturf_${CACHE_VERSION}_bets_` + dateInput);
+            globalBets = safeGetLocal(`fabturf_v21_bets_` + dateInput);
 
             if (document.getElementById('historyBlock').style.display !== 'none' && document.getElementById('historyBlock').style.display !== '') showHistoryStats();
 
@@ -719,6 +814,8 @@
                     }
                 });
                 
+                loadedProgrammeDate = dateInput;
+
                 if (filteredReunions.length > 0) {
                     liveMeetingsData = filteredReunions;
                     let select = document.getElementById('meetingSelect');
@@ -1035,7 +1132,6 @@
             return foundGain;
         }
 
-        // CALCUL DE RATTRAPAGE PARAMÉTRÉ SELON LA MISE DE BASE (10€ POUR BASE, 5€ POUR PÉPITE)
         function computeSmartStake(deficitSerie, baseStakeVal = STAKE_BASE) {
             if (deficitSerie <= 0) return baseStakeVal;
             let stake = Math.ceil((deficitSerie * 1.35) + baseStakeVal);
@@ -1054,18 +1150,20 @@
             } else {
                 globalBets[raceKey] = { num: horseNum, name: horseName, odds: odds, raceName: raceName };
             }
-            safeSetLocal(`fabturf_${CACHE_VERSION}_bets_` + d, globalBets);
+            safeSetLocal(`fabturf_v21_bets_` + d, globalBets);
             
             fetchRaceData(false); 
             updateBetSlipOnly();
+            saveCurrentDayStatsToHistory();
         }
 
         function clearManualBets() {
             let d = document.getElementById('raceDate').value;
             globalBets = {};
-            safeSetLocal(`fabturf_${CACHE_VERSION}_bets_` + d, globalBets);
+            safeSetLocal(`fabturf_v21_bets_` + d, globalBets);
             fetchRaceData(false);
             updateBetSlipOnly();
+            saveCurrentDayStatsToHistory();
             showToast("Ticket complètement vidé", "info");
         }
 
@@ -1241,11 +1339,8 @@
 
                 let hasReports = rapportsList && rapportsList.length > 0;
                 if (hasReports && partants.length > 0) {
-                    try {
-                        localStorage.setItem(`race_cache_${CACHE_VERSION}_${currentRaceKey}`, JSON.stringify({
-                            partants, rapportsList, isComplete: true
-                        }));
-                    } catch(e) {}
+                    let slimmed = slimRaceCacheData(partants, rapportsList, true);
+                    safeSaveStatItem(`race_cache_${CACHE_VERSION}_${currentRaceKey}`, slimmed);
                 }
 
                 let arrivalBlock = document.getElementById('arrivalBlock');
@@ -1412,32 +1507,102 @@
             } catch (e) {}
         }
 
+        // LECTURE ET SAUVEGARDE UNIFIÉE DE L'HISTORIQUE (Compatible avec toutes les versions)
+        function saveDayStatsToStorage(ddmmyyyy, mode, baseProfit, pepiteProfit, manualProfit) {
+            let histObj = {
+                baseProfit: Number(baseProfit) || 0,
+                pepiteProfit: Number(pepiteProfit) || 0,
+                manualProfit: Number(manualProfit) || 0,
+                updatedAt: Date.now()
+            };
+            safeSaveStatItem(`pmu_stats_unified_${mode}_${ddmmyyyy}`, histObj);
+            safeSaveStatItem(`pmu_stats_multidis_v21_${mode}_${ddmmyyyy}`, histObj);
+        }
+
+        function saveCurrentDayStatsToHistory() {
+            let dateInput = document.getElementById('raceDate').value;
+            if (!dateInput) return;
+            let parts = dateInput.split('-');
+            let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
+            let existing = getStatForDateObj(parseLocalYYYYMMDD(dateInput));
+            let manualNet = updateBetSlipOnly();
+            saveDayStatsToStorage(ddmmyyyy, currentDisciplineMode, existing.baseProfit, existing.pepiteProfit, manualNet);
+            let hb = document.getElementById('historyBlock');
+            if (hb && hb.style.display !== 'none' && hb.style.display !== '') showHistoryStats();
+        }
+
         function getStatForDateObj(d) {
-            let key = `pmu_stats_multidis_${CACHE_VERSION}_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
-            let saved = localStorage.getItem(key);
-            if (saved) return JSON.parse(saved);
-            return { baseProfit: 0, pepiteProfit: 0, manualProfit: 0 };
+            let ddmmyyyy = `${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let candidateKeys = [
+                `pmu_stats_unified_${currentDisciplineMode}_${ddmmyyyy}`,
+                `pmu_stats_multidis_v21_${currentDisciplineMode}_${ddmmyyyy}`,
+                `pmu_stats_multidis_v27_${currentDisciplineMode}_${ddmmyyyy}`,
+                `pmu_stats_multidis_v26_${currentDisciplineMode}_${ddmmyyyy}`,
+                `pmu_stats_multidis_v25_${currentDisciplineMode}_${ddmmyyyy}`,
+                `pmu_stats_multidis_v24_${currentDisciplineMode}_${ddmmyyyy}`
+            ];
+            for (let k of candidateKeys) {
+                let saved = localStorage.getItem(k);
+                if (saved) {
+                    try {
+                        let parsed = JSON.parse(saved);
+                        if (parsed && typeof parsed === 'object') {
+                            return {
+                                baseProfit: Number(parsed.baseProfit) || 0,
+                                pepiteProfit: Number(parsed.pepiteProfit) || 0,
+                                manualProfit: Number(parsed.manualProfit) || 0,
+                                hasData: true
+                            };
+                        }
+                    } catch(e) {}
+                }
+            }
+            return { baseProfit: 0, pepiteProfit: 0, manualProfit: 0, hasData: false };
         }
 
         function showHistoryStats() {
-            let dateInput = document.getElementById('raceDate').value;
-            let currentViewDate = dateInput ? new Date(dateInput) : new Date();
+            let dateInput = document.getElementById('raceDate').value || getLocalDateString();
+            let currentViewDate = parseLocalYYYYMMDD(dateInput);
             let year = currentViewDate.getFullYear();
             
             document.getElementById('currentYearText').textContent = year;
 
             let dayOfWeek = currentViewDate.getDay() || 7; 
-            let monday = new Date(currentViewDate);
-            monday.setDate(currentViewDate.getDate() - (dayOfWeek - 1)); 
+            let monday = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth(), currentViewDate.getDate() - (dayOfWeek - 1), 12, 0, 0);
+            let sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6, 12, 0, 0);
             
+            let wLabel = document.getElementById('weekDatesLabel');
+            if (wLabel) {
+                wLabel.textContent = `Du ${String(monday.getDate()).padStart(2,'0')}/${String(monday.getMonth()+1).padStart(2,'0')} au ${String(sunday.getDate()).padStart(2,'0')}/${String(sunday.getMonth()+1).padStart(2,'0')}`;
+            }
+
+            const dayNames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+            let weekBreakdownEl = document.getElementById('weekDaysBreakdown');
+            if (weekBreakdownEl) weekBreakdownEl.innerHTML = '';
+
             let wBase = 0, wPep = 0, wMan = 0;
             for(let i=0; i<7; i++) {
-                let d = new Date(monday);
-                d.setDate(monday.getDate() + i);
+                let d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i, 12, 0, 0);
                 let s = getStatForDateObj(d);
                 wBase += s.baseProfit || 0;
                 wPep += s.pepiteProfit || 0;
                 wMan += s.manualProfit || 0;
+
+                if (weekBreakdownEl) {
+                    let dStr = getLocalDateString(d);
+                    let isSelectedDay = (dStr === dateInput);
+                    let row = document.createElement('div');
+                    row.className = `flex justify-between items-center px-2.5 py-1.5 rounded-lg border ${isSelectedDay ? 'bg-zinc-900 border-amber-500/40 text-white' : 'bg-zinc-900/40 border-zinc-800/80 text-zinc-400'}`;
+                    let statusDot = s.hasData ? '<span class="text-emerald-400 mr-1.5">●</span>' : '<span class="text-zinc-600 mr-1.5">○</span>';
+                    row.innerHTML = `
+                        <span class="font-semibold">${statusDot}${dayNames[i]} ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</span>
+                        <div class="space-x-2 font-mono text-[10px]">
+                            <span>Base: <strong>${formatMoneyHTML(s.baseProfit)}</strong></span>
+                            <span>Pép: <strong>${formatMoneyHTML(s.pepiteProfit)}</strong></span>
+                        </div>
+                    `;
+                    weekBreakdownEl.appendChild(row);
+                }
             }
 
             document.getElementById('weekBase').innerHTML = formatMoneyHTML(wBase);
@@ -1449,17 +1614,18 @@
             monthsGrid.innerHTML = '';
 
             for (let m = 0; m < 12; m++) {
-                let mBase = 0, mPep = 0, mMan = 0;
+                let mBase = 0, mPep = 0, mMan = 0, hasMonthData = false;
                 let daysInMonth = new Date(year, m + 1, 0).getDate(); 
                 
                 for (let d = 1; d <= daysInMonth; d++) {
-                    let s = getStatForDateObj(new Date(year, m, d));
+                    let s = getStatForDateObj(new Date(year, m, d, 12, 0, 0));
+                    if (s.hasData) hasMonthData = true;
                     mBase += s.baseProfit || 0;
                     mPep += s.pepiteProfit || 0;
                     mMan += s.manualProfit || 0;
                 }
 
-                if (mBase !== 0 || mPep !== 0 || mMan !== 0) {
+                if (hasMonthData || mBase !== 0 || mPep !== 0 || mMan !== 0) {
                     let div = document.createElement('div');
                     let isCurrentViewMonth = (m === currentViewDate.getMonth());
                     div.className = isCurrentViewMonth 
@@ -1478,18 +1644,200 @@
                 }
             }
             if(monthsGrid.innerHTML === '') {
-                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Aucune donnée calculée pour cette année.</div>';
+                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Cliquez sur "Calculer la Semaine" ou "Calculer le Mois" ci-dessus pour synchroniser vos journées passées.</div>';
+            }
+        }
+
+        function cancelSyncPeriod() {
+            cancelSyncFlag = true;
+        }
+
+        // SYNCHRONISATION AUTOMATIQUE DE LA SEMAINE OU DU MOIS COMPLET
+        async function syncPeriodHistory(periodType) {
+            if (isSyncingPeriod) return;
+            isSyncingPeriod = true;
+            cancelSyncFlag = false;
+
+            let banner = document.getElementById('syncProgressBanner');
+            let bannerText = document.getElementById('syncProgressText');
+            if (banner) banner.style.display = 'flex';
+
+            let dateInput = document.getElementById('raceDate').value || getLocalDateString();
+            let viewDate = parseLocalYYYYMMDD(dateInput);
+            let todayDate = parseLocalYYYYMMDD(getLocalDateString());
+
+            let datesToSync = [];
+            if (periodType === 'WEEK') {
+                let dayOfWeek = viewDate.getDay() || 7;
+                let monday = new Date(viewDate.getFullYear(), viewDate.getMonth(), viewDate.getDate() - (dayOfWeek - 1), 12, 0, 0);
+                for (let i = 0; i < 7; i++) {
+                    let d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i, 12, 0, 0);
+                    if (d <= todayDate) datesToSync.push(d);
+                }
+            } else {
+                let yr = viewDate.getFullYear();
+                let mo = viewDate.getMonth();
+                let daysInMo = new Date(yr, mo + 1, 0).getDate();
+                for (let dIdx = 1; dIdx <= daysInMo; dIdx++) {
+                    let d = new Date(yr, mo, dIdx, 12, 0, 0);
+                    if (d <= todayDate) datesToSync.push(d);
+                }
+            }
+
+            try {
+                for (let idx = 0; idx < datesToSync.length; idx++) {
+                    if (cancelSyncFlag) break;
+                    let d = datesToSync[idx];
+                    let yyyymmdd = getLocalDateString(d);
+                    let ddmmyyyy = `${String(d.getDate()).padStart(2,'0')}${String(d.getMonth()+1).padStart(2,'0')}${d.getFullYear()}`;
+                    let isToday = (yyyymmdd === getLocalDateString());
+
+                    if (bannerText) {
+                        bannerText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Calcul du ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} (${idx+1}/${datesToSync.length})...`;
+                    }
+
+                    await computeSingleDayStatsForSync(ddmmyyyy, yyyymmdd, !isToday, (doneR, totR) => {
+                        if (bannerText) {
+                            bannerText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Jour ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} : course ${doneR}/${totR}...`;
+                        }
+                    });
+
+                    showHistoryStats();
+                }
+                if (!cancelSyncFlag) {
+                    showToast("Cumul Semaine & Mois mis à jour !", "success");
+                } else {
+                    showToast("Synchronisation interrompue", "info");
+                }
+            } catch (e) {}
+
+            if (banner) banner.style.display = 'none';
+            isSyncingPeriod = false;
+            calculateDailyStats(false);
+        }
+
+        async function computeSingleDayStatsForSync(ddmmyyyy, yyyymmdd, isPastDate, onRaceStep) {
+            let now = Date.now();
+            let reunions = [];
+            try {
+                let data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
+                let rawR = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
+                rawR.forEach(r => {
+                    let allC = r.courses || r.races || r.lesCourses || [];
+                    let targetC = allC.filter(c => isTargetDisciplineRace(c));
+                    if (targetC.length > 0) {
+                        reunions.push({ numOfficiel: r.numOfficiel, courses: targetC });
+                    }
+                });
+            } catch (e) { return; }
+
+            let pastRaces = [];
+            reunions.forEach((m, mIdx) => {
+                let rNum = m.numOfficiel || (mIdx + 1);
+                (m.courses || []).forEach((c, cIdx) => {
+                    let cNum = c.numOrdre || (cIdx + 1);
+                    if (c.heureDepart) {
+                        let departTime = new Date(c.heureDepart).getTime();
+                        if (isPastDate || (departTime > 0 && departTime < (now - 8 * 60 * 1000))) {
+                            pastRaces.push({ rNum, cNum, time: departTime, courseObj: c });
+                        }
+                    }
+                });
+            });
+
+            pastRaces.sort((a, b) => a.time - b.time);
+            let totalProfitBasePla = 0, totalProfitPepitePla = 0;
+            let deficitSerieBase = 0, deficitSeriePepite = 0;
+            let coursesValidees = 0;
+
+            for (let i = 0; i < pastRaces.length; i++) {
+                if (cancelSyncFlag) return;
+                let r = pastRaces[i];
+                if (onRaceStep) onRaceStep(i + 1, pastRaces.length);
+
+                let cacheKey = `race_cache_${CACHE_VERSION}_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let raceData = null;
+                let savedData = localStorage.getItem(cacheKey);
+                if (savedData) {
+                    try {
+                        raceData = JSON.parse(savedData);
+                        if (!raceData || !raceData.rapportsList || raceData.rapportsList.length === 0) raceData = null;
+                    } catch(e) { raceData = null; }
+                }
+
+                if (!raceData) {
+                    await sleep(60);
+                    let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum, r.courseObj);
+                    let isComplete = (rapportsList && rapportsList.length > 0);
+                    raceData = slimRaceCacheData(partants, rapportsList, isComplete);
+                    if (isComplete && partants.length > 0) {
+                        safeSaveStatItem(cacheKey, raceData);
+                    }
+                }
+
+                if (!raceData || !raceData.partants || raceData.partants.length === 0) continue;
+                if (!raceData.rapportsList || raceData.rapportsList.length === 0) continue;
+
+                let algoResult = computeAlgorithm(raceData.partants);
+                let baseH = algoResult.baseHorse;
+                let nuggetH = algoResult.nuggetHorse;
+                let maxPaidPlaces = algoResult.processed.length >= 8 ? 3 : 2;
+
+                let baseArr = baseH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === baseH.num)?.ordreArrivee || 99) : 99;
+                let nuggetArr = nuggetH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === nuggetH.num)?.ordreArrivee || 99) : 99;
+
+                if (baseH) {
+                    coursesValidees++;
+                    let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
+                    let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
+                    if (gPla === 0 && baseArr >= 1 && baseArr <= maxPaidPlaces && baseH.cote < 999) {
+                        gPla = Math.max(1.10, parseFloat((1 + ((baseH.cote - 1) / 3.5)).toFixed(2)));
+                    }
+                    if (gPla > 0) {
+                        let netBasePla = (gPla * actualStakeBase) - actualStakeBase;
+                        totalProfitBasePla += netBasePla;
+                        deficitSerieBase = Math.max(0, deficitSerieBase - netBasePla);
+                    } else {
+                        totalProfitBasePla -= actualStakeBase;
+                        deficitSerieBase += actualStakeBase;
+                    }
+                }
+
+                if (nuggetH) {
+                    let simStakePepite = computeSmartStake(deficitSeriePepite, STAKE_PEPITE);
+                    let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
+                    if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= maxPaidPlaces && nuggetH.cote < 999) {
+                        gPla = Math.max(1.10, parseFloat((1 + ((nuggetH.cote - 1) / 3.5)).toFixed(2)));
+                    }
+                    if (gPla > 0) {
+                        let netPepitePla = (gPla * simStakePepite) - simStakePepite;
+                        totalProfitPepitePla += netPepitePla;
+                        deficitSeriePepite = Math.max(0, deficitSeriePepite - netPepitePla);
+                    } else {
+                        totalProfitPepitePla -= simStakePepite;
+                        deficitSeriePepite += simStakePepite;
+                    }
+                }
+            }
+
+            if (coursesValidees > 0) {
+                let dayBets = safeGetLocal(`fabturf_v21_bets_` + yyyymmdd);
+                let existing = getStatForDateObj(parseLocalYYYYMMDD(yyyymmdd));
+                let manualNet = Object.keys(dayBets).length > 0 ? existing.manualProfit : 0;
+                saveDayStatsToStorage(ddmmyyyy, currentDisciplineMode, totalProfitBasePla, totalProfitPepitePla, manualNet);
             }
         }
 
         async function calculateDailyStats(isAuto = false) {
             if (isAuto && isCalculatingStats) return;
+            let dateInput = document.getElementById('raceDate').value;
+            if (!dateInput || loadedProgrammeDate !== dateInput) return;
+
             let myCalcId = ++currentCalcId;
             isCalculatingStats = true;
             
             try {
                 let statsProgress = document.getElementById('statsProgress');
-                let dateInput = document.getElementById('raceDate').value;
                 let parts = dateInput.split('-');
                 let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
                 
@@ -1506,7 +1854,7 @@
                         if (c.heureDepart) {
                             let departTime = new Date(c.heureDepart).getTime();
                             if (isPastDate || (departTime > 0 && departTime < (now - 8 * 60 * 1000))) {
-                                pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime });
+                                pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime, courseObj: c });
                             }
                         }
                     });
@@ -1552,15 +1900,15 @@
                         if (statsProgress) {
                             statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
                         }
-                        await sleep(100); 
+                        await sleep(70); 
                         if (currentCalcId !== myCalcId) return;
                         
-                        let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum);
+                        let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum, r.courseObj);
                         let isComplete = (rapportsList && rapportsList.length > 0); 
                         
-                        raceData = { partants, rapportsList, isComplete };
+                        raceData = slimRaceCacheData(partants, rapportsList, isComplete);
                         if (raceData.isComplete && partants.length > 0) {
-                            try { localStorage.setItem(cacheKey, JSON.stringify(raceData)); } catch(e) {}
+                            safeSaveStatItem(cacheKey, raceData);
                         }
                     }
 
@@ -1591,7 +1939,6 @@
                         else { totalProfitPepiteGag -= 1.0; }
                     }
 
-                    // CALCUL BASE AVEC MISE DE DÉPART 10€ (STAKE_BASE)
                     if (baseH) {
                         coursesValidees++;
                         let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
@@ -1614,7 +1961,6 @@
                         }
                     }
 
-                    // CALCUL PÉPITE AVEC MISE DE DÉPART 5€ (STAKE_PEPITE)
                     if (nuggetH) {
                         let simStakePepite = computeSmartStake(deficitSeriePepite, STAKE_PEPITE);
                         totalSpentPepite += simStakePepite;
@@ -1635,45 +1981,42 @@
                             deficitSeriePepite += simStakePepite;
                         }
                     }
+
+                    // MISE À JOUR PROGRESSIVE EN TEMPS RÉEL À CHAQUE COURSE VALIDÉE
+                    document.getElementById('statBaseGag').textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
+                    document.getElementById('statBasePla').textContent = `${baseWinsPla} / ${coursesValidees}`;
+                    document.getElementById('statPepiteGag').textContent = `${pepiteWinsGag} / ${coursesGagnantBaseValidees}`;
+                    document.getElementById('statPepitePla').textContent = `${pepiteWinsPla} / ${coursesValidees}`;
+                    document.getElementById('gainBasePla').innerHTML = formatMoneyHTML(totalProfitBasePla);
+                    document.getElementById('gainBaseGag').innerHTML = formatMoneyHTML(totalProfitBaseGag);
+                    document.getElementById('gainPepitePla').innerHTML = formatMoneyHTML(totalProfitPepitePla);
+                    document.getElementById('gainPepiteGag').innerHTML = formatMoneyHTML(totalProfitPepiteGag);
+
+                    document.getElementById('totalSpentText').textContent = `${totalSpentBase.toFixed(2)} €`;
+                    document.getElementById('maxStakeBaseText').textContent = `${maxStakeBase.toFixed(2)} €`;
+                    document.getElementById('deficitBaseText').textContent = `${deficitSerieBase.toFixed(2)} €`;
+                    
+                    document.getElementById('totalSpentPepiteText').textContent = `${totalSpentPepite.toFixed(2)} €`;
+                    document.getElementById('maxStakePepiteText').textContent = `${maxStakePepite.toFixed(2)} €`;
+                    document.getElementById('deficitPepiteText').textContent = `${deficitSeriePepite.toFixed(2)} €`;
+
+                    let nextStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
+                    let nextStakePepite = computeSmartStake(deficitSeriePepite, STAKE_PEPITE);
+                    
+                    document.getElementById('nextStakeBaseText').textContent = `Mise: ${nextStakeBase.toFixed(2)} €`;
+                    document.getElementById('nextStakePepiteText').textContent = `Mise: ${nextStakePepite.toFixed(2)} €`;
+                    document.getElementById('headerNextStake').textContent = `${nextStakeBase.toFixed(2)} €`;
                 }
 
                 if (currentCalcId !== myCalcId) return;
 
-                document.getElementById('statBaseGag').textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
-                document.getElementById('statBasePla').textContent = `${baseWinsPla} / ${coursesValidees}`;
-                document.getElementById('statPepiteGag').textContent = `${pepiteWinsGag} / ${coursesGagnantBaseValidees}`;
-                document.getElementById('statPepitePla').textContent = `${pepiteWinsPla} / ${coursesValidees}`;
-                document.getElementById('gainBasePla').innerHTML = formatMoneyHTML(totalProfitBasePla);
-                document.getElementById('gainBaseGag').innerHTML = formatMoneyHTML(totalProfitBaseGag);
-                document.getElementById('gainPepitePla').innerHTML = formatMoneyHTML(totalProfitPepitePla);
-                document.getElementById('gainPepiteGag').innerHTML = formatMoneyHTML(totalProfitPepiteGag);
-
-                document.getElementById('totalSpentText').textContent = `${totalSpentBase.toFixed(2)} €`;
-                document.getElementById('maxStakeBaseText').textContent = `${maxStakeBase.toFixed(2)} €`;
-                document.getElementById('deficitBaseText').textContent = `${deficitSerieBase.toFixed(2)} €`;
-                
-                document.getElementById('totalSpentPepiteText').textContent = `${totalSpentPepite.toFixed(2)} €`;
-                document.getElementById('maxStakePepiteText').textContent = `${maxStakePepite.toFixed(2)} €`;
-                document.getElementById('deficitPepiteText').textContent = `${deficitSeriePepite.toFixed(2)} €`;
-
-                let nextStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
-                let nextStakePepite = computeSmartStake(deficitSeriePepite, STAKE_PEPITE);
-                
-                document.getElementById('nextStakeBaseText').textContent = `Mise: ${nextStakeBase.toFixed(2)} €`;
-                document.getElementById('nextStakePepiteText').textContent = `Mise: ${nextStakePepite.toFixed(2)} €`;
-                document.getElementById('headerNextStake').textContent = `${nextStakeBase.toFixed(2)} €`;
-                
                 if (statsProgress) statsProgress.textContent = `✅ ${coursesValidees}/${pastRacesToday.length} validées`;
                 
                 let manualNet = updateBetSlipOnly();
 
+                // SAUVEGARDE GARANTIE DANS L'HISTORIQUE SEMAINE & MOIS
                 if (coursesValidees > 0 || manualNet !== 0) {
-                    let histObj = {
-                        baseProfit: totalProfitBasePla, 
-                        pepiteProfit: totalProfitPepitePla,
-                        manualProfit: manualNet
-                    };
-                    localStorage.setItem(`pmu_stats_multidis_${CACHE_VERSION}_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify(histObj));
+                    saveDayStatsToStorage(ddmmyyyy, currentDisciplineMode, totalProfitBasePla, totalProfitPepitePla, manualNet);
                 }
                 
                 let hb = document.getElementById('historyBlock');
