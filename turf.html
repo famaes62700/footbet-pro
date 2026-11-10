@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V26 Ticket & Force Refresh</title>
+    <title>Turf - V21 Interface Symétrique</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,37 +14,33 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
 </head>
-<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-40">
+<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-10">
 
-    <div id="toastContainer" class="fixed bottom-24 right-4 z-[9999] flex flex-col space-y-2 pointer-events-none"></div>
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-3 sm:p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
-            <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-700">
-                <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">Pro V26</span>
+            <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center">
+                <i class="fa-solid fa-horse-head mr-1 sm:mr-2"></i><span class="hidden sm:inline">Turf</span>
             </h1>
             
             <div class="flex items-center space-x-1.5 sm:space-x-2">
                 
                 <div class="text-xs bg-zinc-800 px-2 py-1 rounded-lg border border-emerald-500/30 text-emerald-400 font-bold flex flex-col items-end shadow mr-1">
-                    <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">Mise Auto</span>
+                    <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">À Jouer (Base)</span>
                     <span id="headerNextStake">5.00 €</span>
                 </div>
                 
-                <button onclick="resetAllCache()" class="bg-red-900/50 hover:bg-red-600 text-red-300 hover:text-white w-8 h-8 rounded-lg border border-red-500/50 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Purger la mémoire et forcer l'actualisation (Réparer)">
-                    <i class="fa-solid fa-trash-can"></i>
+                <button id="btnArrivalAlarm" onclick="toggleArrivalAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0" title="Alerte Arrivée Officielle">
+                    <i id="iconArrivalAlarm" class="fa-solid fa-flag-checkered"></i>
                 </button>
-
-                <button id="btnStartAlarm" onclick="toggleStartAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Alerte Départ">
+                
+                <button id="btnStartAlarm" onclick="toggleStartAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0" title="Alerte Départ (1min30 avant)">
                     <i id="iconStartAlarm" class="fa-solid fa-bell-slash"></i>
                 </button>
 
-                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Historique des Gains">
+                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0" title="Historique des Gains">
                     <i class="fa-solid fa-calendar-days"></i>
                 </button>
 
@@ -59,37 +55,35 @@
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-2 flex items-center justify-between text-xs">
             <span class="text-zinc-400 font-bold ml-2"><i class="fa-solid fa-filter mr-1.5 text-amber-400"></i> Mode :</span>
             <div class="flex space-x-2">
-                <button id="btnFilterTrot" onclick="setDisciplineMode('TROT')" class="bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow cursor-pointer">
+                <button id="btnFilterTrot" onclick="setDisciplineMode('TROT')" class="bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow">
                     100% Trot
                 </button>
-                <button id="btnFilterAll" onclick="setDisciplineMode('ALL')" class="bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer">
-                    Toutes Courses
+                <button id="btnFilterAll" onclick="setDisciplineMode('ALL')" class="bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition">
+                    Toutes Courses (Monde)
                 </button>
             </div>
         </div>
 
         <div class="flex justify-between items-center bg-zinc-950 border border-zinc-800 p-2 rounded-xl">
             <div id="statusText" class="text-xs text-amber-400 font-mono flex items-center">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion PMU...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion...
             </div>
             <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded">Prêt</div>
         </div>
 
-        <!-- HISTORIQUE CUMULÉ -->
-        <div id="historyBlock" style="display: none;" class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2">
+        <div id="historyBlock" class="hidden bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
                     <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés
                 </h2>
-                <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
-                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Cette Semaine</h3>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div class="text-zinc-300">Base : <span id="weekBase" class="text-emerald-400 font-bold block">0.00 €</span></div>
-                        <div class="text-zinc-300">Pépite : <span id="weekPepite" class="text-amber-400 font-bold block">0.00 €</span></div>
-                        <div class="text-zinc-300">Perso : <span id="weekManual" class="text-orange-400 font-bold block">0.00 €</span></div>
+                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Cette Semaine (Placé Réel)</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="text-zinc-300">Base : <span id="weekBase" class="text-emerald-400 font-bold">0.00 €</span></div>
+                        <div class="text-zinc-300">Pépite : <span id="weekPepite" class="text-amber-400 font-bold">0.00 €</span></div>
                     </div>
                 </div>
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
@@ -103,7 +97,7 @@
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour</h2>
-                    <p class="text-[10px] text-zinc-400">Rattrapage optimisé • Base 5€</p>
+                    <p class="text-[10px] text-zinc-400">Rattrapage optimisé • Base 5€ • <strong class="text-emerald-400">Illimité</strong></p>
                 </div>
             </div>
 
@@ -111,15 +105,15 @@
                 <!-- BASE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
                     <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">RÉEL</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base</div>
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori)</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
-                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant</span>
+                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant (1€ virt.)</span>
                             <span id="statBaseGag" class="text-[9px] text-zinc-500 font-bold my-0.5">0 / 0</span>
                             <span id="gainBaseGag" class="font-bold text-zinc-300 mt-0.5">0.00 €</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-emerald-500/30 text-center flex flex-col justify-center shadow-inner">
-                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé</span>
+                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé (Réel)</span>
                             <span id="statBasePla" class="text-[9px] text-emerald-500/70 font-bold my-0.5">0 / 0</span>
                             <span id="gainBasePla" class="font-bold text-emerald-400 mt-0.5">0.00 €</span>
                         </div>
@@ -132,12 +126,12 @@
                     <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Pépite</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
-                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant</span>
+                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant (1€ virt.)</span>
                             <span id="statPepiteGag" class="text-[9px] text-zinc-500 font-bold my-0.5">0 / 0</span>
                             <span id="gainPepiteGag" class="font-bold text-zinc-300 mt-0.5">0.00 €</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-amber-500/30 text-center flex flex-col justify-center">
-                            <span class="text-[8px] text-amber-400 block uppercase font-bold">Placé</span>
+                            <span class="text-[8px] text-amber-400 block uppercase font-bold">Placé (Simu)</span>
                             <span id="statPepitePla" class="text-[9px] text-amber-500/70 font-bold my-0.5">0 / 0</span>
                             <span id="gainPepitePla" class="font-bold text-amber-400 mt-0.5">0.00 €</span>
                         </div>
@@ -145,8 +139,10 @@
                 </div>
             </div>
 
-            <!-- MISE MAX ET DÉFICITS -->
+            <!-- MISE MAX ET DÉFICITS (SYMÉTRIQUE) -->
             <div class="grid grid-cols-2 gap-3 text-[11px] bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 text-zinc-300">
+                
+                <!-- GAUCHE : BASE -->
                 <div class="flex flex-col space-y-1 border-r border-zinc-700/50 pr-3">
                     <span class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement (Base)</span>
                     <span class="flex justify-between">Joué: <strong id="totalSpentText" class="text-white">0.00 €</strong></span>
@@ -157,6 +153,7 @@
                     </div>
                 </div>
 
+                <!-- DROITE : PÉPITE -->
                 <div class="flex flex-col space-y-1 pl-1">
                     <span class="text-[9px] uppercase text-amber-400 font-bold mb-0.5">Investissement (Pépite)</span>
                     <span class="flex justify-between">Joué: <strong id="totalSpentPepiteText" class="text-white">0.00 €</strong></span>
@@ -166,26 +163,27 @@
                         <strong id="nextStakePepiteText" class="text-amber-400 bg-zinc-900 px-2 py-1 rounded border border-amber-500/30 font-black text-xs shadow-md block text-center">Mise: 5.00 €</strong>
                     </div>
                 </div>
+
             </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <select id="meetingSelect" onchange="onMeetingChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500 cursor-pointer">
+            <select id="meetingSelect" onchange="onMeetingChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500">
                 <option value="">-- Réunion --</option>
             </select>
-            <select id="raceSelect" onchange="onRaceChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500 cursor-pointer">
+            <select id="raceSelect" onchange="onRaceChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500">
                 <option value="">-- Course --</option>
             </select>
         </div>
 
-        <div id="arrivalBlock" style="display: none;" class="bg-blue-950/40 border border-blue-500/40 rounded-xl p-3.5 space-y-2">
+        <div id="arrivalBlock" class="hidden bg-blue-950/40 border border-blue-500/40 rounded-xl p-3.5 space-y-2">
             <h2 class="text-xs font-bold uppercase text-blue-400 tracking-wider flex items-center">
                 <i class="fa-solid fa-flag-checkered mr-1.5"></i> Arrivée Officielle
             </h2>
             <div id="arrivalList" class="flex flex-wrap gap-2 text-xs font-bold text-white"></div>
         </div>
 
-        <div id="reportsBlock" style="display: none;" class="bg-zinc-900 border border-emerald-500/30 rounded-xl p-3.5 space-y-2">
+        <div id="reportsBlock" class="hidden bg-zinc-900 border border-emerald-500/30 rounded-xl p-3.5 space-y-2">
             <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center">
                 <i class="fa-solid fa-euro-sign mr-1.5"></i> Rapports Définitifs (pour 1 €)
             </h2>
@@ -198,13 +196,16 @@
                     <i class="fa-solid fa-star mr-1.5"></i> Nos 2 Chevaux Clés
                 </h2>
                 <div class="flex items-center space-x-1.5 flex-wrap">
-                    <button onclick="goToPrevRace()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 font-semibold transition flex items-center shadow cursor-pointer" title="Course précédente">
+                    <a href="https://www.equidia.fr/direct?utm_source=intern&utm_medium=header_menu&utm_campaign=Home" target="_blank" class="bg-red-600 hover:bg-red-500 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold shadow transition flex items-center">
+                        <i class="fa-solid fa-video mr-1.5"></i> Direct 🎥
+                    </a>
+                    <button onclick="goToPrevRace()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 font-semibold transition flex items-center shadow" title="Course précédente">
                         <i class="fa-solid fa-backward-step"></i>
                     </button>
-                    <button onclick="refreshCurrentRace()" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 text-xs px-2.5 py-1.5 rounded-lg border border-emerald-500/30 font-semibold transition flex items-center shadow cursor-pointer" title="Actualiser manuellement">
+                    <button onclick="refreshCurrentRace()" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 text-xs px-2.5 py-1.5 rounded-lg border border-emerald-500/30 font-semibold transition flex items-center shadow" title="Actualiser manuellement">
                         <i class="fa-solid fa-rotate"></i>
                     </button>
-                    <button onclick="goToNextRace()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 font-semibold transition flex items-center shadow cursor-pointer" title="Course suivante">
+                    <button onclick="goToNextRace()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 font-semibold transition flex items-center shadow" title="Course suivante">
                         <i class="fa-solid fa-forward-step"></i>
                     </button>
                 </div>
@@ -224,13 +225,13 @@
         </div>
 
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden text-xs shadow-xl">
-            <div id="raceInfoDetails" class="p-3 border-b border-zinc-800 font-bold text-zinc-300 flex justify-between items-center">
+            <div id="raceInfoDetails" class="p-3.5 border-b border-zinc-800 font-bold text-zinc-300 flex justify-between items-center">
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead>
                         <tr class="bg-zinc-800/60 text-zinc-400 border-b border-zinc-800">
-                            <th class="p-3">N° / Nom <span class="text-[9px] font-normal text-zinc-500">(Cliquez pour parier)</span></th>
+                            <th class="p-3">N° / Nom</th>
                             <th class="p-3">Musique</th>
                             <th class="p-3">Cote</th>
                             <th class="p-3">Score Pépite</th>
@@ -244,108 +245,8 @@
         </div>
     </main>
 
-    <!-- TICKET FLOTTANT POUR LES PARIS MANUELS (ADAPTÉ POUR PC) -->
-    <div id="betSlipBar" class="hidden fixed bottom-0 left-0 right-0 md:left-auto md:right-8 md:bottom-8 md:w-[400px] md:rounded-2xl z-50 bg-zinc-900 border-t-2 md:border-2 border-emerald-500 shadow-[0_-10px_40px_rgba(0,0,0,0.9)] flex-col max-h-[85vh] md:max-h-[75vh] transition-all duration-300">
-        
-        <div class="p-4 w-full flex justify-between items-center cursor-pointer hover:bg-zinc-800/50 transition md:rounded-t-2xl" onclick="toggleTicket()">
-            <div class="flex items-center space-x-4">
-                <div class="relative">
-                    <i class="fa-solid fa-ticket text-emerald-500 text-3xl"></i>
-                    <span id="slipCountBadge" class="absolute -top-2 -right-2 bg-amber-500 text-zinc-900 font-black text-xs w-5 h-5 flex items-center justify-center rounded-full shadow">0</span>
-                </div>
-                <div>
-                    <div class="text-sm font-black text-white uppercase tracking-wider">Votre Ticket Turf <i id="ticketChevron" class="fa-solid fa-chevron-up ml-2 text-zinc-500 transition-transform"></i></div>
-                    <div class="text-xs text-zinc-400 mt-0.5">Cliquez pour voir les détails</div>
-                </div>
-            </div>
-            <div class="flex items-center space-x-3">
-                 <div class="text-right">
-                    <span class="text-[10px] text-amber-400 uppercase font-bold block">Gain Max Combiné</span>
-                    <strong id="slipComboGainMini" class="text-amber-400 font-black text-base">0.00 €</strong>
-                 </div>
-                 <button onclick="clearManualBets(); event.stopPropagation();" class="text-zinc-500 hover:text-red-500 p-2 transition cursor-pointer" title="Vider le ticket"><i class="fa-solid fa-trash text-lg"></i></button>
-            </div>
-        </div>
-
-        <div id="ticketDetails" class="hidden flex-col w-full px-4 pb-5 overflow-y-auto border-t border-zinc-800 pt-4">
-            
-            <div class="text-xs uppercase font-bold text-zinc-400 mb-3">Vos sélections</div>
-            <div id="ticketMatchesList" class="mb-5 space-y-2"></div>
-
-            <div class="space-y-4">
-                <div class="bg-zinc-950 border border-emerald-500/30 rounded-xl p-4 shadow-inner">
-                    <div class="text-xs uppercase font-bold text-emerald-400 mb-1">Option 1 : Paris Simples</div>
-                    <div class="text-xs text-zinc-400 mb-3">5€ joués sur chaque cheval séparément</div>
-                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2">
-                        <span class="text-xs text-zinc-500">Mise Totale:</span>
-                        <span id="ticketSimpleStake" class="font-bold text-white text-sm">0.00 €</span>
-                    </div>
-                    <div class="flex justify-between items-center mt-1">
-                        <span class="text-xs text-zinc-500">Gain Potentiel max:</span>
-                        <span id="ticketSimpleGain" class="font-black text-emerald-400 text-base">0.00 €</span>
-                    </div>
-                    <div class="flex justify-between items-center mt-1">
-                        <span class="text-xs text-zinc-500">Bénéfice Net Actuel:</span>
-                        <span id="ticketSimpleNet" class="font-bold text-emerald-400 text-[10px]">0.00 €</span>
-                    </div>
-                </div>
-
-                <div class="bg-zinc-950 border border-amber-500/30 rounded-xl p-4 relative overflow-hidden shadow-inner">
-                    <div class="absolute -right-4 -top-4 text-amber-500/5 text-6xl"><i class="fa-solid fa-fire"></i></div>
-                    <div class="text-xs uppercase font-bold text-amber-400 mb-1 relative z-10">Option 2 : Pari Combiné</div>
-                    <div class="text-xs text-zinc-400 mb-3 relative z-10">1 seule mise de 5€ avec cotes multipliées</div>
-                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2 relative z-10">
-                        <span class="text-xs text-zinc-500">Cote Totale:</span>
-                        <span id="ticketComboOdds" class="font-bold text-white text-sm">1.00</span>
-                    </div>
-                    <div class="flex justify-between items-center mt-1 relative z-10">
-                        <span class="text-xs text-zinc-500">Gain Pot. (pour 5€):</span>
-                        <span id="ticketComboGain" class="font-black text-amber-400 text-lg">0.00 €</span>
-                    </div>
-                </div>
-                
-                <button onclick="clearManualBets()" class="w-full bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/50 py-3 rounded-xl font-bold text-sm transition shadow flex items-center justify-center cursor-pointer">
-                    <i class="fa-solid fa-trash mr-2"></i> Vider tout le ticket
-                </button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // SÉCURISATION MAXIMALE V26 (Changement d'ID pour tout forcer à se re-télécharger)
-        const CACHE_VERSION = "v26";
-        
-        function safeGetLocal(key) {
-            try { 
-                let item = localStorage.getItem(key);
-                let parsed = item ? JSON.parse(item) : {}; 
-                if (typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-                return parsed;
-            } catch(e) { return {}; }
-        }
-        function safeSetLocal(key, val) {
-            try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
-        }
-        
-        function getLocalDateString() {
-            const d = new Date();
-            const yr = d.getFullYear();
-            const mo = String(d.getMonth() + 1).padStart(2, '0');
-            const da = String(d.getDate()).padStart(2, '0');
-            return `${yr}-${mo}-${da}`;
-        }
-        
-        function resetAllCache() {
-            Object.keys(localStorage).forEach(k => {
-                if (k.startsWith('race_cache_') || k.startsWith('pmu_stats_') || k.startsWith('fabturf_')) {
-                    localStorage.removeItem(k);
-                }
-            });
-            showToast("Mémoire complètement purgée !", "success");
-            setTimeout(() => location.reload(), 1000);
-        }
-
-        document.getElementById('raceDate').value = getLocalDateString();
+        document.getElementById('raceDate').valueAsDate = new Date();
         let liveMeetingsData = [];
         let autoTransitionTimer = null; 
         
@@ -360,10 +261,7 @@
         
         let hasAutoTransitioned = {};
         let isCalculatingStats = false;
-        let isTicketExpanded = false;
         
-        let globalBets = {};
-
         let audioStart = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         let audioArrival = new Audio('https://assets.mixkit.co/active_storage/sfx/2870/2870-preview.mp3');
 
@@ -373,41 +271,52 @@
             let btnAll = document.getElementById('btnFilterAll');
 
             if (mode === 'TROT') {
-                btnTrot.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow cursor-pointer";
-                btnAll.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer";
+                btnTrot.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow";
+                btnAll.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition";
                 showToast("Mode 100% Trot activé");
             } else {
-                btnAll.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow cursor-pointer";
-                btnTrot.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer";
+                btnAll.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow";
+                btnTrot.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition";
                 showToast("Mode Toutes Courses activé");
             }
             loadLivePmu();
         }
 
+        function resetAllCache() {
+            notifiedArrivals = {};
+            hasAutoTransitioned = {};
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('race_cache_') || k.startsWith('pmu_stats_')) {
+                    localStorage.removeItem(k);
+                }
+            });
+            showToast("Mémoire locale totalement purgée !", "success");
+            fetchRaceData(false);
+            calculateDailyStats(false);
+        }
+
         function onDateChange() {
-            try {
-                document.getElementById('statBaseGag').textContent = "0 / 0";
-                document.getElementById('statBasePla').textContent = "0 / 0";
-                document.getElementById('statPepiteGag').textContent = "0 / 0";
-                document.getElementById('statPepitePla').textContent = "0 / 0";
-                document.getElementById('gainBaseGag').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
-                document.getElementById('gainBasePla').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
-                document.getElementById('gainPepiteGag').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
-                document.getElementById('gainPepitePla').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
-                
-                document.getElementById('totalSpentText').textContent = "0.00 €";
-                document.getElementById('totalSpentPepiteText').textContent = "0.00 €";
-                
-                document.getElementById('maxStakeBaseText').textContent = "0.00 €";
-                document.getElementById('maxStakePepiteText').textContent = "0.00 €";
-                
-                document.getElementById('deficitBaseText').textContent = "0.00 €";
-                document.getElementById('deficitPepiteText').textContent = "0.00 €";
-                
-                document.getElementById('headerNextStake').textContent = "5.00 €";
-                document.getElementById('nextStakeBaseText').textContent = "Mise: 5.00 €";
-                document.getElementById('nextStakePepiteText').textContent = "Mise: 5.00 €";
-            } catch(e) {}
+            document.getElementById('statBaseGag').textContent = "0 / 0";
+            document.getElementById('statBasePla').textContent = "0 / 0";
+            document.getElementById('statPepiteGag').textContent = "0 / 0";
+            document.getElementById('statPepitePla').textContent = "0 / 0";
+            document.getElementById('gainBaseGag').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
+            document.getElementById('gainBasePla').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
+            document.getElementById('gainPepiteGag').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
+            document.getElementById('gainPepitePla').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
+            
+            document.getElementById('totalSpentText').textContent = "0.00 €";
+            document.getElementById('totalSpentPepiteText').textContent = "0.00 €";
+            
+            document.getElementById('maxStakeBaseText').textContent = "0.00 €";
+            document.getElementById('maxStakePepiteText').textContent = "0.00 €";
+            
+            document.getElementById('deficitBaseText').textContent = "0.00 €";
+            document.getElementById('deficitPepiteText').textContent = "0.00 €";
+            
+            document.getElementById('headerNextStake').textContent = "5.00 €";
+            document.getElementById('nextStakeBaseText').textContent = "Mise: 5.00 €";
+            document.getElementById('nextStakePepiteText').textContent = "Mise: 5.00 €";
             loadLivePmu();
         }
 
@@ -482,6 +391,7 @@
             }
         }
 
+        // RAFRAÎCHISSEMENT AUTOMATIQUE TOUTES LES 10 SECONDES
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
             let cIdx = document.getElementById('raceSelect').value;
@@ -503,11 +413,11 @@
 
         function toggleHistoryStats() {
             let historyBlock = document.getElementById('historyBlock');
-            if (historyBlock.style.display === 'none' || historyBlock.style.display === '') {
-                historyBlock.style.display = 'block';
+            if (historyBlock.classList.contains('hidden')) {
+                historyBlock.classList.remove('hidden');
                 showHistoryStats();
             } else {
-                historyBlock.style.display = 'none';
+                historyBlock.classList.add('hidden');
             }
         }
 
@@ -517,7 +427,7 @@
             let bgClass = type === 'success' ? 'bg-emerald-900/90 border-emerald-500/50 text-emerald-200' : 'bg-zinc-800 border-zinc-700 text-white';
             if (type === 'error') bgClass = 'bg-red-900/90 border-red-500/50 text-red-200';
             
-            toast.className = `pointer-events-auto px-5 py-3 rounded-xl border shadow-2xl text-sm font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center space-x-2 ${bgClass}`;
+            toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center space-x-2 ${bgClass}`;
             toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
             setTimeout(() => { toast.classList.remove('opacity-0', 'translate-y-2'); }, 10);
@@ -540,11 +450,11 @@
 
         function getDisciplineBadge(course) {
             let s = String(course.specialite || course.discipline || 'COURSE').toUpperCase();
-            if (s.includes('MONTE')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">MONTÉ</span>';
-            if (s.includes('ATTEL')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">ATTELÉ</span>';
-            if (s.includes('PLAT')) return '<span class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">PLAT</span>';
-            if (s.includes('HAIES') || s.includes('STEEPLE') || s.includes('OBST')) return '<span class="bg-purple-500/20 text-purple-400 border border-purple-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">OBSTACLE</span>';
-            return `<span class="bg-zinc-500/20 text-zinc-300 border border-zinc-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">${s}</span>`;
+            if (s.includes('MONTE')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">MONTÉ</span>';
+            if (s.includes('ATTEL')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">ATTELÉ</span>';
+            if (s.includes('PLAT')) return '<span class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">PLAT</span>';
+            if (s.includes('HAIES') || s.includes('STEEPLE') || s.includes('OBST')) return '<span class="bg-purple-500/20 text-purple-400 border border-purple-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">OBSTACLE</span>';
+            return `<span class="bg-zinc-500/20 text-zinc-300 border border-zinc-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">${s}</span>`;
         }
 
         async function smartFetchPMU(path) {
@@ -601,6 +511,7 @@
                 }
             }
 
+            // Consolidate arrivals from courseObj if present
             if (courseObj && Array.isArray(courseObj.ordreArrivee) && courseObj.ordreArrivee.length > 0) {
                 courseObj.ordreArrivee.forEach((item, index) => {
                     let rank = index + 1;
@@ -624,9 +535,7 @@
             const statusText = document.getElementById('statusText');
             statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des courses...';
 
-            globalBets = safeGetLocal(`fabturf_${CACHE_VERSION}_bets_` + dateInput);
-
-            if (document.getElementById('historyBlock').style.display !== 'none' && document.getElementById('historyBlock').style.display !== '') showHistoryStats();
+            if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
 
             const parts = dateInput.split('-');
             const ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
@@ -847,6 +756,7 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
+        // VOTRE ALGORITHME D'ORIGINE CONSERVÉ INTÉGRALEMENT
         function computeAlgorithm(partants) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
@@ -955,154 +865,6 @@
             return Math.max(BASE_STAKE + 3, stake);
         }
 
-        function placeBet(raceKey, horseNum, horseName, odds, raceName, isLocked) {
-            if (isLocked) {
-                showToast("Les paris sont fermés (course commencée) 🔒", "error");
-                return;
-            }
-
-            let d = document.getElementById('raceDate').value;
-            if (globalBets[raceKey] && globalBets[raceKey].num === horseNum) {
-                delete globalBets[raceKey];
-            } else {
-                globalBets[raceKey] = { num: horseNum, name: horseName, odds: odds, raceName: raceName };
-            }
-            safeSetLocal(`fabturf_${CACHE_VERSION}_bets_` + d, globalBets);
-            
-            fetchRaceData(); 
-            calculateDailyStats(); 
-        }
-
-        function clearManualBets() {
-            let d = document.getElementById('raceDate').value;
-            globalBets = {};
-            safeSetLocal(`fabturf_${CACHE_VERSION}_bets_` + d, globalBets);
-            fetchRaceData();
-            calculateDailyStats();
-            showToast("Ticket complètement vidé", "info");
-        }
-
-        function toggleTicket() {
-            let details = document.getElementById('ticketDetails');
-            let chevron = document.getElementById('ticketChevron');
-            let ticket = document.getElementById('betSlipBar');
-            
-            isTicketExpanded = !isTicketExpanded;
-            
-            if (isTicketExpanded) {
-                details.classList.remove('hidden');
-                details.classList.add('flex');
-                chevron.classList.replace('fa-chevron-up', 'fa-chevron-down');
-            } else {
-                details.classList.add('hidden');
-                details.classList.remove('flex');
-                chevron.classList.replace('fa-chevron-down', 'fa-chevron-up');
-            }
-        }
-
-        function updateBetSlipOnly() {
-            let slipC = 0, simGross = 0, simNet = 0, cOdd = 1.0, cLost = false;
-            let ticketListHTML = '';
-            
-            Object.keys(globalBets).forEach(raceKey => {
-                let bet = globalBets[raceKey];
-                slipC++;
-                let o = bet.odds;
-                cOdd *= o;
-                
-                let mIcon = '<i class="fa-solid fa-clock text-zinc-500"></i>';
-                let mColor = "text-zinc-300";
-
-                let cacheKey = `race_cache_${CACHE_VERSION}_${raceKey}`;
-                let savedData = localStorage.getItem(cacheKey);
-                if (savedData) {
-                    let raceData = JSON.parse(savedData);
-                    if (raceData.isComplete && raceData.partants) {
-                        let gGag = extractGainFromRapports(raceData.rapportsList, bet.num, 'GAGNANT');
-                        
-                        let p = raceData.partants.find(x => parseInt(x.numPmu||x.numOrdre, 10) === bet.num);
-                        let arr = p ? parseInt(p.ordreArrivee, 10) : 99;
-                        
-                        if (gGag === 0 && arr === 1) gGag = bet.odds; 
-
-                        if (gGag > 0) {
-                            simGross += (gGag * BASE_STAKE);
-                            simNet += (gGag * BASE_STAKE) - BASE_STAKE;
-                            mIcon = '<i class="fa-solid fa-check text-emerald-400"></i>'; 
-                            mColor = "text-emerald-400 font-bold";
-                        } else {
-                            simNet -= BASE_STAKE;
-                            cLost = true;
-                            mIcon = '<i class="fa-solid fa-xmark text-red-500"></i>'; 
-                            mColor = "text-red-500 line-through opacity-60";
-                        }
-                    } else {
-                        simGross += (o * BASE_STAKE);
-                    }
-                } else {
-                    simGross += (o * BASE_STAKE);
-                }
-
-                ticketListHTML += `
-                    <div class="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-3 flex justify-between items-center text-xs mb-2">
-                        <div class="flex items-center space-x-3 w-2/3">
-                            <span class="w-5 text-center text-base">${mIcon}</span>
-                            <div class="truncate">
-                                <div class="font-bold text-white truncate">${bet.raceName || raceKey}</div>
-                                <div class="text-zinc-400 mt-0.5">Cheval : <strong class="text-emerald-400">N°${bet.num} ${bet.name}</strong></div>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-zinc-500">Cote: <span class="text-white font-bold">${o.toFixed(1)}</span></div>
-                            <div class="${mColor} text-[11px] mt-0.5">Pot. ${(o*BASE_STAKE).toFixed(2)} €</div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            let bar = document.getElementById('betSlipBar');
-            if (!bar) return simNet;
-            
-            if (slipC > 0) {
-                bar.classList.remove('hidden');
-                bar.classList.add('flex');
-                
-                try { document.getElementById('slipCountBadge').textContent = slipC; } catch(e){}
-                try { document.getElementById('ticketMatchesList').innerHTML = ticketListHTML; } catch(e){}
-                try { document.getElementById('ticketSimpleStake').textContent = `${(slipC * BASE_STAKE).toFixed(2)} €`; } catch(e){}
-                try { document.getElementById('ticketSimpleGain').textContent = `${simGross.toFixed(2)} €`; } catch(e){}
-                try { document.getElementById('ticketSimpleNet').textContent = `${simNet > 0 ? '+':''}${simNet.toFixed(2)} €`; } catch(e){}
-                
-                let cPot = cLost ? 0 : (cOdd*BASE_STAKE);
-                let cText = cLost ? "Perdu (0.00 €)" : `${cPot.toFixed(2)} €`;
-                let cClass = cLost ? "text-red-400 font-black" : "text-amber-400 font-black";
-                
-                try { document.getElementById('ticketComboOdds').textContent = cOdd.toFixed(2); } catch(e){}
-                try {
-                    let mainCombo = document.getElementById('ticketComboGain');
-                    mainCombo.textContent = cText; mainCombo.className = cClass + " text-xl";
-                } catch(e){}
-                try {
-                    let miniGain = document.getElementById('slipComboGainMini');
-                    miniGain.textContent = cText; miniGain.className = cClass + " text-base";
-                } catch(e){}
-            } else { 
-                bar.classList.add('hidden');
-                bar.classList.remove('flex');
-                
-                isTicketExpanded = false;
-                let details = document.getElementById('ticketDetails');
-                if(details) {
-                    details.classList.add('hidden');
-                    details.classList.remove('flex');
-                }
-                let chevron = document.getElementById('ticketChevron');
-                if(chevron) chevron.classList.replace('fa-chevron-down', 'fa-chevron-up');
-            }
-
-            return simNet; 
-        }
-
         async function fetchRaceData(isBackground = false) {
             let mIdxStr = document.getElementById('meetingSelect').value;
             let rIdxStr = document.getElementById('raceSelect').value;
@@ -1122,15 +884,12 @@
             let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
             let rNum = meeting.numOfficiel || (mIdxNum + 1);
             let cNum = race.numOrdre || (rIdxNum + 1);
-            let currentRaceKey = `${ddmmyyyy}_${rNum}_${cNum}`;
-            let currentRaceName = `R${rNum}C${cNum} - ${race.libelle || race.nom || 'Prix'}`;
+            let currentRaceKey = `${ddmmyyyy}_R${rNum}_C${cNum}`;
             let now = new Date().getTime();
 
             try {
                 let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
-                let isLocked = raceStartTime > 0 && now >= raceStartTime; 
-                
-                if (isBackground && raceStartTime > 0 && now >= raceStartTime && (now - raceStartTime) < 50 * 60 * 1000) {
+                if (isBackground && raceStartTime > 0 && now >= raceStartTime && (now - raceStartTime) < 45 * 60 * 1000) {
                     try {
                         let progData = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
                         let rawR = progData.programme?.reunions || progData.reunions || [];
@@ -1152,10 +911,9 @@
                 arrivalList.innerHTML = '';
                 let arrivees = partants.filter(p => p.ordreArrivee && parseInt(p.ordreArrivee, 10) > 0).sort((a, b) => parseInt(a.ordreArrivee, 10) - parseInt(b.ordreArrivee, 10));
 
-                let hasReports = rapportsList && rapportsList.length > 0;
-
+                // GESTION DE L'ARRIVÉE OFFICIELLE : Affichage, Sonnerie et Bascule Automatique
                 if (arrivees.length > 0) {
-                    arrivalBlock.style.display = 'block';
+                    arrivalBlock.classList.remove('hidden');
                     arrivees.slice(0, 5).forEach((p) => {
                         let div = document.createElement('div');
                         div.className = "bg-blue-900/60 px-2.5 py-1 rounded-lg border border-blue-500/40";
@@ -1163,17 +921,21 @@
                         arrivalList.appendChild(div);
                     });
 
+                    // 1. Sonnerie Alerte Arrivée (Dès que l'arrivée officielle est détectée)
                     if (!notifiedArrivals[currentRaceKey]) {
                         notifiedArrivals[currentRaceKey] = true;
                         if (arrivalAlarmEnabled) {
                             audioArrival.play().catch(() => {});
-                            showToast(`🏁 Arrivée Officielle (R${rNum}C${cNum}) !`, "success");
+                            showToast(`🏁 Arrivée Officielle publiée (R${rNum}C${cNum}) !`, "success");
                         }
                     }
 
+                    // 2. Bascule Automatique à la course suivante (30s après l'arrivée officielle)
                     if (!hasAutoTransitioned[currentRaceKey]) {
                         hasAutoTransitioned[currentRaceKey] = true; 
-                        showToast(`Bascule à la course suivante dans 30s... ⏱️`, "info");
+                        
+                        showToast(`Bascule à la course suivante dans 30 secondes... ⏱️`, "info");
+                        
                         if (autoTransitionTimer) clearTimeout(autoTransitionTimer);
                         autoTransitionTimer = setTimeout(() => {
                             autoTransitionTimer = null;
@@ -1186,54 +948,53 @@
                     }
 
                 } else {
-                    arrivalBlock.style.display = 'none';
+                    arrivalBlock.classList.add('hidden');
                 }
 
+                // GESTION DES RAPPORTS DÉFINITIFS
                 let reportsBlock = document.getElementById('reportsBlock');
                 let reportsGrid = document.getElementById('reportsGrid');
                 reportsGrid.innerHTML = '';
-                let foundAnyReport = false;
+                let hasReports = false;
+                
+                rapportsList.forEach(repGroup => {
+                    let typePari = (repGroup.typePari || repGroup.libellePari || repGroup.codePari || "").toUpperCase();
+                    let famille = (repGroup.famillePari || "").toUpperCase();
+                    
+                    if (typePari.includes('SIMPLE') || typePari.includes('SG') || typePari.includes('SP') || famille.includes('SIMPLE')) {
+                        let details = repGroup.rapports || repGroup.dividendes || repGroup.lesRapports || [];
+                        details.forEach(r => {
+                            let val = 0;
+                            if (r.dividendePourUnEuro !== undefined) val = r.dividendePourUnEuro / 100;
+                            else if (r.dividendeEuro !== undefined) val = r.dividendeEuro;
+                            else if (r.gainEuro !== undefined) val = r.gainEuro;
+                            else {
+                                let m = r.rapport || r.dividende || r.montant;
+                                if (m !== undefined && m !== null) {
+                                    val = parseFloat(String(m).replace(',', '.'));
+                                    if (val > 100) val = val / 100;
+                                }
+                            }
+
+                            if (val > 0) {
+                                hasReports = true;
+                                let rawC = r.combinaison !== undefined ? r.combinaison : (r.cheval || r.numeroCheval);
+                                let numC = extractHorseNumFromCombo(rawC);
+                                let combo = numC > 0 ? ` (N°${numC})` : '';
+                                let lib = r.libelleRapport || r.libelle || typePari;
+                                let div = document.createElement('div');
+                                div.className = "bg-zinc-800/80 p-2.5 rounded-xl border border-zinc-700 flex justify-between items-center";
+                                div.innerHTML = `<span class="text-zinc-400 font-medium">${lib}${combo} :</span> <span class="text-emerald-400 font-bold">${val.toFixed(2)} €</span>`;
+                                reportsGrid.appendChild(div);
+                            }
+                        });
+                    }
+                });
 
                 if (hasReports) {
-                    rapportsList.forEach(repGroup => {
-                        let typePari = (repGroup.typePari || repGroup.libellePari || repGroup.codePari || "").toUpperCase();
-                        let famille = (repGroup.famillePari || "").toUpperCase();
-                        
-                        if (typePari.includes('SIMPLE') || typePari.includes('SG') || typePari.includes('SP') || famille.includes('SIMPLE')) {
-                            let details = repGroup.rapports || repGroup.dividendes || repGroup.lesRapports || [];
-                            details.forEach(r => {
-                                let val = 0;
-                                if (r.dividendePourUnEuro !== undefined) val = r.dividendePourUnEuro / 100;
-                                else if (r.dividendeEuro !== undefined) val = r.dividendeEuro;
-                                else if (r.gainEuro !== undefined) val = r.gainEuro;
-                                else {
-                                    let m = r.rapport || r.dividende || r.montant;
-                                    if (m !== undefined && m !== null) {
-                                        val = parseFloat(String(m).replace(',', '.'));
-                                        if (val > 100) val = val / 100;
-                                    }
-                                }
-
-                                if (val > 0) {
-                                    foundAnyReport = true;
-                                    let rawC = r.combinaison !== undefined ? r.combinaison : (r.cheval || r.numeroCheval);
-                                    let numC = extractHorseNumFromCombo(rawC);
-                                    let combo = numC > 0 ? ` (N°${numC})` : '';
-                                    let lib = r.libelleRapport || r.libelle || typePari;
-                                    let div = document.createElement('div');
-                                    div.className = "bg-zinc-800/80 p-2.5 rounded-xl border border-zinc-700 flex justify-between items-center";
-                                    div.innerHTML = `<span class="text-zinc-400 font-medium">${lib}${combo} :</span> <span class="text-emerald-400 font-bold">${val.toFixed(2)} €</span>`;
-                                    reportsGrid.appendChild(div);
-                                }
-                            });
-                        }
-                    });
-                }
-
-                if (foundAnyReport) {
-                    reportsBlock.style.display = 'block';
+                    reportsBlock.classList.remove('hidden');
                 } else {
-                    reportsBlock.style.display = 'none';
+                    reportsBlock.classList.add('hidden');
                 }
 
                 let algoResult = computeAlgorithm(partants);
@@ -1258,19 +1019,9 @@
                 tbody.innerHTML = '';
                 processed.forEach(p => {
                     let tr = document.createElement('tr');
-                    let tag = p.ordreArrivee ? `<span class="ml-2 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
-                    if (p.num === baseHorse?.num) tag += '<span class="ml-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold ml-1">Favori</span>';
-                    if (p.num === nuggetHorse?.num) tag += '<span class="ml-2 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold ml-1">Pépite</span>';
-                    
-                    let isSelected = globalBets[currentRaceKey] && globalBets[currentRaceKey].num === p.num;
-                    
-                    if (isLocked) {
-                        tr.className = isSelected ? "bg-emerald-900/40 border-l-4 border-emerald-500 opacity-70 cursor-not-allowed" : "border-b border-zinc-800/50 opacity-70 cursor-not-allowed";
-                    } else {
-                        tr.className = isSelected ? "bg-emerald-900/40 border-l-4 border-emerald-500 cursor-pointer" : "border-b border-zinc-800/50 hover:bg-zinc-800/50 cursor-pointer transition";
-                    }
-                    
-                    tr.onclick = () => placeBet(currentRaceKey, p.num, p.nom, p.cote, currentRaceName, isLocked);
+                    let tag = p.ordreArrivee ? `<span class="ml-1 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
+                    if (p.num === baseHorse?.num) tag += '<span class="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">Favori</span>';
+                    if (p.num === nuggetHorse?.num) tag += '<span class="ml-1 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">Pépite</span>';
 
                     tr.innerHTML = `<td class="p-3 font-bold"><span class="text-emerald-400 mr-2">${p.num}</span>${p.nom}${tag}</td><td class="p-3 text-zinc-300 font-mono">${p.musique}</td><td class="p-3 text-emerald-400 font-bold">${p.coteDisplay}</td><td class="p-3 font-semibold text-zinc-500">${p.nuggetScore}%</td>`;
                     tbody.appendChild(tr);
@@ -1278,31 +1029,29 @@
                 
                 let timeInfo = race.heureDepart ? `[${formatTime(race.heureDepart)}] ` : '';
                 let discBadge = getDisciplineBadge(race);
-                let statusBadge = "";
-                
-                if (raceStartTime > 0) {
-                    if (now >= raceStartTime && now < raceStartTime + 1800000 && !foundAnyReport) {
-                        statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse ml-2">🔴 En cours</span>`;
-                    } else if (foundAnyReport) {
-                        statusBadge = `<span class="bg-zinc-800 text-zinc-400 border border-zinc-600 px-2 py-0.5 rounded text-[10px] uppercase font-bold ml-2">🏁 Terminé</span>`;
-                    }
-                }
                 
                 document.getElementById('raceInfoDetails').innerHTML = `
                     <div class="flex items-center">
                         <span class="mr-2 text-zinc-400 font-normal">${timeInfo}</span>
-                        <span>Sélection par cotes</span>
-                        ${discBadge} ${statusBadge}
+                        <span>Partants classés par cotes</span>
+                        ${discBadge}
                     </div>
                 `;
             } catch (e) {}
         }
 
+        function formatMoneyHTML(val) {
+            if (val === 0) return `<span class="text-zinc-500">0.00 €</span>`;
+            let color = val > 0 ? 'text-emerald-400' : 'text-red-400';
+            let sign = val > 0 ? '+' : '';
+            return `<span class="${color}">${sign}${val.toFixed(2)} €</span>`;
+        }
+
         function getStatForDateObj(d) {
-            let key = `pmu_stats_multidis_${CACHE_VERSION}_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_multidis_v21_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
-            return { baseProfit: 0, pepiteProfit: 0, manualProfit: 0 };
+            return { baseProfit: 0, pepiteProfit: 0 };
         }
 
         function showHistoryStats() {
@@ -1316,36 +1065,33 @@
             let monday = new Date(currentViewDate);
             monday.setDate(currentViewDate.getDate() - (dayOfWeek - 1)); 
             
-            let wBase = 0, wPep = 0, wMan = 0;
+            let wBase = 0, wPep = 0;
             for(let i=0; i<7; i++) {
                 let d = new Date(monday);
                 d.setDate(monday.getDate() + i);
                 let s = getStatForDateObj(d);
                 wBase += s.baseProfit || 0;
                 wPep += s.pepiteProfit || 0;
-                wMan += s.manualProfit || 0;
             }
 
             document.getElementById('weekBase').innerHTML = formatMoneyHTML(wBase);
             document.getElementById('weekPepite').innerHTML = formatMoneyHTML(wPep);
-            document.getElementById('weekManual').innerHTML = formatMoneyHTML(wMan);
 
             const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
             let monthsGrid = document.getElementById('monthsGrid');
             monthsGrid.innerHTML = '';
 
             for (let m = 0; m < 12; m++) {
-                let mBase = 0, mPep = 0, mMan = 0;
+                let mBase = 0, mPep = 0;
                 let daysInMonth = new Date(year, m + 1, 0).getDate(); 
                 
                 for (let d = 1; d <= daysInMonth; d++) {
                     let s = getStatForDateObj(new Date(year, m, d));
                     mBase += s.baseProfit || 0;
                     mPep += s.pepiteProfit || 0;
-                    mMan += s.manualProfit || 0;
                 }
 
-                if (mBase !== 0 || mPep !== 0 || mMan !== 0) {
+                if (mBase !== 0 || mPep !== 0) {
                     let div = document.createElement('div');
                     let isCurrentViewMonth = (m === currentViewDate.getMonth());
                     div.className = isCurrentViewMonth 
@@ -1357,14 +1103,13 @@
                         <div class="space-x-2">
                             <span>Base: ${formatMoneyHTML(mBase)}</span>
                             <span>Pépite: ${formatMoneyHTML(mPep)}</span>
-                            <span>Perso: ${formatMoneyHTML(mMan)}</span>
                         </div>
                     `;
                     monthsGrid.appendChild(div);
                 }
             }
             if(monthsGrid.innerHTML === '') {
-                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Aucune donnée calculée.</div>';
+                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Aucune donnée calculée pour cette année.</div>';
             }
         }
 
@@ -1373,12 +1118,34 @@
             isCalculatingStats = true;
             
             let statsProgress = document.getElementById('statsProgress');
+            let statBaseGag = document.getElementById('statBaseGag');
+            let statBasePla = document.getElementById('statBasePla');
+            let statPepiteGag = document.getElementById('statPepiteGag');
+            let statPepitePla = document.getElementById('statPepitePla');
+            
+            let gainBasePla = document.getElementById('gainBasePla');
+            let gainBaseGag = document.getElementById('gainBaseGag');
+            let gainPepitePla = document.getElementById('gainPepitePla');
+            let gainPepiteGag = document.getElementById('gainPepiteGag');
+            
+            let totalSpentText = document.getElementById('totalSpentText');
+            let maxStakeBaseText = document.getElementById('maxStakeBaseText');
+            let deficitBaseText = document.getElementById('deficitBaseText');
+            let nextStakeBaseText = document.getElementById('nextStakeBaseText');
+            
+            let totalSpentPepiteText = document.getElementById('totalSpentPepiteText');
+            let maxStakePepiteText = document.getElementById('maxStakePepiteText');
+            let deficitPepiteText = document.getElementById('deficitPepiteText');
+            let nextStakePepiteText = document.getElementById('nextStakePepiteText');
+            
+            let headerNextStake = document.getElementById('headerNextStake');
+
             let dateInput = document.getElementById('raceDate').value;
             let parts = dateInput.split('-');
             let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
             
             let now = new Date().getTime();
-            let todayStr = getLocalDateString();
+            let todayStr = new Date().toISOString().split('T')[0];
             let isPastDate = dateInput < todayStr;
 
             let pastRacesToday = [];
@@ -1400,7 +1167,6 @@
 
             if (pastRacesToday.length === 0) {
                 if (!isAuto && statsProgress) statsProgress.textContent = "Aucune course passée.";
-                updateBetSlipOnly();
                 isCalculatingStats = false;
                 return;
             }
@@ -1408,42 +1174,41 @@
             let baseWinsGag = 0, baseWinsPla = 0;
             let pepiteWinsGag = 0, pepiteWinsPla = 0;
             
-            let totalSpentBase = 0, totalSpentPepite = 0;
-            let maxStakeBase = 0, maxStakePepite = 0;
+            let totalSpentBase = 0; 
+            let totalSpentPepite = 0;
             
-            let totalProfitBasePla = 0, totalProfitBaseGag = 0;
-            let totalProfitPepitePla = 0, totalProfitPepiteGag = 0;
+            let maxStakeBase = 0;
+            let maxStakePepite = 0;
+            
+            let totalProfitBasePla = 0;
+            let totalProfitBaseGag = 0;
+            
+            let totalProfitPepitePla = 0;
+            let totalProfitPepiteGag = 0;
 
             let coursesValidees = 0;
             let coursesGagnantBaseValidees = 0;
             
-            let deficitSerieBase = 0, deficitSeriePepite = 0;
+            let deficitSerieBase = 0;
+            let deficitSeriePepite = 0;
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `race_cache_${CACHE_VERSION}_${ddmmyyyy}_${r.rNum}_${r.cNum}`; 
+                let cacheKey = `race_cache_v21_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
 
                 let raceData = null;
                 let savedData = localStorage.getItem(cacheKey);
                 
-                let isRaceLiveBypass = (r.time > 0 && now >= r.time && (now - r.time) < 55 * 60 * 1000);
-                
-                if (savedData && !isRaceLiveBypass) {
+                if (savedData) {
                     raceData = JSON.parse(savedData);
-                    // SI MEMOIRE VIDE OU INCOMPLETE SUR COURSE PASSEE, ON FORCE LA SUPPRESSION DU CACHE
-                    if (!raceData.isComplete && r.time > 0 && (now - r.time) > 45 * 60 * 1000) {
-                        raceData = null; 
-                    }
-                } 
-                
-                if (!raceData) {
+                } else {
                     if (!isAuto && statsProgress) {
-                        statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) PMU...`;
+                        statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
                     }
-                    await sleep(200); 
+                    await sleep(150); 
                     let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum);
                     
-                    let isComplete = (rapportsList.length > 0) || isPastDate; // Si c'est hier, on force la complétion pour arrêter de fetcher
+                    let isComplete = (rapportsList.length > 0);
                     raceData = { partants, rapportsList, isComplete };
                     
                     if (raceData.isComplete && partants.length > 0) {
@@ -1491,6 +1256,7 @@
 
                 if (baseH) {
                     coursesValidees++;
+                    
                     let actualStakeBase = computeSmartStake(deficitSerieBase);
                     
                     totalSpentBase += actualStakeBase;
@@ -1537,63 +1303,39 @@
                 }
             }
 
-            try {
-                document.getElementById('statBaseGag').textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
-                document.getElementById('statBasePla').textContent = `${baseWinsPla} / ${coursesValidees}`;
-                document.getElementById('statPepiteGag').textContent = `${pepiteWinsGag} / ${coursesGagnantBaseValidees}`;
-                document.getElementById('statPepitePla').textContent = `${pepiteWinsPla} / ${coursesValidees}`;
-                document.getElementById('gainBasePla').innerHTML = formatMoneyHTML(totalProfitBasePla);
-                document.getElementById('gainBaseGag').innerHTML = formatMoneyHTML(totalProfitBaseGag);
-                document.getElementById('gainPepitePla').innerHTML = formatMoneyHTML(totalProfitPepitePla);
-                document.getElementById('gainPepiteGag').innerHTML = formatMoneyHTML(totalProfitPepiteGag);
+            statBaseGag.textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
+            statBasePla.textContent = `${baseWinsPla} / ${coursesValidees}`;
+            statPepiteGag.textContent = `${pepiteWinsGag} / ${coursesGagnantBaseValidees}`;
+            statPepitePla.textContent = `${pepiteWinsPla} / ${coursesValidees}`;
+            gainBasePla.innerHTML = formatMoneyHTML(totalProfitBasePla);
+            gainBaseGag.innerHTML = formatMoneyHTML(totalProfitBaseGag);
+            gainPepitePla.innerHTML = formatMoneyHTML(totalProfitPepitePla);
+            gainPepiteGag.innerHTML = formatMoneyHTML(totalProfitPepiteGag);
 
-                let totalSpentText = document.getElementById('totalSpentText');
-                if (totalSpentText) totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
-                
-                let maxStakeBaseText = document.getElementById('maxStakeBaseText');
-                if (maxStakeBaseText) maxStakeBaseText.textContent = `${maxStakeBase.toFixed(2)} €`;
-                
-                let deficitBaseText = document.getElementById('deficitBaseText');
-                if (deficitBaseText) deficitBaseText.textContent = `${deficitSerieBase.toFixed(2)} €`;
-                
-                let totalSpentPepiteText = document.getElementById('totalSpentPepiteText');
-                if (totalSpentPepiteText) totalSpentPepiteText.textContent = `${totalSpentPepite.toFixed(2)} €`;
-                
-                let maxStakePepiteText = document.getElementById('maxStakePepiteText');
-                if (maxStakePepiteText) maxStakePepiteText.textContent = `${maxStakePepite.toFixed(2)} €`;
-                
-                let deficitPepiteText = document.getElementById('deficitPepiteText');
-                if (deficitPepiteText) deficitPepiteText.textContent = `${deficitSeriePepite.toFixed(2)} €`;
-
-                let nextStakeBase = computeSmartStake(deficitSerieBase);
-                let nextStakePepite = computeSmartStake(deficitSeriePepite);
-                
-                let nextStakeBaseText = document.getElementById('nextStakeBaseText');
-                if (nextStakeBaseText) nextStakeBaseText.textContent = `Mise: ${nextStakeBase.toFixed(2)} €`;
-                
-                let nextStakePepiteText = document.getElementById('nextStakePepiteText');
-                if (nextStakePepiteText) nextStakePepiteText.textContent = `Mise: ${nextStakePepite.toFixed(2)} €`;
-                
-                let headerNextStake = document.getElementById('headerNextStake');
-                if (headerNextStake) headerNextStake.textContent = `${nextStakeBase.toFixed(2)} €`;
-                
-                if (statsProgress) statsProgress.textContent = `✅ ${coursesValidees}/${pastRacesToday.length} validées`;
-            } catch(e) {}
+            if (totalSpentText) totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
+            if (maxStakeBaseText) maxStakeBaseText.textContent = `${maxStakeBase.toFixed(2)} €`;
+            if (deficitBaseText) deficitBaseText.textContent = `${deficitSerieBase.toFixed(2)} €`;
             
-            let manualNet = updateBetSlipOnly();
+            if (totalSpentPepiteText) totalSpentPepiteText.textContent = `${totalSpentPepite.toFixed(2)} €`;
+            if (maxStakePepiteText) maxStakePepiteText.textContent = `${maxStakePepite.toFixed(2)} €`;
+            if (deficitPepiteText) deficitPepiteText.textContent = `${deficitSeriePepite.toFixed(2)} €`;
 
-            if (coursesValidees > 0 || manualNet !== 0) {
-                let histObj = {
-                    baseProfit: totalProfitBasePla, 
-                    pepiteProfit: totalProfitPepitePla,
-                    manualProfit: manualNet
-                };
-                localStorage.setItem(`pmu_stats_multidis_${CACHE_VERSION}_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify(histObj));
+            let nextStakeBase = computeSmartStake(deficitSerieBase);
+            let nextStakePepite = computeSmartStake(deficitSeriePepite);
+            
+            if (nextStakeBaseText) nextStakeBaseText.textContent = `Mise: ${nextStakeBase.toFixed(2)} €`;
+            if (nextStakePepiteText) nextStakePepiteText.textContent = `Mise: ${nextStakePepite.toFixed(2)} €`;
+            if (headerNextStake) headerNextStake.textContent = `${nextStakeBase.toFixed(2)} €`;
+            
+            if (coursesValidees > 0) {
+                localStorage.setItem(`pmu_stats_multidis_v21_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
+                    baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
+                }));
             }
             
-            let hb = document.getElementById('historyBlock');
-            if (hb && hb.style.display !== 'none' && hb.style.display !== '') showHistoryStats();
-
+            if (statsProgress) statsProgress.textContent = `✅ ${coursesValidees}/${pastRacesToday.length} validées`;
+            if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
+            
             isCalculatingStats = false;
         }
 
