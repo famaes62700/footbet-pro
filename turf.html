@@ -14,10 +14,14 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
 <body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-10">
 
-    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-[9999] flex flex-col space-y-2 pointer-events-none"></div>
 
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-3 sm:p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
@@ -32,15 +36,15 @@
                     <span id="headerNextStake">5.00 €</span>
                 </div>
                 
-                <button id="btnArrivalAlarm" onclick="toggleArrivalAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0" title="Alerte Arrivée Officielle">
+                <button id="btnArrivalAlarm" onclick="toggleArrivalAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Alerte Arrivée Officielle">
                     <i id="iconArrivalAlarm" class="fa-solid fa-flag-checkered"></i>
                 </button>
                 
-                <button id="btnStartAlarm" onclick="toggleStartAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0" title="Alerte Départ (1min30 avant)">
+                <button id="btnStartAlarm" onclick="toggleStartAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Alerte Départ (1min30 avant)">
                     <i id="iconStartAlarm" class="fa-solid fa-bell-slash"></i>
                 </button>
 
-                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0" title="Historique des Gains">
+                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Historique des Gains">
                     <i class="fa-solid fa-calendar-days"></i>
                 </button>
 
@@ -55,10 +59,10 @@
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-2 flex items-center justify-between text-xs">
             <span class="text-zinc-400 font-bold ml-2"><i class="fa-solid fa-filter mr-1.5 text-amber-400"></i> Mode :</span>
             <div class="flex space-x-2">
-                <button id="btnFilterTrot" onclick="setDisciplineMode('TROT')" class="bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow">
+                <button id="btnFilterTrot" onclick="setDisciplineMode('TROT')" class="bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow cursor-pointer">
                     100% Trot
                 </button>
-                <button id="btnFilterAll" onclick="setDisciplineMode('ALL')" class="bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition">
+                <button id="btnFilterAll" onclick="setDisciplineMode('ALL')" class="bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer">
                     Toutes Courses (Monde)
                 </button>
             </div>
@@ -71,12 +75,13 @@
             <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded">Prêt</div>
         </div>
 
-        <div id="historyBlock" class="hidden bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2">
+        <!-- HISTORIQUE CUMULÉ FORCÉ EN JAVASCRIPT -->
+        <div id="historyBlock" style="display: none;" class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
                     <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés
                 </h2>
-                <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
@@ -168,22 +173,24 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <select id="meetingSelect" onchange="onMeetingChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500">
+            <select id="meetingSelect" onchange="onMeetingChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500 cursor-pointer">
                 <option value="">-- Réunion --</option>
             </select>
-            <select id="raceSelect" onchange="onRaceChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500">
+            <select id="raceSelect" onchange="onRaceChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500 cursor-pointer">
                 <option value="">-- Course --</option>
             </select>
         </div>
 
-        <div id="arrivalBlock" class="hidden bg-blue-950/40 border border-blue-500/40 rounded-xl p-3.5 space-y-2">
+        <!-- ARRIVÉE FORCÉ EN JS -->
+        <div id="arrivalBlock" style="display: none;" class="bg-blue-950/40 border border-blue-500/40 rounded-xl p-3.5 space-y-2">
             <h2 class="text-xs font-bold uppercase text-blue-400 tracking-wider flex items-center">
                 <i class="fa-solid fa-flag-checkered mr-1.5"></i> Arrivée Officielle
             </h2>
             <div id="arrivalList" class="flex flex-wrap gap-2 text-xs font-bold text-white"></div>
         </div>
 
-        <div id="reportsBlock" class="hidden bg-zinc-900 border border-emerald-500/30 rounded-xl p-3.5 space-y-2">
+        <!-- RAPPORTS FORCÉ EN JS -->
+        <div id="reportsBlock" style="display: none;" class="bg-zinc-900 border border-emerald-500/30 rounded-xl p-3.5 space-y-2">
             <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center">
                 <i class="fa-solid fa-euro-sign mr-1.5"></i> Rapports Définitifs (pour 1 €)
             </h2>
@@ -196,16 +203,16 @@
                     <i class="fa-solid fa-star mr-1.5"></i> Nos 2 Chevaux Clés
                 </h2>
                 <div class="flex items-center space-x-1.5 flex-wrap">
-                    <a href="https://www.equidia.fr/direct?utm_source=intern&utm_medium=header_menu&utm_campaign=Home" target="_blank" class="bg-red-600 hover:bg-red-500 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold shadow transition flex items-center">
+                    <a href="https://www.equidia.fr/direct?utm_source=intern&utm_medium=header_menu&utm_campaign=Home" target="_blank" class="bg-red-600 hover:bg-red-500 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold shadow transition flex items-center cursor-pointer">
                         <i class="fa-solid fa-video mr-1.5"></i> Direct 🎥
                     </a>
-                    <button onclick="goToPrevRace()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 font-semibold transition flex items-center shadow" title="Course précédente">
+                    <button onclick="goToPrevRace()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 font-semibold transition flex items-center shadow cursor-pointer" title="Course précédente">
                         <i class="fa-solid fa-backward-step"></i>
                     </button>
-                    <button onclick="refreshCurrentRace()" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 text-xs px-2.5 py-1.5 rounded-lg border border-emerald-500/30 font-semibold transition flex items-center shadow" title="Actualiser manuellement">
+                    <button onclick="refreshCurrentRace()" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 text-xs px-2.5 py-1.5 rounded-lg border border-emerald-500/30 font-semibold transition flex items-center shadow cursor-pointer" title="Actualiser manuellement">
                         <i class="fa-solid fa-rotate"></i>
                     </button>
-                    <button onclick="goToNextRace()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 font-semibold transition flex items-center shadow" title="Course suivante">
+                    <button onclick="goToNextRace()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 font-semibold transition flex items-center shadow cursor-pointer" title="Course suivante">
                         <i class="fa-solid fa-forward-step"></i>
                     </button>
                 </div>
@@ -246,6 +253,19 @@
     </main>
 
     <script>
+        // SÉCURISATION MAXIMALE DU CACHE
+        function safeGetLocal(key) {
+            try { 
+                let item = localStorage.getItem(key);
+                let parsed = item ? JSON.parse(item) : {}; 
+                if (typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+                return parsed;
+            } catch(e) { return {}; }
+        }
+        function safeSetLocal(key, val) {
+            try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+        }
+
         document.getElementById('raceDate').valueAsDate = new Date();
         let liveMeetingsData = [];
         let autoTransitionTimer = null; 
@@ -271,12 +291,12 @@
             let btnAll = document.getElementById('btnFilterAll');
 
             if (mode === 'TROT') {
-                btnTrot.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow";
-                btnAll.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition";
+                btnTrot.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow cursor-pointer";
+                btnAll.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer";
                 showToast("Mode 100% Trot activé");
             } else {
-                btnAll.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow";
-                btnTrot.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition";
+                btnAll.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow cursor-pointer";
+                btnTrot.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer";
                 showToast("Mode Toutes Courses activé");
             }
             loadLivePmu();
@@ -296,27 +316,29 @@
         }
 
         function onDateChange() {
-            document.getElementById('statBaseGag').textContent = "0 / 0";
-            document.getElementById('statBasePla').textContent = "0 / 0";
-            document.getElementById('statPepiteGag').textContent = "0 / 0";
-            document.getElementById('statPepitePla').textContent = "0 / 0";
-            document.getElementById('gainBaseGag').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
-            document.getElementById('gainBasePla').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
-            document.getElementById('gainPepiteGag').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
-            document.getElementById('gainPepitePla').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
-            
-            document.getElementById('totalSpentText').textContent = "0.00 €";
-            document.getElementById('totalSpentPepiteText').textContent = "0.00 €";
-            
-            document.getElementById('maxStakeBaseText').textContent = "0.00 €";
-            document.getElementById('maxStakePepiteText').textContent = "0.00 €";
-            
-            document.getElementById('deficitBaseText').textContent = "0.00 €";
-            document.getElementById('deficitPepiteText').textContent = "0.00 €";
-            
-            document.getElementById('headerNextStake').textContent = "5.00 €";
-            document.getElementById('nextStakeBaseText').textContent = "Mise: 5.00 €";
-            document.getElementById('nextStakePepiteText').textContent = "Mise: 5.00 €";
+            try {
+                document.getElementById('statBaseGag').textContent = "0 / 0";
+                document.getElementById('statBasePla').textContent = "0 / 0";
+                document.getElementById('statPepiteGag').textContent = "0 / 0";
+                document.getElementById('statPepitePla').textContent = "0 / 0";
+                document.getElementById('gainBaseGag').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
+                document.getElementById('gainBasePla').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
+                document.getElementById('gainPepiteGag').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
+                document.getElementById('gainPepitePla').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
+                
+                document.getElementById('totalSpentText').textContent = "0.00 €";
+                document.getElementById('totalSpentPepiteText').textContent = "0.00 €";
+                
+                document.getElementById('maxStakeBaseText').textContent = "0.00 €";
+                document.getElementById('maxStakePepiteText').textContent = "0.00 €";
+                
+                document.getElementById('deficitBaseText').textContent = "0.00 €";
+                document.getElementById('deficitPepiteText').textContent = "0.00 €";
+                
+                document.getElementById('headerNextStake').textContent = "5.00 €";
+                document.getElementById('nextStakeBaseText').textContent = "Mise: 5.00 €";
+                document.getElementById('nextStakePepiteText').textContent = "Mise: 5.00 €";
+            } catch(e) {}
             loadLivePmu();
         }
 
@@ -413,11 +435,11 @@
 
         function toggleHistoryStats() {
             let historyBlock = document.getElementById('historyBlock');
-            if (historyBlock.classList.contains('hidden')) {
-                historyBlock.classList.remove('hidden');
+            if (historyBlock.style.display === 'none' || historyBlock.style.display === '') {
+                historyBlock.style.display = 'block';
                 showHistoryStats();
             } else {
-                historyBlock.classList.add('hidden');
+                historyBlock.style.display = 'none';
             }
         }
 
@@ -427,7 +449,7 @@
             let bgClass = type === 'success' ? 'bg-emerald-900/90 border-emerald-500/50 text-emerald-200' : 'bg-zinc-800 border-zinc-700 text-white';
             if (type === 'error') bgClass = 'bg-red-900/90 border-red-500/50 text-red-200';
             
-            toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center space-x-2 ${bgClass}`;
+            toast.className = `pointer-events-auto px-5 py-3 rounded-xl border shadow-2xl text-sm font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center space-x-2 ${bgClass}`;
             toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
             setTimeout(() => { toast.classList.remove('opacity-0', 'translate-y-2'); }, 10);
@@ -511,7 +533,6 @@
                 }
             }
 
-            // Consolidate arrivals from courseObj if present
             if (courseObj && Array.isArray(courseObj.ordreArrivee) && courseObj.ordreArrivee.length > 0) {
                 courseObj.ordreArrivee.forEach((item, index) => {
                     let rank = index + 1;
@@ -535,7 +556,7 @@
             const statusText = document.getElementById('statusText');
             statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des courses...';
 
-            if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
+            if (document.getElementById('historyBlock').style.display !== 'none' && document.getElementById('historyBlock').style.display !== '') showHistoryStats();
 
             const parts = dateInput.split('-');
             const ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
@@ -756,7 +777,6 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
-        // VOTRE ALGORITHME D'ORIGINE CONSERVÉ INTÉGRALEMENT
         function computeAlgorithm(partants) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
@@ -889,7 +909,8 @@
 
             try {
                 let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
-                if (isBackground && raceStartTime > 0 && now >= raceStartTime && (now - raceStartTime) < 45 * 60 * 1000) {
+                // SI LA COURSE EST EN COURS (Lancée il y a moins de 50 minutes) : FORCAGE LIVE
+                if (isBackground && raceStartTime > 0 && now >= raceStartTime && (now - raceStartTime) < 50 * 60 * 1000) {
                     try {
                         let progData = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
                         let rawR = progData.programme?.reunions || progData.reunions || [];
@@ -911,9 +932,11 @@
                 arrivalList.innerHTML = '';
                 let arrivees = partants.filter(p => p.ordreArrivee && parseInt(p.ordreArrivee, 10) > 0).sort((a, b) => parseInt(a.ordreArrivee, 10) - parseInt(b.ordreArrivee, 10));
 
+                let hasReports = rapportsList && rapportsList.length > 0;
+
                 // GESTION DE L'ARRIVÉE OFFICIELLE : Affichage, Sonnerie et Bascule Automatique
                 if (arrivees.length > 0) {
-                    arrivalBlock.classList.remove('hidden');
+                    arrivalBlock.style.display = 'block';
                     arrivees.slice(0, 5).forEach((p) => {
                         let div = document.createElement('div');
                         div.className = "bg-blue-900/60 px-2.5 py-1 rounded-lg border border-blue-500/40";
@@ -921,12 +944,12 @@
                         arrivalList.appendChild(div);
                     });
 
-                    // 1. Sonnerie Alerte Arrivée (Dès que l'arrivée officielle est détectée)
+                    // 1. Sonnerie Alerte Arrivée
                     if (!notifiedArrivals[currentRaceKey]) {
                         notifiedArrivals[currentRaceKey] = true;
                         if (arrivalAlarmEnabled) {
                             audioArrival.play().catch(() => {});
-                            showToast(`🏁 Arrivée Officielle publiée (R${rNum}C${cNum}) !`, "success");
+                            showToast(`🏁 Arrivée Officielle (R${rNum}C${cNum}) !`, "success");
                         }
                     }
 
@@ -934,7 +957,7 @@
                     if (!hasAutoTransitioned[currentRaceKey]) {
                         hasAutoTransitioned[currentRaceKey] = true; 
                         
-                        showToast(`Bascule à la course suivante dans 30 secondes... ⏱️`, "info");
+                        showToast(`Bascule à la course suivante dans 30s... ⏱️`, "info");
                         
                         if (autoTransitionTimer) clearTimeout(autoTransitionTimer);
                         autoTransitionTimer = setTimeout(() => {
@@ -948,53 +971,56 @@
                     }
 
                 } else {
-                    arrivalBlock.classList.add('hidden');
+                    arrivalBlock.style.display = 'none';
                 }
 
                 // GESTION DES RAPPORTS DÉFINITIFS
                 let reportsBlock = document.getElementById('reportsBlock');
                 let reportsGrid = document.getElementById('reportsGrid');
                 reportsGrid.innerHTML = '';
-                let hasReports = false;
                 
-                rapportsList.forEach(repGroup => {
-                    let typePari = (repGroup.typePari || repGroup.libellePari || repGroup.codePari || "").toUpperCase();
-                    let famille = (repGroup.famillePari || "").toUpperCase();
-                    
-                    if (typePari.includes('SIMPLE') || typePari.includes('SG') || typePari.includes('SP') || famille.includes('SIMPLE')) {
-                        let details = repGroup.rapports || repGroup.dividendes || repGroup.lesRapports || [];
-                        details.forEach(r => {
-                            let val = 0;
-                            if (r.dividendePourUnEuro !== undefined) val = r.dividendePourUnEuro / 100;
-                            else if (r.dividendeEuro !== undefined) val = r.dividendeEuro;
-                            else if (r.gainEuro !== undefined) val = r.gainEuro;
-                            else {
-                                let m = r.rapport || r.dividende || r.montant;
-                                if (m !== undefined && m !== null) {
-                                    val = parseFloat(String(m).replace(',', '.'));
-                                    if (val > 100) val = val / 100;
-                                }
-                            }
-
-                            if (val > 0) {
-                                hasReports = true;
-                                let rawC = r.combinaison !== undefined ? r.combinaison : (r.cheval || r.numeroCheval);
-                                let numC = extractHorseNumFromCombo(rawC);
-                                let combo = numC > 0 ? ` (N°${numC})` : '';
-                                let lib = r.libelleRapport || r.libelle || typePari;
-                                let div = document.createElement('div');
-                                div.className = "bg-zinc-800/80 p-2.5 rounded-xl border border-zinc-700 flex justify-between items-center";
-                                div.innerHTML = `<span class="text-zinc-400 font-medium">${lib}${combo} :</span> <span class="text-emerald-400 font-bold">${val.toFixed(2)} €</span>`;
-                                reportsGrid.appendChild(div);
-                            }
-                        });
-                    }
-                });
+                let foundAnyReport = false;
 
                 if (hasReports) {
-                    reportsBlock.classList.remove('hidden');
+                    rapportsList.forEach(repGroup => {
+                        let typePari = (repGroup.typePari || repGroup.libellePari || repGroup.codePari || "").toUpperCase();
+                        let famille = (repGroup.famillePari || "").toUpperCase();
+                        
+                        if (typePari.includes('SIMPLE') || typePari.includes('SG') || typePari.includes('SP') || famille.includes('SIMPLE')) {
+                            let details = repGroup.rapports || repGroup.dividendes || repGroup.lesRapports || [];
+                            details.forEach(r => {
+                                let val = 0;
+                                if (r.dividendePourUnEuro !== undefined) val = r.dividendePourUnEuro / 100;
+                                else if (r.dividendeEuro !== undefined) val = r.dividendeEuro;
+                                else if (r.gainEuro !== undefined) val = r.gainEuro;
+                                else {
+                                    let m = r.rapport || r.dividende || r.montant;
+                                    if (m !== undefined && m !== null) {
+                                        val = parseFloat(String(m).replace(',', '.'));
+                                        if (val > 100) val = val / 100;
+                                    }
+                                }
+
+                                if (val > 0) {
+                                    foundAnyReport = true;
+                                    let rawC = r.combinaison !== undefined ? r.combinaison : (r.cheval || r.numeroCheval);
+                                    let numC = extractHorseNumFromCombo(rawC);
+                                    let combo = numC > 0 ? ` (N°${numC})` : '';
+                                    let lib = r.libelleRapport || r.libelle || typePari;
+                                    let div = document.createElement('div');
+                                    div.className = "bg-zinc-800/80 p-2.5 rounded-xl border border-zinc-700 flex justify-between items-center";
+                                    div.innerHTML = `<span class="text-zinc-400 font-medium">${lib}${combo} :</span> <span class="text-emerald-400 font-bold">${val.toFixed(2)} €</span>`;
+                                    reportsGrid.appendChild(div);
+                                }
+                            });
+                        }
+                    });
+                }
+
+                if (foundAnyReport) {
+                    reportsBlock.style.display = 'block';
                 } else {
-                    reportsBlock.classList.add('hidden');
+                    reportsBlock.style.display = 'none';
                 }
 
                 let algoResult = computeAlgorithm(partants);
@@ -1027,24 +1053,27 @@
                     tbody.appendChild(tr);
                 });
                 
+                // BADGE "EN COURS" ou "TERMINÉ" (Comme sur NFL)
                 let timeInfo = race.heureDepart ? `[${formatTime(race.heureDepart)}] ` : '';
                 let discBadge = getDisciplineBadge(race);
+                let statusBadge = "";
+                
+                if (raceStartTime > 0) {
+                    if (now >= raceStartTime && now < raceStartTime + 1800000 && !foundAnyReport) {
+                        statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse ml-2">🔴 En cours</span>`;
+                    } else if (foundAnyReport) {
+                        statusBadge = `<span class="bg-zinc-800 text-zinc-400 border border-zinc-600 px-2 py-0.5 rounded text-[10px] uppercase font-bold ml-2">🏁 Terminé</span>`;
+                    }
+                }
                 
                 document.getElementById('raceInfoDetails').innerHTML = `
                     <div class="flex items-center">
                         <span class="mr-2 text-zinc-400 font-normal">${timeInfo}</span>
                         <span>Partants classés par cotes</span>
-                        ${discBadge}
+                        ${discBadge} ${statusBadge}
                     </div>
                 `;
             } catch (e) {}
-        }
-
-        function formatMoneyHTML(val) {
-            if (val === 0) return `<span class="text-zinc-500">0.00 €</span>`;
-            let color = val > 0 ? 'text-emerald-400' : 'text-red-400';
-            let sign = val > 0 ? '+' : '';
-            return `<span class="${color}">${sign}${val.toFixed(2)} €</span>`;
         }
 
         function getStatForDateObj(d) {
@@ -1118,28 +1147,7 @@
             isCalculatingStats = true;
             
             let statsProgress = document.getElementById('statsProgress');
-            let statBaseGag = document.getElementById('statBaseGag');
-            let statBasePla = document.getElementById('statBasePla');
-            let statPepiteGag = document.getElementById('statPepiteGag');
-            let statPepitePla = document.getElementById('statPepitePla');
             
-            let gainBasePla = document.getElementById('gainBasePla');
-            let gainBaseGag = document.getElementById('gainBaseGag');
-            let gainPepitePla = document.getElementById('gainPepitePla');
-            let gainPepiteGag = document.getElementById('gainPepiteGag');
-            
-            let totalSpentText = document.getElementById('totalSpentText');
-            let maxStakeBaseText = document.getElementById('maxStakeBaseText');
-            let deficitBaseText = document.getElementById('deficitBaseText');
-            let nextStakeBaseText = document.getElementById('nextStakeBaseText');
-            
-            let totalSpentPepiteText = document.getElementById('totalSpentPepiteText');
-            let maxStakePepiteText = document.getElementById('maxStakePepiteText');
-            let deficitPepiteText = document.getElementById('deficitPepiteText');
-            let nextStakePepiteText = document.getElementById('nextStakePepiteText');
-            
-            let headerNextStake = document.getElementById('headerNextStake');
-
             let dateInput = document.getElementById('raceDate').value;
             let parts = dateInput.split('-');
             let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
@@ -1174,23 +1182,16 @@
             let baseWinsGag = 0, baseWinsPla = 0;
             let pepiteWinsGag = 0, pepiteWinsPla = 0;
             
-            let totalSpentBase = 0; 
-            let totalSpentPepite = 0;
+            let totalSpentBase = 0, totalSpentPepite = 0;
+            let maxStakeBase = 0, maxStakePepite = 0;
             
-            let maxStakeBase = 0;
-            let maxStakePepite = 0;
-            
-            let totalProfitBasePla = 0;
-            let totalProfitBaseGag = 0;
-            
-            let totalProfitPepitePla = 0;
-            let totalProfitPepiteGag = 0;
+            let totalProfitBasePla = 0, totalProfitBaseGag = 0;
+            let totalProfitPepitePla = 0, totalProfitPepiteGag = 0;
 
             let coursesValidees = 0;
             let coursesGagnantBaseValidees = 0;
             
-            let deficitSerieBase = 0;
-            let deficitSeriePepite = 0;
+            let deficitSerieBase = 0, deficitSeriePepite = 0;
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
@@ -1199,13 +1200,16 @@
                 let raceData = null;
                 let savedData = localStorage.getItem(cacheKey);
                 
-                if (savedData) {
+                // BYPASS LIVE CACHE (Refetch si la course est récente pour actualiser les arrivées)
+                let isRaceLiveBypass = (r.time > 0 && now >= r.time && (now - r.time) < 55 * 60 * 1000);
+                
+                if (savedData && !isRaceLiveBypass) {
                     raceData = JSON.parse(savedData);
                 } else {
                     if (!isAuto && statsProgress) {
-                        statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
+                        statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length})`;
                     }
-                    await sleep(150); 
+                    await sleep(200); 
                     let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum);
                     
                     let isComplete = (rapportsList.length > 0);
@@ -1256,7 +1260,6 @@
 
                 if (baseH) {
                     coursesValidees++;
-                    
                     let actualStakeBase = computeSmartStake(deficitSerieBase);
                     
                     totalSpentBase += actualStakeBase;
@@ -1303,38 +1306,58 @@
                 }
             }
 
-            statBaseGag.textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
-            statBasePla.textContent = `${baseWinsPla} / ${coursesValidees}`;
-            statPepiteGag.textContent = `${pepiteWinsGag} / ${coursesGagnantBaseValidees}`;
-            statPepitePla.textContent = `${pepiteWinsPla} / ${coursesValidees}`;
-            gainBasePla.innerHTML = formatMoneyHTML(totalProfitBasePla);
-            gainBaseGag.innerHTML = formatMoneyHTML(totalProfitBaseGag);
-            gainPepitePla.innerHTML = formatMoneyHTML(totalProfitPepitePla);
-            gainPepiteGag.innerHTML = formatMoneyHTML(totalProfitPepiteGag);
+            // SÉCURITÉ DOM UPDATES
+            try {
+                document.getElementById('statBaseGag').textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
+                document.getElementById('statBasePla').textContent = `${baseWinsPla} / ${coursesValidees}`;
+                document.getElementById('statPepiteGag').textContent = `${pepiteWinsGag} / ${coursesGagnantBaseValidees}`;
+                document.getElementById('statPepitePla').textContent = `${pepiteWinsPla} / ${coursesValidees}`;
+                document.getElementById('gainBasePla').innerHTML = formatMoneyHTML(totalProfitBasePla);
+                document.getElementById('gainBaseGag').innerHTML = formatMoneyHTML(totalProfitBaseGag);
+                document.getElementById('gainPepitePla').innerHTML = formatMoneyHTML(totalProfitPepitePla);
+                document.getElementById('gainPepiteGag').innerHTML = formatMoneyHTML(totalProfitPepiteGag);
 
-            if (totalSpentText) totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
-            if (maxStakeBaseText) maxStakeBaseText.textContent = `${maxStakeBase.toFixed(2)} €`;
-            if (deficitBaseText) deficitBaseText.textContent = `${deficitSerieBase.toFixed(2)} €`;
-            
-            if (totalSpentPepiteText) totalSpentPepiteText.textContent = `${totalSpentPepite.toFixed(2)} €`;
-            if (maxStakePepiteText) maxStakePepiteText.textContent = `${maxStakePepite.toFixed(2)} €`;
-            if (deficitPepiteText) deficitPepiteText.textContent = `${deficitSeriePepite.toFixed(2)} €`;
+                let totalSpentText = document.getElementById('totalSpentText');
+                if (totalSpentText) totalSpentText.textContent = `${totalSpentBase.toFixed(2)} €`;
+                
+                let maxStakeBaseText = document.getElementById('maxStakeBaseText');
+                if (maxStakeBaseText) maxStakeBaseText.textContent = `${maxStakeBase.toFixed(2)} €`;
+                
+                let deficitBaseText = document.getElementById('deficitBaseText');
+                if (deficitBaseText) deficitBaseText.textContent = `${deficitSerieBase.toFixed(2)} €`;
+                
+                let totalSpentPepiteText = document.getElementById('totalSpentPepiteText');
+                if (totalSpentPepiteText) totalSpentPepiteText.textContent = `${totalSpentPepite.toFixed(2)} €`;
+                
+                let maxStakePepiteText = document.getElementById('maxStakePepiteText');
+                if (maxStakePepiteText) maxStakePepiteText.textContent = `${maxStakePepite.toFixed(2)} €`;
+                
+                let deficitPepiteText = document.getElementById('deficitPepiteText');
+                if (deficitPepiteText) deficitPepiteText.textContent = `${deficitSeriePepite.toFixed(2)} €`;
 
-            let nextStakeBase = computeSmartStake(deficitSerieBase);
-            let nextStakePepite = computeSmartStake(deficitSeriePepite);
-            
-            if (nextStakeBaseText) nextStakeBaseText.textContent = `Mise: ${nextStakeBase.toFixed(2)} €`;
-            if (nextStakePepiteText) nextStakePepiteText.textContent = `Mise: ${nextStakePepite.toFixed(2)} €`;
-            if (headerNextStake) headerNextStake.textContent = `${nextStakeBase.toFixed(2)} €`;
-            
-            if (coursesValidees > 0) {
-                localStorage.setItem(`pmu_stats_multidis_v21_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
-                    baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
-                }));
-            }
-            
-            if (statsProgress) statsProgress.textContent = `✅ ${coursesValidees}/${pastRacesToday.length} validées`;
-            if (!document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
+                let nextStakeBase = computeSmartStake(deficitSerieBase);
+                let nextStakePepite = computeSmartStake(deficitSeriePepite);
+                
+                let nextStakeBaseText = document.getElementById('nextStakeBaseText');
+                if (nextStakeBaseText) nextStakeBaseText.textContent = `Mise: ${nextStakeBase.toFixed(2)} €`;
+                
+                let nextStakePepiteText = document.getElementById('nextStakePepiteText');
+                if (nextStakePepiteText) nextStakePepiteText.textContent = `Mise: ${nextStakePepite.toFixed(2)} €`;
+                
+                let headerNextStake = document.getElementById('headerNextStake');
+                if (headerNextStake) headerNextStake.textContent = `${nextStakeBase.toFixed(2)} €`;
+                
+                if (coursesValidees > 0) {
+                    localStorage.setItem(`pmu_stats_multidis_v21_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
+                        baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
+                    }));
+                }
+                
+                if (statsProgress) statsProgress.textContent = `✅ ${coursesValidees}/${pastRacesToday.length} validées`;
+                
+                let hb = document.getElementById('historyBlock');
+                if (hb && hb.style.display !== 'none' && hb.style.display !== '') showHistoryStats();
+            } catch(e) {}
             
             isCalculatingStats = false;
         }
