@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V32 Connexion & Cumul Réparés</title>
+    <title>Turf - V33 Chargement Course Suivante Instantané</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -345,7 +345,7 @@
     </div>
 
     <script>
-        const CACHE_VERSION = "v32";
+        const CACHE_VERSION = "v33";
         
         // MISES DIFFÉRENCIÉES : 10€ POUR LA BASE, 5€ POUR LA PÉPITE ET LE TICKET
         const STAKE_BASE = 10.0;
@@ -488,6 +488,7 @@
         let isCalculatingStats = false;
         let currentCalcId = 0;
         let currentFetchRaceId = 0;
+        let isFetchingRace = false;
         let isTicketExpanded = false;
         let isSyncingPeriod = false;
         let cancelSyncFlag = false;
@@ -632,7 +633,7 @@
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
             let cIdx = document.getElementById('raceSelect').value;
-            if (mIdx !== "" && cIdx !== "") fetchRaceData(true); 
+            if (mIdx !== "" && cIdx !== "" && !isFetchingRace) fetchRaceData(true); 
             if (!isSyncingPeriod) calculateDailyStats(true);
             checkStartAlarm();
         }, 10000);
@@ -694,20 +695,20 @@
             return `<span class="bg-zinc-500/20 text-zinc-300 border border-zinc-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">${s}</span>`;
         }
 
-        // MOTEUR DE CONNEXION V28 RESTAURÉ INTÉGRALEMENT (Sans coupure de délai)
-        async function smartFetchPMU(path) {
+        // CONNEXION PMU ROBUSTE : Gère les réponses 204/404 (quand une course à venir n'a pas encore de rapports) sans bloquer les proxies
+        async function smartFetchPMU(path, allowEmpty = false) {
             const sep = path.includes('?') ? '&' : '?';
             const cacheBusterPath = `${path}${sep}_t=${Date.now()}`;
             const fullPmuUrl = `https://online.turfinfo.api.pmu.fr/rest/client/61/programme/${cacheBusterPath}`;
             
             try {
                 let localRes = await fetch(`/api/pmu/${cacheBusterPath}`);
+                if (localRes.status === 204 || localRes.status === 404) return null;
                 if (localRes.ok) return await localRes.json();
             } catch (e) {}
 
             const proxies = [
                 `https://api.allorigins.win/raw?url=${encodeURIComponent(fullPmuUrl)}`,
-                `https://api.allorigins.win/get?url=${encodeURIComponent(fullPmuUrl)}`,
                 `https://corsproxy.io/?${encodeURIComponent(fullPmuUrl)}`,
                 `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(fullPmuUrl)}`
             ];
@@ -715,37 +716,38 @@
             for (let proxy of proxies) {
                 try {
                     let res = await fetch(proxy, { cache: 'no-store' });
+                    if (res.status === 204 || res.status === 404) return null;
                     if (res.ok) {
                         let text = await res.text();
-                        if (!text || text.trim() === "") continue;
+                        if (!text || text.trim() === "") {
+                            if (allowEmpty) return null;
+                            continue;
+                        }
                         let json = JSON.parse(text);
-                        if (json && json.contents) {
+                        if (json && json.contents !== undefined) {
+                            if (!json.contents || String(json.contents).trim() === "") {
+                                if (allowEmpty) return null;
+                                continue;
+                            }
                             json = typeof json.contents === 'string' ? JSON.parse(json.contents) : json.contents;
                         }
-                        if (json && typeof json === 'object') return json;
+                        return json;
                     }
                 } catch(e) {}
             }
+            if (allowEmpty) return null;
             throw new Error("PMU bloqué");
         }
 
-        async function getFullRaceData(dateStr, rNum, cNum, courseObj = null) {
+        async function getFullRaceData(dateStr, rNum, cNum, courseObj = null, checkReports = true) {
             let partants = [];
             let rapportsList = [];
             try {
-                let pData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/participants?specialisation=INTERNET`);
+                let pData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/participants?specialisation=INTERNET`, false);
                 if(pData) partants = pData.participants || (Array.isArray(pData) ? pData : []);
             } catch(e) {}
 
-            try {
-                let rData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs?specialisation=INTERNET`);
-                if (rData) {
-                    if (Array.isArray(rData)) rapportsList = rData;
-                    else rapportsList = rData.rapports || rData.lesRapports || [];
-                }
-            } catch(e) {}
-
-            if (partants.length > 0 && !partants.some(p => p.ordreArrivee && p.ordreArrivee > 0) && !courseObj) {
+            if (!courseObj) {
                 let m = liveMeetingsData.find(reun => (reun.numOfficiel || 0) == rNum);
                 if (m && m.courses) {
                     courseObj = m.courses.find(c => (c.numOrdre || 0) == cNum);
@@ -766,6 +768,21 @@
                 });
             }
 
+            let hasArrival = partants.some(p => p.ordreArrivee && parseInt(p.ordreArrivee, 10) > 0);
+            let raceStartTime = (courseObj && courseObj.heureDepart) ? new Date(courseObj.heureDepart).getTime() : 0;
+            let hasStarted = (raceStartTime === 0) || (Date.now() >= raceStartTime);
+
+            // Ne demande les rapports définitifs que si la course a démarré ou a une arrivée (évite de bloquer sur les courses suivantes !)
+            if (checkReports && (hasArrival || hasStarted)) {
+                try {
+                    let rData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs?specialisation=INTERNET`, true);
+                    if (rData) {
+                        if (Array.isArray(rData)) rapportsList = rData;
+                        else rapportsList = rData.rapports || rData.lesRapports || [];
+                    }
+                } catch(e) {}
+            }
+
             return { partants, rapportsList };
         }
 
@@ -784,7 +801,7 @@
             const now = new Date().getTime();
 
             try {
-                const data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
+                const data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`, false);
                 let rawReunions = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
                 
                 let filteredReunions = [];
@@ -844,6 +861,7 @@
                         if (currentRaceVal !== "" && filteredReunions[currentVal].courses[currentRaceVal]) {
                             document.getElementById('raceSelect').value = currentRaceVal;
                         }
+                        fetchRaceData(false);
                     }
                     
                     calculateDailyStats(false);
@@ -898,10 +916,11 @@
             liveMeetingsData.forEach((m, mIdx) => {
                 let courses = m.courses || [];
                 courses.forEach((c, cIdx) => {
-                    if (c.heureDepart) list.push({ mIdx: mIdx, cIdx: cIdx, time: new Date(c.heureDepart).getTime() });
+                    let t = c.heureDepart ? new Date(c.heureDepart).getTime() : 0;
+                    list.push({ mIdx: mIdx, cIdx: cIdx, time: t });
                 });
             });
-            return list.sort((a, b) => a.time - b.time);
+            return list.sort((a, b) => (a.time - b.time) || (a.mIdx - b.mIdx) || (a.cIdx - b.cIdx));
         }
 
         function navigateAdjacentRace(direction) { 
@@ -920,6 +939,9 @@
                     document.getElementById('meetingSelect').value = targetRace.mIdx;
                     onMeetingChange(true);
                     document.getElementById('raceSelect').value = targetRace.cIdx;
+                    let rNum = liveMeetingsData[targetRace.mIdx]?.numOfficiel || (targetRace.mIdx + 1);
+                    let cNum = liveMeetingsData[targetRace.mIdx]?.courses?.[targetRace.cIdx]?.numOrdre || (targetRace.cIdx + 1);
+                    showToast(`Passage à la course R${rNum}C${cNum}`, 'info');
                     fetchRaceData(false);
                 } else {
                     showToast(direction === 1 ? "Dernière course atteinte" : "Première course atteinte", 'error');
@@ -955,9 +977,12 @@
             } else {
                 raceSelect.innerHTML = '<option value="">Aucune course</option>';
             }
-            if (currentRaceVal !== "" && courses[currentRaceVal]) {
-                raceSelect.value = currentRaceVal;
-            } else if (!preserveTimer && courses.length > 0) {
+
+            if (preserveTimer) {
+                if (currentRaceVal !== "" && courses[currentRaceVal]) {
+                    raceSelect.value = currentRaceVal;
+                }
+            } else if (courses.length > 0) {
                 raceSelect.value = 0;
                 fetchRaceData(false);
             }
@@ -1272,6 +1297,8 @@
         }
 
         async function fetchRaceData(isBackground = false) {
+            if (isBackground && isFetchingRace) return;
+
             let mIdxStr = document.getElementById('meetingSelect').value;
             let rIdxStr = document.getElementById('raceSelect').value;
             if (mIdxStr === "" || rIdxStr === "") return;
@@ -1286,6 +1313,7 @@
             if (!race) return;
 
             let myFetchId = ++currentFetchRaceId;
+            isFetchingRace = true;
 
             let dateInput = document.getElementById('raceDate').value;
             let parts = dateInput.split('-');
@@ -1296,14 +1324,25 @@
             let currentRaceName = `R${rNum}C${cNum} - ${race.libelle || race.nom || 'Prix'}`;
             let now = new Date().getTime();
 
+            // Si changement de course (manuel ou bascule auto), on met immédiatement un indicateur visuel de chargement
+            if (!isBackground) {
+                document.getElementById('arrivalBlock').style.display = 'none';
+                document.getElementById('reportsBlock').style.display = 'none';
+                document.getElementById('top1Name').textContent = 'Chargement...';
+                document.getElementById('top1Stats').textContent = '--';
+                document.getElementById('top2Name').textContent = 'Chargement...';
+                document.getElementById('top2Stats').textContent = '--';
+                document.getElementById('runnersTableBody').innerHTML = `<tr><td colspan="4" class="p-6 text-center text-amber-400 font-mono"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement de R${rNum}C${cNum}...</td></tr>`;
+            }
+
             try {
                 let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
                 let isLocked = raceStartTime > 0 && now >= raceStartTime; 
                 
                 if (isBackground && raceStartTime > 0 && now >= raceStartTime && (now - raceStartTime) < 50 * 60 * 1000) {
                     try {
-                        let progData = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
-                        let rawR = progData.programme?.reunions || progData.reunions || progData.programme?.lesReunions || [];
+                        let progData = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`, true);
+                        let rawR = progData?.programme?.reunions || progData?.reunions || progData?.programme?.lesReunions || [];
                         let updatedM = rawR.find(r => (r.numOfficiel || 0) == rNum);
                         if (updatedM) {
                             let upCourses = updatedM.courses || updatedM.races || updatedM.lesCourses || [];
@@ -1316,7 +1355,7 @@
                     } catch(e) {}
                 }
 
-                let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, rNum, cNum, race);
+                let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, rNum, cNum, race, true);
 
                 if (myFetchId !== currentFetchRaceId) return;
                 if (document.getElementById('meetingSelect').value !== mIdxStr || document.getElementById('raceSelect').value !== rIdxStr) return;
@@ -1449,25 +1488,29 @@
                 processed.sort((a, b) => a.cote - b.cote);
                 let tbody = document.getElementById('runnersTableBody');
                 tbody.innerHTML = '';
-                processed.forEach(p => {
-                    let tr = document.createElement('tr');
-                    let tag = p.ordreArrivee ? `<span class="ml-2 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
-                    if (p.num === baseHorse?.num) tag += '<span class="ml-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold ml-1">Favori</span>';
-                    if (p.num === nuggetHorse?.num) tag += '<span class="ml-2 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold ml-1">Pépite</span>';
-                    
-                    let isSelected = globalBets[currentRaceKey] && globalBets[currentRaceKey].num === p.num;
-                    
-                    if (isLocked) {
-                        tr.className = isSelected ? "bg-emerald-900/40 border-l-4 border-emerald-500 opacity-70 cursor-not-allowed" : "border-b border-zinc-800/50 opacity-70 cursor-not-allowed";
-                    } else {
-                        tr.className = isSelected ? "bg-emerald-900/40 border-l-4 border-emerald-500 cursor-pointer" : "border-b border-zinc-800/50 hover:bg-zinc-800/50 cursor-pointer transition";
-                    }
-                    
-                    tr.onclick = () => placeBet(currentRaceKey, p.num, p.nom, p.cote, currentRaceName, isLocked);
+                if (processed.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-zinc-500">Aucun partant disponible pour R${rNum}C${cNum}.</td></tr>`;
+                } else {
+                    processed.forEach(p => {
+                        let tr = document.createElement('tr');
+                        let tag = p.ordreArrivee ? `<span class="ml-2 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
+                        if (p.num === baseHorse?.num) tag += '<span class="ml-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold ml-1">Favori</span>';
+                        if (p.num === nuggetHorse?.num) tag += '<span class="ml-2 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold ml-1">Pépite</span>';
+                        
+                        let isSelected = globalBets[currentRaceKey] && globalBets[currentRaceKey].num === p.num;
+                        
+                        if (isLocked) {
+                            tr.className = isSelected ? "bg-emerald-900/40 border-l-4 border-emerald-500 opacity-70 cursor-not-allowed" : "border-b border-zinc-800/50 opacity-70 cursor-not-allowed";
+                        } else {
+                            tr.className = isSelected ? "bg-emerald-900/40 border-l-4 border-emerald-500 cursor-pointer" : "border-b border-zinc-800/50 hover:bg-zinc-800/50 cursor-pointer transition";
+                        }
+                        
+                        tr.onclick = () => placeBet(currentRaceKey, p.num, p.nom, p.cote, currentRaceName, isLocked);
 
-                    tr.innerHTML = `<td class="p-3 font-bold"><span class="text-emerald-400 mr-2">${p.num}</span>${p.nom}${tag}</td><td class="p-3 text-zinc-300 font-mono">${p.musique}</td><td class="p-3 text-emerald-400 font-bold">${p.coteDisplay}</td><td class="p-3 font-semibold text-zinc-500">${p.nuggetScore}%</td>`;
-                    tbody.appendChild(tr);
-                });
+                        tr.innerHTML = `<td class="p-3 font-bold"><span class="text-emerald-400 mr-2">${p.num}</span>${p.nom}${tag}</td><td class="p-3 text-zinc-300 font-mono">${p.musique}</td><td class="p-3 text-emerald-400 font-bold">${p.coteDisplay}</td><td class="p-3 font-semibold text-zinc-500">${p.nuggetScore}%</td>`;
+                        tbody.appendChild(tr);
+                    });
+                }
                 
                 let timeInfo = race.heureDepart ? `[${formatTime(race.heureDepart)}] ` : '';
                 let discBadge = getDisciplineBadge(race);
@@ -1483,12 +1526,18 @@
                 
                 document.getElementById('raceInfoDetails').innerHTML = `
                     <div class="flex items-center">
+                        <span class="mr-2 text-amber-400 font-bold">R${rNum}C${cNum}</span>
                         <span class="mr-2 text-zinc-400 font-normal">${timeInfo}</span>
                         <span>Sélection par cotes</span>
                         ${discBadge} ${statusBadge}
                     </div>
                 `;
-            } catch (e) {}
+            } catch (e) {
+            } finally {
+                if (myFetchId === currentFetchRaceId) {
+                    isFetchingRace = false;
+                }
+            }
         }
 
         function saveDayStatsToStorage(ddmmyyyy, mode, baseProfit, pepiteProfit, manualProfit) {
@@ -1702,7 +1751,7 @@
             let now = Date.now();
             let reunions = [];
             try {
-                let data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
+                let data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`, false);
                 let rawR = data.programme?.reunions || data.reunions || data.programme?.lesReunions || [];
                 rawR.forEach(r => {
                     let allC = r.courses || r.races || r.lesCourses || [];
@@ -1749,7 +1798,7 @@
 
                 if (!raceData) {
                     await sleep(100);
-                    let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum, r.courseObj);
+                    let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum, r.courseObj, true);
                     let isComplete = (rapportsList && rapportsList.length > 0);
                     raceData = slimRaceCacheData(partants, rapportsList, isComplete);
                     if (isComplete && partants.length > 0) {
@@ -1885,7 +1934,7 @@
                         await sleep(100); 
                         if (currentCalcId !== myCalcId) return;
                         
-                        let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum, r.courseObj);
+                        let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum, r.courseObj, true);
                         let isComplete = (rapportsList && rapportsList.length > 0); 
                         
                         raceData = slimRaceCacheData(partants, rapportsList, isComplete);
@@ -1988,7 +2037,6 @@
                     document.getElementById('nextStakePepiteText').textContent = `Mise: ${nextStakePepite.toFixed(2)} €`;
                     document.getElementById('headerNextStake').textContent = `${nextStakeBase.toFixed(2)} €`;
 
-                    // Sauvegarde en temps réel dès qu'une course est validée
                     if (coursesValidees > 0) {
                         saveDayStatsToStorage(ddmmyyyy, currentDisciplineMode, totalProfitBasePla, totalProfitPepitePla, 0);
                     }
