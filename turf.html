@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V29 Complet & Auto-Bascule 30s</title>
+    <title>Turf - V30 Base 10€ & Pépite 5€</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -33,7 +33,7 @@
                 
                 <div class="text-xs bg-zinc-800 px-2 py-1 rounded-lg border border-emerald-500/30 text-emerald-400 font-bold flex flex-col items-end shadow mr-1">
                     <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">À Jouer (Base)</span>
-                    <span id="headerNextStake">5.00 €</span>
+                    <span id="headerNextStake">10.00 €</span>
                 </div>
                 
                 <!-- DRAPEAU DES ARRIVÉES -->
@@ -95,8 +95,8 @@
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
                     <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Cette Semaine (Placé Réel)</h3>
                     <div class="grid grid-cols-3 gap-2">
-                        <div class="text-zinc-300">Base : <span id="weekBase" class="text-emerald-400 font-bold block">0.00 €</span></div>
-                        <div class="text-zinc-300">Pépite : <span id="weekPepite" class="text-amber-400 font-bold block">0.00 €</span></div>
+                        <div class="text-zinc-300">Base (10€) : <span id="weekBase" class="text-emerald-400 font-bold block">0.00 €</span></div>
+                        <div class="text-zinc-300">Pépite (5€) : <span id="weekPepite" class="text-amber-400 font-bold block">0.00 €</span></div>
                         <div class="text-zinc-300">Perso : <span id="weekManual" class="text-orange-400 font-bold block">0.00 €</span></div>
                     </div>
                 </div>
@@ -111,14 +111,14 @@
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour</h2>
-                    <p class="text-[10px] text-zinc-400">Rattrapage optimisé • Base 5€ • <strong class="text-emerald-400">Illimité</strong></p>
+                    <p class="text-[10px] text-zinc-400">Rattrapage optimisé • <strong class="text-emerald-400">Base 10€</strong> | <strong class="text-amber-400">Pépite 5€</strong></p>
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-3 text-xs">
                 <!-- BASE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">RÉEL</div>
+                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">MISE 10€</div>
                     <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori)</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
@@ -127,7 +127,7 @@
                             <span id="gainBaseGag" class="font-bold text-zinc-300 mt-0.5">0.00 €</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-emerald-500/30 text-center flex flex-col justify-center shadow-inner">
-                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé (Réel)</span>
+                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé (Base 10€)</span>
                             <span id="statBasePla" class="text-[9px] text-emerald-500/70 font-bold my-0.5">0 / 0</span>
                             <span id="gainBasePla" class="font-bold text-emerald-400 mt-0.5">0.00 €</span>
                         </div>
@@ -136,7 +136,7 @@
 
                 <!-- PÉPITE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-amber-500/40 relative flex flex-col justify-between">
-                    <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMULATION</div>
+                    <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMU 5€</div>
                     <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Pépite</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
@@ -145,7 +145,7 @@
                             <span id="gainPepiteGag" class="font-bold text-zinc-300 mt-0.5">0.00 €</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-amber-500/30 text-center flex flex-col justify-center">
-                            <span class="text-[8px] text-amber-400 block uppercase font-bold">Placé (Simu)</span>
+                            <span class="text-[8px] text-amber-400 block uppercase font-bold">Placé (Base 5€)</span>
                             <span id="statPepitePla" class="text-[9px] text-amber-500/70 font-bold my-0.5">0 / 0</span>
                             <span id="gainPepitePla" class="font-bold text-amber-400 mt-0.5">0.00 €</span>
                         </div>
@@ -156,17 +156,17 @@
             <!-- MISE MAX ET DÉFICITS -->
             <div class="grid grid-cols-2 gap-3 text-[11px] bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 text-zinc-300">
                 <div class="flex flex-col space-y-1 border-r border-zinc-700/50 pr-3">
-                    <span class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement (Base)</span>
+                    <span class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement (Base 10€)</span>
                     <span class="flex justify-between">Joué: <strong id="totalSpentText" class="text-white">0.00 €</strong></span>
                     <span class="flex justify-between">Max Atteint: <strong id="maxStakeBaseText" class="text-zinc-300">0.00 €</strong></span>
                     <span class="flex justify-between">Déficit: <strong id="deficitBaseText" class="text-red-400">0.00 €</strong></span>
                     <div class="pt-1.5">
-                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-2 py-1 rounded border border-emerald-500/30 font-black text-xs shadow-md block text-center">Mise: 5.00 €</strong>
+                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-2 py-1 rounded border border-emerald-500/30 font-black text-xs shadow-md block text-center">Mise: 10.00 €</strong>
                     </div>
                 </div>
 
                 <div class="flex flex-col space-y-1 pl-1">
-                    <span class="text-[9px] uppercase text-amber-400 font-bold mb-0.5">Investissement (Pépite)</span>
+                    <span class="text-[9px] uppercase text-amber-400 font-bold mb-0.5">Investissement (Pépite 5€)</span>
                     <span class="flex justify-between">Joué: <strong id="totalSpentPepiteText" class="text-white">0.00 €</strong></span>
                     <span class="flex justify-between">Max Atteint: <strong id="maxStakePepiteText" class="text-zinc-300">0.00 €</strong></span>
                     <span class="flex justify-between">Déficit: <strong id="deficitPepiteText" class="text-red-400">0.00 €</strong></span>
@@ -225,12 +225,12 @@
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mt-3">
                 <div class="bg-zinc-900/90 p-3 rounded-xl border border-emerald-500/40 space-y-1">
-                    <div class="text-[10px] uppercase font-bold text-emerald-400">Favori des Parieurs (Base)</div>
+                    <div class="text-[10px] uppercase font-bold text-emerald-400">Favori des Parieurs (Base 10€)</div>
                     <div id="top1Name" class="font-bold text-white text-sm">En attente...</div>
                     <div id="top1Stats" class="text-[11px] text-zinc-400">--</div>
                 </div>
                 <div class="bg-zinc-900/90 p-3 rounded-xl border border-amber-500/40 space-y-1">
-                    <div class="text-[10px] uppercase font-bold text-amber-400">Pépite / Coup de Cœur</div>
+                    <div class="text-[10px] uppercase font-bold text-amber-400">Pépite / Coup de Cœur (5€)</div>
                     <div id="top2Name" class="font-bold text-white text-sm">En attente...</div>
                     <div id="top2Stats" class="text-[11px] text-zinc-400">--</div>
                 </div>
@@ -328,6 +328,11 @@
     <script>
         const CACHE_VERSION = "v21";
         
+        // MISES DIFFÉRENCIÉES : 10€ POUR LA BASE, 5€ POUR LA PÉPITE ET LE TICKET
+        const STAKE_BASE = 10.0;
+        const STAKE_PEPITE = 5.0;
+        const BASE_STAKE = 5.0;
+        
         function safeGetLocal(key) {
             try { 
                 let item = localStorage.getItem(key);
@@ -376,9 +381,9 @@
                 document.getElementById('deficitBaseText').textContent = "0.00 €";
                 document.getElementById('deficitPepiteText').textContent = "0.00 €";
                 
-                document.getElementById('headerNextStake').textContent = "5.00 €";
-                document.getElementById('nextStakeBaseText').textContent = "Mise: 5.00 €";
-                document.getElementById('nextStakePepiteText').textContent = "Mise: 5.00 €";
+                document.getElementById('headerNextStake').textContent = `${STAKE_BASE.toFixed(2)} €`;
+                document.getElementById('nextStakeBaseText').textContent = `Mise: ${STAKE_BASE.toFixed(2)} €`;
+                document.getElementById('nextStakePepiteText').textContent = `Mise: ${STAKE_PEPITE.toFixed(2)} €`;
             } catch(e) {}
         }
 
@@ -389,7 +394,6 @@
         let autoTransitionRaceKey = null;
         
         let currentDisciplineMode = 'TROT'; 
-        const BASE_STAKE = 5.0; 
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
         let startAlarmEnabled = false;
@@ -1031,10 +1035,11 @@
             return foundGain;
         }
 
-        function computeSmartStake(deficitSerie) {
-            if (deficitSerie <= 0) return BASE_STAKE;
-            let stake = Math.ceil((deficitSerie * 1.35) + BASE_STAKE);
-            return Math.max(BASE_STAKE + 3, stake);
+        // CALCUL DE RATTRAPAGE PARAMÉTRÉ SELON LA MISE DE BASE (10€ POUR BASE, 5€ POUR PÉPITE)
+        function computeSmartStake(deficitSerie, baseStakeVal = STAKE_BASE) {
+            if (deficitSerie <= 0) return baseStakeVal;
+            let stake = Math.ceil((deficitSerie * 1.35) + baseStakeVal);
+            return Math.max(baseStakeVal + 3, stake);
         }
 
         function placeBet(raceKey, horseNum, horseName, odds, raceName, isLocked) {
@@ -1213,7 +1218,6 @@
                 let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
                 let isLocked = raceStartTime > 0 && now >= raceStartTime; 
                 
-                // RAFRAÎCHISSEMENT DU PROGRAMME POUR DÉTECTER L'ARRIVÉE IMMÉDIATEMENT
                 if (raceStartTime > 0 && now >= (raceStartTime - 60000) && (now - raceStartTime) < 60 * 60 * 1000) {
                     try {
                         let progData = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
@@ -1232,7 +1236,6 @@
 
                 let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, rNum, cNum, race);
 
-                // Si l'utilisateur ou la bascule a changé de course pendant le téléchargement, on ignore ce rendu obsolète
                 if (myFetchId !== currentFetchRaceId) return;
                 if (document.getElementById('meetingSelect').value !== mIdxStr || document.getElementById('raceSelect').value !== rIdxStr) return;
 
@@ -1259,7 +1262,6 @@
                         arrivalList.appendChild(div);
                     });
 
-                    // 1. Sonnerie Alerte Arrivée Officielle
                     if (!notifiedArrivals[currentRaceKey]) {
                         notifiedArrivals[currentRaceKey] = true;
                         if (arrivalAlarmEnabled) {
@@ -1268,7 +1270,6 @@
                         }
                     }
 
-                    // 2. Bascule Automatique garantie 30s après l'arrivée officielle
                     if (!hasAutoTransitioned[currentRaceKey] && autoTransitionRaceKey !== currentRaceKey) {
                         clearAutoTransition();
                         autoTransitionRaceKey = currentRaceKey;
@@ -1590,9 +1591,10 @@
                         else { totalProfitPepiteGag -= 1.0; }
                     }
 
+                    // CALCUL BASE AVEC MISE DE DÉPART 10€ (STAKE_BASE)
                     if (baseH) {
                         coursesValidees++;
-                        let actualStakeBase = computeSmartStake(deficitSerieBase);
+                        let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
                         totalSpentBase += actualStakeBase;
                         if (actualStakeBase > maxStakeBase) maxStakeBase = actualStakeBase;
 
@@ -1612,8 +1614,9 @@
                         }
                     }
 
+                    // CALCUL PÉPITE AVEC MISE DE DÉPART 5€ (STAKE_PEPITE)
                     if (nuggetH) {
-                        let simStakePepite = computeSmartStake(deficitSeriePepite);
+                        let simStakePepite = computeSmartStake(deficitSeriePepite, STAKE_PEPITE);
                         totalSpentPepite += simStakePepite;
                         if (simStakePepite > maxStakePepite) maxStakePepite = simStakePepite;
 
@@ -1653,8 +1656,8 @@
                 document.getElementById('maxStakePepiteText').textContent = `${maxStakePepite.toFixed(2)} €`;
                 document.getElementById('deficitPepiteText').textContent = `${deficitSeriePepite.toFixed(2)} €`;
 
-                let nextStakeBase = computeSmartStake(deficitSerieBase);
-                let nextStakePepite = computeSmartStake(deficitSeriePepite);
+                let nextStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
+                let nextStakePepite = computeSmartStake(deficitSeriePepite, STAKE_PEPITE);
                 
                 document.getElementById('nextStakeBaseText').textContent = `Mise: ${nextStakeBase.toFixed(2)} €`;
                 document.getElementById('nextStakePepiteText').textContent = `Mise: ${nextStakePepite.toFixed(2)} €`;
