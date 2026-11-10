@@ -93,7 +93,7 @@
 
     </main>
 
-    <!-- TICKET FLOTTANT DÉTAILLÉ (PANIER) ADAPTÉ POUR PC -->
+    <!-- TICKET FLOTTANT DÉTAILLÉ (PANIER) ADAPTÉ POUR PC ET NFL STYLE -->
     <div id="betSlipBar" class="hidden fixed bottom-0 left-0 right-0 md:left-auto md:right-8 md:bottom-8 md:w-[400px] md:rounded-2xl z-50 bg-zinc-900 border-t-2 md:border-2 border-orange-500 shadow-[0_-10px_40px_rgba(0,0,0,0.9)] flex-col max-h-[85vh] md:max-h-[75vh] transition-all duration-300">
         
         <!-- HEADER DU TICKET -->
@@ -110,39 +110,59 @@
             </div>
             <div class="flex items-center space-x-3">
                  <div class="text-right">
-                    <span class="text-[10px] text-zinc-400 uppercase font-bold block">Gain Net En Cours</span>
-                    <strong id="slipComboGainMini" class="text-orange-400 font-black text-base">0.00 €</strong>
+                    <span class="text-[10px] text-amber-400 uppercase font-bold block">Gain Max Combiné</span>
+                    <strong id="slipComboGainMini" class="text-amber-400 font-black text-base">0.00 €</strong>
                  </div>
                  <button onclick="clearManualBets(); event.stopPropagation();" class="text-zinc-500 hover:text-red-500 p-2 transition cursor-pointer" title="Vider le ticket"><i class="fa-solid fa-trash text-lg"></i></button>
             </div>
         </div>
 
-        <!-- CONTENU DÉTAILLÉ DU TICKET -->
+        <!-- CONTENU DÉTAILLÉ DU TICKET AVEC COMBINÉ -->
         <div id="ticketDetails" class="hidden flex-col w-full px-4 pb-5 overflow-y-auto border-t border-zinc-800 pt-4">
             
-            <div class="text-xs uppercase font-bold text-zinc-400 mb-3">Détail Match par Match</div>
+            <div class="text-xs uppercase font-bold text-zinc-400 mb-3">Vos sélections</div>
             <div id="ticketMatchesList" class="mb-5 space-y-2">
                 <!-- Rempli dynamiquement -->
             </div>
 
-            <div class="space-y-4">
-                <div class="bg-zinc-950 border border-orange-500/30 rounded-xl p-4 shadow-inner">
-                    <div class="text-xs uppercase font-bold text-orange-400 mb-1">Résumé de la soirée</div>
-                    <div class="text-xs text-zinc-400 mb-3">Mise variable (2% Bankroll) sur chaque match. Cotes moyennes NBA évaluées à 1.80.</div>
-                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2">
-                        <span class="text-xs text-zinc-500">Mise Totale:</span>
-                        <span id="ticketSimpleStake" class="font-bold text-white text-sm">0.00 €</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <!-- RÉSUMÉ SIMPLES -->
+                <div class="bg-zinc-950 border border-emerald-500/30 rounded-xl p-3 shadow-inner">
+                    <div class="text-[10px] uppercase font-bold text-emerald-400 mb-1">Option 1 : Paris Simples</div>
+                    <div class="text-[10px] text-zinc-400 mb-2 leading-tight">Mise séparée sur chaque match</div>
+                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2 mt-2">
+                        <span class="text-[10px] text-zinc-500">Mise Totale:</span>
+                        <span id="ticketSimpleStake" class="font-bold text-white text-xs">0.00 €</span>
                     </div>
-                    <div class="flex justify-between items-center mt-2 pt-2 border-t border-zinc-800/50">
-                        <span class="text-xs text-zinc-500">Bénéfice Net Actuel:</span>
-                        <span id="ticketSimpleNet" class="font-black text-orange-400 text-lg">0.00 €</span>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-[10px] text-zinc-500">Gain Pot. max:</span>
+                        <span id="ticketSimpleGain" class="font-black text-emerald-400 text-sm">0.00 €</span>
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-[10px] text-zinc-500">Bénéfice Net Actuel:</span>
+                        <span id="ticketSimpleNet" class="font-bold text-emerald-400 text-[10px]">0.00 €</span>
                     </div>
                 </div>
-                
-                <button onclick="clearManualBets()" class="w-full bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/50 py-3 rounded-xl font-bold text-sm transition shadow flex items-center justify-center cursor-pointer">
-                    <i class="fa-solid fa-trash mr-2"></i> Vider tout le ticket
-                </button>
+
+                <!-- RÉSUMÉ COMBINÉ -->
+                <div class="bg-zinc-950 border border-amber-500/30 rounded-xl p-3 relative overflow-hidden shadow-inner">
+                    <div class="absolute -right-4 -top-4 text-amber-500/10 text-6xl"><i class="fa-solid fa-fire"></i></div>
+                    <div class="text-[10px] uppercase font-bold text-amber-400 mb-1 relative z-10">Option 2 : Pari Combiné</div>
+                    <div class="text-[10px] text-zinc-400 mb-2 leading-tight relative z-10">Une seule mise. Cotes multipliées !</div>
+                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2 mt-2 relative z-10">
+                        <span class="text-[10px] text-zinc-500">Cote Totale:</span>
+                        <span id="ticketComboOdds" class="font-bold text-white text-xs">1.00</span>
+                    </div>
+                    <div class="flex justify-between items-center mt-1 relative z-10">
+                        <span class="text-[10px] text-zinc-500">Gain Pot. (pour 1 mise):</span>
+                        <span id="ticketComboGain" class="font-black text-amber-400 text-sm">0.00 €</span>
+                    </div>
+                </div>
             </div>
+            
+            <button onclick="clearManualBets()" class="w-full bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/50 py-3 rounded-xl font-bold text-sm transition shadow flex items-center justify-center cursor-pointer">
+                <i class="fa-solid fa-trash mr-2"></i> Vider tout le ticket
+            </button>
         </div>
     </div>
 
@@ -360,7 +380,6 @@
                 return;
             }
 
-            // Calcul du bankroll dynamique pour avoir la mise actuelle
             let runningBankroll = INITIAL_BANKROLL;
             currentMatches.forEach(m => {
                 if (globalBets[m.id]) {
@@ -393,7 +412,6 @@
                 let winner = match.winner;
                 let myBet = globalBets[match.id]; 
 
-                // Design des boutons avec verrouillage
                 let cursorCls = isLocked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer';
                 let hovBlue = isLocked ? '' : 'hover:bg-blue-800/60 hover:text-white';
                 let hovEme = isLocked ? '' : 'hover:bg-emerald-800/60 hover:text-white';
@@ -487,7 +505,6 @@
             let ticketListHTML = '';
             
             let runningBankroll = INITIAL_BANKROLL;
-            // On calcule d'abord la bankroll réelle pour connaitre la taille des mises
             currentMatches.forEach(m => {
                 let pick = globalBets[m.id];
                 if (pick && m.status === 'FINISHED' && m.winner) {
@@ -551,11 +568,25 @@
                 try { document.getElementById('slipCountBadge').textContent = slipC; } catch(e){}
                 try { document.getElementById('ticketMatchesList').innerHTML = ticketListHTML; } catch(e){}
                 try { document.getElementById('ticketSimpleStake').textContent = `${(slipC * stake).toFixed(2)} €`; } catch(e){}
+                try { document.getElementById('ticketSimpleGain').textContent = `${simGross.toFixed(2)} €`; } catch(e){}
                 
-                let sClass = simNet > 0 ? "text-emerald-400 font-black" : (simNet < 0 ? "text-red-400 font-black" : "text-orange-400 font-black");
+                let sClass = simNet > 0 ? "text-emerald-400 font-black" : (simNet < 0 ? "text-red-400 font-black" : "text-zinc-400 font-bold");
                 let sSign = simNet > 0 ? "+" : "";
                 try { document.getElementById('ticketSimpleNet').innerHTML = `<span class="${sClass}">${sSign}${simNet.toFixed(2)} €</span>`; } catch(e){}
-                try { document.getElementById('slipComboGainMini').innerHTML = `<span class="${sClass}">${sSign}${simNet.toFixed(2)} €</span>`; } catch(e){}
+                
+                let cPot = cLost ? 0 : (cOdd * stake);
+                let cText = cLost ? "Perdu (0.00 €)" : `${cPot.toFixed(2)} €`;
+                let cClass = cLost ? "text-red-400 font-black" : "text-amber-400 font-black";
+                
+                try { document.getElementById('ticketComboOdds').textContent = cOdd.toFixed(2); } catch(e){}
+                try {
+                    let mainCombo = document.getElementById('ticketComboGain');
+                    mainCombo.textContent = cText; mainCombo.className = cClass + " text-sm";
+                } catch(e){}
+                try {
+                    let miniGain = document.getElementById('slipComboGainMini');
+                    miniGain.innerHTML = `<span class="${cClass}">${cText}</span>`;
+                } catch(e){}
                 
             } else { 
                 bar.classList.add('hidden');
@@ -617,7 +648,7 @@
 
                     if (match.status === 'FINISHED' && match.winner) {
                         if (myBet === match.winner) {
-                            let netWin = (1.80 * currentStake) - currentStake; // Multiplicateur moyen NBA
+                            let netWin = (1.80 * currentStake) - currentStake; 
                             dailyProfit += netWin;
                             currentBankroll += netWin;
                         } else {
