@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V25 Ticket & Historique Réparé</title>
+    <title>Turf - V26 Ticket & Force Refresh</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -26,7 +26,7 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-3 sm:p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-700">
-                <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">Pro V25</span>
+                <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">Pro V26</span>
             </h1>
             
             <div class="flex items-center space-x-1.5 sm:space-x-2">
@@ -36,11 +36,11 @@
                     <span id="headerNextStake">5.00 €</span>
                 </div>
                 
-                <button id="btnArrivalAlarm" onclick="toggleArrivalAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Alerte Arrivée Officielle">
-                    <i id="iconArrivalAlarm" class="fa-solid fa-flag-checkered"></i>
+                <button onclick="resetAllCache()" class="bg-red-900/50 hover:bg-red-600 text-red-300 hover:text-white w-8 h-8 rounded-lg border border-red-500/50 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Purger la mémoire et forcer l'actualisation (Réparer)">
+                    <i class="fa-solid fa-trash-can"></i>
                 </button>
-                
-                <button id="btnStartAlarm" onclick="toggleStartAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Alerte Départ (1min30 avant)">
+
+                <button id="btnStartAlarm" onclick="toggleStartAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Alerte Départ">
                     <i id="iconStartAlarm" class="fa-solid fa-bell-slash"></i>
                 </button>
 
@@ -63,7 +63,7 @@
                     100% Trot
                 </button>
                 <button id="btnFilterAll" onclick="setDisciplineMode('ALL')" class="bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer">
-                    Toutes Courses (Monde)
+                    Toutes Courses
                 </button>
             </div>
         </div>
@@ -111,15 +111,15 @@
                 <!-- BASE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
                     <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">RÉEL</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori)</div>
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
-                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant (1€ virt.)</span>
+                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant</span>
                             <span id="statBaseGag" class="text-[9px] text-zinc-500 font-bold my-0.5">0 / 0</span>
                             <span id="gainBaseGag" class="font-bold text-zinc-300 mt-0.5">0.00 €</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-emerald-500/30 text-center flex flex-col justify-center shadow-inner">
-                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé (Réel)</span>
+                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé</span>
                             <span id="statBasePla" class="text-[9px] text-emerald-500/70 font-bold my-0.5">0 / 0</span>
                             <span id="gainBasePla" class="font-bold text-emerald-400 mt-0.5">0.00 €</span>
                         </div>
@@ -132,12 +132,12 @@
                     <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Pépite</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
-                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant (1€ virt.)</span>
+                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant</span>
                             <span id="statPepiteGag" class="text-[9px] text-zinc-500 font-bold my-0.5">0 / 0</span>
                             <span id="gainPepiteGag" class="font-bold text-zinc-300 mt-0.5">0.00 €</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-amber-500/30 text-center flex flex-col justify-center">
-                            <span class="text-[8px] text-amber-400 block uppercase font-bold">Placé (Simu)</span>
+                            <span class="text-[8px] text-amber-400 block uppercase font-bold">Placé</span>
                             <span id="statPepitePla" class="text-[9px] text-amber-500/70 font-bold my-0.5">0 / 0</span>
                             <span id="gainPepitePla" class="font-bold text-amber-400 mt-0.5">0.00 €</span>
                         </div>
@@ -178,7 +178,6 @@
             </select>
         </div>
 
-        <!-- ARRIVÉE FORCÉ EN JS -->
         <div id="arrivalBlock" style="display: none;" class="bg-blue-950/40 border border-blue-500/40 rounded-xl p-3.5 space-y-2">
             <h2 class="text-xs font-bold uppercase text-blue-400 tracking-wider flex items-center">
                 <i class="fa-solid fa-flag-checkered mr-1.5"></i> Arrivée Officielle
@@ -186,7 +185,6 @@
             <div id="arrivalList" class="flex flex-wrap gap-2 text-xs font-bold text-white"></div>
         </div>
 
-        <!-- RAPPORTS FORCÉ EN JS -->
         <div id="reportsBlock" style="display: none;" class="bg-zinc-900 border border-emerald-500/30 rounded-xl p-3.5 space-y-2">
             <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center">
                 <i class="fa-solid fa-euro-sign mr-1.5"></i> Rapports Définitifs (pour 1 €)
@@ -200,9 +198,6 @@
                     <i class="fa-solid fa-star mr-1.5"></i> Nos 2 Chevaux Clés
                 </h2>
                 <div class="flex items-center space-x-1.5 flex-wrap">
-                    <a href="https://www.equidia.fr/direct?utm_source=intern&utm_medium=header_menu&utm_campaign=Home" target="_blank" class="bg-red-600 hover:bg-red-500 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold shadow transition flex items-center cursor-pointer">
-                        <i class="fa-solid fa-video mr-1.5"></i> Direct 🎥
-                    </a>
                     <button onclick="goToPrevRace()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 font-semibold transition flex items-center shadow cursor-pointer" title="Course précédente">
                         <i class="fa-solid fa-backward-step"></i>
                     </button>
@@ -249,7 +244,7 @@
         </div>
     </main>
 
-    <!-- TICKET FLOTTANT POUR LES PARIS MANUELS -->
+    <!-- TICKET FLOTTANT POUR LES PARIS MANUELS (ADAPTÉ POUR PC) -->
     <div id="betSlipBar" class="hidden fixed bottom-0 left-0 right-0 md:left-auto md:right-8 md:bottom-8 md:w-[400px] md:rounded-2xl z-50 bg-zinc-900 border-t-2 md:border-2 border-emerald-500 shadow-[0_-10px_40px_rgba(0,0,0,0.9)] flex-col max-h-[85vh] md:max-h-[75vh] transition-all duration-300">
         
         <div class="p-4 w-full flex justify-between items-center cursor-pointer hover:bg-zinc-800/50 transition md:rounded-t-2xl" onclick="toggleTicket()">
@@ -317,6 +312,9 @@
     </div>
 
     <script>
+        // SÉCURISATION MAXIMALE V26 (Changement d'ID pour tout forcer à se re-télécharger)
+        const CACHE_VERSION = "v26";
+        
         function safeGetLocal(key) {
             try { 
                 let item = localStorage.getItem(key);
@@ -335,6 +333,16 @@
             const mo = String(d.getMonth() + 1).padStart(2, '0');
             const da = String(d.getDate()).padStart(2, '0');
             return `${yr}-${mo}-${da}`;
+        }
+        
+        function resetAllCache() {
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('race_cache_') || k.startsWith('pmu_stats_') || k.startsWith('fabturf_')) {
+                    localStorage.removeItem(k);
+                }
+            });
+            showToast("Mémoire complètement purgée !", "success");
+            setTimeout(() => location.reload(), 1000);
         }
 
         document.getElementById('raceDate').value = getLocalDateString();
@@ -616,7 +624,7 @@
             const statusText = document.getElementById('statusText');
             statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des courses...';
 
-            globalBets = safeGetLocal("fabturf_v21_bets_" + dateInput);
+            globalBets = safeGetLocal(`fabturf_${CACHE_VERSION}_bets_` + dateInput);
 
             if (document.getElementById('historyBlock').style.display !== 'none' && document.getElementById('historyBlock').style.display !== '') showHistoryStats();
 
@@ -959,7 +967,7 @@
             } else {
                 globalBets[raceKey] = { num: horseNum, name: horseName, odds: odds, raceName: raceName };
             }
-            safeSetLocal("fabturf_v21_bets_" + d, globalBets);
+            safeSetLocal(`fabturf_${CACHE_VERSION}_bets_` + d, globalBets);
             
             fetchRaceData(); 
             calculateDailyStats(); 
@@ -968,7 +976,7 @@
         function clearManualBets() {
             let d = document.getElementById('raceDate').value;
             globalBets = {};
-            safeSetLocal("fabturf_v21_bets_" + d, globalBets);
+            safeSetLocal(`fabturf_${CACHE_VERSION}_bets_` + d, globalBets);
             fetchRaceData();
             calculateDailyStats();
             showToast("Ticket complètement vidé", "info");
@@ -996,9 +1004,6 @@
             let slipC = 0, simGross = 0, simNet = 0, cOdd = 1.0, cLost = false;
             let ticketListHTML = '';
             
-            let dateInput = document.getElementById('raceDate').value;
-            let ddmmyyyy = dateInput.split('-').reverse().join('');
-
             Object.keys(globalBets).forEach(raceKey => {
                 let bet = globalBets[raceKey];
                 slipC++;
@@ -1008,8 +1013,7 @@
                 let mIcon = '<i class="fa-solid fa-clock text-zinc-500"></i>';
                 let mColor = "text-zinc-300";
 
-                // VÉRIFICATION V25 (Nouveau cache purgé)
-                let cacheKey = `race_cache_v25_${raceKey}`;
+                let cacheKey = `race_cache_${CACHE_VERSION}_${raceKey}`;
                 let savedData = localStorage.getItem(cacheKey);
                 if (savedData) {
                     let raceData = JSON.parse(savedData);
@@ -1295,7 +1299,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_multidis_v21_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_multidis_${CACHE_VERSION}_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0, manualProfit: 0 };
@@ -1417,9 +1421,7 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                
-                // FORCE LA PURGE V25 POUR SUPPRIMER LES CACHES CORROMPUS
-                let cacheKey = `race_cache_v25_${ddmmyyyy}_${r.rNum}_${r.cNum}`; 
+                let cacheKey = `race_cache_${CACHE_VERSION}_${ddmmyyyy}_${r.rNum}_${r.cNum}`; 
 
                 let raceData = null;
                 let savedData = localStorage.getItem(cacheKey);
@@ -1428,7 +1430,7 @@
                 
                 if (savedData && !isRaceLiveBypass) {
                     raceData = JSON.parse(savedData);
-                    // SÉCURITÉ : Si la course a plus de 45 minutes mais que les gains ne sont pas là, on détruit le cache
+                    // SI MEMOIRE VIDE OU INCOMPLETE SUR COURSE PASSEE, ON FORCE LA SUPPRESSION DU CACHE
                     if (!raceData.isComplete && r.time > 0 && (now - r.time) > 45 * 60 * 1000) {
                         raceData = null; 
                     }
@@ -1436,12 +1438,12 @@
                 
                 if (!raceData) {
                     if (!isAuto && statsProgress) {
-                        statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length})`;
+                        statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) PMU...`;
                     }
                     await sleep(200); 
                     let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum);
                     
-                    let isComplete = (rapportsList.length > 0);
+                    let isComplete = (rapportsList.length > 0) || isPastDate; // Si c'est hier, on force la complétion pour arrêter de fetcher
                     raceData = { partants, rapportsList, isComplete };
                     
                     if (raceData.isComplete && partants.length > 0) {
@@ -1580,14 +1582,13 @@
             
             let manualNet = updateBetSlipOnly();
 
-            // SAUVEGARDE DE TOUS LES GAINS (BASE, PEPITE ET PERSO)
             if (coursesValidees > 0 || manualNet !== 0) {
                 let histObj = {
                     baseProfit: totalProfitBasePla, 
                     pepiteProfit: totalProfitPepitePla,
                     manualProfit: manualNet
                 };
-                localStorage.setItem(`pmu_stats_multidis_v21_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify(histObj));
+                localStorage.setItem(`pmu_stats_multidis_${CACHE_VERSION}_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify(histObj));
             }
             
             let hb = document.getElementById('historyBlock');
