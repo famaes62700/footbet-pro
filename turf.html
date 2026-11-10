@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V21 Interface Symétrique</title>
+    <title>Turf - V24 Ticket & Paris Multiples</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -19,20 +19,20 @@
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-10">
+<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-40">
 
-    <div id="toastContainer" class="fixed bottom-4 right-4 z-[9999] flex flex-col space-y-2 pointer-events-none"></div>
+    <div id="toastContainer" class="fixed bottom-24 right-4 z-[9999] flex flex-col space-y-2 pointer-events-none"></div>
 
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-3 sm:p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
-            <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center">
-                <i class="fa-solid fa-horse-head mr-1 sm:mr-2"></i><span class="hidden sm:inline">Turf</span>
+            <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-700">
+                <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">Pro V24</span>
             </h1>
             
             <div class="flex items-center space-x-1.5 sm:space-x-2">
                 
                 <div class="text-xs bg-zinc-800 px-2 py-1 rounded-lg border border-emerald-500/30 text-emerald-400 font-bold flex flex-col items-end shadow mr-1">
-                    <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">À Jouer (Base)</span>
+                    <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">Mise Auto</span>
                     <span id="headerNextStake">5.00 €</span>
                 </div>
                 
@@ -70,12 +70,12 @@
 
         <div class="flex justify-between items-center bg-zinc-950 border border-zinc-800 p-2 rounded-xl">
             <div id="statusText" class="text-xs text-amber-400 font-mono flex items-center">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion PMU...
             </div>
             <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded">Prêt</div>
         </div>
 
-        <!-- HISTORIQUE CUMULÉ FORCÉ EN JAVASCRIPT -->
+        <!-- HISTORIQUE CUMULÉ -->
         <div id="historyBlock" style="display: none;" class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
@@ -102,7 +102,7 @@
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour</h2>
-                    <p class="text-[10px] text-zinc-400">Rattrapage optimisé • Base 5€ • <strong class="text-emerald-400">Illimité</strong></p>
+                    <p class="text-[10px] text-zinc-400">Rattrapage optimisé • Base 5€</p>
                 </div>
             </div>
 
@@ -146,8 +146,6 @@
 
             <!-- MISE MAX ET DÉFICITS (SYMÉTRIQUE) -->
             <div class="grid grid-cols-2 gap-3 text-[11px] bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 text-zinc-300">
-                
-                <!-- GAUCHE : BASE -->
                 <div class="flex flex-col space-y-1 border-r border-zinc-700/50 pr-3">
                     <span class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement (Base)</span>
                     <span class="flex justify-between">Joué: <strong id="totalSpentText" class="text-white">0.00 €</strong></span>
@@ -158,7 +156,6 @@
                     </div>
                 </div>
 
-                <!-- DROITE : PÉPITE -->
                 <div class="flex flex-col space-y-1 pl-1">
                     <span class="text-[9px] uppercase text-amber-400 font-bold mb-0.5">Investissement (Pépite)</span>
                     <span class="flex justify-between">Joué: <strong id="totalSpentPepiteText" class="text-white">0.00 €</strong></span>
@@ -168,7 +165,6 @@
                         <strong id="nextStakePepiteText" class="text-amber-400 bg-zinc-900 px-2 py-1 rounded border border-amber-500/30 font-black text-xs shadow-md block text-center">Mise: 5.00 €</strong>
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -232,13 +228,13 @@
         </div>
 
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden text-xs shadow-xl">
-            <div id="raceInfoDetails" class="p-3.5 border-b border-zinc-800 font-bold text-zinc-300 flex justify-between items-center">
+            <div id="raceInfoDetails" class="p-3 border-b border-zinc-800 font-bold text-zinc-300 flex justify-between items-center">
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead>
                         <tr class="bg-zinc-800/60 text-zinc-400 border-b border-zinc-800">
-                            <th class="p-3">N° / Nom</th>
+                            <th class="p-3">N° / Nom <span class="text-[9px] font-normal text-zinc-500">(Cliquez pour parier)</span></th>
                             <th class="p-3">Musique</th>
                             <th class="p-3">Cote</th>
                             <th class="p-3">Score Pépite</th>
@@ -251,6 +247,69 @@
             </div>
         </div>
     </main>
+
+    <!-- TICKET FLOTTANT POUR LES PARIS MANUELS (ADAPTÉ POUR PC) -->
+    <div id="betSlipBar" class="hidden fixed bottom-0 left-0 right-0 md:left-auto md:right-8 md:bottom-8 md:w-[400px] md:rounded-2xl z-50 bg-zinc-900 border-t-2 md:border-2 border-emerald-500 shadow-[0_-10px_40px_rgba(0,0,0,0.9)] flex-col max-h-[85vh] md:max-h-[75vh] transition-all duration-300">
+        
+        <div class="p-4 w-full flex justify-between items-center cursor-pointer hover:bg-zinc-800/50 transition md:rounded-t-2xl" onclick="toggleTicket()">
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <i class="fa-solid fa-ticket text-emerald-500 text-3xl"></i>
+                    <span id="slipCountBadge" class="absolute -top-2 -right-2 bg-amber-500 text-zinc-900 font-black text-xs w-5 h-5 flex items-center justify-center rounded-full shadow">0</span>
+                </div>
+                <div>
+                    <div class="text-sm font-black text-white uppercase tracking-wider">Votre Ticket Turf <i id="ticketChevron" class="fa-solid fa-chevron-up ml-2 text-zinc-500 transition-transform"></i></div>
+                    <div class="text-xs text-zinc-400 mt-0.5">Cliquez pour voir les détails</div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                 <div class="text-right">
+                    <span class="text-[10px] text-amber-400 uppercase font-bold block">Gain Max Combiné</span>
+                    <strong id="slipComboGainMini" class="text-amber-400 font-black text-base">0.00 €</strong>
+                 </div>
+                 <button onclick="clearManualBets(); event.stopPropagation();" class="text-zinc-500 hover:text-red-500 p-2 transition cursor-pointer" title="Vider le ticket"><i class="fa-solid fa-trash text-lg"></i></button>
+            </div>
+        </div>
+
+        <div id="ticketDetails" class="hidden flex-col w-full px-4 pb-5 overflow-y-auto border-t border-zinc-800 pt-4">
+            
+            <div class="text-xs uppercase font-bold text-zinc-400 mb-3">Vos sélections</div>
+            <div id="ticketMatchesList" class="mb-5 space-y-2"></div>
+
+            <div class="space-y-4">
+                <div class="bg-zinc-950 border border-emerald-500/30 rounded-xl p-4 shadow-inner">
+                    <div class="text-xs uppercase font-bold text-emerald-400 mb-1">Option 1 : Paris Simples</div>
+                    <div class="text-xs text-zinc-400 mb-3">5€ joués sur chaque cheval séparément</div>
+                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2">
+                        <span class="text-xs text-zinc-500">Mise Totale:</span>
+                        <span id="ticketSimpleStake" class="font-bold text-white text-sm">0.00 €</span>
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-xs text-zinc-500">Gain Potentiel max:</span>
+                        <span id="ticketSimpleGain" class="font-black text-emerald-400 text-base">0.00 €</span>
+                    </div>
+                </div>
+
+                <div class="bg-zinc-950 border border-amber-500/30 rounded-xl p-4 relative overflow-hidden shadow-inner">
+                    <div class="absolute -right-4 -top-4 text-amber-500/5 text-6xl"><i class="fa-solid fa-fire"></i></div>
+                    <div class="text-xs uppercase font-bold text-amber-400 mb-1 relative z-10">Option 2 : Pari Combiné</div>
+                    <div class="text-xs text-zinc-400 mb-3 relative z-10">1 seule mise de 5€ avec cotes multipliées</div>
+                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2 relative z-10">
+                        <span class="text-xs text-zinc-500">Cote Totale:</span>
+                        <span id="ticketComboOdds" class="font-bold text-white text-sm">1.00</span>
+                    </div>
+                    <div class="flex justify-between items-center mt-1 relative z-10">
+                        <span class="text-xs text-zinc-500">Gain Pot. (pour 5€):</span>
+                        <span id="ticketComboGain" class="font-black text-amber-400 text-lg">0.00 €</span>
+                    </div>
+                </div>
+                
+                <button onclick="clearManualBets()" class="w-full bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/50 py-3 rounded-xl font-bold text-sm transition shadow flex items-center justify-center cursor-pointer">
+                    <i class="fa-solid fa-trash mr-2"></i> Vider tout le ticket
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // SÉCURISATION MAXIMALE DU CACHE
@@ -281,7 +340,11 @@
         
         let hasAutoTransitioned = {};
         let isCalculatingStats = false;
+        let isTicketExpanded = false;
         
+        // MEMOIRE DES PARIS MANUELS
+        let globalBets = {};
+
         let audioStart = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         let audioArrival = new Audio('https://assets.mixkit.co/active_storage/sfx/2870/2870-preview.mp3');
 
@@ -300,19 +363,6 @@
                 showToast("Mode Toutes Courses activé");
             }
             loadLivePmu();
-        }
-
-        function resetAllCache() {
-            notifiedArrivals = {};
-            hasAutoTransitioned = {};
-            Object.keys(localStorage).forEach(k => {
-                if (k.startsWith('race_cache_') || k.startsWith('pmu_stats_')) {
-                    localStorage.removeItem(k);
-                }
-            });
-            showToast("Mémoire locale totalement purgée !", "success");
-            fetchRaceData(false);
-            calculateDailyStats(false);
         }
 
         function onDateChange() {
@@ -413,7 +463,6 @@
             }
         }
 
-        // RAFRAÎCHISSEMENT AUTOMATIQUE TOUTES LES 10 SECONDES
         setInterval(() => {
             let mIdx = document.getElementById('meetingSelect').value;
             let cIdx = document.getElementById('raceSelect').value;
@@ -472,11 +521,11 @@
 
         function getDisciplineBadge(course) {
             let s = String(course.specialite || course.discipline || 'COURSE').toUpperCase();
-            if (s.includes('MONTE')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">MONTÉ</span>';
-            if (s.includes('ATTEL')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">ATTELÉ</span>';
-            if (s.includes('PLAT')) return '<span class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">PLAT</span>';
-            if (s.includes('HAIES') || s.includes('STEEPLE') || s.includes('OBST')) return '<span class="bg-purple-500/20 text-purple-400 border border-purple-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">OBSTACLE</span>';
-            return `<span class="bg-zinc-500/20 text-zinc-300 border border-zinc-500/40 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">${s}</span>`;
+            if (s.includes('MONTE')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">MONTÉ</span>';
+            if (s.includes('ATTEL')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">ATTELÉ</span>';
+            if (s.includes('PLAT')) return '<span class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">PLAT</span>';
+            if (s.includes('HAIES') || s.includes('STEEPLE') || s.includes('OBST')) return '<span class="bg-purple-500/20 text-purple-400 border border-purple-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">OBSTACLE</span>';
+            return `<span class="bg-zinc-500/20 text-zinc-300 border border-zinc-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">${s}</span>`;
         }
 
         async function smartFetchPMU(path) {
@@ -555,6 +604,8 @@
             const dateInput = document.getElementById('raceDate').value;
             const statusText = document.getElementById('statusText');
             statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des courses...';
+
+            globalBets = safeGetLocal("fabturf_v24_bets_" + dateInput);
 
             if (document.getElementById('historyBlock').style.display !== 'none' && document.getElementById('historyBlock').style.display !== '') showHistoryStats();
 
@@ -885,6 +936,159 @@
             return Math.max(BASE_STAKE + 3, stake);
         }
 
+        // TICKET : PLACER UN PARI
+        function placeBet(raceKey, horseNum, horseName, odds, raceName, isLocked) {
+            if (isLocked) {
+                showToast("Les paris sont fermés (course commencée) 🔒", "error");
+                return;
+            }
+
+            let d = document.getElementById('raceDate').value;
+            if (globalBets[raceKey] && globalBets[raceKey].num === horseNum) {
+                delete globalBets[raceKey];
+            } else {
+                globalBets[raceKey] = { num: horseNum, name: horseName, odds: odds, raceName: raceName };
+            }
+            safeSetLocal("fabturf_v24_bets_" + d, globalBets);
+            
+            fetchRaceData(); 
+            calculateDailyStats(); 
+        }
+
+        function clearManualBets() {
+            let d = document.getElementById('raceDate').value;
+            globalBets = {};
+            safeSetLocal("fabturf_v24_bets_" + d, globalBets);
+            fetchRaceData();
+            calculateDailyStats();
+            showToast("Ticket complètement vidé", "info");
+        }
+
+        function toggleTicket() {
+            let details = document.getElementById('ticketDetails');
+            let chevron = document.getElementById('ticketChevron');
+            let ticket = document.getElementById('betSlipBar');
+            
+            isTicketExpanded = !isTicketExpanded;
+            
+            if (isTicketExpanded) {
+                details.classList.remove('hidden');
+                details.classList.add('flex');
+                chevron.classList.replace('fa-chevron-up', 'fa-chevron-down');
+            } else {
+                details.classList.add('hidden');
+                details.classList.remove('flex');
+                chevron.classList.replace('fa-chevron-down', 'fa-chevron-up');
+            }
+        }
+
+        // MISE A JOUR DU TICKET
+        function updateBetSlipOnly() {
+            let slipC = 0, simGross = 0, simNet = 0, cOdd = 1.0, cLost = false;
+            let ticketListHTML = '';
+            
+            let dateInput = document.getElementById('raceDate').value;
+            let ddmmyyyy = dateInput.split('-').reverse().join('');
+
+            Object.keys(globalBets).forEach(raceKey => {
+                let bet = globalBets[raceKey];
+                slipC++;
+                let o = bet.odds;
+                cOdd *= o;
+                
+                let mIcon = '<i class="fa-solid fa-clock text-zinc-500"></i>';
+                let mColor = "text-zinc-300";
+
+                // VÉRIFICATION DANS LE CACHE V24 SI LA COURSE EST GAGNÉE
+                let cacheKey = `race_cache_v24_${raceKey}`;
+                let savedData = localStorage.getItem(cacheKey);
+                if (savedData) {
+                    let raceData = JSON.parse(savedData);
+                    if (raceData.isComplete) {
+                        let gGag = extractGainFromRapports(raceData.rapportsList, bet.num, 'GAGNANT');
+                        
+                        let p = raceData.partants.find(x => parseInt(x.numPmu||x.numOrdre, 10) === bet.num);
+                        let arr = p ? parseInt(p.ordreArrivee, 10) : 99;
+                        
+                        if (gGag === 0 && arr === 1) gGag = bet.odds; // Simu gain
+
+                        if (gGag > 0) {
+                            simGross += (gGag * BASE_STAKE);
+                            simNet += (gGag * BASE_STAKE) - BASE_STAKE;
+                            mIcon = '<i class="fa-solid fa-check text-emerald-400"></i>'; 
+                            mColor = "text-emerald-400 font-bold";
+                        } else {
+                            simNet -= BASE_STAKE;
+                            cLost = true;
+                            mIcon = '<i class="fa-solid fa-xmark text-red-500"></i>'; 
+                            mColor = "text-red-500 line-through opacity-60";
+                        }
+                    } else {
+                        simGross += (o * BASE_STAKE);
+                    }
+                } else {
+                    simGross += (o * BASE_STAKE);
+                }
+
+                ticketListHTML += `
+                    <div class="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-3 flex justify-between items-center text-xs mb-2">
+                        <div class="flex items-center space-x-3 w-2/3">
+                            <span class="w-5 text-center text-base">${mIcon}</span>
+                            <div class="truncate">
+                                <div class="font-bold text-white truncate">${bet.raceName || raceKey}</div>
+                                <div class="text-zinc-400 mt-0.5">Cheval : <strong class="text-emerald-400">N°${bet.num} ${bet.name}</strong></div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-zinc-500">Cote: <span class="text-white font-bold">${o.toFixed(1)}</span></div>
+                            <div class="${mColor} text-[11px] mt-0.5">Pot. ${(o*BASE_STAKE).toFixed(2)} €</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            let bar = document.getElementById('betSlipBar');
+            if (!bar) return simNet;
+            
+            if (slipC > 0) {
+                bar.classList.remove('hidden');
+                bar.classList.add('flex');
+                
+                try { document.getElementById('slipCountBadge').textContent = slipC; } catch(e){}
+                try { document.getElementById('ticketMatchesList').innerHTML = ticketListHTML; } catch(e){}
+                try { document.getElementById('ticketSimpleStake').textContent = `${(slipC * BASE_STAKE).toFixed(2)} €`; } catch(e){}
+                try { document.getElementById('ticketSimpleGain').textContent = `${simGross.toFixed(2)} €`; } catch(e){}
+                
+                let cPot = cLost ? 0 : (cOdd*BASE_STAKE);
+                let cText = cLost ? "Perdu (0.00 €)" : `${cPot.toFixed(2)} €`;
+                let cClass = cLost ? "text-red-400 font-black" : "text-amber-400 font-black";
+                
+                try { document.getElementById('ticketComboOdds').textContent = cOdd.toFixed(2); } catch(e){}
+                try {
+                    let mainCombo = document.getElementById('ticketComboGain');
+                    mainCombo.textContent = cText; mainCombo.className = cClass + " text-xl";
+                } catch(e){}
+                try {
+                    let miniGain = document.getElementById('slipComboGainMini');
+                    miniGain.textContent = cText; miniGain.className = cClass + " text-base";
+                } catch(e){}
+            } else { 
+                bar.classList.add('hidden');
+                bar.classList.remove('flex');
+                
+                isTicketExpanded = false;
+                let details = document.getElementById('ticketDetails');
+                if(details) {
+                    details.classList.add('hidden');
+                    details.classList.remove('flex');
+                }
+                let chevron = document.getElementById('ticketChevron');
+                if(chevron) chevron.classList.replace('fa-chevron-down', 'fa-chevron-up');
+            }
+
+            return simNet; 
+        }
+
         async function fetchRaceData(isBackground = false) {
             let mIdxStr = document.getElementById('meetingSelect').value;
             let rIdxStr = document.getElementById('raceSelect').value;
@@ -904,12 +1108,14 @@
             let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
             let rNum = meeting.numOfficiel || (mIdxNum + 1);
             let cNum = race.numOrdre || (rIdxNum + 1);
-            let currentRaceKey = `${ddmmyyyy}_R${rNum}_C${cNum}`;
+            let currentRaceKey = `${ddmmyyyy}_${rNum}_${cNum}`;
+            let currentRaceName = `R${rNum}C${cNum} - ${race.libelle || race.nom || 'Prix'}`;
             let now = new Date().getTime();
 
             try {
                 let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
-                // SI LA COURSE EST EN COURS (Lancée il y a moins de 50 minutes) : FORCAGE LIVE
+                let isLocked = raceStartTime > 0 && now >= raceStartTime; // VERROU ANTI-TRICHE
+                
                 if (isBackground && raceStartTime > 0 && now >= raceStartTime && (now - raceStartTime) < 50 * 60 * 1000) {
                     try {
                         let progData = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
@@ -934,7 +1140,6 @@
 
                 let hasReports = rapportsList && rapportsList.length > 0;
 
-                // GESTION DE L'ARRIVÉE OFFICIELLE : Affichage, Sonnerie et Bascule Automatique
                 if (arrivees.length > 0) {
                     arrivalBlock.style.display = 'block';
                     arrivees.slice(0, 5).forEach((p) => {
@@ -944,7 +1149,6 @@
                         arrivalList.appendChild(div);
                     });
 
-                    // 1. Sonnerie Alerte Arrivée
                     if (!notifiedArrivals[currentRaceKey]) {
                         notifiedArrivals[currentRaceKey] = true;
                         if (arrivalAlarmEnabled) {
@@ -953,12 +1157,9 @@
                         }
                     }
 
-                    // 2. Bascule Automatique à la course suivante (30s après l'arrivée officielle)
                     if (!hasAutoTransitioned[currentRaceKey]) {
                         hasAutoTransitioned[currentRaceKey] = true; 
-                        
                         showToast(`Bascule à la course suivante dans 30s... ⏱️`, "info");
-                        
                         if (autoTransitionTimer) clearTimeout(autoTransitionTimer);
                         autoTransitionTimer = setTimeout(() => {
                             autoTransitionTimer = null;
@@ -974,11 +1175,9 @@
                     arrivalBlock.style.display = 'none';
                 }
 
-                // GESTION DES RAPPORTS DÉFINITIFS
                 let reportsBlock = document.getElementById('reportsBlock');
                 let reportsGrid = document.getElementById('reportsGrid');
                 reportsGrid.innerHTML = '';
-                
                 let foundAnyReport = false;
 
                 if (hasReports) {
@@ -1046,14 +1245,23 @@
                 processed.forEach(p => {
                     let tr = document.createElement('tr');
                     let tag = p.ordreArrivee ? `<span class="ml-1 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
-                    if (p.num === baseHorse?.num) tag += '<span class="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">Favori</span>';
-                    if (p.num === nuggetHorse?.num) tag += '<span class="ml-1 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">Pépite</span>';
+                    if (p.num === baseHorse?.num) tag += '<span class="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold ml-1">Favori</span>';
+                    if (p.num === nuggetHorse?.num) tag += '<span class="ml-1 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold ml-1">Pépite</span>';
+                    
+                    let isSelected = globalBets[currentRaceKey] && globalBets[currentRaceKey].num === p.num;
+                    
+                    if (isLocked) {
+                        tr.className = isSelected ? "bg-emerald-900/40 border-l-4 border-emerald-500 opacity-70 cursor-not-allowed" : "border-b border-zinc-800/50 opacity-70 cursor-not-allowed";
+                    } else {
+                        tr.className = isSelected ? "bg-emerald-900/40 border-l-4 border-emerald-500 cursor-pointer" : "border-b border-zinc-800/50 hover:bg-zinc-800/50 cursor-pointer transition";
+                    }
+                    
+                    tr.onclick = () => placeBet(currentRaceKey, p.num, p.nom, p.cote, currentRaceName, isLocked);
 
                     tr.innerHTML = `<td class="p-3 font-bold"><span class="text-emerald-400 mr-2">${p.num}</span>${p.nom}${tag}</td><td class="p-3 text-zinc-300 font-mono">${p.musique}</td><td class="p-3 text-emerald-400 font-bold">${p.coteDisplay}</td><td class="p-3 font-semibold text-zinc-500">${p.nuggetScore}%</td>`;
                     tbody.appendChild(tr);
                 });
                 
-                // BADGE "EN COURS" ou "TERMINÉ" (Comme sur NFL)
                 let timeInfo = race.heureDepart ? `[${formatTime(race.heureDepart)}] ` : '';
                 let discBadge = getDisciplineBadge(race);
                 let statusBadge = "";
@@ -1069,7 +1277,7 @@
                 document.getElementById('raceInfoDetails').innerHTML = `
                     <div class="flex items-center">
                         <span class="mr-2 text-zinc-400 font-normal">${timeInfo}</span>
-                        <span>Partants classés par cotes</span>
+                        <span>Sélection par cotes</span>
                         ${discBadge} ${statusBadge}
                     </div>
                 `;
@@ -1077,7 +1285,7 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_multidis_v21_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_multidis_v24_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
             return { baseProfit: 0, pepiteProfit: 0 };
@@ -1138,7 +1346,7 @@
                 }
             }
             if(monthsGrid.innerHTML === '') {
-                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Aucune donnée calculée pour cette année.</div>';
+                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Aucune donnée calculée.</div>';
             }
         }
 
@@ -1147,7 +1355,6 @@
             isCalculatingStats = true;
             
             let statsProgress = document.getElementById('statsProgress');
-            
             let dateInput = document.getElementById('raceDate').value;
             let parts = dateInput.split('-');
             let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
@@ -1175,6 +1382,7 @@
 
             if (pastRacesToday.length === 0) {
                 if (!isAuto && statsProgress) statsProgress.textContent = "Aucune course passée.";
+                updateBetSlipOnly();
                 isCalculatingStats = false;
                 return;
             }
@@ -1195,12 +1403,11 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `race_cache_v21_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `race_cache_v24_${ddmmyyyy}_${r.rNum}_${r.cNum}`; // PASSAGE EN V24 POUR FORCER LA PURGE
 
                 let raceData = null;
                 let savedData = localStorage.getItem(cacheKey);
                 
-                // BYPASS LIVE CACHE (Refetch si la course est récente pour actualiser les arrivées)
                 let isRaceLiveBypass = (r.time > 0 && now >= r.time && (now - r.time) < 55 * 60 * 1000);
                 
                 if (savedData && !isRaceLiveBypass) {
@@ -1306,7 +1513,6 @@
                 }
             }
 
-            // SÉCURITÉ DOM UPDATES
             try {
                 document.getElementById('statBaseGag').textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
                 document.getElementById('statBasePla').textContent = `${baseWinsPla} / ${coursesValidees}`;
@@ -1348,7 +1554,7 @@
                 if (headerNextStake) headerNextStake.textContent = `${nextStakeBase.toFixed(2)} €`;
                 
                 if (coursesValidees > 0) {
-                    localStorage.setItem(`pmu_stats_multidis_v21_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
+                    localStorage.setItem(`pmu_stats_multidis_v24_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
                         baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
                     }));
                 }
@@ -1359,6 +1565,7 @@
                 if (hb && hb.style.display !== 'none' && hb.style.display !== '') showHistoryStats();
             } catch(e) {}
             
+            updateBetSlipOnly();
             isCalculatingStats = false;
         }
 
