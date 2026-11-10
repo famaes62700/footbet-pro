@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NFLBet Pro - Football Américain</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -13,221 +12,220 @@
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-36">
+<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-40">
 
     <div id="toastContainer" class="fixed bottom-24 right-4 z-[9999] flex flex-col space-y-2 pointer-events-none"></div>
 
-    <header class="bg-zinc-900/95 backdrop-blur-md border-b border-zinc-800 p-3 sm:p-4 sticky top-0 z-40 shadow-lg">
-        <div class="max-w-3xl mx-auto flex justify-between items-center mb-2.5">
-            <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-orange-500 flex items-center bg-zinc-800/80 px-3.5 py-2 rounded-xl border border-zinc-700 shadow">
-                <i class="fa-solid fa-football mr-2.5 text-orange-500 text-lg"></i>NFLBet <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">Pro</span>
+    <header class="bg-zinc-900/95 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
+        <div class="max-w-3xl mx-auto flex justify-between items-center mb-3">
+            <h1 class="text-lg font-black uppercase tracking-wider text-orange-500 flex items-center bg-zinc-800/80 px-4 py-2 rounded-xl border border-zinc-700 shadow">
+                <i class="fa-solid fa-football mr-3 text-orange-500 text-xl"></i>NFLBet <span class="text-[11px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded font-bold">Pro</span>
             </h1>
             
-            <div class="flex items-center space-x-1.5 sm:space-x-2">
-                <div class="text-xs bg-zinc-800 px-2.5 py-1 rounded-lg border border-emerald-500/30 text-emerald-400 font-bold flex flex-col items-end shadow">
-                    <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">Mise Auto (Sûre)</span>
+            <div class="flex items-center space-x-3">
+                <div class="text-xs bg-zinc-800 px-3 py-1.5 rounded-lg border border-emerald-500/30 text-emerald-400 font-bold flex flex-col items-end shadow">
+                    <span class="text-[9px] text-zinc-400 font-normal uppercase tracking-wide">Mise Auto</span>
                     <span id="headerNextStake">5.00 €</span>
                 </div>
-                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow">
-                    <i class="fa-solid fa-calendar-days text-orange-500"></i>
+                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-10 h-10 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow cursor-pointer">
+                    <i class="fa-solid fa-calendar-days text-orange-500 text-lg"></i>
                 </button>
-                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-orange-500" onchange="onDateChange()">
+                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-sm px-3 py-2 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-orange-500" onchange="onDateChange()">
             </div>
         </div>
 
-        <div class="max-w-3xl mx-auto flex items-center gap-2 overflow-x-auto scrollbar-hide">
-            <button id="btnFilterLive" onclick="toggleLiveFilter()" class="bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-500/50 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center whitespace-nowrap">
-                <i class="fa-solid fa-fire mr-1.5"></i> En Direct
+        <div class="max-w-3xl mx-auto flex items-center gap-3 overflow-x-auto scrollbar-hide pb-1">
+            <button id="btnFilterLive" onclick="toggleLiveFilter()" class="bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-500/50 px-4 py-2 rounded-lg text-sm font-bold transition flex items-center whitespace-nowrap cursor-pointer">
+                <i class="fa-solid fa-fire mr-2"></i> En Direct
             </button>
-            <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700 focus:outline-none focus:border-orange-500 flex-grow">
-                <option value="ALL">National Football League (NFL)</option>
+            <select id="compSelect" onchange="applyFilters()" class="bg-zinc-800 text-white text-sm px-4 py-2 rounded-lg border border-zinc-700 focus:outline-none focus:border-orange-500 flex-grow cursor-pointer">
+                <option value="ALL">Toute la NFL</option>
             </select>
-            <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-orange-500 px-3 py-1.5 rounded-lg border border-orange-500/30 text-xs font-bold transition flex items-center shadow flex-shrink-0" title="Actualiser">
+            <button onclick="loadFootballMatches(false)" class="bg-zinc-800 hover:bg-zinc-700 text-orange-500 px-4 py-2 rounded-lg border border-orange-500/30 text-sm font-bold transition flex items-center shadow flex-shrink-0 cursor-pointer" title="Actualiser">
                 <i class="fa-solid fa-rotate"></i>
             </button>
         </div>
     </header>
 
-    <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4">
+    <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-5">
         
-        <div class="flex justify-between items-center bg-zinc-950 border border-zinc-800 p-2 rounded-xl">
-            <div id="statusText" class="text-xs text-orange-500 font-mono flex items-center truncate">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Démarrage...
+        <div class="flex justify-between items-center bg-zinc-950 border border-zinc-800 p-3 rounded-xl">
+            <div id="statusText" class="text-sm text-orange-500 font-mono flex items-center truncate">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement NFL...
             </div>
-            <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded flex-shrink-0">Prêt</div>
+            <div id="statsProgress" class="text-xs text-zinc-300 font-mono text-right bg-zinc-900 px-3 py-1 rounded flex-shrink-0">Prêt</div>
         </div>
 
-        <!-- HISTORIQUE CUMULÉ -->
-        <div id="historyBlock" style="display: none;" class="bg-zinc-900 border border-orange-500/30 rounded-2xl p-4 shadow-xl mb-2">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
-                    <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés
+        <!-- HISTORIQUE -->
+        <div id="historyBlock" class="hidden bg-zinc-900 border border-orange-500/30 rounded-2xl p-5 shadow-xl mb-2">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-sm font-bold uppercase text-zinc-300 tracking-wider flex items-center">
+                    <i class="fa-solid fa-vault mr-2 text-emerald-400"></i> Vos Gains Cumulés
                 </h2>
-                <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-xl px-2 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
-                <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
-                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Cette Semaine</h3>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div class="text-zinc-300">Favori : <span id="weekBase" class="text-emerald-400 font-bold block">0.00 €</span></div>
-                        <div class="text-zinc-300">Outsider : <span id="weekPepite" class="text-amber-400 font-bold block">0.00 €</span></div>
-                        <div class="text-zinc-300">Perso : <span id="weekManual" class="text-orange-400 font-bold block">0.00 €</span></div>
+            <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                <div class="bg-zinc-800/80 p-4 rounded-xl border border-zinc-700 text-sm">
+                    <h3 class="text-xs uppercase font-bold text-zinc-300 mb-3">Cette Semaine</h3>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="text-zinc-300">Favori : <span id="weekBase" class="text-emerald-400 font-bold block text-base mt-1">0.00 €</span></div>
+                        <div class="text-zinc-300">Outsider : <span id="weekPepite" class="text-amber-400 font-bold block text-base mt-1">0.00 €</span></div>
+                        <div class="text-zinc-300">Perso : <span id="weekManual" class="text-orange-400 font-bold block text-base mt-1">0.00 €</span></div>
                     </div>
                 </div>
-                <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
-                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Mois par Mois (<span id="currentYearText"></span>)</h3>
+                <div class="bg-zinc-800/80 p-4 rounded-xl border border-zinc-700">
+                    <h3 class="text-xs uppercase font-bold text-zinc-300 mb-3">Mois par Mois (<span id="currentYearText"></span>)</h3>
                     <div id="monthsGrid" class="space-y-2"></div>
                 </div>
             </div>
         </div>
 
-        <!-- BILAN DU JOUR SYMÉTRIQUE -->
-        <div class="bg-zinc-900 border border-orange-500/30 rounded-2xl p-4 shadow-xl space-y-3">
-            <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
+        <!-- BILAN DU JOUR -->
+        <div class="bg-zinc-900 border border-orange-500/30 rounded-2xl p-5 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
                 <div>
-                    <h2 class="text-xs font-bold uppercase text-orange-500 tracking-wider">Bilan Auto NFL</h2>
-                    <p class="text-[10px] text-zinc-400">Joué auto • Base 5€</p>
+                    <h2 class="text-sm font-bold uppercase text-orange-500 tracking-wider">Bilan Auto NFL</h2>
+                    <p class="text-xs text-zinc-400 mt-1">Géré par l'algorithme • Base 5€</p>
                 </div>
                 <div class="text-right">
-                    <span class="text-[9px] uppercase text-zinc-400 block">Gains Tickets Perso</span>
-                    <span id="gainManualTotal" class="text-xs font-black text-orange-500">0.00 €</span>
+                    <span class="text-[10px] uppercase text-zinc-400 block mb-1">Gains Tickets Perso</span>
+                    <span id="gainManualTotal" class="text-lg font-black text-orange-500">0.00 €</span>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="grid grid-cols-2 gap-4 text-sm">
                 <!-- VALEUR SÛRE (FAVORI) -->
-                <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-950 text-[8px] font-black px-1.5 py-0.5 rounded shadow">AUTO FAVORI</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Favoris NFL</div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
-                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Mise (5€)</span>
-                            <span id="statBaseFlat" class="text-[9px] text-zinc-500 font-bold my-0.5">0/0</span>
-                            <span id="gainBaseFlat" class="font-bold text-zinc-300 mt-0.5 block">0.00 €</span>
+                <div class="bg-zinc-950 p-4 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
+                    <div class="absolute -top-3 -right-2 bg-emerald-500 text-zinc-950 text-[10px] font-black px-2 py-1 rounded shadow">AUTO FAVORI</div>
+                    <div class="text-xs text-zinc-400 uppercase font-bold mb-3">Favoris NFL</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-zinc-900/60 p-2 rounded-lg border border-zinc-700/50 text-center">
+                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Mise (5€)</span>
+                            <span id="statBaseFlat" class="text-[11px] text-zinc-500 font-bold my-1 block">0/0</span>
+                            <span id="gainBaseFlat" class="font-bold text-zinc-300 block">0.00 €</span>
                         </div>
-                        <div class="bg-zinc-900/60 p-2 rounded border border-emerald-500/30 text-center shadow-inner">
-                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Rattrapage</span>
-                            <span id="statBaseProg" class="text-[9px] text-emerald-500/70 font-bold my-0.5">0/0</span>
-                            <span id="gainBaseProg" class="font-bold text-emerald-400 mt-0.5 block">0.00 €</span>
+                        <div class="bg-zinc-900/60 p-2 rounded-lg border border-emerald-500/30 text-center shadow-inner">
+                            <span class="text-[9px] text-emerald-400 block uppercase font-bold">Rattrapage</span>
+                            <span id="statBaseProg" class="text-[11px] text-emerald-500/70 font-bold my-1 block">0/0</span>
+                            <span id="gainBaseProg" class="font-bold text-emerald-400 block">0.00 €</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- PÉPITE (OUTSIDER) -->
-                <div class="bg-zinc-950 p-3 rounded-xl border border-amber-500/40 relative flex flex-col justify-between">
-                    <div class="absolute -top-2 -right-2 bg-amber-500 text-zinc-950 text-[8px] font-black px-1.5 py-0.5 rounded shadow">AUTO OUTSIDER</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Outsiders (Underdogs)</div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center">
-                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Mise (5€)</span>
-                            <span id="statPepiteFlat" class="text-[9px] text-zinc-500 font-bold my-0.5">0/0</span>
-                            <span id="gainPepiteFlat" class="font-bold text-zinc-300 mt-0.5 block">0.00 €</span>
+                <div class="bg-zinc-950 p-4 rounded-xl border border-amber-500/40 relative flex flex-col justify-between">
+                    <div class="absolute -top-3 -right-2 bg-amber-500 text-zinc-950 text-[10px] font-black px-2 py-1 rounded shadow">AUTO OUTSIDER</div>
+                    <div class="text-xs text-zinc-400 uppercase font-bold mb-3">Outsiders</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-zinc-900/60 p-2 rounded-lg border border-zinc-700/50 text-center">
+                            <span class="text-[9px] text-zinc-400 block uppercase font-bold">Mise (5€)</span>
+                            <span id="statPepiteFlat" class="text-[11px] text-zinc-500 font-bold my-1 block">0/0</span>
+                            <span id="gainPepiteFlat" class="font-bold text-zinc-300 block">0.00 €</span>
                         </div>
-                        <div class="bg-zinc-900/60 p-2 rounded border border-amber-500/30 text-center">
-                            <span class="text-[8px] text-amber-400 block uppercase font-bold">Rattrapage</span>
-                            <span id="statPepiteProg" class="text-[9px] text-amber-500/70 font-bold my-0.5">0/0</span>
-                            <span id="gainPepiteProg" class="font-bold text-amber-400 mt-0.5 block">0.00 €</span>
+                        <div class="bg-zinc-900/60 p-2 rounded-lg border border-amber-500/30 text-center">
+                            <span class="text-[9px] text-amber-400 block uppercase font-bold">Rattrapage</span>
+                            <span id="statPepiteProg" class="text-[11px] text-amber-500/70 font-bold my-1 block">0/0</span>
+                            <span id="gainPepiteProg" class="font-bold text-amber-400 block">0.00 €</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- MISE MAX ET DÉFICITS -->
-            <div class="grid grid-cols-2 gap-3 text-[11px] bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 text-zinc-300">
-                <div class="flex flex-col space-y-1 border-r border-zinc-700/50 pr-3">
-                    <span class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Gestion (Favori)</span>
+            <div class="grid grid-cols-2 gap-4 text-xs bg-zinc-800/60 p-4 rounded-xl border border-zinc-700/50 text-zinc-300">
+                <div class="flex flex-col space-y-1.5 border-r border-zinc-700/50 pr-4">
+                    <span class="text-[10px] uppercase text-emerald-400 font-bold mb-1">Gestion (Favori)</span>
                     <span class="flex justify-between">Joué: <strong id="totalSpentBaseText" class="text-white">0.00 €</strong></span>
                     <span class="flex justify-between">Max: <strong id="maxStakeBaseText" class="text-zinc-300">0.00 €</strong></span>
                     <span class="flex justify-between">Déficit: <strong id="deficitBaseText" class="text-red-400">0.00 €</strong></span>
-                    <div class="pt-1.5">
-                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-2 py-1 rounded border border-emerald-500/30 font-black text-xs shadow-md block text-center">Mise: 5.00 €</strong>
+                    <div class="pt-2">
+                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 py-1.5 rounded-lg border border-emerald-500/30 font-black shadow-md block text-center">Mise: 5.00 €</strong>
                     </div>
                 </div>
 
-                <div class="flex flex-col space-y-1 pl-1">
-                    <span class="text-[9px] uppercase text-amber-400 font-bold mb-0.5">Gestion (Outsider)</span>
+                <div class="flex flex-col space-y-1.5 pl-2">
+                    <span class="text-[10px] uppercase text-amber-400 font-bold mb-1">Gestion (Outsider)</span>
                     <span class="flex justify-between">Joué: <strong id="totalSpentPepiteText" class="text-white">0.00 €</strong></span>
                     <span class="flex justify-between">Max: <strong id="maxStakePepiteText" class="text-zinc-300">0.00 €</strong></span>
                     <span class="flex justify-between">Déficit: <strong id="deficitPepiteText" class="text-red-400">0.00 €</strong></span>
-                    <div class="pt-1.5">
-                        <strong id="nextStakePepiteText" class="text-amber-400 bg-zinc-900 px-2 py-1 rounded border border-amber-500/30 font-black text-xs shadow-md block text-center">Mise: 5.00 €</strong>
+                    <div class="pt-2">
+                        <strong id="nextStakePepiteText" class="text-amber-400 bg-zinc-900 py-1.5 rounded-lg border border-amber-500/30 font-black shadow-md block text-center">Mise: 5.00 €</strong>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- ACTIONS RAPIDES -->
-        <div class="flex flex-wrap gap-2 justify-between items-center bg-zinc-900/90 border border-zinc-800 p-2.5 rounded-xl text-xs">
-            <span class="text-zinc-400 font-bold text-[11px]"><i class="fa-solid fa-wand-magic-sparkles text-orange-500 mr-1.5"></i>Tickets :</span>
-            <div class="flex gap-1.5">
-                <button onclick="selectAllAlgo('BASE')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow">+ Favoris</button>
-                <button onclick="selectAllAlgo('PEPITE')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow">+ Outsiders</button>
-                <button onclick="clearManualBets()" class="bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/50 px-3 py-1.5 rounded-lg font-bold text-[11px] transition shadow flex items-center" title="Vider le ticket">
-                    <i class="fa-solid fa-trash mr-1.5"></i> Vider
+        <div class="flex flex-wrap gap-3 justify-between items-center bg-zinc-900/90 border border-zinc-800 p-4 rounded-xl">
+            <span class="text-zinc-400 font-bold text-sm"><i class="fa-solid fa-wand-magic-sparkles text-orange-500 mr-2"></i>Actions :</span>
+            <div class="flex gap-2">
+                <button onclick="selectAllAlgo('BASE')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-4 py-2 rounded-lg font-bold text-xs transition shadow cursor-pointer">+ Favoris</button>
+                <button onclick="selectAllAlgo('PEPITE')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 px-4 py-2 rounded-lg font-bold text-xs transition shadow cursor-pointer">+ Outsiders</button>
+                <button onclick="clearManualBets()" class="bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/50 px-4 py-2 rounded-lg font-bold text-xs transition shadow flex items-center cursor-pointer">
+                    <i class="fa-solid fa-trash mr-2"></i> Tout Vider
                 </button>
             </div>
         </div>
 
-        <div id="matchesContainer" class="space-y-3"></div>
+        <div id="matchesContainer" class="space-y-4"></div>
     </main>
 
-    <!-- TICKET FLOTTANT DÉTAILLÉ (PANIER) -->
-    <div id="betSlipBar" class="fixed bottom-0 left-0 right-0 md:left-auto md:right-8 md:bottom-8 md:w-[400px] md:rounded-2xl z-50 bg-zinc-900 border-t-2 md:border-2 border-orange-500 shadow-[0_-10px_40px_rgba(0,0,0,0.9)] flex-col max-h-[85vh] transition-all duration-300" style="display: none;">
+    <!-- TICKET FLOTTANT (ADAPTÉ POUR PC) -->
+    <!-- Sur grand écran (md:), il se place en bas à droite comme un vrai site de paris -->
+    <div id="betSlipBar" class="hidden fixed bottom-0 left-0 right-0 md:left-auto md:right-8 md:bottom-8 md:w-[400px] md:rounded-2xl z-50 bg-zinc-900 border-t-2 md:border-2 border-orange-500 shadow-[0_-10px_40px_rgba(0,0,0,0.9)] flex-col max-h-[85vh] md:max-h-[75vh] transition-all duration-300">
         
-        <div class="p-4 max-w-3xl mx-auto w-full flex justify-between items-center cursor-pointer md:rounded-t-2xl hover:bg-zinc-800/50 transition" onclick="toggleTicket()">
-            <div class="flex items-center space-x-3">
+        <div class="p-4 w-full flex justify-between items-center cursor-pointer hover:bg-zinc-800/50 transition md:rounded-t-2xl" onclick="toggleTicket()">
+            <div class="flex items-center space-x-4">
                 <div class="relative">
-                    <i class="fa-solid fa-ticket text-orange-500 text-2xl"></i>
-                    <span id="slipCountBadge" class="absolute -top-2 -right-2 bg-red-500 text-white font-black text-[10px] w-4 h-4 flex items-center justify-center rounded-full shadow">0</span>
+                    <i class="fa-solid fa-ticket text-orange-500 text-3xl"></i>
+                    <span id="slipCountBadge" class="absolute -top-2 -right-2 bg-red-500 text-white font-black text-xs w-5 h-5 flex items-center justify-center rounded-full shadow">0</span>
                 </div>
                 <div>
-                    <div class="text-xs font-black text-white uppercase tracking-wider">Votre Ticket NFL <i id="ticketChevron" class="fa-solid fa-chevron-up ml-1 text-zinc-500 transition-transform"></i></div>
-                    <div class="text-[10px] text-zinc-400">Voir les détails de vos paris</div>
+                    <div class="text-sm font-black text-white uppercase tracking-wider">Votre Ticket NFL <i id="ticketChevron" class="fa-solid fa-chevron-up ml-2 text-zinc-500 transition-transform"></i></div>
+                    <div class="text-xs text-zinc-400 mt-0.5">Cliquez pour voir les détails</div>
                 </div>
             </div>
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
                  <div class="text-right">
-                    <span class="text-[9px] text-amber-400 uppercase font-bold block">Gain Max Combiné</span>
-                    <strong id="slipComboGainMini" class="text-amber-400 font-black text-sm">0.00 €</strong>
+                    <span class="text-[10px] text-amber-400 uppercase font-bold block">Gain Max Combiné</span>
+                    <strong id="slipComboGainMini" class="text-amber-400 font-black text-base">0.00 €</strong>
                  </div>
-                 <button onclick="clearManualBets(); event.stopPropagation();" class="text-zinc-500 hover:text-red-400 p-2 transition cursor-pointer" title="Vider le ticket"><i class="fa-solid fa-trash"></i></button>
+                 <button onclick="clearManualBets(); event.stopPropagation();" class="text-zinc-500 hover:text-red-500 p-2 transition cursor-pointer" title="Vider le ticket"><i class="fa-solid fa-trash text-lg"></i></button>
             </div>
         </div>
 
-        <div id="ticketDetails" class="flex-col max-w-3xl mx-auto w-full px-4 pb-5 overflow-y-auto border-t border-zinc-800 pt-3" style="display: none;">
+        <div id="ticketDetails" class="hidden flex-col w-full px-4 pb-5 overflow-y-auto border-t border-zinc-800 pt-4">
             
-            <div class="text-[11px] uppercase font-bold text-zinc-400 mb-2">Détail Match par Match</div>
-            <div id="ticketMatchesList" class="mb-4 space-y-2"></div>
+            <div class="text-xs uppercase font-bold text-zinc-400 mb-3">Vos sélections</div>
+            <div id="ticketMatchesList" class="mb-5 space-y-2"></div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div class="bg-zinc-950 border border-emerald-500/30 rounded-xl p-3 shadow-inner">
-                    <div class="text-[10px] uppercase font-bold text-emerald-400 mb-1">Option 1 : Paris Simples</div>
-                    <div class="text-[10px] text-zinc-400 mb-2 leading-tight">5€ misés séparément sur chaque match</div>
-                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2 mt-2">
-                        <span class="text-[10px] text-zinc-500">Mise Totale:</span>
-                        <span id="ticketSimpleStake" class="font-bold text-white text-xs">0.00 €</span>
+            <div class="space-y-4">
+                <!-- RÉSUMÉ SIMPLES -->
+                <div class="bg-zinc-950 border border-emerald-500/30 rounded-xl p-4 shadow-inner">
+                    <div class="text-xs uppercase font-bold text-emerald-400 mb-1">Option 1 : Paris Simples</div>
+                    <div class="text-xs text-zinc-400 mb-3">5€ joués sur chaque match séparément</div>
+                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2">
+                        <span class="text-xs text-zinc-500">Mise Totale:</span>
+                        <span id="ticketSimpleStake" class="font-bold text-white text-sm">0.00 €</span>
                     </div>
                     <div class="flex justify-between items-center mt-1">
-                        <span class="text-[10px] text-zinc-500">Gain Pot. max:</span>
-                        <span id="ticketSimpleGain" class="font-black text-emerald-400 text-sm">0.00 €</span>
-                    </div>
-                    <div class="flex justify-between items-center mt-1">
-                        <span class="text-[10px] text-zinc-500">Bénéfice Net Actuel:</span>
-                        <span id="ticketSimpleNet" class="font-bold text-emerald-400 text-[10px]">0.00 €</span>
+                        <span class="text-xs text-zinc-500">Gain Potentiel max:</span>
+                        <span id="ticketSimpleGain" class="font-black text-emerald-400 text-base">0.00 €</span>
                     </div>
                 </div>
 
-                <div class="bg-zinc-950 border border-amber-500/30 rounded-xl p-3 relative overflow-hidden shadow-inner">
+                <!-- RÉSUMÉ COMBINÉ -->
+                <div class="bg-zinc-950 border border-amber-500/30 rounded-xl p-4 relative overflow-hidden shadow-inner">
                     <div class="absolute -right-4 -top-4 text-amber-500/5 text-6xl"><i class="fa-solid fa-fire"></i></div>
-                    <div class="text-[10px] uppercase font-bold text-amber-400 mb-1 relative z-10">Option 2 : Pari Combiné</div>
-                    <div class="text-[10px] text-zinc-400 mb-2 leading-tight relative z-10">Une seule mise de 5€. Cotes multipliées !</div>
-                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2 mt-2 relative z-10">
-                        <span class="text-[10px] text-zinc-500">Cote Totale:</span>
-                        <span id="ticketComboOdds" class="font-bold text-white text-xs">1.00</span>
+                    <div class="text-xs uppercase font-bold text-amber-400 mb-1 relative z-10">Option 2 : Pari Combiné</div>
+                    <div class="text-xs text-zinc-400 mb-3 relative z-10">1 seule mise de 5€ avec cotes multipliées</div>
+                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2 relative z-10">
+                        <span class="text-xs text-zinc-500">Cote Totale:</span>
+                        <span id="ticketComboOdds" class="font-bold text-white text-sm">1.00</span>
                     </div>
                     <div class="flex justify-between items-center mt-1 relative z-10">
-                        <span class="text-[10px] text-zinc-500">Gain Pot. (pour 5€):</span>
-                        <span id="ticketComboGain" class="font-black text-amber-400 text-sm">0.00 €</span>
+                        <span class="text-xs text-zinc-500">Gain Pot. (pour 5€):</span>
+                        <span id="ticketComboGain" class="font-black text-amber-400 text-lg">0.00 €</span>
                     </div>
                 </div>
             </div>
@@ -300,7 +298,6 @@
 
             let basePick = out[0];
             basePick.confidence = Math.min(99, Math.round(basePick.prob * 100));
-
             let pepitePick = out[1];
             pepitePick.nuggetScore = Math.min(99, Math.round((pepitePick.prob * 100) + (pepitePick.odd * 10)));
 
@@ -334,7 +331,7 @@
                 { id: "nfl_mock4", home: "Philadelphia Eagles", away: "Dallas Cowboys", comp: "NFL" }
             ];
 
-            let lockedOdds = safeGetLocal("nfl_fixed_odds_v22_" + dateStr.replace(/-/g,''));
+            let lockedOdds = safeGetLocal("nfl_fixed_odds_v23_" + dateStr.replace(/-/g,''));
             let mocks = mockList.map((m, idx) => {
                 let tMs = baseTime + (idx * 30 * 60000); 
                 if (!lockedOdds[m.id]) lockedOdds[m.id] = computeNFLAlgorithm(m.home, m.away);
@@ -346,7 +343,7 @@
                     winner: null, algo: lockedOdds[m.id]
                 };
             });
-            safeSetLocal("nfl_fixed_odds_v22_" + dateStr.replace(/-/g,''), lockedOdds);
+            safeSetLocal("nfl_fixed_odds_v23_" + dateStr.replace(/-/g,''), lockedOdds);
             return mocks;
         }
 
@@ -355,14 +352,15 @@
             const apiDate = dateInputVal.replace(/-/g, '');
             const statusText = document.getElementById('statusText');
             
-            globalBets = safeGetLocal("nflbet_v22_bets_" + dateInputVal);
+            // VERSION V23 : On purge toute ancienne donnée corrompue
+            globalBets = safeGetLocal("nflbet_v23_bets_" + dateInputVal);
 
             if (!isSilent) statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Recherche NFL...';
             
             let validMatches = [];
             let seenIds = new Set();
             let manualScores = safeGetLocal("nfl_manual_scores_" + dateInputVal);
-            let lockedOdds = safeGetLocal("nfl_fixed_odds_v22_" + apiDate);
+            let lockedOdds = safeGetLocal("nfl_fixed_odds_v23_" + apiDate);
 
             try {
                 let data = await smartFetchESPN("nfl", apiDate);
@@ -393,6 +391,7 @@
                             let ptsH = (manualScores[ev.id] && manualScores[ev.id].home !== undefined) ? manualScores[ev.id].home : (parseInt(home.score) || 0);
                             let ptsA = (manualScores[ev.id] && manualScores[ev.id].away !== undefined) ? manualScores[ev.id].away : (parseInt(away.score) || 0);
                             
+                            // NFL status parsing
                             let status = isLive ? 'IN_PLAY' : (isCompleted ? 'FINISHED' : 'TIMED');
                             let winner = (status === 'FINISHED') ? (ptsH > ptsA ? 'HOME' : (ptsA > ptsH ? 'AWAY' : null)) : null;
 
@@ -414,9 +413,9 @@
                     validMatches = getFallbackMatches(dateInputVal);
                     if(!isSilent) statusText.innerHTML = `<span class="text-amber-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> NFL Démo Actif.</span>`;
                 } else {
-                    safeSetLocal("nfl_fixed_odds_v22_" + apiDate, lockedOdds);
+                    safeSetLocal("nfl_fixed_odds_v23_" + apiDate, lockedOdds);
                     const lc = validMatches.filter(m => m.status === 'IN_PLAY').length;
-                    if(!isSilent) statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> ${validMatches.length} matchs (${lc} en direct)</span>`;
+                    if(!isSilent) statusText.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check mr-2"></i> ${validMatches.length} matchs (${lc} en direct)</span>`;
                 }
 
                 currentMatches = validMatches.sort((a, b) => a.timeMs - b.timeMs);
@@ -484,6 +483,7 @@
 
             matchesToRender.forEach(m => {
                 let isFin = m.status === 'FINISHED', isLive = m.status === 'IN_PLAY';
+                // VERROU ANTI-PARIS SUR LES MATCHS COMMENCES
                 let isLocked = (isFin || isLive);
                 
                 let { odds, basePick, pepitePick } = m.algo;
@@ -497,7 +497,8 @@
                     let nm = (k==='HOME')?m.homeTeam.name:m.awayTeam.name;
                     let sel = (myB === k), bas = (basePick.key === k), pep = (pepitePick.key === k), win = (isFin && m.winner === k);
                     
-                    let cursorCls = isLocked ? 'cursor-not-allowed opacity-80' : 'cursor-pointer';
+                    // Style de bouton verrouillé ou non
+                    let cursorCls = isLocked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer';
                     let hovBas = isLocked ? '' : 'hover:bg-emerald-900/60';
                     let hovPep = isLocked ? '' : 'hover:bg-amber-900/60';
                     let hovZin = isLocked ? '' : 'hover:bg-zinc-800';
@@ -550,7 +551,7 @@
                 let nm = (k==='HOME')?m.homeTeam.name:m.awayTeam.name;
                 let sel = (myB === k), bas = (basePick.key === k), pep = (pepitePick.key === k), win = (isFin && m.winner === k);
                 
-                let cursorCls = isLocked ? 'cursor-not-allowed opacity-80' : 'cursor-pointer';
+                let cursorCls = isLocked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer';
                 let hovBas = isLocked ? '' : 'hover:bg-emerald-900/60';
                 let hovPep = isLocked ? '' : 'hover:bg-amber-900/60';
                 let hovZin = isLocked ? '' : 'hover:bg-zinc-800';
@@ -562,62 +563,9 @@
             }).join('');
         }
 
-        // --- VERROUILLAGE DES PARIS ---
-        function placeBet(mId, pick) {
-            let m = currentMatches.find(x => x.id === mId);
-            
-            // SECURITE : Impossible de parier si le match a démarré
-            if (m && m.status !== 'TIMED') {
-                showToast("Les paris sont fermés (match commencé) 🔒", "error");
-                return;
-            }
-
-            let d = document.getElementById('matchDate').value;
-            if (globalBets[mId] === pick) { 
-                delete globalBets[mId]; 
-            } else { 
-                globalBets[mId] = pick; 
-            }
-            safeSetLocal("nflbet_v22_bets_" + d, globalBets);
-            updateMatchButtonsDOM(mId, globalBets[mId]);
-            calculateAllStats();
-        }
-
-        function selectAllAlgo(type) {
-            let d = document.getElementById('matchDate').value;
-            let count = 0;
-            currentMatches.forEach(m => {
-                // SECURITE : Sélectionne uniquement les matchs non commencés
-                if (m.status === 'TIMED') {
-                    globalBets[m.id] = (type === 'BASE') ? m.algo.basePick.key : m.algo.pepitePick.key;
-                    updateMatchButtonsDOM(m.id, globalBets[m.id]);
-                    count++;
-                }
-            });
-            
-            if (count > 0) {
-                safeSetLocal("nflbet_v22_bets_" + d, globalBets);
-                showToast("Sélection Multiple validée !", "success");
-                calculateAllStats();
-            } else {
-                showToast("Aucun match disponible pour parier 🔒", "error");
-            }
-        }
-
-        function clearManualBets() {
-            let d = document.getElementById('matchDate').value;
-            globalBets = {};
-            safeSetLocal("nflbet_v22_bets_" + d, globalBets);
-            currentMatches.forEach(m => updateMatchButtonsDOM(m.id, undefined));
-            showToast("Ticket complètement vidé", "info"); 
-            calculateAllStats();
-        }
-
-        // --- GESTION DU TICKET (CLASS LIST + DISPLAY) ---
         function toggleTicket() {
             let details = document.getElementById('ticketDetails');
             let chevron = document.getElementById('ticketChevron');
-            let ticket = document.getElementById('betSlipBar');
             
             isTicketExpanded = !isTicketExpanded;
             
@@ -632,7 +580,6 @@
             }
         }
 
-        // AFFICHAGE GARANTI DU TICKET SUR PC/MOBILE
         function updateBetSlipOnly() {
             let slipC = 0, simGross = 0, simNet = 0, cOdd = 1.0, cLost = false;
             let ticketListHTML = '';
@@ -688,7 +635,7 @@
             if (!bar) return simNet;
             
             if (slipC > 0) {
-                // AFFICHAGE DE LA BARRE (Retrait de hidden, ajout de flex)
+                // AFFICHE LE TICKET EN MODE PC/TAILWIND PROPRE
                 bar.classList.remove('hidden');
                 bar.classList.add('flex');
                 
@@ -713,11 +660,11 @@
                 } catch(e){}
 
             } else { 
-                // MASQUAGE DE LA BARRE
+                // MASQUE LE TICKET
                 bar.classList.add('hidden');
                 bar.classList.remove('flex');
                 
-                // Réinitialise le ticket fermé quand il est vide
+                // Réinitialise le tiroir
                 isTicketExpanded = false;
                 let details = document.getElementById('ticketDetails');
                 if(details) {
@@ -729,6 +676,56 @@
             }
 
             return simNet; 
+        }
+
+        // VERROUILLAGE ANTI-TRICHE
+        function placeBet(mId, pick) {
+            let m = currentMatches.find(x => x.id === mId);
+            
+            if (m && m.status !== 'TIMED') {
+                showToast("Les paris sont fermés (match commencé) 🔒", "error");
+                return;
+            }
+
+            let d = document.getElementById('matchDate').value;
+            if (globalBets[mId] === pick) { 
+                delete globalBets[mId]; 
+            } else { 
+                globalBets[mId] = pick; 
+            }
+            safeSetLocal("nflbet_v23_bets_" + d, globalBets);
+            updateMatchButtonsDOM(mId, globalBets[mId]);
+            calculateAllStats();
+        }
+
+        function selectAllAlgo(type) {
+            let d = document.getElementById('matchDate').value;
+            let count = 0;
+            currentMatches.forEach(m => {
+                // NE SELECTIONNE QUE LES MATCHS NON COMMENCES
+                if (m.status === 'TIMED') {
+                    globalBets[m.id] = (type === 'BASE') ? m.algo.basePick.key : m.algo.pepitePick.key;
+                    updateMatchButtonsDOM(m.id, globalBets[m.id]);
+                    count++;
+                }
+            });
+            
+            if (count > 0) {
+                safeSetLocal("nflbet_v23_bets_" + d, globalBets);
+                showToast("Sélection Multiple validée !", "success");
+                calculateAllStats();
+            } else {
+                showToast("Aucun match disponible pour parier 🔒", "error");
+            }
+        }
+
+        function clearManualBets() {
+            let d = document.getElementById('matchDate').value;
+            globalBets = {};
+            safeSetLocal("nflbet_v23_bets_" + d, globalBets);
+            currentMatches.forEach(m => updateMatchButtonsDOM(m.id, undefined));
+            showToast("Ticket complètement vidé", "info"); 
+            calculateAllStats();
         }
 
         function calculateAllStats() {
@@ -788,9 +785,9 @@
             let manualNet = updateBetSlipOnly();
 
             if (fin > 0 || manualNet !== 0) {
-                let hist = safeGetLocal('nflbet_v22_history');
+                let hist = safeGetLocal('nflbet_v23_history');
                 hist[dateStr] = { baseProfit: progBase, pepiteProfit: progPep, manualProfit: manualNet };
-                safeSetLocal('nflbet_v22_history', hist);
+                safeSetLocal('nflbet_v23_history', hist);
             }
             if (document.getElementById('historyBlock') && !document.getElementById('historyBlock').classList.contains('hidden')) showHistoryStats();
         }
@@ -818,7 +815,7 @@
         function showHistoryStats() {
             let year = new Date(document.getElementById('matchDate').value).getFullYear();
             document.getElementById('currentYearText').textContent = year;
-            let h = safeGetLocal('nflbet_v22_history');
+            let h = safeGetLocal('nflbet_v23_history');
             
             let mon = new Date(document.getElementById('matchDate').value);
             mon.setDate(mon.getDate() - ((mon.getDay()||7) - 1));
