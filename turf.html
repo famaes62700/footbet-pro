@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V33 Chargement Course Suivante Instantané</title>
+    <title>Turf - V34 Horaires Temps Réel & Sync</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -35,6 +35,11 @@
                     <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">À Jouer (Base)</span>
                     <span id="headerNextStake">10.00 €</span>
                 </div>
+
+                <!-- BOUTON CORRECTEUR DE DÉCALAGE HORAIRE -->
+                <button id="btnTimeOffset" onclick="adjustTimeOffset()" class="bg-zinc-800 hover:bg-zinc-700 text-amber-400 px-2 h-8 rounded-lg border border-zinc-700 text-[10px] font-mono font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Ajuster un décalage horaire en minutes (ex: +10 ou -10)">
+                    <i class="fa-regular fa-clock mr-1"></i><span id="timeOffsetLabel">±0m</span>
+                </button>
                 
                 <!-- DRAPEAU DES ARRIVÉES -->
                 <button id="btnArrivalAlarm" onclick="toggleArrivalAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Alerte Arrivée Officielle">
@@ -80,7 +85,10 @@
             <div id="statusText" class="text-xs text-amber-400 font-mono flex items-center">
                 <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion PMU...
             </div>
-            <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded">Prêt</div>
+            <div class="flex items-center space-x-2">
+                <span id="liveClockDisplay" class="text-[10px] text-zinc-400 font-mono bg-zinc-900 px-2 py-1 rounded border border-zinc-800">--:--</span>
+                <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded">Prêt</div>
+            </div>
         </div>
 
         <!-- HISTORIQUE CUMULÉ AVEC SYNCHRONISATION SEMAINE & MOIS -->
@@ -352,6 +360,55 @@
         const STAKE_PEPITE = 5.0;
         const BASE_STAKE = 5.0;
 
+        // GESTION DU DÉCALAGE D'HORAIRE PERSONNALISABLE (en minutes)
+        let timeOffsetMinutes = parseInt(localStorage.getItem('fabturf_time_offset_min') || '0', 10) || 0;
+
+        function updateTimeOffsetUI() {
+            let lbl = document.getElementById('timeOffsetLabel');
+            if (!lbl) return;
+            if (timeOffsetMinutes === 0) lbl.textContent = '±0m';
+            else lbl.textContent = (timeOffsetMinutes > 0 ? `+${timeOffsetMinutes}m` : `${timeOffsetMinutes}m`);
+        }
+
+        function adjustTimeOffset() {
+            let input = prompt(
+                "Décalage horaire des départs (en minutes) :\n\n" +
+                "• Mettez +10 si l'application retarde de 10 min sur le réel.\n" +
+                "• Mettez -10 si l'application avance de 10 min sur le réel.\n" +
+                "• Mettez 0 pour garder l'heure brute du serveur PMU.",
+                String(timeOffsetMinutes)
+            );
+            if (input === null) return;
+            let parsed = parseInt(input.trim(), 10);
+            if (isNaN(parsed)) parsed = 0;
+            timeOffsetMinutes = Math.max(-120, Math.min(120, parsed));
+            try { localStorage.setItem('fabturf_time_offset_min', String(timeOffsetMinutes)); } catch(e) {}
+            updateTimeOffsetUI();
+            refreshDropdownLabelsInPlace();
+            fetchRaceData(false);
+            calculateDailyStats(false);
+            showToast(`Horaire ajusté de ${timeOffsetMinutes >= 0 ? '+' : ''}${timeOffsetMinutes} min`, "success");
+        }
+
+        // Convertit l'heure brute PMU en tenant compte du correcteur de décalage
+        function getCourseTimeMs(course) {
+            if (!course || !course.heureDepart) return 0;
+            let rawMs = typeof course.heureDepart === 'number' ? course.heureDepart : new Date(course.heureDepart).getTime();
+            return rawMs + (timeOffsetMinutes * 60 * 1000);
+        }
+
+        // Détermine si une course est réellement commencée ou terminée d'après le statut direct PMU + horaire ajusté
+        function isCourseStartedOrFinished(course, nowMs = Date.now()) {
+            if (!course) return false;
+            if (Array.isArray(course.ordreArrivee) && course.ordreArrivee.length > 0) return true;
+            let st = String(course.statut || "").toUpperCase();
+            if (st.includes('EN_COURS') || st.includes('ARRIVEE') || st.includes('FIN_COURSE') || st.includes('TERMIN')) {
+                return true;
+            }
+            let startMs = getCourseTimeMs(course);
+            return startMs > 0 && nowMs >= startMs;
+        }
+
         function cleanupAndMigrateStorage() {
             try {
                 let keysToRemove = [];
@@ -469,9 +526,11 @@
         }
 
         cleanupAndMigrateStorage();
+        updateTimeOffsetUI();
         document.getElementById('raceDate').value = getLocalDateString();
         let liveMeetingsData = [];
         let loadedProgrammeDate = "";
+        let lastProgrammeSyncMs = 0;
         let autoTransitionTimer = null;
         let autoCountdownInterval = null;
         let autoTransitionRaceKey = null;
@@ -497,6 +556,15 @@
 
         let audioStart = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         let audioArrival = new Audio('https://assets.mixkit.co/active_storage/sfx/2870/2870-preview.mp3');
+
+        // Horloge temps réel visible dans la barre de statut
+        setInterval(() => {
+            let clk = document.getElementById('liveClockDisplay');
+            if (clk) {
+                let d = new Date(Date.now() + (timeOffsetMinutes * 60 * 1000));
+                clk.textContent = `🕒 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+            }
+        }, 1000);
 
         function clearAutoTransition() {
             if (autoTransitionTimer) {
@@ -604,7 +672,7 @@
 
         function checkStartAlarm() {
             if (!startAlarmEnabled || liveMeetingsData.length === 0) return;
-            let now = new Date().getTime();
+            let now = Date.now();
             let sortedRaces = getSortedRacesList();
             let nextRace = sortedRaces.find(r => r.time > now);
             if (nextRace) {
@@ -630,7 +698,83 @@
             }
         }
 
+        // SYNCHRONISATION SILENCIEUSE DES RETARDS ET HORAIRES PMU TOUTES LES 20 SECONDES
+        async function syncProgrammeTimesSilently() {
+            let dateInput = document.getElementById('raceDate').value;
+            if (!dateInput || dateInput !== getLocalDateString()) return;
+            if (Date.now() - lastProgrammeSyncMs < 20000) return;
+            lastProgrammeSyncMs = Date.now();
+
+            let parts = dateInput.split('-');
+            let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
+            try {
+                let progData = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`, true);
+                let rawR = progData?.programme?.reunions || progData?.reunions || progData?.programme?.lesReunions || [];
+                if (!rawR || rawR.length === 0) return;
+
+                let hasTimeShift = false;
+                liveMeetingsData.forEach(m => {
+                    let rNum = m.numOfficiel;
+                    let upM = rawR.find(r => (r.numOfficiel || 0) == rNum);
+                    if (upM) {
+                        let upCourses = upM.courses || upM.races || upM.lesCourses || [];
+                        (m.courses || []).forEach((c, idx) => {
+                            let upC = upCourses.find(x => (x.numOrdre || 0) == c.numOrdre);
+                            if (upC) {
+                                if (upC.heureDepart && upC.heureDepart !== c.heureDepart) {
+                                    hasTimeShift = true;
+                                }
+                                m.courses[idx] = Object.assign(c, upC);
+                            }
+                        });
+                    }
+                });
+
+                if (hasTimeShift) {
+                    refreshDropdownLabelsInPlace();
+                }
+            } catch(e) {}
+        }
+
+        function refreshDropdownLabelsInPlace() {
+            let mSelect = document.getElementById('meetingSelect');
+            let rSelect = document.getElementById('raceSelect');
+            let mVal = mSelect.value;
+            let rVal = rSelect.value;
+
+            Array.from(mSelect.options).forEach(opt => {
+                if (opt.value === "") return;
+                let idx = parseInt(opt.value, 10);
+                let r = liveMeetingsData[idx];
+                if (!r) return;
+                let coursesList = r.courses || [];
+                let timeStr = "";
+                if (coursesList[0] && coursesList[0].heureDepart) {
+                    timeStr = ` 🕒 [${formatTime(getCourseTimeMs(coursesList[0]))}]`;
+                }
+                let hipName = r.hippodrome ? (r.hippodrome.libelleLong || r.hippodrome.libelleCourt || r.hippodrome.nom) : 'Hippodrome';
+                let pays = (r.hippodrome && r.hippodrome.codePays) ? ` [${r.hippodrome.codePays}]` : "";
+                opt.textContent = `R${r.numOfficiel || (idx+1)} - ${hipName}${pays}${timeStr} (${coursesList.length} courses)`;
+            });
+
+            if (mVal !== "" && liveMeetingsData[mVal]) {
+                let courses = liveMeetingsData[mVal].courses || [];
+                Array.from(rSelect.options).forEach(opt => {
+                    if (opt.value === "") return;
+                    let cIdx = parseInt(opt.value, 10);
+                    let c = courses[cIdx];
+                    if (!c) return;
+                    let courseTime = c.heureDepart ? `[${formatTime(getCourseTimeMs(c))}] ` : '';
+                    let libelleCourse = c.libelle || c.nom || c.libelleCourt || 'Prix';
+                    let s = String(c.specialite || c.discipline || "COURSE").toUpperCase();
+                    opt.textContent = `${courseTime}C${c.numOrdre || (cIdx+1)} - ${libelleCourse} [${s}]`;
+                });
+                rSelect.value = rVal;
+            }
+        }
+
         setInterval(() => {
+            syncProgrammeTimesSilently();
             let mIdx = document.getElementById('meetingSelect').value;
             let cIdx = document.getElementById('raceSelect').value;
             if (mIdx !== "" && cIdx !== "" && !isFetchingRace) fetchRaceData(true); 
@@ -695,7 +839,6 @@
             return `<span class="bg-zinc-500/20 text-zinc-300 border border-zinc-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">${s}</span>`;
         }
 
-        // CONNEXION PMU ROBUSTE : Gère les réponses 204/404 (quand une course à venir n'a pas encore de rapports) sans bloquer les proxies
         async function smartFetchPMU(path, allowEmpty = false) {
             const sep = path.includes('?') ? '&' : '?';
             const cacheBusterPath = `${path}${sep}_t=${Date.now()}`;
@@ -769,10 +912,9 @@
             }
 
             let hasArrival = partants.some(p => p.ordreArrivee && parseInt(p.ordreArrivee, 10) > 0);
-            let raceStartTime = (courseObj && courseObj.heureDepart) ? new Date(courseObj.heureDepart).getTime() : 0;
-            let hasStarted = (raceStartTime === 0) || (Date.now() >= raceStartTime);
+            let raceStartTime = getCourseTimeMs(courseObj);
+            let hasStarted = (raceStartTime === 0) || isCourseStartedOrFinished(courseObj, Date.now());
 
-            // Ne demande les rapports définitifs que si la course a démarré ou a une arrivée (évite de bloquer sur les courses suivantes !)
             if (checkReports && (hasArrival || hasStarted)) {
                 try {
                     let rData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs?specialisation=INTERNET`, true);
@@ -798,7 +940,7 @@
 
             const parts = dateInput.split('-');
             const ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
-            const now = new Date().getTime();
+            const now = Date.now();
 
             try {
                 const data = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`, false);
@@ -816,6 +958,7 @@
                 });
                 
                 loadedProgrammeDate = dateInput;
+                lastProgrammeSyncMs = Date.now();
 
                 if (filteredReunions.length > 0) {
                     liveMeetingsData = filteredReunions;
@@ -834,14 +977,14 @@
                         totalCourses += coursesList.length;
 
                         coursesList.forEach(c => {
-                            if (c.heureDepart && (new Date(c.heureDepart).getTime() < now)) {
+                            if (isCourseStartedOrFinished(c, now)) {
                                 racesRunCount++;
                             }
                         });
 
                         let timeStr = "";
                         if (coursesList[0] && coursesList[0].heureDepart) {
-                            timeStr = ` 🕒 [${formatTime(coursesList[0].heureDepart)}]`;
+                            timeStr = ` 🕒 [${formatTime(getCourseTimeMs(coursesList[0]))}]`;
                         } else if (r.heurereunion || r.heurePremierDepart) {
                             timeStr = ` 🕒 [${formatTime(r.heurereunion || r.heurePremierDepart)}]`;
                         }
@@ -878,21 +1021,23 @@
             }
         }
 
+        // Sélectionne la course en cours ou la prochaine à partir (sans rester bloqué 20 min sur une course finie)
         function autoSelectCurrentRace() {
             if (liveMeetingsData.length === 0) return;
-            let now = new Date().getTime();
+            let now = Date.now();
             let bestMIdx = 0, bestCIdx = 0;
             let minDiff = Infinity, minPastDiff = Infinity;
             let pastMIdx = 0, pastCIdx = 0;
-            let bufferTemps = 20 * 60 * 1000; 
+            let bufferEnCours = 6 * 60 * 1000; // Garde la course affichée 6 min après son départ si l'arrivée n'est pas encore tombée
 
             liveMeetingsData.forEach((m, mIdx) => {
                 let courses = m.courses || [];
                 courses.forEach((c, cIdx) => {
-                    if (c.heureDepart) {
-                        let isAlreadyFinished = Array.isArray(c.ordreArrivee) && c.ordreArrivee.length > 0;
-                        let activeBuffer = isAlreadyFinished ? 0 : bufferTemps;
-                        let diff = (new Date(c.heureDepart).getTime() + activeBuffer) - now;
+                    let startMs = getCourseTimeMs(c);
+                    if (startMs > 0) {
+                        let isAlreadyFinished = (Array.isArray(c.ordreArrivee) && c.ordreArrivee.length > 0) || String(c.statut || '').toUpperCase().includes('FIN');
+                        let activeBuffer = isAlreadyFinished ? 0 : bufferEnCours;
+                        let diff = (startMs + activeBuffer) - now;
                         if (diff > 0 && diff < minDiff) { 
                             minDiff = diff; bestMIdx = mIdx; bestCIdx = cIdx;
                         } else if (diff <= 0 && Math.abs(diff) < minPastDiff) {
@@ -916,7 +1061,7 @@
             liveMeetingsData.forEach((m, mIdx) => {
                 let courses = m.courses || [];
                 courses.forEach((c, cIdx) => {
-                    let t = c.heureDepart ? new Date(c.heureDepart).getTime() : 0;
+                    let t = getCourseTimeMs(c);
                     list.push({ mIdx: mIdx, cIdx: cIdx, time: t });
                 });
             });
@@ -967,7 +1112,7 @@
                 courses.forEach((c, cIdx) => {
                     let opt = document.createElement('option');
                     opt.value = cIdx;
-                    let courseTime = c.heureDepart ? `[${formatTime(c.heureDepart)}] ` : '';
+                    let courseTime = c.heureDepart ? `[${formatTime(getCourseTimeMs(c))}] ` : '';
                     let libelleCourse = c.libelle || c.nom || c.libelleCourt || 'Prix';
                     let s = String(c.specialite || c.discipline || "COURSE").toUpperCase();
                     
@@ -1005,7 +1150,7 @@
                     await fetchRaceData(false);
                 }
             }
-            showToast('Données actualisées', 'success');
+            showToast('Horaires et cotes actualisés', 'success');
         }
 
         function evaluateMusique(musique) {
@@ -1322,9 +1467,8 @@
             let cNum = race.numOrdre || (rIdxNum + 1);
             let currentRaceKey = `${ddmmyyyy}_${rNum}_${cNum}`;
             let currentRaceName = `R${rNum}C${cNum} - ${race.libelle || race.nom || 'Prix'}`;
-            let now = new Date().getTime();
+            let now = Date.now();
 
-            // Si changement de course (manuel ou bascule auto), on met immédiatement un indicateur visuel de chargement
             if (!isBackground) {
                 document.getElementById('arrivalBlock').style.display = 'none';
                 document.getElementById('reportsBlock').style.display = 'none';
@@ -1336,25 +1480,6 @@
             }
 
             try {
-                let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
-                let isLocked = raceStartTime > 0 && now >= raceStartTime; 
-                
-                if (isBackground && raceStartTime > 0 && now >= raceStartTime && (now - raceStartTime) < 50 * 60 * 1000) {
-                    try {
-                        let progData = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`, true);
-                        let rawR = progData?.programme?.reunions || progData?.reunions || progData?.programme?.lesReunions || [];
-                        let updatedM = rawR.find(r => (r.numOfficiel || 0) == rNum);
-                        if (updatedM) {
-                            let upCourses = updatedM.courses || updatedM.races || updatedM.lesCourses || [];
-                            let updatedC = upCourses.find(c => (c.numOrdre || 0) == cNum);
-                            if (updatedC) {
-                                race = updatedC;
-                                courses[rIdxNum] = updatedC;
-                            }
-                        }
-                    } catch(e) {}
-                }
-
                 let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, rNum, cNum, race, true);
 
                 if (myFetchId !== currentFetchRaceId) return;
@@ -1370,6 +1495,9 @@
                 let arrivalList = document.getElementById('arrivalList');
                 arrivalList.innerHTML = '';
                 let arrivees = partants.filter(p => p.ordreArrivee && parseInt(p.ordreArrivee, 10) > 0).sort((a, b) => parseInt(a.ordreArrivee, 10) - parseInt(b.ordreArrivee, 10));
+
+                let raceStartTime = getCourseTimeMs(race);
+                let isLocked = isCourseStartedOrFinished(race, now) || arrivees.length > 0 || hasReports;
 
                 if (arrivees.length > 0) {
                     arrivalBlock.style.display = 'block';
@@ -1512,22 +1640,23 @@
                     });
                 }
                 
-                let timeInfo = race.heureDepart ? `[${formatTime(race.heureDepart)}] ` : '';
+                let timeInfo = raceStartTime > 0 ? `[Départ : ${formatTime(raceStartTime)}] ` : '';
                 let discBadge = getDisciplineBadge(race);
                 let statusBadge = "";
                 
-                if (raceStartTime > 0) {
-                    if (now >= raceStartTime && now < raceStartTime + 1800000 && !foundAnyReport && arrivees.length === 0) {
-                        statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse ml-2">🔴 En cours</span>`;
-                    } else if (foundAnyReport || arrivees.length > 0) {
-                        statusBadge = `<span class="bg-zinc-800 text-zinc-400 border border-zinc-600 px-2 py-0.5 rounded text-[10px] uppercase font-bold ml-2">🏁 Terminé</span>`;
-                    }
+                if (foundAnyReport || arrivees.length > 0) {
+                    statusBadge = `<span class="bg-zinc-800 text-zinc-400 border border-zinc-600 px-2 py-0.5 rounded text-[10px] uppercase font-bold ml-2">🏁 Terminé</span>`;
+                } else if (isLocked) {
+                    statusBadge = `<span class="bg-red-900/60 text-red-300 border border-red-500/40 px-2 py-0.5 rounded text-[10px] uppercase font-bold animate-pulse ml-2">🔴 En cours</span>`;
+                } else if (raceStartTime > now) {
+                    let minLeft = Math.max(1, Math.ceil((raceStartTime - now) / 60000));
+                    statusBadge = `<span class="bg-emerald-950/60 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded text-[10px] font-mono font-bold ml-2">⏳ Dans ${minLeft} min</span>`;
                 }
                 
                 document.getElementById('raceInfoDetails').innerHTML = `
-                    <div class="flex items-center">
+                    <div class="flex items-center flex-wrap gap-y-1">
                         <span class="mr-2 text-amber-400 font-bold">R${rNum}C${cNum}</span>
-                        <span class="mr-2 text-zinc-400 font-normal">${timeInfo}</span>
+                        <span class="mr-2 text-zinc-300 font-mono">${timeInfo}</span>
                         <span>Sélection par cotes</span>
                         ${discBadge} ${statusBadge}
                     </div>
@@ -1767,11 +1896,10 @@
                 let rNum = m.numOfficiel || (mIdx + 1);
                 (m.courses || []).forEach((c, cIdx) => {
                     let cNum = c.numOrdre || (cIdx + 1);
-                    if (c.heureDepart) {
-                        let departTime = new Date(c.heureDepart).getTime();
-                        if (isPastDate || (departTime > 0 && departTime < (now - 8 * 60 * 1000))) {
-                            pastRaces.push({ rNum, cNum, time: departTime, courseObj: c });
-                        }
+                    let departTime = getCourseTimeMs(c);
+                    let hasArr = Array.isArray(c.ordreArrivee) && c.ordreArrivee.length > 0;
+                    if (isPastDate || hasArr || (departTime > 0 && departTime < (now - 2 * 60 * 1000))) {
+                        pastRaces.push({ rNum, cNum, time: departTime, courseObj: c });
                     }
                 });
             });
@@ -1872,7 +2000,7 @@
                 let parts = dateInput.split('-');
                 let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
                 
-                let now = new Date().getTime();
+                let now = Date.now();
                 let todayStr = getLocalDateString();
                 let isPastDate = dateInput < todayStr;
 
@@ -1882,11 +2010,11 @@
                     let courses = m.courses || [];
                     courses.forEach((c, cIdx) => {
                         let cNum = c.numOrdre || (cIdx + 1);
-                        if (c.heureDepart) {
-                            let departTime = new Date(c.heureDepart).getTime();
-                            if (isPastDate || (departTime > 0 && departTime < (now - 8 * 60 * 1000))) {
-                                pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime, courseObj: c });
-                            }
+                        let departTime = getCourseTimeMs(c);
+                        let hasArr = Array.isArray(c.ordreArrivee) && c.ordreArrivee.length > 0;
+                        // Détecte une course dès son arrivée officielle ou 2 minutes après son départ (plus d'attente de 10 min !)
+                        if (isPastDate || hasArr || (departTime > 0 && departTime < (now - 2 * 60 * 1000))) {
+                            pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime, courseObj: c });
                         }
                     });
                 });
