@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V24 Ticket & Paris Multiples</title>
+    <title>Turf - V21 Ticket & Historique Réparé</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -26,7 +26,7 @@
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-3 sm:p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-700">
-                <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">Pro V24</span>
+                <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">Pro V21</span>
             </h1>
             
             <div class="flex items-center space-x-1.5 sm:space-x-2">
@@ -75,7 +75,7 @@
             <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded">Prêt</div>
         </div>
 
-        <!-- HISTORIQUE CUMULÉ -->
+        <!-- HISTORIQUE CUMULÉ (AVEC COLONNE PERSO) -->
         <div id="historyBlock" style="display: none;" class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-4 shadow-xl mb-2">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-300 tracking-wider flex items-center">
@@ -85,10 +85,11 @@
             </div>
             <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
-                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Cette Semaine (Placé Réel)</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="text-zinc-300">Base : <span id="weekBase" class="text-emerald-400 font-bold">0.00 €</span></div>
-                        <div class="text-zinc-300">Pépite : <span id="weekPepite" class="text-amber-400 font-bold">0.00 €</span></div>
+                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Cette Semaine</h3>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="text-zinc-300">Base : <span id="weekBase" class="text-emerald-400 font-bold block">0.00 €</span></div>
+                        <div class="text-zinc-300">Pépite : <span id="weekPepite" class="text-amber-400 font-bold block">0.00 €</span></div>
+                        <div class="text-zinc-300">Perso : <span id="weekManual" class="text-orange-400 font-bold block">0.00 €</span></div>
                     </div>
                 </div>
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
@@ -288,6 +289,10 @@
                         <span class="text-xs text-zinc-500">Gain Potentiel max:</span>
                         <span id="ticketSimpleGain" class="font-black text-emerald-400 text-base">0.00 €</span>
                     </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-xs text-zinc-500">Bénéfice Net Actuel:</span>
+                        <span id="ticketSimpleNet" class="font-bold text-emerald-400 text-[10px]">0.00 €</span>
+                    </div>
                 </div>
 
                 <div class="bg-zinc-950 border border-amber-500/30 rounded-xl p-4 relative overflow-hidden shadow-inner">
@@ -342,7 +347,7 @@
         let isCalculatingStats = false;
         let isTicketExpanded = false;
         
-        // MEMOIRE DES PARIS MANUELS
+        // MEMOIRE DES PARIS MANUELS (Retour au format V21 pour conserver vos données)
         let globalBets = {};
 
         let audioStart = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -605,7 +610,8 @@
             const statusText = document.getElementById('statusText');
             statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des courses...';
 
-            globalBets = safeGetLocal("fabturf_v24_bets_" + dateInput);
+            // RECONNEXION AVEC LA MÉMOIRE V21 POUR GARDER L'HISTORIQUE
+            globalBets = safeGetLocal("fabturf_v21_bets_" + dateInput);
 
             if (document.getElementById('historyBlock').style.display !== 'none' && document.getElementById('historyBlock').style.display !== '') showHistoryStats();
 
@@ -949,7 +955,8 @@
             } else {
                 globalBets[raceKey] = { num: horseNum, name: horseName, odds: odds, raceName: raceName };
             }
-            safeSetLocal("fabturf_v24_bets_" + d, globalBets);
+            // RETOUR SUR V21 POUR GARDER LA MÉMOIRE
+            safeSetLocal("fabturf_v21_bets_" + d, globalBets);
             
             fetchRaceData(); 
             calculateDailyStats(); 
@@ -958,7 +965,7 @@
         function clearManualBets() {
             let d = document.getElementById('raceDate').value;
             globalBets = {};
-            safeSetLocal("fabturf_v24_bets_" + d, globalBets);
+            safeSetLocal("fabturf_v21_bets_" + d, globalBets);
             fetchRaceData();
             calculateDailyStats();
             showToast("Ticket complètement vidé", "info");
@@ -999,18 +1006,20 @@
                 let mIcon = '<i class="fa-solid fa-clock text-zinc-500"></i>';
                 let mColor = "text-zinc-300";
 
-                // VÉRIFICATION DANS LE CACHE V24 SI LA COURSE EST GAGNÉE
-                let cacheKey = `race_cache_v24_${raceKey}`;
+                // VÉRIFICATION DANS LE CACHE SI LA COURSE EST GAGNÉE (SUR V21)
+                let cacheKey = `race_cache_v21_${raceKey}`;
                 let savedData = localStorage.getItem(cacheKey);
                 if (savedData) {
                     let raceData = JSON.parse(savedData);
-                    if (raceData.isComplete) {
+                    if (raceData.isComplete && raceData.partants) {
+                        // Pour les paris persos turf, on vérifie s'il est Gagnant
                         let gGag = extractGainFromRapports(raceData.rapportsList, bet.num, 'GAGNANT');
                         
                         let p = raceData.partants.find(x => parseInt(x.numPmu||x.numOrdre, 10) === bet.num);
                         let arr = p ? parseInt(p.ordreArrivee, 10) : 99;
                         
-                        if (gGag === 0 && arr === 1) gGag = bet.odds; // Simu gain
+                        // Si le rapport n'est pas encore dispo mais qu'on sait qu'il a gagné
+                        if (gGag === 0 && arr === 1) gGag = bet.odds; 
 
                         if (gGag > 0) {
                             simGross += (gGag * BASE_STAKE);
@@ -1058,6 +1067,7 @@
                 try { document.getElementById('ticketMatchesList').innerHTML = ticketListHTML; } catch(e){}
                 try { document.getElementById('ticketSimpleStake').textContent = `${(slipC * BASE_STAKE).toFixed(2)} €`; } catch(e){}
                 try { document.getElementById('ticketSimpleGain').textContent = `${simGross.toFixed(2)} €`; } catch(e){}
+                try { document.getElementById('ticketSimpleNet').textContent = `${simNet > 0 ? '+':''}${simNet.toFixed(2)} €`; } catch(e){}
                 
                 let cPot = cLost ? 0 : (cOdd*BASE_STAKE);
                 let cText = cLost ? "Perdu (0.00 €)" : `${cPot.toFixed(2)} €`;
@@ -1114,7 +1124,7 @@
 
             try {
                 let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
-                let isLocked = raceStartTime > 0 && now >= raceStartTime; // VERROU ANTI-TRICHE
+                let isLocked = raceStartTime > 0 && now >= raceStartTime; 
                 
                 if (isBackground && raceStartTime > 0 && now >= raceStartTime && (now - raceStartTime) < 50 * 60 * 1000) {
                     try {
@@ -1244,9 +1254,9 @@
                 tbody.innerHTML = '';
                 processed.forEach(p => {
                     let tr = document.createElement('tr');
-                    let tag = p.ordreArrivee ? `<span class="ml-1 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
-                    if (p.num === baseHorse?.num) tag += '<span class="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold ml-1">Favori</span>';
-                    if (p.num === nuggetHorse?.num) tag += '<span class="ml-1 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold ml-1">Pépite</span>';
+                    let tag = p.ordreArrivee ? `<span class="ml-2 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
+                    if (p.num === baseHorse?.num) tag += '<span class="ml-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">Favori</span>';
+                    if (p.num === nuggetHorse?.num) tag += '<span class="ml-2 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">Pépite</span>';
                     
                     let isSelected = globalBets[currentRaceKey] && globalBets[currentRaceKey].num === p.num;
                     
@@ -1285,10 +1295,10 @@
         }
 
         function getStatForDateObj(d) {
-            let key = `pmu_stats_multidis_v24_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
+            let key = `pmu_stats_multidis_v21_${currentDisciplineMode}_${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
             let saved = localStorage.getItem(key);
             if (saved) return JSON.parse(saved);
-            return { baseProfit: 0, pepiteProfit: 0 };
+            return { baseProfit: 0, pepiteProfit: 0, manualProfit: 0 };
         }
 
         function showHistoryStats() {
@@ -1302,33 +1312,36 @@
             let monday = new Date(currentViewDate);
             monday.setDate(currentViewDate.getDate() - (dayOfWeek - 1)); 
             
-            let wBase = 0, wPep = 0;
+            let wBase = 0, wPep = 0, wMan = 0;
             for(let i=0; i<7; i++) {
                 let d = new Date(monday);
                 d.setDate(monday.getDate() + i);
                 let s = getStatForDateObj(d);
                 wBase += s.baseProfit || 0;
                 wPep += s.pepiteProfit || 0;
+                wMan += s.manualProfit || 0;
             }
 
             document.getElementById('weekBase').innerHTML = formatMoneyHTML(wBase);
             document.getElementById('weekPepite').innerHTML = formatMoneyHTML(wPep);
+            document.getElementById('weekManual').innerHTML = formatMoneyHTML(wMan);
 
             const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
             let monthsGrid = document.getElementById('monthsGrid');
             monthsGrid.innerHTML = '';
 
             for (let m = 0; m < 12; m++) {
-                let mBase = 0, mPep = 0;
+                let mBase = 0, mPep = 0, mMan = 0;
                 let daysInMonth = new Date(year, m + 1, 0).getDate(); 
                 
                 for (let d = 1; d <= daysInMonth; d++) {
                     let s = getStatForDateObj(new Date(year, m, d));
                     mBase += s.baseProfit || 0;
                     mPep += s.pepiteProfit || 0;
+                    mMan += s.manualProfit || 0;
                 }
 
-                if (mBase !== 0 || mPep !== 0) {
+                if (mBase !== 0 || mPep !== 0 || mMan !== 0) {
                     let div = document.createElement('div');
                     let isCurrentViewMonth = (m === currentViewDate.getMonth());
                     div.className = isCurrentViewMonth 
@@ -1340,6 +1353,7 @@
                         <div class="space-x-2">
                             <span>Base: ${formatMoneyHTML(mBase)}</span>
                             <span>Pépite: ${formatMoneyHTML(mPep)}</span>
+                            <span>Perso: ${formatMoneyHTML(mMan)}</span>
                         </div>
                     `;
                     monthsGrid.appendChild(div);
@@ -1403,7 +1417,8 @@
 
             for (let i = 0; i < pastRacesToday.length; i++) {
                 let r = pastRacesToday[i];
-                let cacheKey = `race_cache_v24_${ddmmyyyy}_${r.rNum}_${r.cNum}`; // PASSAGE EN V24 POUR FORCER LA PURGE
+                // RETOUR SUR V21 POUR QUE LES GAINS PRECEDENTS S'AFFICHENT
+                let cacheKey = `race_cache_v21_${ddmmyyyy}_${r.rNum}_${r.cNum}`; 
 
                 let raceData = null;
                 let savedData = localStorage.getItem(cacheKey);
@@ -1553,19 +1568,24 @@
                 let headerNextStake = document.getElementById('headerNextStake');
                 if (headerNextStake) headerNextStake.textContent = `${nextStakeBase.toFixed(2)} €`;
                 
-                if (coursesValidees > 0) {
-                    localStorage.setItem(`pmu_stats_multidis_v24_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify({
-                        baseProfit: totalProfitBasePla, pepiteProfit: totalProfitPepitePla
-                    }));
-                }
-                
                 if (statsProgress) statsProgress.textContent = `✅ ${coursesValidees}/${pastRacesToday.length} validées`;
-                
-                let hb = document.getElementById('historyBlock');
-                if (hb && hb.style.display !== 'none' && hb.style.display !== '') showHistoryStats();
             } catch(e) {}
             
-            updateBetSlipOnly();
+            // SAUVEGARDE DE TOUS LES GAINS (BASE, PEPITE ET PERSO)
+            let manualNet = updateBetSlipOnly();
+
+            if (coursesValidees > 0 || manualNet !== 0) {
+                let histObj = {
+                    baseProfit: totalProfitBasePla, 
+                    pepiteProfit: totalProfitPepitePla,
+                    manualProfit: manualNet
+                };
+                localStorage.setItem(`pmu_stats_multidis_v21_${currentDisciplineMode}_${ddmmyyyy}`, JSON.stringify(histObj));
+            }
+            
+            let hb = document.getElementById('historyBlock');
+            if (hb && hb.style.display !== 'none' && hb.style.display !== '') showHistoryStats();
+
             isCalculatingStats = false;
         }
 
