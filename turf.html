@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V31 Cumul Semaine & Mois Réparé</title>
+    <title>Turf - V32 Connexion & Cumul Réparés</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -345,25 +345,22 @@
     </div>
 
     <script>
-        const CACHE_VERSION = "v31";
+        const CACHE_VERSION = "v32";
         
         // MISES DIFFÉRENCIÉES : 10€ POUR LA BASE, 5€ POUR LA PÉPITE ET LE TICKET
         const STAKE_BASE = 10.0;
         const STAKE_PEPITE = 5.0;
         const BASE_STAKE = 5.0;
 
-        // NETTOYAGE INTELLIGENT DE LA MÉMOIRE AU DÉMARRAGE (Évite le blocage des 5 Mo tout en migrant l'historique)
         function cleanupAndMigrateStorage() {
             try {
                 let keysToRemove = [];
                 for (let i = 0; i < localStorage.length; i++) {
                     let k = localStorage.key(i);
                     if (!k) continue;
-                    // Supprime les anciens caches bruts de courses qui saturaient les 5 Mo
                     if (k.startsWith('race_cache_') && !k.startsWith(`race_cache_${CACHE_VERSION}_`)) {
                         keysToRemove.push(k);
                     }
-                    // Migre les anciens historiques (v21, v24, v25, v26, v27) vers le stockage unifié s'ils n'y sont pas encore
                     if (k.startsWith('pmu_stats_multidis_')) {
                         let m = k.match(/^pmu_stats_multidis_v\d+_(TROT|ALL)_(\d{8})$/);
                         if (m) {
@@ -387,7 +384,6 @@
             try {
                 localStorage.setItem(key, str);
             } catch (quotaErr) {
-                // Si la mémoire est pleine, on purge uniquement les caches de courses pour garantir la sauvegarde des gains
                 Object.keys(localStorage).forEach(k => {
                     if (k.startsWith('race_cache_')) localStorage.removeItem(k);
                 });
@@ -395,7 +391,6 @@
             }
         }
 
-        // Compresse une course de 45 Ko à 1 Ko avant mise en cache
         function slimRaceCacheData(partants, rapportsList, isComplete) {
             let slimP = (partants || []).map(p => ({
                 numPmu: p.numPmu || p.numOrdre,
@@ -699,44 +694,35 @@
             return `<span class="bg-zinc-500/20 text-zinc-300 border border-zinc-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">${s}</span>`;
         }
 
-        async function fetchWithTimeout(url, timeoutMs = 4500) {
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), timeoutMs);
-            try {
-                const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
-                clearTimeout(id);
-                return response;
-            } catch (err) {
-                clearTimeout(id);
-                throw err;
-            }
-        }
-
+        // MOTEUR DE CONNEXION V28 RESTAURÉ INTÉGRALEMENT (Sans coupure de délai)
         async function smartFetchPMU(path) {
             const sep = path.includes('?') ? '&' : '?';
             const cacheBusterPath = `${path}${sep}_t=${Date.now()}`;
             const fullPmuUrl = `https://online.turfinfo.api.pmu.fr/rest/client/61/programme/${cacheBusterPath}`;
             
             try {
-                let directRes = await fetchWithTimeout(fullPmuUrl, 2500);
-                if (directRes.ok) return await directRes.json();
+                let localRes = await fetch(`/api/pmu/${cacheBusterPath}`);
+                if (localRes.ok) return await localRes.json();
             } catch (e) {}
 
             const proxies = [
-                `https://corsproxy.io/?${encodeURIComponent(fullPmuUrl)}`,
                 `https://api.allorigins.win/raw?url=${encodeURIComponent(fullPmuUrl)}`,
+                `https://api.allorigins.win/get?url=${encodeURIComponent(fullPmuUrl)}`,
+                `https://corsproxy.io/?${encodeURIComponent(fullPmuUrl)}`,
                 `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(fullPmuUrl)}`
             ];
 
             for (let proxy of proxies) {
                 try {
-                    let res = await fetchWithTimeout(proxy, 4500);
+                    let res = await fetch(proxy, { cache: 'no-store' });
                     if (res.ok) {
                         let text = await res.text();
                         if (!text || text.trim() === "") continue;
                         let json = JSON.parse(text);
-                        if (json && json.contents) json = JSON.parse(json.contents);
-                        return json;
+                        if (json && json.contents) {
+                            json = typeof json.contents === 'string' ? JSON.parse(json.contents) : json.contents;
+                        }
+                        if (json && typeof json === 'object') return json;
                     }
                 } catch(e) {}
             }
@@ -746,20 +732,18 @@
         async function getFullRaceData(dateStr, rNum, cNum, courseObj = null) {
             let partants = [];
             let rapportsList = [];
+            try {
+                let pData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/participants?specialisation=INTERNET`);
+                if(pData) partants = pData.participants || (Array.isArray(pData) ? pData : []);
+            } catch(e) {}
 
-            const [pRes, rRes] = await Promise.allSettled([
-                smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/participants?specialisation=INTERNET`),
-                smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs?specialisation=INTERNET`)
-            ]);
-
-            if (pRes.status === 'fulfilled' && pRes.value) {
-                let pData = pRes.value;
-                partants = pData.participants || (Array.isArray(pData) ? pData : []);
-            }
-            if (rRes.status === 'fulfilled' && rRes.value) {
-                let rData = rRes.value;
-                rapportsList = Array.isArray(rData) ? rData : (rData.rapports || rData.lesRapports || []);
-            }
+            try {
+                let rData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs?specialisation=INTERNET`);
+                if (rData) {
+                    if (Array.isArray(rData)) rapportsList = rData;
+                    else rapportsList = rData.rapports || rData.lesRapports || [];
+                }
+            } catch(e) {}
 
             if (partants.length > 0 && !partants.some(p => p.ordreArrivee && p.ordreArrivee > 0) && !courseObj) {
                 let m = liveMeetingsData.find(reun => (reun.numOfficiel || 0) == rNum);
@@ -775,7 +759,7 @@
                     nums.forEach(n => {
                         let horseNum = parseInt(n, 10);
                         let targetP = partants.find(p => parseInt(p.numPmu || p.numOrdre, 10) === horseNum);
-                        if (targetP) {
+                        if (targetP && !targetP.ordreArrivee) {
                             targetP.ordreArrivee = rank;
                         }
                     });
@@ -1316,7 +1300,7 @@
                 let raceStartTime = race.heureDepart ? new Date(race.heureDepart).getTime() : 0;
                 let isLocked = raceStartTime > 0 && now >= raceStartTime; 
                 
-                if (raceStartTime > 0 && now >= (raceStartTime - 60000) && (now - raceStartTime) < 60 * 60 * 1000) {
+                if (isBackground && raceStartTime > 0 && now >= raceStartTime && (now - raceStartTime) < 50 * 60 * 1000) {
                     try {
                         let progData = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`);
                         let rawR = progData.programme?.reunions || progData.reunions || progData.programme?.lesReunions || [];
@@ -1507,7 +1491,6 @@
             } catch (e) {}
         }
 
-        // LECTURE ET SAUVEGARDE UNIFIÉE DE L'HISTORIQUE (Compatible avec toutes les versions)
         function saveDayStatsToStorage(ddmmyyyy, mode, baseProfit, pepiteProfit, manualProfit) {
             let histObj = {
                 baseProfit: Number(baseProfit) || 0,
@@ -1652,7 +1635,6 @@
             cancelSyncFlag = true;
         }
 
-        // SYNCHRONISATION AUTOMATIQUE DE LA SEMAINE OU DU MOIS COMPLET
         async function syncPeriodHistory(periodType) {
             if (isSyncingPeriod) return;
             isSyncingPeriod = true;
@@ -1766,7 +1748,7 @@
                 }
 
                 if (!raceData) {
-                    await sleep(60);
+                    await sleep(100);
                     let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum, r.courseObj);
                     let isComplete = (rapportsList && rapportsList.length > 0);
                     raceData = slimRaceCacheData(partants, rapportsList, isComplete);
@@ -1900,7 +1882,7 @@
                         if (statsProgress) {
                             statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
                         }
-                        await sleep(70); 
+                        await sleep(100); 
                         if (currentCalcId !== myCalcId) return;
                         
                         let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum, r.courseObj);
@@ -1982,7 +1964,6 @@
                         }
                     }
 
-                    // MISE À JOUR PROGRESSIVE EN TEMPS RÉEL À CHAQUE COURSE VALIDÉE
                     document.getElementById('statBaseGag').textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
                     document.getElementById('statBasePla').textContent = `${baseWinsPla} / ${coursesValidees}`;
                     document.getElementById('statPepiteGag').textContent = `${pepiteWinsGag} / ${coursesGagnantBaseValidees}`;
@@ -2006,6 +1987,11 @@
                     document.getElementById('nextStakeBaseText').textContent = `Mise: ${nextStakeBase.toFixed(2)} €`;
                     document.getElementById('nextStakePepiteText').textContent = `Mise: ${nextStakePepite.toFixed(2)} €`;
                     document.getElementById('headerNextStake').textContent = `${nextStakeBase.toFixed(2)} €`;
+
+                    // Sauvegarde en temps réel dès qu'une course est validée
+                    if (coursesValidees > 0) {
+                        saveDayStatsToStorage(ddmmyyyy, currentDisciplineMode, totalProfitBasePla, totalProfitPepitePla, 0);
+                    }
                 }
 
                 if (currentCalcId !== myCalcId) return;
@@ -2014,7 +2000,6 @@
                 
                 let manualNet = updateBetSlipOnly();
 
-                // SAUVEGARDE GARANTIE DANS L'HISTORIQUE SEMAINE & MOIS
                 if (coursesValidees > 0 || manualNet !== 0) {
                     saveDayStatsToStorage(ddmmyyyy, currentDisciplineMode, totalProfitBasePla, totalProfitPepitePla, manualNet);
                 }
