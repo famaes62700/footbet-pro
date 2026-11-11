@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V34 Horaires Temps Réel & Sync</title>
+    <title>Turf - V36 Favori & Pépite Verrouillés au Départ</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -25,21 +25,21 @@
 
     <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-3 sm:p-4 sticky top-0 z-40 shadow-lg">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
-            <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-700">
-                <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">Pro</span>
-            </h1>
+            <!-- LOGO TURF PRO + CALENDRIER DATE À SA DROITE -->
+            <div class="flex items-center space-x-2">
+                <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-700">
+                    <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">Pro</span>
+                </h1>
+                <input type="date" id="raceDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2.5 py-1.5 rounded-xl border border-zinc-700 cursor-pointer focus:outline-none focus:border-amber-500 shadow" onchange="onDateChange()">
+            </div>
             
+            <!-- BOUTONS D'ACTION À DROITE -->
             <div class="flex items-center space-x-1.5 sm:space-x-2">
                 
                 <div class="text-xs bg-zinc-800 px-2 py-1 rounded-lg border border-emerald-500/30 text-emerald-400 font-bold flex flex-col items-end shadow mr-1">
                     <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">À Jouer (Base)</span>
                     <span id="headerNextStake">10.00 €</span>
                 </div>
-
-                <!-- BOUTON CORRECTEUR DE DÉCALAGE HORAIRE -->
-                <button id="btnTimeOffset" onclick="adjustTimeOffset()" class="bg-zinc-800 hover:bg-zinc-700 text-amber-400 px-2 h-8 rounded-lg border border-zinc-700 text-[10px] font-mono font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Ajuster un décalage horaire en minutes (ex: +10 ou -10)">
-                    <i class="fa-regular fa-clock mr-1"></i><span id="timeOffsetLabel">±0m</span>
-                </button>
                 
                 <!-- DRAPEAU DES ARRIVÉES -->
                 <button id="btnArrivalAlarm" onclick="toggleArrivalAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Alerte Arrivée Officielle">
@@ -51,7 +51,7 @@
                     <i id="iconStartAlarm" class="fa-solid fa-bell-slash"></i>
                 </button>
 
-                <!-- HISTORIQUE -->
+                <!-- HISTORIQUE DES GAINS -->
                 <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Historique des Gains">
                     <i class="fa-solid fa-calendar-days text-emerald-400"></i>
                 </button>
@@ -60,8 +60,6 @@
                 <button onclick="resetAllCache()" class="bg-red-900/40 hover:bg-red-600 text-red-300 hover:text-white w-8 h-8 rounded-lg border border-red-500/40 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Recalculer les courses du jour">
                     <i class="fa-solid fa-arrows-rotate"></i>
                 </button>
-
-                <input type="date" id="raceDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-amber-500" onchange="onDateChange()">
                 
             </div>
         </div>
@@ -234,6 +232,7 @@
             <div class="flex flex-wrap justify-between items-center gap-2">
                 <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center">
                     <i class="fa-solid fa-star mr-1.5"></i> Nos 2 Chevaux Clés
+                    <span id="picksLockBadge" class="ml-2 text-[9px] bg-zinc-800 text-zinc-400 border border-zinc-700 px-1.5 py-0.5 rounded font-mono normal-case"></span>
                 </h2>
                 <div class="flex items-center space-x-1.5 flex-wrap">
                     <a href="https://www.equidia.fr/direct?utm_source=intern&utm_medium=header_menu&utm_campaign=Home" target="_blank" class="bg-red-600 hover:bg-red-500 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold shadow transition flex items-center cursor-pointer">
@@ -360,44 +359,13 @@
         const STAKE_PEPITE = 5.0;
         const BASE_STAKE = 5.0;
 
-        // GESTION DU DÉCALAGE D'HORAIRE PERSONNALISABLE (en minutes)
-        let timeOffsetMinutes = parseInt(localStorage.getItem('fabturf_time_offset_min') || '0', 10) || 0;
+        try { localStorage.removeItem('fabturf_time_offset_min'); } catch(e) {}
 
-        function updateTimeOffsetUI() {
-            let lbl = document.getElementById('timeOffsetLabel');
-            if (!lbl) return;
-            if (timeOffsetMinutes === 0) lbl.textContent = '±0m';
-            else lbl.textContent = (timeOffsetMinutes > 0 ? `+${timeOffsetMinutes}m` : `${timeOffsetMinutes}m`);
-        }
-
-        function adjustTimeOffset() {
-            let input = prompt(
-                "Décalage horaire des départs (en minutes) :\n\n" +
-                "• Mettez +10 si l'application retarde de 10 min sur le réel.\n" +
-                "• Mettez -10 si l'application avance de 10 min sur le réel.\n" +
-                "• Mettez 0 pour garder l'heure brute du serveur PMU.",
-                String(timeOffsetMinutes)
-            );
-            if (input === null) return;
-            let parsed = parseInt(input.trim(), 10);
-            if (isNaN(parsed)) parsed = 0;
-            timeOffsetMinutes = Math.max(-120, Math.min(120, parsed));
-            try { localStorage.setItem('fabturf_time_offset_min', String(timeOffsetMinutes)); } catch(e) {}
-            updateTimeOffsetUI();
-            refreshDropdownLabelsInPlace();
-            fetchRaceData(false);
-            calculateDailyStats(false);
-            showToast(`Horaire ajusté de ${timeOffsetMinutes >= 0 ? '+' : ''}${timeOffsetMinutes} min`, "success");
-        }
-
-        // Convertit l'heure brute PMU en tenant compte du correcteur de décalage
         function getCourseTimeMs(course) {
             if (!course || !course.heureDepart) return 0;
-            let rawMs = typeof course.heureDepart === 'number' ? course.heureDepart : new Date(course.heureDepart).getTime();
-            return rawMs + (timeOffsetMinutes * 60 * 1000);
+            return typeof course.heureDepart === 'number' ? course.heureDepart : new Date(course.heureDepart).getTime();
         }
 
-        // Détermine si une course est réellement commencée ou terminée d'après le statut direct PMU + horaire ajusté
         function isCourseStartedOrFinished(course, nowMs = Date.now()) {
             if (!course) return false;
             if (Array.isArray(course.ordreArrivee) && course.ordreArrivee.length > 0) return true;
@@ -526,7 +494,6 @@
         }
 
         cleanupAndMigrateStorage();
-        updateTimeOffsetUI();
         document.getElementById('raceDate').value = getLocalDateString();
         let liveMeetingsData = [];
         let loadedProgrammeDate = "";
@@ -561,7 +528,7 @@
         setInterval(() => {
             let clk = document.getElementById('liveClockDisplay');
             if (clk) {
-                let d = new Date(Date.now() + (timeOffsetMinutes * 60 * 1000));
+                let d = new Date();
                 clk.textContent = `🕒 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
             }
         }, 1000);
@@ -1021,14 +988,13 @@
             }
         }
 
-        // Sélectionne la course en cours ou la prochaine à partir (sans rester bloqué 20 min sur une course finie)
         function autoSelectCurrentRace() {
             if (liveMeetingsData.length === 0) return;
             let now = Date.now();
             let bestMIdx = 0, bestCIdx = 0;
             let minDiff = Infinity, minPastDiff = Infinity;
             let pastMIdx = 0, pastCIdx = 0;
-            let bufferEnCours = 6 * 60 * 1000; // Garde la course affichée 6 min après son départ si l'arrivée n'est pas encore tombée
+            let bufferEnCours = 6 * 60 * 1000;
 
             liveMeetingsData.forEach((m, mIdx) => {
                 let courses = m.courses || [];
@@ -1184,7 +1150,8 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
-        function computeAlgorithm(partants) {
+        // ALGORITHME AVEC VERROUILLAGE DÉFINITIF DU FAVORI ET DE LA PÉPITE DÈS LE DÉPART
+        function computeAlgorithm(partants, raceKey = null, isRaceStarted = false) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
                 return !st.includes("NON_PARTANT") && !st.includes("NP");
@@ -1228,6 +1195,59 @@
 
             let remaining = processed.filter(p => p.num !== baseHorse?.num);
             let nuggetHorse = remaining.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
+
+            // GESTION DU VERROUILLAGE AU DÉPART DE LA COURSE
+            if (raceKey && processed.length > 0 && baseHorse) {
+                let ddmmyyyy = raceKey.split('_')[0];
+                let lockStorageKey = `fabturf_locked_picks_${ddmmyyyy}`;
+                let lockedPicks = safeGetLocal(lockStorageKey);
+                let existingLock = lockedPicks[raceKey];
+
+                if (!isRaceStarted) {
+                    // Avant le départ : on met à jour l'empreinte pré-course (sauf si elle a déjà été figée au départ)
+                    if (!existingLock || !existingLock.lockedAtStart) {
+                        lockedPicks[raceKey] = {
+                            baseNum: baseHorse.num,
+                            nuggetNum: nuggetHorse ? nuggetHorse.num : null,
+                            lockedAtStart: false
+                        };
+                        safeSetLocal(lockStorageKey, lockedPicks);
+                    }
+                } else {
+                    // Dès que la course a commencé (ou est terminée) : on fige le Favori et la Pépite
+                    if (existingLock && existingLock.baseNum) {
+                        let lockedBase = processed.find(p => p.num === existingLock.baseNum);
+                        let lockedNugget = existingLock.nuggetNum ? processed.find(p => p.num === existingLock.nuggetNum) : null;
+
+                        if (lockedBase) {
+                            baseHorse = lockedBase;
+                            if (lockedNugget && lockedNugget.num !== baseHorse.num) {
+                                nuggetHorse = lockedNugget;
+                            } else {
+                                let rem = processed.filter(p => p.num !== baseHorse.num);
+                                nuggetHorse = rem.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
+                            }
+                        }
+
+                        if (!existingLock.lockedAtStart) {
+                            lockedPicks[raceKey] = {
+                                baseNum: baseHorse ? baseHorse.num : existingLock.baseNum,
+                                nuggetNum: nuggetHorse ? nuggetHorse.num : existingLock.nuggetNum,
+                                lockedAtStart: true
+                            };
+                            safeSetLocal(lockStorageKey, lockedPicks);
+                        }
+                    } else {
+                        // Si la course est découverte déjà lancée, on la verrouille immédiatement pour qu'elle ne bouge plus
+                        lockedPicks[raceKey] = {
+                            baseNum: baseHorse.num,
+                            nuggetNum: nuggetHorse ? nuggetHorse.num : null,
+                            lockedAtStart: true
+                        };
+                        safeSetLocal(lockStorageKey, lockedPicks);
+                    }
+                }
+            }
             
             return { processed, baseHorse, nuggetHorse };
         }
@@ -1499,6 +1519,18 @@
                 let raceStartTime = getCourseTimeMs(race);
                 let isLocked = isCourseStartedOrFinished(race, now) || arrivees.length > 0 || hasReports;
 
+                // Indicateur visuel du verrouillage du Favori et de la Pépite
+                let lockBadgeEl = document.getElementById('picksLockBadge');
+                if (lockBadgeEl) {
+                    if (isLocked) {
+                        lockBadgeEl.className = "ml-2 text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded font-mono normal-case";
+                        lockBadgeEl.textContent = "🔒 Figés";
+                    } else {
+                        lockBadgeEl.className = "ml-2 text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.5 rounded font-mono normal-case";
+                        lockBadgeEl.textContent = "🟢 Cotes évolutives";
+                    }
+                }
+
                 if (arrivees.length > 0) {
                     arrivalBlock.style.display = 'block';
                     arrivees.slice(0, 5).forEach((p) => {
@@ -1596,7 +1628,8 @@
                     reportsBlock.style.display = 'none';
                 }
 
-                let algoResult = computeAlgorithm(partants);
+                // APPEL DE L'ALGORITHME AVEC VERROUILLAGE SI LA COURSE EST COMMENCÉE (isLocked)
+                let algoResult = computeAlgorithm(partants, currentRaceKey, isLocked);
                 let { processed, baseHorse, nuggetHorse } = algoResult;
 
                 if (baseHorse) {
@@ -1914,7 +1947,8 @@
                 let r = pastRaces[i];
                 if (onRaceStep) onRaceStep(i + 1, pastRaces.length);
 
-                let cacheKey = `race_cache_${CACHE_VERSION}_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let rKey = `${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `race_cache_${CACHE_VERSION}_${rKey}`;
                 let raceData = null;
                 let savedData = localStorage.getItem(cacheKey);
                 if (savedData) {
@@ -1937,7 +1971,7 @@
                 if (!raceData || !raceData.partants || raceData.partants.length === 0) continue;
                 if (!raceData.rapportsList || raceData.rapportsList.length === 0) continue;
 
-                let algoResult = computeAlgorithm(raceData.partants);
+                let algoResult = computeAlgorithm(raceData.partants, rKey, true);
                 let baseH = algoResult.baseHorse;
                 let nuggetH = algoResult.nuggetHorse;
                 let maxPaidPlaces = algoResult.processed.length >= 8 ? 3 : 2;
@@ -2012,7 +2046,6 @@
                         let cNum = c.numOrdre || (cIdx + 1);
                         let departTime = getCourseTimeMs(c);
                         let hasArr = Array.isArray(c.ordreArrivee) && c.ordreArrivee.length > 0;
-                        // Détecte une course dès son arrivée officielle ou 2 minutes après son départ (plus d'attente de 10 min !)
                         if (isPastDate || hasArr || (departTime > 0 && departTime < (now - 2 * 60 * 1000))) {
                             pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime, courseObj: c });
                         }
@@ -2039,7 +2072,8 @@
                     if (currentCalcId !== myCalcId) return;
                     
                     let r = pastRacesToday[i];
-                    let cacheKey = `race_cache_${CACHE_VERSION}_${ddmmyyyy}_${r.rNum}_${r.cNum}`; 
+                    let rKey = `${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                    let cacheKey = `race_cache_${CACHE_VERSION}_${rKey}`; 
 
                     let raceData = null;
                     let savedData = localStorage.getItem(cacheKey);
@@ -2075,7 +2109,8 @@
                     let hasReports = raceData.rapportsList && raceData.rapportsList.length > 0;
                     if (!hasReports) continue;
 
-                    let algoResult = computeAlgorithm(raceData.partants);
+                    // UTILISE LES CHEVAUX VERROUILLÉS AU DÉPART POUR LE BILAN DU JOUR
+                    let algoResult = computeAlgorithm(raceData.partants, rKey, true);
                     let baseH = algoResult.baseHorse;
                     let nuggetH = algoResult.nuggetHorse;
                     let maxPaidPlaces = algoResult.processed.length >= 8 ? 3 : 2;
