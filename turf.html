@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V37 Calcul des Gains Favori Réparé</title>
+    <title>Turf - V37 Complet & Opérationnel</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -155,7 +155,6 @@
                             <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé (Base 10€)</span>
                             <span id="statBasePla" class="text-[9px] text-emerald-500/70 font-bold my-0.5">0 / 0</span>
                             <span id="gainBasePla" class="font-bold text-emerald-400 mt-0.5">0.00 €</span>
-                            <span id="grossWinBasePla" class="text-[9px] text-emerald-400/80 font-mono mt-0.5">Gains: +0.00 €</span>
                         </div>
                     </div>
                 </div>
@@ -174,7 +173,6 @@
                             <span class="text-[8px] text-amber-400 block uppercase font-bold">Placé (Base 5€)</span>
                             <span id="statPepitePla" class="text-[9px] text-amber-500/70 font-bold my-0.5">0 / 0</span>
                             <span id="gainPepitePla" class="font-bold text-amber-400 mt-0.5">0.00 €</span>
-                            <span id="grossWinPepitePla" class="text-[9px] text-amber-400/80 font-mono mt-0.5">Gains: +0.00 €</span>
                         </div>
                     </div>
                 </div>
@@ -354,7 +352,7 @@
     </div>
 
     <script>
-        const CACHE_VERSION = "v37";
+        const CACHE_VERSION = "v21";
         
         // MISES DIFFÉRENCIÉES : 10€ POUR LA BASE, 5€ POUR LA PÉPITE ET LE TICKET
         const STAKE_BASE = 10.0;
@@ -368,1056 +366,6 @@
             return typeof course.heureDepart === 'number' ? course.heureDepart : new Date(course.heureDepart).getTime();
         }
 
-        function isCourseStartedOrFinished(course, nowMs = Date.now()) {
-            if (!course) return false;
-            if (Array.isArray(course.ordreArrivee) && course.ordreArrivee.length > 0) return true;
-            let st = String(course.statut || "").toUpperCase();
-            if (st.includes('EN_COURS') || st.includes('ARRIVEE') || st.includes('FIN_COURSE') || st.includes('TERMIN')) {
-                return true;
-            }
-            let startMs = getCourseTimeMs(course);
-            return startMs > 0 && nowMs >= startMs;
-        }
-
-        function cleanupAndMigrateStorage() {
-            try {
-                let keysToRemove = [];
-                for (let i = 0; i < localStorage.length; i++) {
-                    let k = localStorage.key(i);
-                    if (!k) continue;
-                    // Purge tous les anciens caches de courses (< v37) et les anciens verrous v36 erronés
-                    if (k.startsWith('race_cache_') && !k.startsWith(`race_cache_${CACHE_VERSION}_`)) {
-                        keysToRemove.push(k);
-                    }
-                    if (k.startsWith('fabturf_locked_picks_') && !k.startsWith(`fabturf_locked_picks_${CACHE_VERSION}_`)) {
-                        keysToRemove.push(k);
-                    }
-                    if (k.startsWith('pmu_stats_multidis_')) {
-                        let m = k.match(/^pmu_stats_multidis_v\d+_(TROT|ALL)_(\d{8})$/);
-                        if (m) {
-                            let mode = m[1];
-                            let ddmmyyyy = m[2];
-                            let unifiedKey = `pmu_stats_unified_${mode}_${ddmmyyyy}`;
-                            if (!localStorage.getItem(unifiedKey)) {
-                                try {
-                                    localStorage.setItem(unifiedKey, localStorage.getItem(k));
-                                } catch(e) {}
-                            }
-                        }
-                    }
-                }
-                keysToRemove.forEach(k => localStorage.removeItem(k));
-            } catch(e) {}
-        }
-
-        function safeSaveStatItem(key, valObj) {
-            let str = JSON.stringify(valObj);
-            try {
-                localStorage.setItem(key, str);
-            } catch (quotaErr) {
-                Object.keys(localStorage).forEach(k => {
-                    if (k.startsWith('race_cache_')) localStorage.removeItem(k);
-                });
-                try { localStorage.setItem(key, str); } catch(e) {}
-            }
-        }
-
-        // Conserve dernierRapportDirect ET dernierRapportReference ainsi que tous les rapports
-        function slimRaceCacheData(partants, rapportsList, isComplete) {
-            let slimP = (partants || []).map(p => ({
-                numPmu: p.numPmu || p.numOrdre,
-                nom: p.nom,
-                statut: p.statut,
-                musique: p.musique || p.form,
-                dernierRapportDirect: p.dernierRapportDirect ? { rapport: p.dernierRapportDirect.rapport } : undefined,
-                dernierRapportReference: p.dernierRapportReference ? { rapport: p.dernierRapportReference.rapport } : undefined,
-                ordreArrivee: p.ordreArrivee
-            }));
-            return { partants: slimP, rapportsList: rapportsList || [], isComplete: Boolean(isComplete) };
-        }
-        
-        function safeGetLocal(key) {
-            try { 
-                let item = localStorage.getItem(key);
-                let parsed = item ? JSON.parse(item) : {}; 
-                if (typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-                return parsed;
-            } catch(e) { return {}; }
-        }
-        function safeSetLocal(key, val) {
-            try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
-        }
-        
-        function getLocalDateString(d = new Date()) {
-            const yr = d.getFullYear();
-            const mo = String(d.getMonth() + 1).padStart(2, '0');
-            const da = String(d.getDate()).padStart(2, '0');
-            return `${yr}-${mo}-${da}`;
-        }
-
-        function parseLocalYYYYMMDD(dateStr) {
-            if (!dateStr) return new Date();
-            let p = dateStr.split('-');
-            return new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10), 12, 0, 0);
-        }
-
-        function formatMoneyHTML(val) {
-            let num = Number(val) || 0;
-            if (Math.abs(num) < 0.005) return `<span class="text-zinc-500">0.00 €</span>`;
-            let color = num > 0 ? 'text-emerald-400' : 'text-red-400';
-            let sign = num > 0 ? '+' : '';
-            return `<span class="${color}">${sign}${num.toFixed(2)} €</span>`;
-        }
-
-        function resetCountersUI() {
-            try {
-                document.getElementById('statBaseGag').textContent = "0 / 0";
-                document.getElementById('statBasePla').textContent = "0 / 0";
-                document.getElementById('statPepiteGag').textContent = "0 / 0";
-                document.getElementById('statPepitePla').textContent = "0 / 0";
-                document.getElementById('gainBaseGag').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
-                document.getElementById('gainBasePla').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
-                document.getElementById('gainPepiteGag').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
-                document.getElementById('gainPepitePla').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
-                
-                let gwBase = document.getElementById('grossWinBasePla');
-                if (gwBase) gwBase.textContent = "Gains: +0.00 €";
-                let gwPep = document.getElementById('grossWinPepitePla');
-                if (gwPep) gwPep.textContent = "Gains: +0.00 €";
-
-                document.getElementById('totalSpentText').textContent = "0.00 €";
-                document.getElementById('totalSpentPepiteText').textContent = "0.00 €";
-                
-                document.getElementById('maxStakeBaseText').textContent = "0.00 €";
-                document.getElementById('maxStakePepiteText').textContent = "0.00 €";
-                
-                document.getElementById('deficitBaseText').textContent = "0.00 €";
-                document.getElementById('deficitPepiteText').textContent = "0.00 €";
-                
-                document.getElementById('headerNextStake').textContent = `${STAKE_BASE.toFixed(2)} €`;
-                document.getElementById('nextStakeBaseText').textContent = `Mise: ${STAKE_BASE.toFixed(2)} €`;
-                document.getElementById('nextStakePepiteText').textContent = `Mise: ${STAKE_PEPITE.toFixed(2)} €`;
-            } catch(e) {}
-        }
-
-        cleanupAndMigrateStorage();
-        document.getElementById('raceDate').value = getLocalDateString();
-        let liveMeetingsData = [];
-        let loadedProgrammeDate = "";
-        let lastProgrammeSyncMs = 0;
-        let autoTransitionTimer = null;
-        let autoCountdownInterval = null;
-        let autoTransitionRaceKey = null;
-        
-        let currentDisciplineMode = 'TROT'; 
-        const sleep = ms => new Promise(res => setTimeout(res, ms));
-
-        let startAlarmEnabled = false;
-        let arrivalAlarmEnabled = false;
-        let lastStartAlarmKey = "";
-        let notifiedArrivals = {};
-        
-        let hasAutoTransitioned = {};
-        let isCalculatingStats = false;
-        let currentCalcId = 0;
-        let currentFetchRaceId = 0;
-        let isFetchingRace = false;
-        let isTicketExpanded = false;
-        let isSyncingPeriod = false;
-        let cancelSyncFlag = false;
-        
-        let globalBets = {};
-
-        let audioStart = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-        let audioArrival = new Audio('https://assets.mixkit.co/active_storage/sfx/2870/2870-preview.mp3');
-
-        setInterval(() => {
-            let clk = document.getElementById('liveClockDisplay');
-            if (clk) {
-                let d = new Date();
-                clk.textContent = `🕒 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
-            }
-        }, 1000);
-
-        function clearAutoTransition() {
-            if (autoTransitionTimer) {
-                clearTimeout(autoTransitionTimer);
-                autoTransitionTimer = null;
-            }
-            if (autoCountdownInterval) {
-                clearInterval(autoCountdownInterval);
-                autoCountdownInterval = null;
-            }
-            autoTransitionRaceKey = null;
-            let cdEl = document.getElementById('autoSwitchCountdown');
-            if (cdEl) cdEl.textContent = '';
-        }
-
-        function resetAllCache() {
-            notifiedArrivals = {};
-            hasAutoTransitioned = {};
-            clearAutoTransition();
-            Object.keys(localStorage).forEach(k => {
-                if (k.startsWith('race_cache_') || k.startsWith('fabturf_locked_picks_')) {
-                    localStorage.removeItem(k);
-                }
-            });
-            showToast("Cache purgé, recalcul complet des gains...", "success");
-            resetCountersUI();
-            loadLivePmu();
-        }
-
-        function setDisciplineMode(mode) {
-            currentDisciplineMode = mode;
-            let btnTrot = document.getElementById('btnFilterTrot');
-            let btnAll = document.getElementById('btnFilterAll');
-            let histLabel = document.getElementById('histModeLabel');
-
-            if (mode === 'TROT') {
-                btnTrot.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow cursor-pointer";
-                btnAll.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer";
-                if (histLabel) histLabel.textContent = "100% Trot";
-                showToast("Mode 100% Trot activé");
-            } else {
-                btnAll.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow cursor-pointer";
-                btnTrot.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer";
-                if (histLabel) histLabel.textContent = "Toutes Courses";
-                showToast("Mode Toutes Courses activé");
-            }
-            clearAutoTransition();
-            hasAutoTransitioned = {};
-            document.getElementById('meetingSelect').value = "";
-            resetCountersUI();
-            loadLivePmu();
-        }
-
-        function onDateChange() {
-            clearAutoTransition();
-            hasAutoTransitioned = {};
-            document.getElementById('meetingSelect').value = "";
-            resetCountersUI();
-            loadLivePmu();
-        }
-
-        function toggleStartAlarm() {
-            startAlarmEnabled = !startAlarmEnabled;
-            let btn = document.getElementById('btnStartAlarm');
-            let icon = document.getElementById('iconStartAlarm');
-            if (startAlarmEnabled) {
-                btn.classList.replace('text-zinc-500', 'text-amber-400');
-                btn.classList.replace('bg-zinc-800', 'bg-amber-900/40');
-                btn.classList.replace('border-zinc-700', 'border-amber-500/50');
-                icon.classList.replace('fa-bell-slash', 'fa-bell');
-                showToast("Alerte Départ activée (1min30 avant)", "success");
-                audioStart.volume = 0.01;
-                audioStart.play().then(() => {
-                    setTimeout(() => { audioStart.pause(); audioStart.currentTime = 0; audioStart.volume = 1.0; }, 300);
-                }).catch(() => {});
-            } else {
-                btn.classList.replace('text-amber-400', 'text-zinc-500');
-                btn.classList.replace('bg-amber-900/40', 'bg-zinc-800');
-                btn.classList.replace('border-amber-500/50', 'border-zinc-700');
-                icon.classList.replace('fa-bell', 'fa-bell-slash');
-                showToast("Alerte Départ désactivée");
-            }
-        }
-
-        function toggleArrivalAlarm() {
-            arrivalAlarmEnabled = !arrivalAlarmEnabled;
-            let btn = document.getElementById('btnArrivalAlarm');
-            let icon = document.getElementById('iconArrivalAlarm');
-            if (arrivalAlarmEnabled) {
-                btn.classList.replace('text-zinc-500', 'text-blue-400');
-                btn.classList.replace('bg-zinc-800', 'bg-blue-900/40');
-                btn.classList.replace('border-zinc-700', 'border-blue-500/50');
-                showToast("Alerte Arrivée Officielle activée", "success");
-                audioArrival.volume = 0.01;
-                audioArrival.play().then(() => {
-                    setTimeout(() => { audioArrival.pause(); audioArrival.currentTime = 0; audioArrival.volume = 1.0; }, 300);
-                }).catch(() => {});
-            } else {
-                btn.classList.replace('text-blue-400', 'text-zinc-500');
-                btn.classList.replace('bg-blue-900/40', 'bg-zinc-800');
-                btn.classList.replace('border-blue-500/50', 'border-zinc-700');
-                showToast("Alerte Arrivée Officielle désactivée");
-            }
-        }
-
-        function checkStartAlarm() {
-            if (!startAlarmEnabled || liveMeetingsData.length === 0) return;
-            let now = Date.now();
-            let sortedRaces = getSortedRacesList();
-            let nextRace = sortedRaces.find(r => r.time > now);
-            if (nextRace) {
-                let diff = nextRace.time - now;
-                if (diff > 60000 && diff <= 120000) {
-                    let raceKey = `${nextRace.mIdx}_${nextRace.cIdx}`;
-                    if (lastStartAlarmKey !== raceKey) {
-                        lastStartAlarmKey = raceKey;
-                        audioStart.play().catch(() => {});
-                        showToast(`🚨 DÉPART IMMINENT ! (R${nextRace.mIdx+1}C${nextRace.cIdx+1})`, "error");
-                        
-                        let currentM = document.getElementById('meetingSelect').value;
-                        let currentC = document.getElementById('raceSelect').value;
-                        if (currentM != nextRace.mIdx || currentC != nextRace.cIdx) {
-                            clearAutoTransition();
-                            document.getElementById('meetingSelect').value = nextRace.mIdx;
-                            onMeetingChange(true);
-                            document.getElementById('raceSelect').value = nextRace.cIdx;
-                            fetchRaceData(false);
-                        }
-                    }
-                }
-            }
-        }
-
-        async function syncProgrammeTimesSilently() {
-            let dateInput = document.getElementById('raceDate').value;
-            if (!dateInput || dateInput !== getLocalDateString()) return;
-            if (Date.now() - lastProgrammeSyncMs < 20000) return;
-            lastProgrammeSyncMs = Date.now();
-
-            let parts = dateInput.split('-');
-            let ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
-            try {
-                let progData = await smartFetchPMU(`${ddmmyyyy}?specialisation=INTERNET`, true);
-                let rawR = progData?.programme?.reunions || progData?.reunions || progData?.programme?.lesReunions || [];
-                if (!rawR || rawR.length === 0) return;
-
-                let hasTimeShift = false;
-                liveMeetingsData.forEach(m => {
-                    let rNum = m.numOfficiel;
-                    let upM = rawR.find(r => (r.numOfficiel || 0) == rNum);
-                    if (upM) {
-                        let upCourses = upM.courses || upM.races || upM.lesCourses || [];
-                        (m.courses || []).forEach((c, idx) => {
-                            let upC = upCourses.find(x => (x.numOrdre || 0) == c.numOrdre);
-                            if (upC) {
-                                if (upC.heureDepart && upC.heureDepart !== c.heureDepart) {
-                                    hasTimeShift = true;
-                                }
-                                m.courses[idx] = Object.assign(c, upC);
-                            }
-                        });
-                    }
-                });
-
-                if (hasTimeShift) {
-                    refreshDropdownLabelsInPlace();
-                }
-            } catch(e) {}
-        }
-
-        function refreshDropdownLabelsInPlace() {
-            let mSelect = document.getElementById('meetingSelect');
-            let rSelect = document.getElementById('raceSelect');
-            let mVal = mSelect.value;
-            let rVal = rSelect.value;
-
-            Array.from(mSelect.options).forEach(opt => {
-                if (opt.value === "") return;
-                let idx = parseInt(opt.value, 10);
-                let r = liveMeetingsData[idx];
-                if (!r) return;
-                let coursesList = r.courses || [];
-                let timeStr = "";
-                if (coursesList[0] && coursesList[0].heureDepart) {
-                    timeStr = ` 🕒 [${formatTime(getCourseTimeMs(coursesList[0]))}]`;
-                }
-                let hipName = r.hippodrome ? (r.hippodrome.libelleLong || r.hippodrome.libelleCourt || r.hippodrome.nom) : 'Hippodrome';
-                let pays = (r.hippodrome && r.hippodrome.codePays) ? ` [${r.hippodrome.codePays}]` : "";
-                opt.textContent = `R${r.numOfficiel || (idx+1)} - ${hipName}${pays}${timeStr} (${coursesList.length} courses)`;
-            });
-
-            if (mVal !== "" && liveMeetingsData[mVal]) {
-                let courses = liveMeetingsData[mVal].courses || [];
-                Array.from(rSelect.options).forEach(opt => {
-                    if (opt.value === "") return;
-                    let cIdx = parseInt(opt.value, 10);
-                    let c = courses[cIdx];
-                    if (!c) return;
-                    let courseTime = c.heureDepart ? `[${formatTime(getCourseTimeMs(c))}] ` : '';
-                    let libelleCourse = c.libelle || c.nom || c.libelleCourt || 'Prix';
-                    let s = String(c.specialite || c.discipline || "COURSE").toUpperCase();
-                    opt.textContent = `${courseTime}C${c.numOrdre || (cIdx+1)} - ${libelleCourse} [${s}]`;
-                });
-                rSelect.value = rVal;
-            }
-        }
-
-        setInterval(async () => {
-            await syncProgrammeTimesSilently();
-            let mIdx = document.getElementById('meetingSelect').value;
-            let cIdx = document.getElementById('raceSelect').value;
-            if (mIdx !== "" && cIdx !== "" && !isFetchingRace) fetchRaceData(true); 
-            if (!isSyncingPeriod) calculateDailyStats(true);
-            checkStartAlarm();
-        }, 10000);
-
-        function isTargetDisciplineRace(course) {
-            let d = String(course.discipline || '').toUpperCase();
-            let s = String(course.specialite || '').toUpperCase();
-            if (currentDisciplineMode === 'TROT') {
-                return d.includes('TROT') || d.includes('ATTEL') || d.includes('MONTE') || 
-                       s.includes('TROT') || s.includes('ATTEL') || s.includes('MONTE');
-            } else {
-                return true; 
-            }
-        }
-
-        function toggleHistoryStats() {
-            let historyBlock = document.getElementById('historyBlock');
-            if (historyBlock.style.display === 'none' || historyBlock.style.display === '') {
-                historyBlock.style.display = 'block';
-                showHistoryStats();
-            } else {
-                historyBlock.style.display = 'none';
-            }
-        }
-
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            let bgClass = type === 'success' ? 'bg-emerald-900/90 border-emerald-500/50 text-emerald-200' : 'bg-zinc-800 border-zinc-700 text-white';
-            if (type === 'error') bgClass = 'bg-red-900/90 border-red-500/50 text-red-200';
-            
-            toast.className = `pointer-events-auto px-5 py-3 rounded-xl border shadow-2xl text-sm font-bold transition transform duration-300 opacity-0 translate-y-2 mb-2 flex items-center space-x-2 ${bgClass}`;
-            toast.innerHTML = `<span>${message}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => { toast.classList.remove('opacity-0', 'translate-y-2'); }, 10);
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-2');
-                setTimeout(() => toast.remove(), 300);
-            }, 3500);
-        }
-
-        function formatTime(timeValue) {
-            if (!timeValue) return '';
-            if (typeof timeValue === 'number') {
-                const date = new Date(timeValue);
-                const h = String(date.getHours()).padStart(2, '0');
-                const m = String(date.getMinutes()).padStart(2, '0');
-                return `${h}h${m}`;
-            }
-            return String(timeValue);
-        }
-
-        function getDisciplineBadge(course) {
-            let s = String(course.specialite || course.discipline || 'COURSE').toUpperCase();
-            if (s.includes('MONTE')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">MONTÉ</span>';
-            if (s.includes('ATTEL')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">ATTELÉ</span>';
-            if (s.includes('PLAT')) return '<span class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">PLAT</span>';
-            if (s.includes('HAIES') || s.includes('STEEPLE') || s.includes('OBST')) return '<span class="bg-purple-500/20 text-purple-400 border border-purple-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">OBSTACLE</span>';
-            return `<span class="bg-zinc-500/20 text-zinc-300 border border-zinc-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">${s}</span>`;
-        }
-
-        async function smartFetchPMU(path, allowEmpty = false) {
-            const sep = path.includes('?') ? '&' : '?';
-            const cacheBusterPath = `${path}${sep}_t=${Date.now()}`;
-            const fullPmuUrl = `https://online.turfinfo.api.pmu.fr/rest/client/61/programme/${cacheBusterPath}`;
-            
-            try {
-                let localRes = await fetch(`/api/pmu/${cacheBusterPath}`);
-                if (localRes.status === 204 || localRes.status === 404) return null;
-                if (localRes.ok) return await localRes.json();
-            } catch (e) {}
-
-            const proxies = [
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(fullPmuUrl)}`,
-                `https://corsproxy.io/?${encodeURIComponent(fullPmuUrl)}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(fullPmuUrl)}`
-            ];
-
-            for (let proxy of proxies) {
-                try {
-                    let res = await fetch(proxy, { cache: 'no-store' });
-                    if (res.status === 204 || res.status === 404) return null;
-                    if (res.ok) {
-                        let text = await res.text();
-                        if (!text || text.trim() === "") {
-                            if (allowEmpty) return null;
-                            continue;
-                        }
-                        let json = JSON.parse(text);
-                        if (json && json.contents !== undefined) {
-                            if (!json.contents || String(json.contents).trim() === "") {
-                                if (allowEmpty) return null;
-                                continue;
-                            }
-                            json = typeof json.contents === 'string' ? JSON.parse(json.contents) : json.contents;
-                        }
-                        return json;
-                    }
-                } catch(e) {}
-            }
-            if (allowEmpty) return null;
-            throw new Error("PMU bloqué");
-        }
-
-        function extractHorseNumFromCombo(rawCombo) {
-            if (rawCombo === undefined || rawCombo === null) return -1;
-            if (Array.isArray(rawCombo)) return rawCombo.length === 1 ? parseInt(rawCombo[0], 10) : -1;
-            let str = String(rawCombo).trim();
-            if (str.includes('-') || str.includes('/')) return -1;
-            let m = str.match(/\d+/);
-            return m ? parseInt(m[0], 10) : -1;
-        }
-
-        // EXTRACTION CORRIGÉE DU MONTANT EN EUROS D'UN RAPPORT PMU (Évite le bug dividendePourUnEuro === null -> 0€)
-        function parsePmuReportItemValue(item, groupMiseBase = 100) {
-            if (!item || typeof item !== 'object') return 0;
-            let candidates = [
-                item.dividendePourUnEuro,
-                item.dividendeEuro,
-                item.gainEuro,
-                item.dividendePourMiseDeBase,
-                item.dividende,
-                item.rapport,
-                item.montant
-            ];
-            for (let c of candidates) {
-                if (c !== undefined && c !== null && c !== "") {
-                    let num = parseFloat(String(c).replace(',', '.'));
-                    if (!isNaN(num) && num > 0) {
-                        // Les dividendes PMU sont exprimés en centimes (ex: 130 pour 1.30 €)
-                        if (num >= 100) {
-                            let base = (groupMiseBase && groupMiseBase >= 100) ? groupMiseBase : 100;
-                            return num / base;
-                        }
-                        return num;
-                    }
-                }
-            }
-            return 0;
-        }
-
-        function extractGainFromRapports(listeRapports, horseNum, targetType) {
-            let foundGain = 0;
-            let targetNum = parseInt(horseNum, 10);
-            if (!listeRapports || !Array.isArray(listeRapports) || isNaN(targetNum)) return 0;
-
-            listeRapports.forEach(group => {
-                let pType = String(group.typePari || group.libellePari || group.codePari || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                let famille = String(group.famillePari || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                
-                if (pType.includes('COUPLE') || pType.includes('TRIO') || pType.includes('TIERCE') || pType.includes('QUARTE') || pType.includes('QUINTE') || pType.includes('MULTI') || pType.includes('2SUR4') || pType.includes('PICK5') || pType.includes('SUPER4')) return;
-
-                let miseBase = Number(group.miseBase) || 100;
-                let details = group.rapports || group.dividendes || group.lesRapports || [];
-                if (!Array.isArray(details)) return;
-
-                details.forEach(item => {
-                    let rawCombo = item.combinaison !== undefined ? item.combinaison : (item.cheval || item.numeroCheval || item.partant || item.numPmu);
-                    let extractedNum = extractHorseNumFromCombo(rawCombo);
-
-                    if (extractedNum === targetNum) {
-                        let lib = String(item.libelleRapport || item.libelle || item.typeRapport || item.nomRapport || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                        let combinedContext = `${pType} ${famille} ${lib}`;
-
-                        let isPlace = combinedContext.includes('PLAC') || pType === 'SP' || pType === 'E_SP' || lib === 'P';
-                        let isGagnant = (combinedContext.includes('GAGN') || pType === 'SG' || pType === 'E_SG' || lib === 'G') && !isPlace;
-
-                        if ((targetType === 'GAGNANT' && isGagnant) || (targetType === 'PLACE' && isPlace)) {
-                            let val = parsePmuReportItemValue(item, miseBase);
-                            if (val > foundGain) foundGain = val;
-                        }
-                    }
-                });
-            });
-            return foundGain;
-        }
-
-        function hasValidSimplePlaceReports(listeRapports) {
-            if (!listeRapports || !Array.isArray(listeRapports) || listeRapports.length === 0) return false;
-            for (let g of listeRapports) {
-                let pType = String(g.typePari || g.libellePari || g.codePari || "").toUpperCase();
-                let fam = String(g.famillePari || "").toUpperCase();
-                let details = g.rapports || g.dividendes || g.lesRapports || [];
-                if ((pType.includes('PLAC') || pType === 'SP' || pType === 'E_SP' || fam.includes('SIMPLE')) && Array.isArray(details) && details.length > 0) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        async function getFullRaceData(dateStr, rNum, cNum, courseObj = null, checkReports = true) {
-            let partants = [];
-            let rapportsList = [];
-            try {
-                let pData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/participants?specialisation=INTERNET`, false);
-                if(pData) partants = pData.participants || (Array.isArray(pData) ? pData : []);
-            } catch(e) {}
-
-            if (!courseObj) {
-                let m = liveMeetingsData.find(reun => (reun.numOfficiel || 0) == rNum);
-                if (m && m.courses) {
-                    courseObj = m.courses.find(c => (c.numOrdre || 0) == cNum);
-                }
-            }
-
-            if (courseObj && Array.isArray(courseObj.ordreArrivee) && courseObj.ordreArrivee.length > 0) {
-                courseObj.ordreArrivee.forEach((item, index) => {
-                    let rank = index + 1;
-                    let nums = Array.isArray(item) ? item : [item];
-                    nums.forEach(n => {
-                        let horseNum = parseInt(n, 10);
-                        let targetP = partants.find(p => parseInt(p.numPmu || p.numOrdre, 10) === horseNum);
-                        if (targetP && !targetP.ordreArrivee) {
-                            targetP.ordreArrivee = rank;
-                        }
-                    });
-                });
-            }
-
-            let hasArrival = partants.some(p => p.ordreArrivee && parseInt(p.ordreArrivee, 10) > 0);
-            let raceStartTime = getCourseTimeMs(courseObj);
-            let hasStarted = (raceStartTime === 0) || isCourseStartedOrFinished(courseObj, Date.now());
-
-            if (checkReports && (hasArrival || hasStarted)) {
-                try {
-                    let rData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs?specialisation=INTERNET`, true);
-                    if (rData) {
-                        rapportsList = Array.isArray(rData) ? rData : (rData.rapports || rData.lesRapports || []);
-                    }
-                    // Si les rapports INTERNET sont vides mais que la course est arrivée, on vérifie les rapports PMU standards
-                    if ((!rapportsList || rapportsList.length === 0) && hasArrival) {
-                        let rDataFallback = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs`, true);
-                        if (rDataFallback) {
-                            rapportsList = Array.isArray(rDataFallback) ? rDataFallback : (rDataFallback.rapports || rDataFallback.lesRapports || []);
-                        }
-                    }
-                } catch(e) {}
-            }
-
-            // Sécurité supplémentaire : déduit l'arrivée (1er et placés) depuis les rapports définitifs si ordreArrivee manque dans partants
-            if (rapportsList && rapportsList.length > 0 && partants.length > 0) {
-                partants.forEach(p => {
-                    let num = parseInt(p.numPmu || p.numOrdre, 10);
-                    if (!p.ordreArrivee || p.ordreArrivee <= 0) {
-                        if (extractGainFromRapports(rapportsList, num, 'GAGNANT') > 0) {
-                            p.ordreArrivee = 1;
-                        } else if (extractGainFromRapports(rapportsList, num, 'PLACE') > 0) {
-                            p.ordreArrivee = 2;
-                        }
-                    }
-                });
-            }
-
-            return { partants, rapportsList };
-        }
-
-        async function loadLivePmu(keepSelection = false) {
-            if (!keepSelection) clearAutoTransition();
-            const dateInput = document.getElementById('raceDate').value;
-            const statusText = document.getElementById('statusText');
-            statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement des courses...';
-
-            globalBets = safeGetLocal(`fabturf_v21_bets_` + dateInput);
-
-            if (document.getElementById('historyBlock').style.display !== 'none' && document.getElementById('historyBlock').style.display !== '') showHistoryStats();
-
-            const parts = dateInput.split('-');
-            const ddmmyyyy = `${parts[2]}${parts[1]}${parts[0]}`;
-            const now!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V34 Horaires Temps Réel & Sync</title>
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Turf">
-    
-    <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=Turf&background=00965e&color=fff&size=512&font-size=0.4&v=2">
-    <link rel="icon" type="image/png" href="https://ui-avatars.com/api/?name=Turf&background=00965e&color=fff&size=512&font-size=0.4&v=2">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
-</head>
-<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-40">
-
-    <div id="toastContainer" class="fixed bottom-24 right-4 z-[9999] flex flex-col space-y-2 pointer-events-none"></div>
-
-    <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-3 sm:p-4 sticky top-0 z-40 shadow-lg">
-        <div class="max-w-3xl mx-auto flex justify-between items-center">
-            <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-700">
-                <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">Pro</span>
-            </h1>
-            
-            <div class="flex items-center space-x-1.5 sm:space-x-2">
-                
-                <div class="text-xs bg-zinc-800 px-2 py-1 rounded-lg border border-emerald-500/30 text-emerald-400 font-bold flex flex-col items-end shadow mr-1">
-                    <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">À Jouer (Base)</span>
-                    <span id="headerNextStake">10.00 €</span>
-                </div>
-
-                <!-- BOUTON CORRECTEUR DE DÉCALAGE HORAIRE -->
-                <button id="btnTimeOffset" onclick="adjustTimeOffset()" class="bg-zinc-800 hover:bg-zinc-700 text-amber-400 px-2 h-8 rounded-lg border border-zinc-700 text-[10px] font-mono font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Ajuster un décalage horaire en minutes (ex: +10 ou -10)">
-                    <i class="fa-regular fa-clock mr-1"></i><span id="timeOffsetLabel">±0m</span>
-                </button>
-                
-                <!-- DRAPEAU DES ARRIVÉES -->
-                <button id="btnArrivalAlarm" onclick="toggleArrivalAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Alerte Arrivée Officielle">
-                    <i id="iconArrivalAlarm" class="fa-solid fa-flag-checkered"></i>
-                </button>
-                
-                <!-- CLOCHE DE DÉPART -->
-                <button id="btnStartAlarm" onclick="toggleStartAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Alerte Départ (1min30 avant)">
-                    <i id="iconStartAlarm" class="fa-solid fa-bell-slash"></i>
-                </button>
-
-                <!-- HISTORIQUE -->
-                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Historique des Gains">
-                    <i class="fa-solid fa-calendar-days text-emerald-400"></i>
-                </button>
-
-                <!-- PURGE CACHE -->
-                <button onclick="resetAllCache()" class="bg-red-900/40 hover:bg-red-600 text-red-300 hover:text-white w-8 h-8 rounded-lg border border-red-500/40 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Recalculer les courses du jour">
-                    <i class="fa-solid fa-arrows-rotate"></i>
-                </button>
-
-                <input type="date" id="raceDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2 py-1.5 rounded-lg border border-zinc-700 cursor-pointer focus:outline-none focus:border-amber-500" onchange="onDateChange()">
-                
-            </div>
-        </div>
-    </header>
-
-    <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4">
-        
-        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-2 flex items-center justify-between text-xs">
-            <span class="text-zinc-400 font-bold ml-2"><i class="fa-solid fa-filter mr-1.5 text-amber-400"></i> Mode :</span>
-            <div class="flex space-x-2">
-                <button id="btnFilterTrot" onclick="setDisciplineMode('TROT')" class="bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow cursor-pointer">
-                    100% Trot
-                </button>
-                <button id="btnFilterAll" onclick="setDisciplineMode('ALL')" class="bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer">
-                    Toutes Courses (Monde)
-                </button>
-            </div>
-        </div>
-
-        <div class="flex justify-between items-center bg-zinc-950 border border-zinc-800 p-2 rounded-xl">
-            <div id="statusText" class="text-xs text-amber-400 font-mono flex items-center">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion PMU...
-            </div>
-            <div class="flex items-center space-x-2">
-                <span id="liveClockDisplay" class="text-[10px] text-zinc-400 font-mono bg-zinc-900 px-2 py-1 rounded border border-zinc-800">--:--</span>
-                <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded">Prêt</div>
-            </div>
-        </div>
-
-        <!-- HISTORIQUE CUMULÉ AVEC SYNCHRONISATION SEMAINE & MOIS -->
-        <div id="historyBlock" style="display: none;" class="bg-zinc-900 border border-emerald-500/40 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
-            <div class="flex flex-wrap justify-between items-center gap-2 border-b border-zinc-800 pb-2.5">
-                <h2 class="text-xs font-bold uppercase text-zinc-200 tracking-wider flex items-center">
-                    <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés (<span id="histModeLabel" class="text-amber-400 ml-1">100% Trot</span>)
-                </h2>
-                <div class="flex items-center space-x-1.5">
-                    <button id="btnSyncWeek" onclick="syncPeriodHistory('WEEK')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer flex items-center">
-                        <i class="fa-solid fa-bolt mr-1"></i> Calculer la Semaine
-                    </button>
-                    <button id="btnSyncMonth" onclick="syncPeriodHistory('MONTH')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer flex items-center">
-                        <i class="fa-solid fa-calendar-check mr-1"></i> Calculer le Mois
-                    </button>
-                    <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-            </div>
-
-            <div id="syncProgressBanner" style="display: none;" class="bg-zinc-950 border border-amber-500/40 text-amber-300 text-xs px-3 py-2 rounded-xl font-mono flex justify-between items-center">
-                <span id="syncProgressText"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Synchronisation en cours...</span>
-                <button onclick="cancelSyncPeriod()" class="text-[10px] bg-red-900/50 text-red-300 px-2 py-0.5 rounded border border-red-500/40 cursor-pointer">Stop</button>
-            </div>
-
-            <div class="space-y-4 max-h-[28rem] overflow-y-auto pr-1">
-                <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-[11px] uppercase font-bold text-zinc-300">Cette Semaine (Cumul Placé)</h3>
-                        <span id="weekDatesLabel" class="text-[10px] text-zinc-400 font-mono"></span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 bg-zinc-950/70 p-2.5 rounded-lg border border-zinc-800 mb-2.5">
-                        <div class="text-zinc-300">Base (10€) : <span id="weekBase" class="text-emerald-400 font-bold block text-sm mt-0.5">0.00 €</span></div>
-                        <div class="text-zinc-300">Pépite (5€) : <span id="weekPepite" class="text-amber-400 font-bold block text-sm mt-0.5">0.00 €</span></div>
-                        <div class="text-zinc-300">Perso : <span id="weekManual" class="text-orange-400 font-bold block text-sm mt-0.5">0.00 €</span></div>
-                    </div>
-                    <div id="weekDaysBreakdown" class="space-y-1 text-[11px]"></div>
-                </div>
-
-                <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
-                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Mois par Mois (<span id="currentYearText"></span>)</h3>
-                    <div id="monthsGrid" class="space-y-2"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-zinc-900 border border-amber-500/30 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
-            <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
-                <div>
-                    <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour</h2>
-                    <p class="text-[10px] text-zinc-400">Rattrapage optimisé • <strong class="text-emerald-400">Base 10€</strong> | <strong class="text-amber-400">Pépite 5€</strong></p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3 text-xs">
-                <!-- BASE -->
-                <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">MISE 10€</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori)</div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
-                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant (1€ virt.)</span>
-                            <span id="statBaseGag" class="text-[9px] text-zinc-500 font-bold my-0.5">0 / 0</span>
-                            <span id="gainBaseGag" class="font-bold text-zinc-300 mt-0.5">0.00 €</span>
-                        </div>
-                        <div class="bg-zinc-900/60 p-2 rounded border border-emerald-500/30 text-center flex flex-col justify-center shadow-inner">
-                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé (Base 10€)</span>
-                            <span id="statBasePla" class="text-[9px] text-emerald-500/70 font-bold my-0.5">0 / 0</span>
-                            <span id="gainBasePla" class="font-bold text-emerald-400 mt-0.5">0.00 €</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- PÉPITE -->
-                <div class="bg-zinc-950 p-3 rounded-xl border border-amber-500/40 relative flex flex-col justify-between">
-                    <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMU 5€</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Pépite</div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
-                            <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant (1€ virt.)</span>
-                            <span id="statPepiteGag" class="text-[9px] text-zinc-500 font-bold my-0.5">0 / 0</span>
-                            <span id="gainPepiteGag" class="font-bold text-zinc-300 mt-0.5">0.00 €</span>
-                        </div>
-                        <div class="bg-zinc-900/60 p-2 rounded border border-amber-500/30 text-center flex flex-col justify-center">
-                            <span class="text-[8px] text-amber-400 block uppercase font-bold">Placé (Base 5€)</span>
-                            <span id="statPepitePla" class="text-[9px] text-amber-500/70 font-bold my-0.5">0 / 0</span>
-                            <span id="gainPepitePla" class="font-bold text-amber-400 mt-0.5">0.00 €</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MISE MAX ET DÉFICITS -->
-            <div class="grid grid-cols-2 gap-3 text-[11px] bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 text-zinc-300">
-                <div class="flex flex-col space-y-1 border-r border-zinc-700/50 pr-3">
-                    <span class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement (Base 10€)</span>
-                    <span class="flex justify-between">Joué: <strong id="totalSpentText" class="text-white">0.00 €</strong></span>
-                    <span class="flex justify-between">Max Atteint: <strong id="maxStakeBaseText" class="text-zinc-300">0.00 €</strong></span>
-                    <span class="flex justify-between">Déficit: <strong id="deficitBaseText" class="text-red-400">0.00 €</strong></span>
-                    <div class="pt-1.5">
-                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-2 py-1 rounded border border-emerald-500/30 font-black text-xs shadow-md block text-center">Mise: 10.00 €</strong>
-                    </div>
-                </div>
-
-                <div class="flex flex-col space-y-1 pl-1">
-                    <span class="text-[9px] uppercase text-amber-400 font-bold mb-0.5">Investissement (Pépite 5€)</span>
-                    <span class="flex justify-between">Joué: <strong id="totalSpentPepiteText" class="text-white">0.00 €</strong></span>
-                    <span class="flex justify-between">Max Atteint: <strong id="maxStakePepiteText" class="text-zinc-300">0.00 €</strong></span>
-                    <span class="flex justify-between">Déficit: <strong id="deficitPepiteText" class="text-red-400">0.00 €</strong></span>
-                    <div class="pt-1.5">
-                        <strong id="nextStakePepiteText" class="text-amber-400 bg-zinc-900 px-2 py-1 rounded border border-amber-500/30 font-black text-xs shadow-md block text-center">Mise: 5.00 €</strong>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <select id="meetingSelect" onchange="onMeetingChange(false)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500 cursor-pointer">
-                <option value="">-- Réunion --</option>
-            </select>
-            <select id="raceSelect" onchange="onRaceChange()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500 cursor-pointer">
-                <option value="">-- Course --</option>
-            </select>
-        </div>
-
-        <div id="arrivalBlock" style="display: none;" class="bg-blue-950/40 border border-blue-500/40 rounded-xl p-3.5 space-y-2">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xs font-bold uppercase text-blue-400 tracking-wider flex items-center">
-                    <i class="fa-solid fa-flag-checkered mr-1.5"></i> Arrivée Officielle
-                </h2>
-                <span id="autoSwitchCountdown" class="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded font-mono font-bold"></span>
-            </div>
-            <div id="arrivalList" class="flex flex-wrap gap-2 text-xs font-bold text-white"></div>
-        </div>
-
-        <div id="reportsBlock" style="display: none;" class="bg-zinc-900 border border-emerald-500/30 rounded-xl p-3.5 space-y-2">
-            <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center">
-                <i class="fa-solid fa-euro-sign mr-1.5"></i> Rapports Définitifs (pour 1 €)
-            </h2>
-            <div id="reportsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs"></div>
-        </div>
-
-        <div class="bg-gradient-to-r from-emerald-950/60 via-zinc-900 to-zinc-900 border border-emerald-500/50 rounded-2xl p-4 space-y-3 shadow-xl relative">
-            <div class="flex flex-wrap justify-between items-center gap-2">
-                <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center">
-                    <i class="fa-solid fa-star mr-1.5"></i> Nos 2 Chevaux Clés
-                </h2>
-                <div class="flex items-center space-x-1.5 flex-wrap">
-                    <a href="https://www.equidia.fr/direct?utm_source=intern&utm_medium=header_menu&utm_campaign=Home" target="_blank" class="bg-red-600 hover:bg-red-500 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-bold shadow transition flex items-center cursor-pointer">
-                        <i class="fa-solid fa-video mr-1.5"></i> Direct 🎥
-                    </a>
-                    <button onclick="goToPrevRace()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 font-semibold transition flex items-center shadow cursor-pointer" title="Course précédente">
-                        <i class="fa-solid fa-backward-step"></i>
-                    </button>
-                    <button onclick="refreshCurrentRace()" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 text-xs px-2.5 py-1.5 rounded-lg border border-emerald-500/30 font-semibold transition flex items-center shadow cursor-pointer" title="Actualiser manuellement">
-                        <i class="fa-solid fa-rotate"></i>
-                    </button>
-                    <button onclick="goToNextRace()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 font-semibold transition flex items-center shadow cursor-pointer" title="Course suivante">
-                        <i class="fa-solid fa-forward-step"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mt-3">
-                <div class="bg-zinc-900/90 p-3 rounded-xl border border-emerald-500/40 space-y-1">
-                    <div class="text-[10px] uppercase font-bold text-emerald-400">Favori des Parieurs (Base 10€)</div>
-                    <div id="top1Name" class="font-bold text-white text-sm">En attente...</div>
-                    <div id="top1Stats" class="text-[11px] text-zinc-400">--</div>
-                </div>
-                <div class="bg-zinc-900/90 p-3 rounded-xl border border-amber-500/40 space-y-1">
-                    <div class="text-[10px] uppercase font-bold text-amber-400">Pépite / Coup de Cœur (5€)</div>
-                    <div id="top2Name" class="font-bold text-white text-sm">En attente...</div>
-                    <div id="top2Stats" class="text-[11px] text-zinc-400">--</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden text-xs shadow-xl">
-            <div id="raceInfoDetails" class="p-3 border-b border-zinc-800 font-bold text-zinc-300 flex justify-between items-center">
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="bg-zinc-800/60 text-zinc-400 border-b border-zinc-800">
-                            <th class="p-3">N° / Nom <span class="text-[9px] font-normal text-zinc-500">(Cliquez pour parier)</span></th>
-                            <th class="p-3">Musique</th>
-                            <th class="p-3">Cote</th>
-                            <th class="p-3">Score Pépite</th>
-                        </tr>
-                    </thead>
-                    <tbody id="runnersTableBody" class="divide-y divide-zinc-800/50">
-                        <tr><td colspan="4" class="p-6 text-center text-zinc-500">Sélectionnez une course.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
-
-    <!-- TICKET FLOTTANT POUR LES PARIS MANUELS -->
-    <div id="betSlipBar" class="hidden fixed bottom-0 left-0 right-0 md:left-auto md:right-8 md:bottom-8 md:w-[400px] md:rounded-2xl z-50 bg-zinc-900 border-t-2 md:border-2 border-emerald-500 shadow-[0_-10px_40px_rgba(0,0,0,0.9)] flex-col max-h-[85vh] md:max-h-[75vh] transition-all duration-300">
-        
-        <div class="p-4 w-full flex justify-between items-center cursor-pointer hover:bg-zinc-800/50 transition md:rounded-t-2xl" onclick="toggleTicket()">
-            <div class="flex items-center space-x-4">
-                <div class="relative">
-                    <i class="fa-solid fa-ticket text-emerald-500 text-3xl"></i>
-                    <span id="slipCountBadge" class="absolute -top-2 -right-2 bg-amber-500 text-zinc-900 font-black text-xs w-5 h-5 flex items-center justify-center rounded-full shadow">0</span>
-                </div>
-                <div>
-                    <div class="text-sm font-black text-white uppercase tracking-wider">Votre Ticket Turf <i id="ticketChevron" class="fa-solid fa-chevron-up ml-2 text-zinc-500 transition-transform"></i></div>
-                    <div class="text-xs text-zinc-400 mt-0.5">Cliquez pour voir les détails</div>
-                </div>
-            </div>
-            <div class="flex items-center space-x-3">
-                 <div class="text-right">
-                    <span class="text-[10px] text-amber-400 uppercase font-bold block">Gain Max Combiné</span>
-                    <strong id="slipComboGainMini" class="text-amber-400 font-black text-base">0.00 €</strong>
-                 </div>
-                 <button onclick="clearManualBets(); event.stopPropagation();" class="text-zinc-500 hover:text-red-500 p-2 transition cursor-pointer" title="Vider le ticket"><i class="fa-solid fa-trash text-lg"></i></button>
-            </div>
-        </div>
-
-        <div id="ticketDetails" class="hidden flex-col w-full px-4 pb-5 overflow-y-auto border-t border-zinc-800 pt-4">
-            
-            <div class="text-xs uppercase font-bold text-zinc-400 mb-3">Vos sélections</div>
-            <div id="ticketMatchesList" class="mb-5 space-y-2"></div>
-
-            <div class="space-y-4">
-                <div class="bg-zinc-950 border border-emerald-500/30 rounded-xl p-4 shadow-inner">
-                    <div class="text-xs uppercase font-bold text-emerald-400 mb-1">Option 1 : Paris Simples</div>
-                    <div class="text-xs text-zinc-400 mb-3">5€ joués sur chaque cheval séparément</div>
-                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2">
-                        <span class="text-xs text-zinc-500">Mise Totale:</span>
-                        <span id="ticketSimpleStake" class="font-bold text-white text-sm">0.00 €</span>
-                    </div>
-                    <div class="flex justify-between items-center mt-1">
-                        <span class="text-xs text-zinc-500">Gain Potentiel max:</span>
-                        <span id="ticketSimpleGain" class="font-black text-emerald-400 text-base">0.00 €</span>
-                    </div>
-                    <div class="flex justify-between items-center mt-1">
-                        <span class="text-xs text-zinc-500">Bénéfice Net Actuel:</span>
-                        <span id="ticketSimpleNet" class="font-bold text-emerald-400 text-[10px]">0.00 €</span>
-                    </div>
-                </div>
-
-                <div class="bg-zinc-950 border border-amber-500/30 rounded-xl p-4 relative overflow-hidden shadow-inner">
-                    <div class="absolute -right-4 -top-4 text-amber-500/5 text-6xl"><i class="fa-solid fa-fire"></i></div>
-                    <div class="text-xs uppercase font-bold text-amber-400 mb-1 relative z-10">Option 2 : Pari Combiné</div>
-                    <div class="text-xs text-zinc-400 mb-3 relative z-10">1 seule mise de 5€ avec cotes multipliées</div>
-                    <div class="flex justify-between items-center border-t border-zinc-800 pt-2 relative z-10">
-                        <span class="text-xs text-zinc-500">Cote Totale:</span>
-                        <span id="ticketComboOdds" class="font-bold text-white text-sm">1.00</span>
-                    </div>
-                    <div class="flex justify-between items-center mt-1 relative z-10">
-                        <span class="text-xs text-zinc-500">Gain Pot. (pour 5€):</span>
-                        <span id="ticketComboGain" class="font-black text-amber-400 text-lg">0.00 €</span>
-                    </div>
-                </div>
-                
-                <button onclick="clearManualBets()" class="w-full bg-red-900/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/50 py-3 rounded-xl font-bold text-sm transition shadow flex items-center justify-center cursor-pointer">
-                    <i class="fa-solid fa-trash mr-2"></i> Vider tout le ticket
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const CACHE_VERSION = "v33";
-        
-        // MISES DIFFÉRENCIÉES : 10€ POUR LA BASE, 5€ POUR LA PÉPITE ET LE TICKET
-        const STAKE_BASE = 10.0;
-        const STAKE_PEPITE = 5.0;
-        const BASE_STAKE = 5.0;
-
-        // GESTION DU DÉCALAGE D'HORAIRE PERSONNALISABLE (en minutes)
-        let timeOffsetMinutes = parseInt(localStorage.getItem('fabturf_time_offset_min') || '0', 10) || 0;
-
-        function updateTimeOffsetUI() {
-            let lbl = document.getElementById('timeOffsetLabel');
-            if (!lbl) return;
-            if (timeOffsetMinutes === 0) lbl.textContent = '±0m';
-            else lbl.textContent = (timeOffsetMinutes > 0 ? `+${timeOffsetMinutes}m` : `${timeOffsetMinutes}m`);
-        }
-
-        function adjustTimeOffset() {
-            let input = prompt(
-                "Décalage horaire des départs (en minutes) :\n\n" +
-                "• Mettez +10 si l'application retarde de 10 min sur le réel.\n" +
-                "• Mettez -10 si l'application avance de 10 min sur le réel.\n" +
-                "• Mettez 0 pour garder l'heure brute du serveur PMU.",
-                String(timeOffsetMinutes)
-            );
-            if (input === null) return;
-            let parsed = parseInt(input.trim(), 10);
-            if (isNaN(parsed)) parsed = 0;
-            timeOffsetMinutes = Math.max(-120, Math.min(120, parsed));
-            try { localStorage.setItem('fabturf_time_offset_min', String(timeOffsetMinutes)); } catch(e) {}
-            updateTimeOffsetUI();
-            refreshDropdownLabelsInPlace();
-            fetchRaceData(false);
-            calculateDailyStats(false);
-            showToast(`Horaire ajusté de ${timeOffsetMinutes >= 0 ? '+' : ''}${timeOffsetMinutes} min`, "success");
-        }
-
-        // Convertit l'heure brute PMU en tenant compte du correcteur de décalage
-        function getCourseTimeMs(course) {
-            if (!course || !course.heureDepart) return 0;
-            let rawMs = typeof course.heureDepart === 'number' ? course.heureDepart : new Date(course.heureDepart).getTime();
-            return rawMs + (timeOffsetMinutes * 60 * 1000);
-        }
-
-        // Détermine si une course est réellement commencée ou terminée d'après le statut direct PMU + horaire ajusté
         function isCourseStartedOrFinished(course, nowMs = Date.now()) {
             if (!course) return false;
             if (Array.isArray(course.ordreArrivee) && course.ordreArrivee.length > 0) return true;
@@ -1546,7 +494,6 @@
         }
 
         cleanupAndMigrateStorage();
-        updateTimeOffsetUI();
         document.getElementById('raceDate').value = getLocalDateString();
         let liveMeetingsData = [];
         let loadedProgrammeDate = "";
@@ -1581,7 +528,7 @@
         setInterval(() => {
             let clk = document.getElementById('liveClockDisplay');
             if (clk) {
-                let d = new Date(Date.now() + (timeOffsetMinutes * 60 * 1000));
+                let d = new Date();
                 clk.textContent = `🕒 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
             }
         }, 1000);
@@ -1718,11 +665,12 @@
             }
         }
 
-        // SYNCHRONISATION SILENCIEUSE DES RETARDS ET HORAIRES PMU TOUTES LES 20 SECONDES
+        // SYNCHRONISATION SILENCIEUSE DES RETARDS ET HORAIRES PMU TOUTES LES 30 SECONDES
         async function syncProgrammeTimesSilently() {
             let dateInput = document.getElementById('raceDate').value;
             if (!dateInput || dateInput !== getLocalDateString()) return;
-            if (Date.now() - lastProgrammeSyncMs < 20000) return;
+            if (isFetchingRace || isCalculatingStats) return;
+            if (Date.now() - lastProgrammeSyncMs < 30000) return;
             lastProgrammeSyncMs = Date.now();
 
             let parts = dateInput.split('-');
@@ -1859,19 +807,25 @@
             return `<span class="bg-zinc-500/20 text-zinc-300 border border-zinc-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">${s}</span>`;
         }
 
+        // MOTEUR DE CONNEXION PMU RÉPARÉ : Ne s'arrête plus jamais sur un 404 local de /api/pmu/
         async function smartFetchPMU(path, allowEmpty = false) {
             const sep = path.includes('?') ? '&' : '?';
             const cacheBusterPath = `${path}${sep}_t=${Date.now()}`;
             const fullPmuUrl = `https://online.turfinfo.api.pmu.fr/rest/client/61/programme/${cacheBusterPath}`;
             
+            // 1. Test rapide du proxy local s'il existe (ignore silencieusement les 404 locaux)
             try {
                 let localRes = await fetch(`/api/pmu/${cacheBusterPath}`);
-                if (localRes.status === 204 || localRes.status === 404) return null;
-                if (localRes.ok) return await localRes.json();
+                if (localRes.ok) {
+                    let ct = localRes.headers.get("content-type") || "";
+                    if (ct.includes("json")) return await localRes.json();
+                }
             } catch (e) {}
 
+            // 2. Liste des proxies publics de secours
             const proxies = [
                 `https://api.allorigins.win/raw?url=${encodeURIComponent(fullPmuUrl)}`,
+                `https://api.allorigins.win/get?url=${encodeURIComponent(fullPmuUrl)}`,
                 `https://corsproxy.io/?${encodeURIComponent(fullPmuUrl)}`,
                 `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(fullPmuUrl)}`
             ];
@@ -1879,7 +833,10 @@
             for (let proxy of proxies) {
                 try {
                     let res = await fetch(proxy, { cache: 'no-store' });
-                    if (res.status === 204 || res.status === 404) return null;
+                    if (res.status === 204) {
+                        if (allowEmpty) return null;
+                        continue;
+                    }
                     if (res.ok) {
                         let text = await res.text();
                         if (!text || text.trim() === "") {
@@ -1888,13 +845,17 @@
                         }
                         let json = JSON.parse(text);
                         if (json && json.contents !== undefined) {
+                            if (json.status && (json.status.http_code === 204 || json.status.http_code === 404)) {
+                                if (allowEmpty) return null;
+                                continue;
+                            }
                             if (!json.contents || String(json.contents).trim() === "") {
                                 if (allowEmpty) return null;
                                 continue;
                             }
                             json = typeof json.contents === 'string' ? JSON.parse(json.contents) : json.contents;
                         }
-                        return json;
+                        if (json && typeof json === 'object') return json;
                     }
                 } catch(e) {}
             }
@@ -1935,6 +896,7 @@
             let raceStartTime = getCourseTimeMs(courseObj);
             let hasStarted = (raceStartTime === 0) || isCourseStartedOrFinished(courseObj, Date.now());
 
+            // N'interroge les rapports définitifs que si la course est commencée ou a une arrivée
             if (checkReports && (hasArrival || hasStarted)) {
                 try {
                     let rData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs?specialisation=INTERNET`, true);
@@ -2041,14 +1003,13 @@
             }
         }
 
-        // Sélectionne la course en cours ou la prochaine à partir (sans rester bloqué 20 min sur une course finie)
         function autoSelectCurrentRace() {
             if (liveMeetingsData.length === 0) return;
             let now = Date.now();
             let bestMIdx = 0, bestCIdx = 0;
             let minDiff = Infinity, minPastDiff = Infinity;
             let pastMIdx = 0, pastCIdx = 0;
-            let bufferEnCours = 6 * 60 * 1000; // Garde la course affichée 6 min après son départ si l'arrivée n'est pas encore tombée
+            let bufferEnCours = 6 * 60 * 1000;
 
             liveMeetingsData.forEach((m, mIdx) => {
                 let courses = m.courses || [];
@@ -2204,7 +1165,8 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
-        function computeAlgorithm(partants) {
+        // ALGORITHME AVEC VERROUILLAGE DÉFINITIF DU FAVORI ET DE LA PÉPITE DÈS LE DÉPART
+        function computeAlgorithm(partants, raceKey = null, isRaceStarted = false) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
                 return !st.includes("NON_PARTANT") && !st.includes("NP");
@@ -2248,6 +1210,56 @@
 
             let remaining = processed.filter(p => p.num !== baseHorse?.num);
             let nuggetHorse = remaining.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
+
+            // GESTION DU VERROUILLAGE AU DÉPART DE LA COURSE
+            if (raceKey && processed.length > 0 && baseHorse) {
+                let ddmmyyyy = raceKey.split('_')[0];
+                let lockStorageKey = `fabturf_locked_picks_${ddmmyyyy}`;
+                let lockedPicks = safeGetLocal(lockStorageKey);
+                let existingLock = lockedPicks[raceKey];
+
+                if (!isRaceStarted) {
+                    if (!existingLock || !existingLock.lockedAtStart) {
+                        lockedPicks[raceKey] = {
+                            baseNum: baseHorse.num,
+                            nuggetNum: nuggetHorse ? nuggetHorse.num : null,
+                            lockedAtStart: false
+                        };
+                        safeSetLocal(lockStorageKey, lockedPicks);
+                    }
+                } else {
+                    if (existingLock && existingLock.baseNum) {
+                        let lockedBase = processed.find(p => p.num === existingLock.baseNum);
+                        let lockedNugget = existingLock.nuggetNum ? processed.find(p => p.num === existingLock.nuggetNum) : null;
+
+                        if (lockedBase) {
+                            baseHorse = lockedBase;
+                            if (lockedNugget && lockedNugget.num !== baseHorse.num) {
+                                nuggetHorse = lockedNugget;
+                            } else {
+                                let rem = processed.filter(p => p.num !== baseHorse.num);
+                                nuggetHorse = rem.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
+                            }
+                        }
+
+                        if (!existingLock.lockedAtStart) {
+                            lockedPicks[raceKey] = {
+                                baseNum: baseHorse ? baseHorse.num : existingLock.baseNum,
+                                nuggetNum: nuggetHorse ? nuggetHorse.num : existingLock.nuggetNum,
+                                lockedAtStart: true
+                            };
+                            safeSetLocal(lockStorageKey, lockedPicks);
+                        }
+                    } else {
+                        lockedPicks[raceKey] = {
+                            baseNum: baseHorse.num,
+                            nuggetNum: nuggetHorse ? nuggetHorse.num : null,
+                            lockedAtStart: true
+                        };
+                        safeSetLocal(lockStorageKey, lockedPicks);
+                    }
+                }
+            }
             
             return { processed, baseHorse, nuggetHorse };
         }
@@ -2519,6 +1531,17 @@
                 let raceStartTime = getCourseTimeMs(race);
                 let isLocked = isCourseStartedOrFinished(race, now) || arrivees.length > 0 || hasReports;
 
+                let lockBadgeEl = document.getElementById('picksLockBadge');
+                if (lockBadgeEl) {
+                    if (isLocked) {
+                        lockBadgeEl.className = "ml-2 text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded font-mono normal-case";
+                        lockBadgeEl.textContent = "🔒 Figés";
+                    } else {
+                        lockBadgeEl.className = "ml-2 text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.5 rounded font-mono normal-case";
+                        lockBadgeEl.textContent = "🟢 Cotes évolutives";
+                    }
+                }
+
                 if (arrivees.length > 0) {
                     arrivalBlock.style.display = 'block';
                     arrivees.slice(0, 5).forEach((p) => {
@@ -2616,7 +1639,7 @@
                     reportsBlock.style.display = 'none';
                 }
 
-                let algoResult = computeAlgorithm(partants);
+                let algoResult = computeAlgorithm(partants, currentRaceKey, isLocked);
                 let { processed, baseHorse, nuggetHorse } = algoResult;
 
                 if (baseHorse) {
@@ -2934,7 +1957,8 @@
                 let r = pastRaces[i];
                 if (onRaceStep) onRaceStep(i + 1, pastRaces.length);
 
-                let cacheKey = `race_cache_${CACHE_VERSION}_${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let rKey = `${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                let cacheKey = `race_cache_${CACHE_VERSION}_${rKey}`;
                 let raceData = null;
                 let savedData = localStorage.getItem(cacheKey);
                 if (savedData) {
@@ -2945,7 +1969,7 @@
                 }
 
                 if (!raceData) {
-                    await sleep(100);
+                    await sleep(150);
                     let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum, r.courseObj, true);
                     let isComplete = (rapportsList && rapportsList.length > 0);
                     raceData = slimRaceCacheData(partants, rapportsList, isComplete);
@@ -2957,7 +1981,7 @@
                 if (!raceData || !raceData.partants || raceData.partants.length === 0) continue;
                 if (!raceData.rapportsList || raceData.rapportsList.length === 0) continue;
 
-                let algoResult = computeAlgorithm(raceData.partants);
+                let algoResult = computeAlgorithm(raceData.partants, rKey, true);
                 let baseH = algoResult.baseHorse;
                 let nuggetH = algoResult.nuggetHorse;
                 let maxPaidPlaces = algoResult.processed.length >= 8 ? 3 : 2;
@@ -3032,7 +2056,6 @@
                         let cNum = c.numOrdre || (cIdx + 1);
                         let departTime = getCourseTimeMs(c);
                         let hasArr = Array.isArray(c.ordreArrivee) && c.ordreArrivee.length > 0;
-                        // Détecte une course dès son arrivée officielle ou 2 minutes après son départ (plus d'attente de 10 min !)
                         if (isPastDate || hasArr || (departTime > 0 && departTime < (now - 2 * 60 * 1000))) {
                             pastRacesToday.push({ rNum, cNum, name: `R${rNum}C${cNum}`, time: departTime, courseObj: c });
                         }
@@ -3059,7 +2082,8 @@
                     if (currentCalcId !== myCalcId) return;
                     
                     let r = pastRacesToday[i];
-                    let cacheKey = `race_cache_${CACHE_VERSION}_${ddmmyyyy}_${r.rNum}_${r.cNum}`; 
+                    let rKey = `${ddmmyyyy}_${r.rNum}_${r.cNum}`;
+                    let cacheKey = `race_cache_${CACHE_VERSION}_${rKey}`; 
 
                     let raceData = null;
                     let savedData = localStorage.getItem(cacheKey);
@@ -3079,7 +2103,7 @@
                         if (statsProgress) {
                             statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
                         }
-                        await sleep(100); 
+                        await sleep(150); 
                         if (currentCalcId !== myCalcId) return;
                         
                         let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum, r.courseObj, true);
@@ -3095,7 +2119,7 @@
                     let hasReports = raceData.rapportsList && raceData.rapportsList.length > 0;
                     if (!hasReports) continue;
 
-                    let algoResult = computeAlgorithm(raceData.partants);
+                    let algoResult = computeAlgorithm(raceData.partants, rKey, true);
                     let baseH = algoResult.baseHorse;
                     let nuggetH = algoResult.nuggetHorse;
                     let maxPaidPlaces = algoResult.processed.length >= 8 ? 3 : 2;
@@ -3175,7 +2199,7 @@
                     document.getElementById('deficitBaseText').textContent = `${deficitSerieBase.toFixed(2)} €`;
                     
                     document.getElementById('totalSpentPepiteText').textContent = `${totalSpentPepite.toFixed(2)} €`;
-                    document.getElementById('maxStakePepiteText').textContent = `${maxStakePepite.toFixed(2)} €`;
+                    document.getElementById('maxStakePepiteText').textContent = `${maxStakePepiteText ? maxStakePepite.toFixed(2) : '0.00'} €`;
                     document.getElementById('deficitPepiteText').textContent = `${deficitSeriePepite.toFixed(2)} €`;
 
                     let nextStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
