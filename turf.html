@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V37 Complet & Opérationnel</title>
+    <title>Turf - V36 Favori & Pépite Verrouillés au Départ</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -352,7 +352,7 @@
     </div>
 
     <script>
-        const CACHE_VERSION = "v21";
+        const CACHE_VERSION = "v33";
         
         // MISES DIFFÉRENCIÉES : 10€ POUR LA BASE, 5€ POUR LA PÉPITE ET LE TICKET
         const STAKE_BASE = 10.0;
@@ -665,12 +665,11 @@
             }
         }
 
-        // SYNCHRONISATION SILENCIEUSE DES RETARDS ET HORAIRES PMU TOUTES LES 30 SECONDES
+        // SYNCHRONISATION SILENCIEUSE DES RETARDS ET HORAIRES PMU TOUTES LES 20 SECONDES
         async function syncProgrammeTimesSilently() {
             let dateInput = document.getElementById('raceDate').value;
             if (!dateInput || dateInput !== getLocalDateString()) return;
-            if (isFetchingRace || isCalculatingStats) return;
-            if (Date.now() - lastProgrammeSyncMs < 30000) return;
+            if (Date.now() - lastProgrammeSyncMs < 20000) return;
             lastProgrammeSyncMs = Date.now();
 
             let parts = dateInput.split('-');
@@ -807,25 +806,19 @@
             return `<span class="bg-zinc-500/20 text-zinc-300 border border-zinc-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">${s}</span>`;
         }
 
-        // MOTEUR DE CONNEXION PMU RÉPARÉ : Ne s'arrête plus jamais sur un 404 local de /api/pmu/
         async function smartFetchPMU(path, allowEmpty = false) {
             const sep = path.includes('?') ? '&' : '?';
             const cacheBusterPath = `${path}${sep}_t=${Date.now()}`;
             const fullPmuUrl = `https://online.turfinfo.api.pmu.fr/rest/client/61/programme/${cacheBusterPath}`;
             
-            // 1. Test rapide du proxy local s'il existe (ignore silencieusement les 404 locaux)
             try {
                 let localRes = await fetch(`/api/pmu/${cacheBusterPath}`);
-                if (localRes.ok) {
-                    let ct = localRes.headers.get("content-type") || "";
-                    if (ct.includes("json")) return await localRes.json();
-                }
+                if (localRes.status === 204 || localRes.status === 404) return null;
+                if (localRes.ok) return await localRes.json();
             } catch (e) {}
 
-            // 2. Liste des proxies publics de secours
             const proxies = [
                 `https://api.allorigins.win/raw?url=${encodeURIComponent(fullPmuUrl)}`,
-                `https://api.allorigins.win/get?url=${encodeURIComponent(fullPmuUrl)}`,
                 `https://corsproxy.io/?${encodeURIComponent(fullPmuUrl)}`,
                 `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(fullPmuUrl)}`
             ];
@@ -833,10 +826,7 @@
             for (let proxy of proxies) {
                 try {
                     let res = await fetch(proxy, { cache: 'no-store' });
-                    if (res.status === 204) {
-                        if (allowEmpty) return null;
-                        continue;
-                    }
+                    if (res.status === 204 || res.status === 404) return null;
                     if (res.ok) {
                         let text = await res.text();
                         if (!text || text.trim() === "") {
@@ -845,17 +835,13 @@
                         }
                         let json = JSON.parse(text);
                         if (json && json.contents !== undefined) {
-                            if (json.status && (json.status.http_code === 204 || json.status.http_code === 404)) {
-                                if (allowEmpty) return null;
-                                continue;
-                            }
                             if (!json.contents || String(json.contents).trim() === "") {
                                 if (allowEmpty) return null;
                                 continue;
                             }
                             json = typeof json.contents === 'string' ? JSON.parse(json.contents) : json.contents;
                         }
-                        if (json && typeof json === 'object') return json;
+                        return json;
                     }
                 } catch(e) {}
             }
@@ -896,7 +882,6 @@
             let raceStartTime = getCourseTimeMs(courseObj);
             let hasStarted = (raceStartTime === 0) || isCourseStartedOrFinished(courseObj, Date.now());
 
-            // N'interroge les rapports définitifs que si la course est commencée ou a une arrivée
             if (checkReports && (hasArrival || hasStarted)) {
                 try {
                     let rData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs?specialisation=INTERNET`, true);
@@ -1219,6 +1204,7 @@
                 let existingLock = lockedPicks[raceKey];
 
                 if (!isRaceStarted) {
+                    // Avant le départ : on met à jour l'empreinte pré-course (sauf si elle a déjà été figée au départ)
                     if (!existingLock || !existingLock.lockedAtStart) {
                         lockedPicks[raceKey] = {
                             baseNum: baseHorse.num,
@@ -1228,6 +1214,7 @@
                         safeSetLocal(lockStorageKey, lockedPicks);
                     }
                 } else {
+                    // Dès que la course a commencé (ou est terminée) : on fige le Favori et la Pépite
                     if (existingLock && existingLock.baseNum) {
                         let lockedBase = processed.find(p => p.num === existingLock.baseNum);
                         let lockedNugget = existingLock.nuggetNum ? processed.find(p => p.num === existingLock.nuggetNum) : null;
@@ -1251,6 +1238,7 @@
                             safeSetLocal(lockStorageKey, lockedPicks);
                         }
                     } else {
+                        // Si la course est découverte déjà lancée, on la verrouille immédiatement pour qu'elle ne bouge plus
                         lockedPicks[raceKey] = {
                             baseNum: baseHorse.num,
                             nuggetNum: nuggetHorse ? nuggetHorse.num : null,
@@ -1531,6 +1519,7 @@
                 let raceStartTime = getCourseTimeMs(race);
                 let isLocked = isCourseStartedOrFinished(race, now) || arrivees.length > 0 || hasReports;
 
+                // Indicateur visuel du verrouillage du Favori et de la Pépite
                 let lockBadgeEl = document.getElementById('picksLockBadge');
                 if (lockBadgeEl) {
                     if (isLocked) {
@@ -1639,6 +1628,7 @@
                     reportsBlock.style.display = 'none';
                 }
 
+                // APPEL DE L'ALGORITHME AVEC VERROUILLAGE SI LA COURSE EST COMMENCÉE (isLocked)
                 let algoResult = computeAlgorithm(partants, currentRaceKey, isLocked);
                 let { processed, baseHorse, nuggetHorse } = algoResult;
 
@@ -1969,7 +1959,7 @@
                 }
 
                 if (!raceData) {
-                    await sleep(150);
+                    await sleep(100);
                     let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum, r.courseObj, true);
                     let isComplete = (rapportsList && rapportsList.length > 0);
                     raceData = slimRaceCacheData(partants, rapportsList, isComplete);
@@ -2103,7 +2093,7 @@
                         if (statsProgress) {
                             statsProgress.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> (${i+1}/${pastRacesToday.length}) : ${r.name}`;
                         }
-                        await sleep(150); 
+                        await sleep(100); 
                         if (currentCalcId !== myCalcId) return;
                         
                         let { partants, rapportsList } = await getFullRaceData(ddmmyyyy, r.rNum, r.cNum, r.courseObj, true);
@@ -2119,6 +2109,7 @@
                     let hasReports = raceData.rapportsList && raceData.rapportsList.length > 0;
                     if (!hasReports) continue;
 
+                    // UTILISE LES CHEVAUX VERROUILLÉS AU DÉPART POUR LE BILAN DU JOUR
                     let algoResult = computeAlgorithm(raceData.partants, rKey, true);
                     let baseH = algoResult.baseHorse;
                     let nuggetH = algoResult.nuggetHorse;
@@ -2199,7 +2190,7 @@
                     document.getElementById('deficitBaseText').textContent = `${deficitSerieBase.toFixed(2)} €`;
                     
                     document.getElementById('totalSpentPepiteText').textContent = `${totalSpentPepite.toFixed(2)} €`;
-                    document.getElementById('maxStakePepiteText').textContent = `${maxStakePepiteText ? maxStakePepite.toFixed(2) : '0.00'} €`;
+                    document.getElementById('maxStakePepiteText').textContent = `${maxStakePepite.toFixed(2)} €`;
                     document.getElementById('deficitPepiteText').textContent = `${deficitSeriePepite.toFixed(2)} €`;
 
                     let nextStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
