@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V38 Pépite Plat & Obstacle</title>
+    <title>Turf - V37 Complet & Opérationnel</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -119,7 +119,7 @@
                     </div>
                     <div class="grid grid-cols-3 gap-2 bg-zinc-950/70 p-2.5 rounded-lg border border-zinc-800 mb-2.5">
                         <div class="text-zinc-300">Base (10€) : <span id="weekBase" class="text-emerald-400 font-bold block text-sm mt-0.5">0.00 €</span></div>
-                        <div class="text-zinc-300">Pépite (Plat/Obst) : <span id="weekPepite" class="text-amber-400 font-bold block text-sm mt-0.5">0.00 €</span></div>
+                        <div class="text-zinc-300">Pépite (5€) : <span id="weekPepite" class="text-amber-400 font-bold block text-sm mt-0.5">0.00 €</span></div>
                         <div class="text-zinc-300">Perso : <span id="weekManual" class="text-orange-400 font-bold block text-sm mt-0.5">0.00 €</span></div>
                     </div>
                     <div id="weekDaysBreakdown" class="space-y-1 text-[11px]"></div>
@@ -136,7 +136,7 @@
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour</h2>
-                    <p class="text-[10px] text-zinc-400">Rattrapage optimisé • <strong class="text-emerald-400">Base 10€ (Tout)</strong> | <strong class="text-amber-400">Pépite 5€ (Plat/Obst.)</strong></p>
+                    <p class="text-[10px] text-zinc-400">Rattrapage optimisé • <strong class="text-emerald-400">Base 10€</strong> | <strong class="text-amber-400">Pépite 5€</strong></p>
                 </div>
             </div>
 
@@ -159,10 +159,10 @@
                     </div>
                 </div>
 
-                <!-- PÉPITE (PLAT & OBSTACLE UNIQUEMENT) -->
+                <!-- PÉPITE -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-amber-500/40 relative flex flex-col justify-between">
-                    <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">PLAT / OBST. 5€</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Pépite (Plat & Obst.)</div>
+                    <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">SIMU 5€</div>
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Pépite</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-zinc-700/50 text-center flex flex-col justify-center">
                             <span class="text-[8px] text-zinc-400 block uppercase font-bold">Gagnant (1€ virt.)</span>
@@ -191,7 +191,7 @@
                 </div>
 
                 <div class="flex flex-col space-y-1 pl-1">
-                    <span class="text-[9px] uppercase text-amber-400 font-bold mb-0.5">Invest. Pépite (Plat/Obst 5€)</span>
+                    <span class="text-[9px] uppercase text-amber-400 font-bold mb-0.5">Investissement (Pépite 5€)</span>
                     <span class="flex justify-between">Joué: <strong id="totalSpentPepiteText" class="text-white">0.00 €</strong></span>
                     <span class="flex justify-between">Max Atteint: <strong id="maxStakePepiteText" class="text-zinc-300">0.00 €</strong></span>
                     <span class="flex justify-between">Déficit: <strong id="deficitPepiteText" class="text-red-400">0.00 €</strong></span>
@@ -256,7 +256,7 @@
                     <div id="top1Stats" class="text-[11px] text-zinc-400">--</div>
                 </div>
                 <div class="bg-zinc-900/90 p-3 rounded-xl border border-amber-500/40 space-y-1">
-                    <div class="text-[10px] uppercase font-bold text-amber-400">Pépite (Plat & Obstacle - 5€)</div>
+                    <div class="text-[10px] uppercase font-bold text-amber-400">Pépite / Coup de Cœur (5€)</div>
                     <div id="top2Name" class="font-bold text-white text-sm">En attente...</div>
                     <div id="top2Stats" class="text-[11px] text-zinc-400">--</div>
                 </div>
@@ -375,18 +375,6 @@
             }
             let startMs = getCourseTimeMs(course);
             return startMs > 0 && nowMs >= startMs;
-        }
-
-        // VÉRIFIE SI LA COURSE EST ÉLIGIBLE POUR LA PÉPITE (UNIQUEMENT PLAT ET OBSTACLE)
-        function isPlatOrObstacleCourse(course) {
-            if (!course) return false;
-            let d = String(course.discipline || '').toUpperCase();
-            let s = String(course.specialite || '').toUpperCase();
-            let combined = `${d} ${s}`;
-            if (combined.includes('TROT') || combined.includes('ATTEL') || combined.includes('MONTE')) {
-                return false;
-            }
-            return combined.includes('PLAT') || combined.includes('HAIE') || combined.includes('STEEPLE') || combined.includes('CROSS') || combined.includes('OBST') || combined.includes('GALOP');
         }
 
         function cleanupAndMigrateStorage() {
@@ -583,12 +571,12 @@
                 btnTrot.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow cursor-pointer";
                 btnAll.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer";
                 if (histLabel) histLabel.textContent = "100% Trot";
-                showToast("Mode 100% Trot activé (Pépite désactivée)");
+                showToast("Mode 100% Trot activé");
             } else {
                 btnAll.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow cursor-pointer";
                 btnTrot.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer";
                 if (histLabel) histLabel.textContent = "Toutes Courses";
-                showToast("Mode Toutes Courses (Pépite active sur Plat/Obstacle)");
+                showToast("Mode Toutes Courses activé");
             }
             clearAutoTransition();
             hasAutoTransitioned = {};
@@ -815,15 +803,17 @@
             if (s.includes('MONTE')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">MONTÉ</span>';
             if (s.includes('ATTEL')) return '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">ATTELÉ</span>';
             if (s.includes('PLAT')) return '<span class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">PLAT</span>';
-            if (s.includes('HAIES') || s.includes('STEEPLE') || s.includes('OBST') || s.includes('CROSS')) return '<span class="bg-purple-500/20 text-purple-400 border border-purple-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">OBSTACLE</span>';
+            if (s.includes('HAIES') || s.includes('STEEPLE') || s.includes('OBST')) return '<span class="bg-purple-500/20 text-purple-400 border border-purple-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">OBSTACLE</span>';
             return `<span class="bg-zinc-500/20 text-zinc-300 border border-zinc-500/40 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ml-2">${s}</span>`;
         }
 
+        // MOTEUR DE CONNEXION PMU RÉPARÉ : Ne s'arrête plus jamais sur un 404 local de /api/pmu/
         async function smartFetchPMU(path, allowEmpty = false) {
             const sep = path.includes('?') ? '&' : '?';
             const cacheBusterPath = `${path}${sep}_t=${Date.now()}`;
             const fullPmuUrl = `https://online.turfinfo.api.pmu.fr/rest/client/61/programme/${cacheBusterPath}`;
             
+            // 1. Test rapide du proxy local s'il existe (ignore silencieusement les 404 locaux)
             try {
                 let localRes = await fetch(`/api/pmu/${cacheBusterPath}`);
                 if (localRes.ok) {
@@ -832,6 +822,7 @@
                 }
             } catch (e) {}
 
+            // 2. Liste des proxies publics de secours
             const proxies = [
                 `https://api.allorigins.win/raw?url=${encodeURIComponent(fullPmuUrl)}`,
                 `https://api.allorigins.win/get?url=${encodeURIComponent(fullPmuUrl)}`,
@@ -905,6 +896,7 @@
             let raceStartTime = getCourseTimeMs(courseObj);
             let hasStarted = (raceStartTime === 0) || isCourseStartedOrFinished(courseObj, Date.now());
 
+            // N'interroge les rapports définitifs que si la course est commencée ou a une arrivée
             if (checkReports && (hasArrival || hasStarted)) {
                 try {
                     let rData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs?specialisation=INTERNET`, true);
@@ -1173,8 +1165,8 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
-        // ALGORITHME AVEC VERROUILLAGE AU DÉPART ET ACTIVATION PÉPITE UNIQUEMENT SUR PLAT/OBSTACLE
-        function computeAlgorithm(partants, raceKey = null, isRaceStarted = false, allowPepite = true) {
+        // ALGORITHME AVEC VERROUILLAGE DÉFINITIF DU FAVORI ET DE LA PÉPITE DÈS LE DÉPART
+        function computeAlgorithm(partants, raceKey = null, isRaceStarted = false) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
                 return !st.includes("NON_PARTANT") && !st.includes("NP");
@@ -1217,7 +1209,7 @@
             let baseHorse = sortedByCote[0]; 
 
             let remaining = processed.filter(p => p.num !== baseHorse?.num);
-            let nuggetHorse = allowPepite ? (remaining.sort((a, b) => b.nuggetScore - a.nuggetScore)[0] || null) : null;
+            let nuggetHorse = remaining.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
 
             // GESTION DU VERROUILLAGE AU DÉPART DE LA COURSE
             if (raceKey && processed.length > 0 && baseHorse) {
@@ -1230,7 +1222,7 @@
                     if (!existingLock || !existingLock.lockedAtStart) {
                         lockedPicks[raceKey] = {
                             baseNum: baseHorse.num,
-                            nuggetNum: (allowPepite && nuggetHorse) ? nuggetHorse.num : null,
+                            nuggetNum: nuggetHorse ? nuggetHorse.num : null,
                             lockedAtStart: false
                         };
                         safeSetLocal(lockStorageKey, lockedPicks);
@@ -1238,25 +1230,22 @@
                 } else {
                     if (existingLock && existingLock.baseNum) {
                         let lockedBase = processed.find(p => p.num === existingLock.baseNum);
+                        let lockedNugget = existingLock.nuggetNum ? processed.find(p => p.num === existingLock.nuggetNum) : null;
+
                         if (lockedBase) {
                             baseHorse = lockedBase;
-                        }
-                        if (allowPepite) {
-                            let lockedNugget = existingLock.nuggetNum ? processed.find(p => p.num === existingLock.nuggetNum) : null;
                             if (lockedNugget && lockedNugget.num !== baseHorse.num) {
                                 nuggetHorse = lockedNugget;
                             } else {
                                 let rem = processed.filter(p => p.num !== baseHorse.num);
-                                nuggetHorse = rem.sort((a, b) => b.nuggetScore - a.nuggetScore)[0] || null;
+                                nuggetHorse = rem.sort((a, b) => b.nuggetScore - a.nuggetScore)[0];
                             }
-                        } else {
-                            nuggetHorse = null;
                         }
 
                         if (!existingLock.lockedAtStart) {
                             lockedPicks[raceKey] = {
                                 baseNum: baseHorse ? baseHorse.num : existingLock.baseNum,
-                                nuggetNum: (allowPepite && nuggetHorse) ? nuggetHorse.num : null,
+                                nuggetNum: nuggetHorse ? nuggetHorse.num : existingLock.nuggetNum,
                                 lockedAtStart: true
                             };
                             safeSetLocal(lockStorageKey, lockedPicks);
@@ -1264,7 +1253,7 @@
                     } else {
                         lockedPicks[raceKey] = {
                             baseNum: baseHorse.num,
-                            nuggetNum: (allowPepite && nuggetHorse) ? nuggetHorse.num : null,
+                            nuggetNum: nuggetHorse ? nuggetHorse.num : null,
                             lockedAtStart: true
                         };
                         safeSetLocal(lockStorageKey, lockedPicks);
@@ -1541,7 +1530,6 @@
 
                 let raceStartTime = getCourseTimeMs(race);
                 let isLocked = isCourseStartedOrFinished(race, now) || arrivees.length > 0 || hasReports;
-                let allowPepite = isPlatOrObstacleCourse(race);
 
                 let lockBadgeEl = document.getElementById('picksLockBadge');
                 if (lockBadgeEl) {
@@ -1651,7 +1639,7 @@
                     reportsBlock.style.display = 'none';
                 }
 
-                let algoResult = computeAlgorithm(partants, currentRaceKey, isLocked, allowPepite);
+                let algoResult = computeAlgorithm(partants, currentRaceKey, isLocked);
                 let { processed, baseHorse, nuggetHorse } = algoResult;
 
                 if (baseHorse) {
@@ -1661,10 +1649,7 @@
                     document.getElementById('top1Name').textContent = `Attente cotes...`;
                 }
                 
-                if (!allowPepite) {
-                    document.getElementById('top2Name').innerHTML = `<span class="text-zinc-500 font-normal">Non joué en Trot</span>`;
-                    document.getElementById('top2Stats').textContent = `Réservé aux courses de Plat & Obstacle`;
-                } else if (nuggetHorse) {
+                if (nuggetHorse) {
                     document.getElementById('top2Name').textContent = `${nuggetHorse.num}. ${nuggetHorse.nom}`;
                     document.getElementById('top2Stats').textContent = `Cote : ${nuggetHorse.coteDisplay} | Potentiel : ${nuggetHorse.nuggetScore}%`;
                 } else {
@@ -1681,7 +1666,7 @@
                         let tr = document.createElement('tr');
                         let tag = p.ordreArrivee ? `<span class="ml-2 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
                         if (p.num === baseHorse?.num) tag += '<span class="ml-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold ml-1">Favori</span>';
-                        if (allowPepite && p.num === nuggetHorse?.num) tag += '<span class="ml-2 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold ml-1">Pépite</span>';
+                        if (p.num === nuggetHorse?.num) tag += '<span class="ml-2 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold ml-1">Pépite</span>';
                         
                         let isSelected = globalBets[currentRaceKey] && globalBets[currentRaceKey].num === p.num;
                         
@@ -1693,7 +1678,7 @@
                         
                         tr.onclick = () => placeBet(currentRaceKey, p.num, p.nom, p.cote, currentRaceName, isLocked);
 
-                        tr.innerHTML = `<td class="p-3 font-bold"><span class="text-emerald-400 mr-2">${p.num}</span>${p.nom}${tag}</td><td class="p-3 text-zinc-300 font-mono">${p.musique}</td><td class="p-3 text-emerald-400 font-bold">${p.coteDisplay}</td><td class="p-3 font-semibold text-zinc-500">${allowPepite ? (p.nuggetScore + '%') : '-'}</td>`;
+                        tr.innerHTML = `<td class="p-3 font-bold"><span class="text-emerald-400 mr-2">${p.num}</span>${p.nom}${tag}</td><td class="p-3 text-zinc-300 font-mono">${p.musique}</td><td class="p-3 text-emerald-400 font-bold">${p.coteDisplay}</td><td class="p-3 font-semibold text-zinc-500">${p.nuggetScore}%</td>`;
                         tbody.appendChild(tr);
                     });
                 }
@@ -1996,8 +1981,7 @@
                 if (!raceData || !raceData.partants || raceData.partants.length === 0) continue;
                 if (!raceData.rapportsList || raceData.rapportsList.length === 0) continue;
 
-                let allowPepite = isPlatOrObstacleCourse(r.courseObj);
-                let algoResult = computeAlgorithm(raceData.partants, rKey, true, allowPepite);
+                let algoResult = computeAlgorithm(raceData.partants, rKey, true);
                 let baseH = algoResult.baseHorse;
                 let nuggetH = algoResult.nuggetHorse;
                 let maxPaidPlaces = algoResult.processed.length >= 8 ? 3 : 2;
@@ -2022,8 +2006,7 @@
                     }
                 }
 
-                // PÉPITE UNIQUEMENT SUR PLAT & OBSTACLE
-                if (allowPepite && nuggetH) {
+                if (nuggetH) {
                     let simStakePepite = computeSmartStake(deficitSeriePepite, STAKE_PEPITE);
                     let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
                     if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= maxPaidPlaces && nuggetH.cote < 999) {
@@ -2092,7 +2075,7 @@
                 let maxStakeBase = 0, maxStakePepite = 0;
                 let totalProfitBasePla = 0, totalProfitBaseGag = 0;
                 let totalProfitPepitePla = 0, totalProfitPepiteGag = 0;
-                let coursesValidees = 0, coursesGagnantBaseValidees = 0, coursesPepiteValidees = 0;
+                let coursesValidees = 0, coursesGagnantBaseValidees = 0;
                 let deficitSerieBase = 0, deficitSeriePepite = 0;
 
                 for (let i = 0; i < pastRacesToday.length; i++) {
@@ -2136,8 +2119,7 @@
                     let hasReports = raceData.rapportsList && raceData.rapportsList.length > 0;
                     if (!hasReports) continue;
 
-                    let allowPepite = isPlatOrObstacleCourse(r.courseObj);
-                    let algoResult = computeAlgorithm(raceData.partants, rKey, true, allowPepite);
+                    let algoResult = computeAlgorithm(raceData.partants, rKey, true);
                     let baseH = algoResult.baseHorse;
                     let nuggetH = algoResult.nuggetHorse;
                     let maxPaidPlaces = algoResult.processed.length >= 8 ? 3 : 2;
@@ -2151,6 +2133,13 @@
                         if (gGagBase === 0 && baseArr === 1 && baseH.cote < 999) gGagBase = baseH.cote; 
                         if (gGagBase > 0) { baseWinsGag++; totalProfitBaseGag += (gGagBase * 1.0) - 1.0; } 
                         else { totalProfitBaseGag -= 1.0; }
+                    }
+
+                    if (nuggetH) {
+                        let gGagPepite = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
+                        if (gGagPepite === 0 && nuggetArr === 1 && nuggetH.cote < 999) gGagPepite = nuggetH.cote; 
+                        if (gGagPepite > 0) { pepiteWinsGag++; totalProfitPepiteGag += (gGagPepite * 1.0) - 1.0; } 
+                        else { totalProfitPepiteGag -= 1.0; }
                     }
 
                     if (baseH) {
@@ -2175,15 +2164,7 @@
                         }
                     }
 
-                    // CALCUL PÉPITE UNIQUEMENT SUR PLAT & OBSTACLE
-                    if (allowPepite && nuggetH) {
-                        coursesPepiteValidees++;
-
-                        let gGagPepite = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'GAGNANT');
-                        if (gGagPepite === 0 && nuggetArr === 1 && nuggetH.cote < 999) gGagPepite = nuggetH.cote; 
-                        if (gGagPepite > 0) { pepiteWinsGag++; totalProfitPepiteGag += (gGagPepite * 1.0) - 1.0; } 
-                        else { totalProfitPepiteGag -= 1.0; }
-
+                    if (nuggetH) {
                         let simStakePepite = computeSmartStake(deficitSeriePepite, STAKE_PEPITE);
                         totalSpentPepite += simStakePepite;
                         if (simStakePepite > maxStakePepite) maxStakePepite = simStakePepite;
@@ -2206,8 +2187,8 @@
 
                     document.getElementById('statBaseGag').textContent = `${baseWinsGag} / ${coursesGagnantBaseValidees}`;
                     document.getElementById('statBasePla').textContent = `${baseWinsPla} / ${coursesValidees}`;
-                    document.getElementById('statPepiteGag').textContent = `${pepiteWinsGag} / ${coursesPepiteValidees}`;
-                    document.getElementById('statPepitePla').textContent = `${pepiteWinsPla} / ${coursesPepiteValidees}`;
+                    document.getElementById('statPepiteGag').textContent = `${pepiteWinsGag} / ${coursesGagnantBaseValidees}`;
+                    document.getElementById('statPepitePla').textContent = `${pepiteWinsPla} / ${coursesValidees}`;
                     document.getElementById('gainBasePla').innerHTML = formatMoneyHTML(totalProfitBasePla);
                     document.getElementById('gainBaseGag').innerHTML = formatMoneyHTML(totalProfitBaseGag);
                     document.getElementById('gainPepitePla').innerHTML = formatMoneyHTML(totalProfitPepitePla);
@@ -2218,7 +2199,7 @@
                     document.getElementById('deficitBaseText').textContent = `${deficitSerieBase.toFixed(2)} €`;
                     
                     document.getElementById('totalSpentPepiteText').textContent = `${totalSpentPepite.toFixed(2)} €`;
-                    document.getElementById('maxStakePepiteText').textContent = `${maxStakePepite.toFixed(2)} €`;
+                    document.getElementById('maxStakePepiteText').textContent = `${maxStakePepiteText ? maxStakePepite.toFixed(2) : '0.00'} €`;
                     document.getElementById('deficitPepiteText').textContent = `${deficitSeriePepite.toFixed(2)} €`;
 
                     let nextStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
