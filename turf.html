@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V44 Proportionnelle Optimisée Petits Rapports (Base 3€)</title>
+    <title>Turf - V45 Optimisé Spécial Trot Anti-DAI (Base 3€)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -137,16 +137,16 @@
         <div class="bg-zinc-900 border border-amber-500/30 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
-                    <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (100% Placé)</h2>
-                    <p class="text-[10px] text-zinc-400"><strong class="text-emerald-400">Base 3€ (Prop. Étagée Petits Rapports)</strong> • <strong class="text-amber-400">Pépite 2€ Adoucie</strong></p>
+                    <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (Trot-Master V45)</h2>
+                    <p class="text-[10px] text-zinc-400"><strong class="text-emerald-400">Base 3€ (Anti-DAI + Prop. Ciblée + Bouclier &lt;8p)</strong> • <strong class="text-amber-400">Pépite 2€ Adoucie</strong></p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <!-- BASE (FAVORI 3€) : MARTINGALE vs PROPORTIONNEL ÉTAGÉ -->
+                <!-- BASE (FAVORI SOLIDE 3€) : MARTINGALE vs PROPORTIONNEL CIBLÉ -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">FAVORI PLACÉ (3€)</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori 3€)</div>
+                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">BASE ANTI-DAI (3€)</div>
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori Solide)</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-cyan-500/30 text-center flex flex-col justify-center">
                             <span class="text-[8px] text-cyan-400 block uppercase font-bold">Placé (Mart. x2)</span>
@@ -154,7 +154,7 @@
                             <span id="gainBaseMart" class="font-bold text-cyan-300 mt-0.5">0.00 €</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-emerald-500/30 text-center flex flex-col justify-center shadow-inner">
-                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé (Prop. Étagée)</span>
+                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé (Prop. Ciblée)</span>
                             <span id="statBasePla" class="text-[9px] text-emerald-500/70 font-bold my-0.5">0 / 0</span>
                             <span id="gainBasePla" class="font-bold text-emerald-400 mt-0.5">0.00 €</span>
                         </div>
@@ -257,7 +257,7 @@
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mt-3">
                 <div class="bg-zinc-900/90 p-3 rounded-xl border border-emerald-500/40 space-y-1">
-                    <div class="text-[10px] uppercase font-bold text-emerald-400">Favori des Parieurs (Base 3€)</div>
+                    <div class="text-[10px] uppercase font-bold text-emerald-400">Favori Solide Anti-DAI (Base 3€)</div>
                     <div id="top1Name" class="font-bold text-white text-sm">En attente...</div>
                     <div id="top1Stats" class="text-[11px] text-zinc-400">--</div>
                 </div>
@@ -358,7 +358,7 @@
     </div>
 
     <script>
-        const CACHE_VERSION = "v44";
+        const CACHE_VERSION = "v45";
         
         // MISES DE DÉPART : 3€ POUR LA BASE (FAVORI), 2€ POUR LA PÉPITE ET LE TICKET
         const STAKE_BASE = 3.0;
@@ -528,7 +528,6 @@
         let audioStart = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         let audioArrival = new Audio('https://assets.mixkit.co/active_storage/sfx/2870/2870-preview.mp3');
 
-        // Horloge temps réel visible dans la barre de statut
         setInterval(() => {
             let clk = document.getElementById('liveClockDisplay');
             if (clk) {
@@ -564,7 +563,7 @@
                     localStorage.removeItem(k);
                 }
             });
-            showToast("Mémoire synchronisée (PC/Mobile) ! Recalcul à neuf...", "success");
+            showToast("Mémoire synchronisée (PC/Mobile) ! Recalcul V45...", "success");
             resetCountersUI();
             loadLivePmu();
         }
@@ -1176,7 +1175,22 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
-        // ALGORITHME DÉTERMINISTE (TRI PAR COTE PUIS PAR NUMÉRO PMU)
+        // DÉTECTEUR DE RISQUE DAI AU TROT (Compte les disqualifications dans les 4 dernières courses)
+        function countRecentDAI(musique) {
+            if (!musique) return 0;
+            let clean = String(musique).replace(/\(\d+\)/g, '');
+            let tokens = clean.match(/([0-9DATR]+)([a-zA-Z]+)/g);
+            if (!tokens || tokens.length === 0) return 0;
+            let count = Math.min(tokens.length, 4);
+            let dai = 0;
+            for (let i = 0; i < count; i++) {
+                let res = tokens[i].match(/^([0-9DATR]+)/i)[1].toUpperCase();
+                if (res.includes('D') || res.includes('A')) dai++;
+            }
+            return dai;
+        }
+
+        // ALGORITHME TROT-MASTER V45 : SÉLECTIONNE LE FAVORI SOLIDE (ANTI-DAI) ET VERROUILLE AU DÉPART
         function computeAlgorithm(partants, raceKey = null, isRaceStarted = false) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
@@ -1192,6 +1206,7 @@
                 let cote = parseFloat(String(rawCote).replace(',', '.')) || 99.9;
                 
                 let musiqueScore = evaluateMusique(musique);
+                let recentDAI = countRecentDAI(musique);
                 
                 let coteScore = 15;
                 if (cote >= 1.6 && cote <= 4.5) coteScore = 96;
@@ -1210,7 +1225,9 @@
                     musique: musique,
                     coteDisplay: rawCote,
                     cote: cote,
-                    baseScore: Math.min(99, Math.max(5, Math.round(100 - (cote * 2)))),
+                    musiqueScore: musiqueScore,
+                    recentDAI: recentDAI,
+                    baseScore: Math.min(99, Math.max(5, Math.round((100 - (cote * 2)) * 0.65 + (musiqueScore * 0.35)))),
                     nuggetScore: Math.min(99, Math.max(5, nuggetRaw)),
                     ordreArrivee: p.ordreArrivee ? parseInt(p.ordreArrivee, 10) : 0
                 };
@@ -1218,6 +1235,23 @@
 
             let sortedByCote = [...processed].sort((a, b) => (a.cote - b.cote) || (a.num - b.num));
             let baseHorse = sortedByCote[0]; 
+
+            // FILTRE ANTI-DAI TROT :
+            // Si le 1er favori est fragile (au moins 2 DAI récents ou musique < 42)
+            // et que le 2e favori est proche en cote (<= 5.5) avec une musique solide (>= 65 et <= 1 DAI),
+            // on sécurise la Base sur le 2e favori !
+            if (sortedByCote.length >= 2) {
+                let fav1 = sortedByCote[0];
+                let fav2 = sortedByCote[1];
+                let fav1Fragile = (fav1.recentDAI >= 2 || fav1.musiqueScore < 42);
+                let fav2Solide = (fav2.cote <= 5.5 && fav2.musiqueScore >= 65 && fav2.recentDAI <= 1);
+                let fav2BienMeilleureMusique = (fav2.cote <= fav1.cote + 1.4 && fav2.cote <= 4.5 && (fav2.musiqueScore - fav1.musiqueScore) >= 28 && fav2.recentDAI === 0);
+
+                if ((fav1Fragile && fav2Solide) || fav2BienMeilleureMusique) {
+                    baseHorse = fav2;
+                    baseHorse.isAntiDaiSwitch = true;
+                }
+            }
 
             let remaining = processed.filter(p => p.num !== baseHorse?.num);
             let nuggetHorse = remaining.sort((a, b) => (b.nuggetScore - a.nuggetScore) || (a.cote - b.cote) || (a.num - b.num))[0];
@@ -1329,33 +1363,41 @@
             return foundGain;
         }
 
-        // PROPORTIONNELLE ÉTAGÉE OPTIMISÉE PETITS RAPPORTS (BASE 3€ INCHANGÉE)
-        function computeSmartStake(deficitSerie, baseStakeVal = STAKE_BASE, horseCote = 99) {
-            if (deficitSerie <= 0) return baseStakeVal;
-
-            // Sécurité "Favori Écrasé" (< 1.50 gagnant = ~1.10€ placé) :
-            // On ne risque pas une grosse mise de rattrapage pour 10% de rentabilité, on maintient 3€ et on garde le déficit pour la suite.
-            if (horseCote > 0 && horseCote < 1.50) {
+        // PROPORTIONNELLE DYNAMIQUE V45 SPÉCIAL TROT (Ciblée sur la cote réelle + Bouclier <8 partants + Bonus Belle Base)
+        function computeSmartStake(deficitSerie, baseStakeVal = STAKE_BASE, horseCote = 2.5, numRunners = 12, musiqueScore = 60) {
+            // 1. BOUCLIER < 8 PARTANTS (2 places payées seulement) OU COTE ÉCRASÉE (< 1.50) :
+            // On ne risque jamais une grosse mise de rattrapage quand la 3e place n'est pas payée ou paie 1.10€ !
+            if (numRunners < 8 || (horseCote > 0 && horseCote < 1.50)) {
                 return baseStakeVal;
             }
 
-            let mult = 1.35;
-            if (deficitSerie <= 6) {
-                // Palier 1 (1 échec = 3€ de déficit) : x2.10 -> Mise 10€ pour rembourser 100% de la perte dès 1.30€ placé
-                mult = 2.10;
-            } else if (deficitSerie <= 18) {
-                // Palier 2 (2 échecs = 13€ de déficit) : x1.65 -> Mise 25€
-                mult = 1.65;
-            } else if (deficitSerie <= 45) {
-                // Palier 3 (3 échecs) : x1.25 -> Amortissement lissé sur 2 favoris placés
-                mult = 1.25;
-            } else {
-                // Palier 4+ : Frein de sécurité anti-explosion du capital
-                mult = 0.90;
+            // 2. AUCUN DÉFICIT : Mise de base 3€, avec Bonus Value (+1€ = 4€) si le favori a une belle cote (2.4 à 4.5) et une super musique (>= 75%)
+            if (deficitSerie <= 0) {
+                if (horseCote >= 2.4 && horseCote <= 4.5 && musiqueScore >= 75) {
+                    return baseStakeVal + 1;
+                }
+                return baseStakeVal;
             }
 
-            let stake = Math.ceil((deficitSerie * mult) + baseStakeVal);
-            return Math.max(baseStakeVal + 1, stake);
+            // 3. EN RATTRAPAGE : Calcul dynamique selon le rendement placé attendu de la cote du favori
+            let effectiveCote = (horseCote > 1.5 && horseCote < 50) ? horseCote : 2.3;
+            let expectedNetRatio = Math.max(0.24, Math.min(0.55, (effectiveCote - 1) / 3.8));
+
+            if (deficitSerie <= 15) {
+                // Paliers 1 & 2 : On vise le remboursement intégral du déficit + 2.80€ de bénéfice net en un seul coup
+                let targetNetGain = deficitSerie + 2.8;
+                let stake = Math.ceil(targetNetGain / expectedNetRatio);
+                return Math.max(baseStakeVal + 2, Math.min(35, stake));
+            } else if (deficitSerie <= 45) {
+                // Palier 3 : On amortit 70% du déficit par victoire pour garder une mise très raisonnable
+                let targetNetGain = (deficitSerie * 0.70) + 2.0;
+                let stake = Math.ceil(targetNetGain / expectedNetRatio);
+                return Math.max(baseStakeVal + 4, Math.min(55, stake));
+            } else {
+                // Palier 4+ : Frein de sécurité (amortissement doux par tiers)
+                let stake = Math.ceil((deficitSerie * 0.85) + baseStakeVal);
+                return Math.max(baseStakeVal + 5, Math.min(75, stake));
+            }
         }
 
         // MODE PROPORTIONNEL ADOUCI POUR LA PÉPITE (2€ : x0.55)
@@ -1688,18 +1730,25 @@
 
                 let algoResult = computeAlgorithm(partants, currentRaceKey, isLocked);
                 let { processed, baseHorse, nuggetHorse } = algoResult;
+                let numRunners = processed.length;
 
                 if (baseHorse) {
-                    document.getElementById('top1Name').textContent = `${baseHorse.num}. ${baseHorse.nom}`;
-                    let freezeNotice = (baseHorse.cote < 1.50 && lastComputedDeficitBase > 0) ? ` | ⚠️ Cote <1.50 (Mise gelée à 3€)` : '';
-                    document.getElementById('top1Stats').textContent = `Cote : ${baseHorse.coteDisplay} | Confiance : ${baseHorse.baseScore}%${freezeNotice}`;
+                    let antiDaiTag = baseHorse.isAntiDaiSwitch ? ` 🛡️ (Sécurisé Anti-DAI)` : '';
+                    document.getElementById('top1Name').textContent = `${baseHorse.num}. ${baseHorse.nom}${antiDaiTag}`;
+                    let warningNotice = '';
+                    if (numRunners < 8 && lastComputedDeficitBase > 0) {
+                        warningNotice = ` | 🛡️ <8 partants (Mise gelée à 3€)`;
+                    } else if (baseHorse.cote < 1.50 && lastComputedDeficitBase > 0) {
+                        warningNotice = ` | ⚠️ Cote <1.50 (Mise gelée à 3€)`;
+                    }
+                    document.getElementById('top1Stats').textContent = `Cote : ${baseHorse.coteDisplay} | Régularité : ${baseHorse.musiqueScore}%${warningNotice}`;
 
-                    // Si on consulte une course à venir, ajuste l'affichage de la mise Prop en fonction de la cote du favori
                     if (!hasReports && arrivees.length === 0) {
-                        let livePropStake = computeSmartStake(lastComputedDeficitBase, STAKE_BASE, baseHorse.cote);
-                        let propLabel = (baseHorse.cote < 1.50 && lastComputedDeficitBase > 0)
-                            ? `Prop: ${livePropStake.toFixed(2)} € (Gel <1.5)`
-                            : `Prop: ${livePropStake.toFixed(2)} €`;
+                        let livePropStake = computeSmartStake(lastComputedDeficitBase, STAKE_BASE, baseHorse.cote, numRunners, baseHorse.musiqueScore);
+                        let propLabel = `Prop: ${livePropStake.toFixed(2)} €`;
+                        if (lastComputedDeficitBase > 0 && (numRunners < 8 || baseHorse.cote < 1.50)) {
+                            propLabel = `Prop: ${livePropStake.toFixed(2)} € (Gel)`;
+                        }
                         document.getElementById('nextStakeBaseText').textContent = propLabel;
                         document.getElementById('headerNextStake').textContent = `${lastComputedMartStakeBase.toFixed(0)}€ | ${livePropStake.toFixed(0)}€`;
                     }
@@ -1723,7 +1772,7 @@
                     processed.forEach(p => {
                         let tr = document.createElement('tr');
                         let tag = p.ordreArrivee ? `<span class="ml-2 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
-                        if (p.num === baseHorse?.num) tag += '<span class="ml-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold ml-1">Favori</span>';
+                        if (p.num === baseHorse?.num) tag += '<span class="ml-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold ml-1">Base Solide</span>';
                         if (p.num === nuggetHorse?.num) tag += '<span class="ml-2 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold ml-1">Pépite</span>';
                         
                         let isSelected = globalBets[currentRaceKey] && globalBets[currentRaceKey].num === p.num;
@@ -1743,6 +1792,9 @@
                 
                 let timeInfo = raceStartTime > 0 ? `[Départ : ${formatTime(raceStartTime)}] ` : '';
                 let discBadge = getDisciplineBadge(race);
+                let placesBadge = numRunners >= 8
+                    ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded text-[10px] ml-2">${numRunners} part. (3 places)</span>`
+                    : `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded text-[10px] ml-2">⚠️ ${numRunners} part. (2 places)</span>`;
                 let statusBadge = "";
                 
                 if (foundAnyReport || arrivees.length > 0) {
@@ -1758,8 +1810,7 @@
                     <div class="flex items-center flex-wrap gap-y-1">
                         <span class="mr-2 text-amber-400 font-bold">R${rNum}C${cNum}</span>
                         <span class="mr-2 text-zinc-300 font-mono">${timeInfo}</span>
-                        <span>Sélection par cotes</span>
-                        ${discBadge} ${statusBadge}
+                        ${discBadge} ${placesBadge} ${statusBadge}
                     </div>
                 `;
             } catch (e) {
@@ -1779,7 +1830,7 @@
                 manualProfit: Number(manualProfit) || 0,
                 updatedAt: Date.now()
             };
-            safeSaveStatItem(`pmu_stats_unified_v44_${mode}_${ddmmyyyy}`, histObj);
+            safeSaveStatItem(`pmu_stats_unified_v45_${mode}_${ddmmyyyy}`, histObj);
         }
 
         function saveCurrentDayStatsToHistory() {
@@ -1796,7 +1847,7 @@
 
         function getStatForDateObj(d) {
             let ddmmyyyy = `${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
-            let key = `pmu_stats_unified_v44_${currentDisciplineMode}_${ddmmyyyy}`;
+            let key = `pmu_stats_unified_v45_${currentDisciplineMode}_${ddmmyyyy}`;
             let saved = localStorage.getItem(key);
             if (saved) {
                 try {
@@ -2051,7 +2102,8 @@
                 let algoResult = computeAlgorithm(raceData.partants, rKey, true);
                 let baseH = algoResult.baseHorse;
                 let nuggetH = algoResult.nuggetHorse;
-                let maxPaidPlaces = algoResult.processed.length >= 8 ? 3 : 2;
+                let numRunners = algoResult.processed.length;
+                let maxPaidPlaces = numRunners >= 8 ? 3 : 2;
 
                 let baseArr = baseH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === baseH.num)?.ordreArrivee || 99) : 99;
                 let nuggetArr = nuggetH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === nuggetH.num)?.ordreArrivee || 99) : 99;
@@ -2063,7 +2115,7 @@
                         gPla = Math.max(1.10, parseFloat((1 + ((baseH.cote - 1) / 3.5)).toFixed(2)));
                     }
 
-                    // 1. Base Placé Martingale (x2 après défaite, retour à 3€ après victoire)
+                    // 1. Base Placé Martingale
                     let martStakeB = currentMartStakeBase;
                     if (gPla > 0) {
                         totalProfitBaseMart += (gPla * martStakeB) - martStakeB;
@@ -2073,8 +2125,8 @@
                         currentMartStakeBase = martStakeB * 2;
                     }
 
-                    // 2. Base Placé Proportionnelle Étagée avec protection cote < 1.50
-                    let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE, baseH.cote);
+                    // 2. Base Placé Proportionnelle Ciblée V45
+                    let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE, baseH.cote, numRunners, baseH.musiqueScore);
                     if (gPla > 0) {
                         let netBasePla = (gPla * actualStakeBase) - actualStakeBase;
                         totalProfitBasePla += netBasePla;
@@ -2091,7 +2143,7 @@
                         gPla = Math.max(1.10, parseFloat((1 + ((nuggetH.cote - 1) / 3.5)).toFixed(2)));
                     }
 
-                    // 1. Pépite Placé Martingale Adoucie (x1.4 après défaite, retour à 2€ après victoire)
+                    // 1. Pépite Placé Martingale Adoucie
                     let martStakeP = currentMartStakePepite;
                     if (gPla > 0) {
                         totalProfitPepiteMart += (gPla * martStakeP) - martStakeP;
@@ -2101,7 +2153,7 @@
                         currentMartStakePepite = computePepiteNextMartStake(martStakeP);
                     }
 
-                    // 2. Pépite Placé Proportionnel Adouci (x0.55 avec base 2€)
+                    // 2. Pépite Placé Proportionnel Adouci
                     let simStakePepite = computePepiteSmartStake(deficitSeriePepite, STAKE_PEPITE);
                     if (gPla > 0) {
                         let netPepitePla = (gPla * simStakePepite) - simStakePepite;
@@ -2216,12 +2268,13 @@
                     let algoResult = computeAlgorithm(raceData.partants, rKey, true);
                     let baseH = algoResult.baseHorse;
                     let nuggetH = algoResult.nuggetHorse;
-                    let maxPaidPlaces = algoResult.processed.length >= 8 ? 3 : 2;
+                    let numRunners = algoResult.processed.length;
+                    let maxPaidPlaces = numRunners >= 8 ? 3 : 2;
 
                     let baseArr = baseH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // CALCUL BASE PLACÉ (3€) : MARTINGALE (x2) & PROPORTIONNELLE ÉTAGÉE PETITS RAPPORTS
+                    // CALCUL BASE PLACÉ (3€) : MARTINGALE (x2) & PROPORTIONNELLE CIBLÉE V45
                     if (baseH) {
                         coursesValidees++;
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
@@ -2241,8 +2294,8 @@
                             currentMartStakeBase = martStakeB * 2;
                         }
 
-                        // 2. Base Placé Proportionnelle Étagée (avec protection cote < 1.50)
-                        let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE, baseH.cote);
+                        // 2. Base Placé Proportionnelle Ciblée V45 (Anti-DAI + Bouclier <8p + Cote réelle)
+                        let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE, baseH.cote, numRunners, baseH.musiqueScore);
                         totalSpentBase += actualStakeBase;
                         if (actualStakeBase > maxStakeBase) maxStakeBase = actualStakeBase;
                         
