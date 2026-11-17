@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V46 Proportionnelle Haute Rentabilité (Base 3€)</title>
+    <title>Turf - V47 Proportionnelle Haute Rentabilité (Base 2€ & Pépite 2€)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -38,7 +38,7 @@
                 
                 <div class="text-xs bg-zinc-800 px-2 py-1 rounded-lg border border-emerald-500/30 text-emerald-400 font-bold flex flex-col items-end shadow mr-1">
                     <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">Base (Mart | Prop)</span>
-                    <span id="headerNextStake">3€ | 3€</span>
+                    <span id="headerNextStake">2€ | 2€</span>
                 </div>
                 
                 <!-- DRAPEAU DES ARRIVÉES -->
@@ -118,8 +118,8 @@
                         <span id="weekDatesLabel" class="text-[10px] text-zinc-400 font-mono"></span>
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-zinc-950/70 p-2.5 rounded-lg border border-zinc-800 mb-2.5 text-[11px]">
-                        <div class="text-zinc-300">Base Mart. (3€) : <span id="weekBaseMart" class="text-cyan-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
-                        <div class="text-zinc-300">Base Prop. (3€) : <span id="weekBase" class="text-emerald-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
+                        <div class="text-zinc-300">Base Mart. (2€) : <span id="weekBaseMart" class="text-cyan-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
+                        <div class="text-zinc-300">Base Prop. (2€) : <span id="weekBase" class="text-emerald-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
                         <div class="text-zinc-300">Pép. Mart. (2€) : <span id="weekPepiteMart" class="text-yellow-300 font-bold block text-xs mt-0.5">0.00 €</span></div>
                         <div class="text-zinc-300">Pép. Prop. (2€) : <span id="weekPepite" class="text-amber-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
                         <div class="text-zinc-300">Perso : <span id="weekManual" class="text-orange-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
@@ -138,15 +138,15 @@
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (100% Placé)</h2>
-                    <p class="text-[10px] text-zinc-400"><strong class="text-emerald-400">Base 3€ (Prop. Booster x2.35 / x2.00)</strong> • <strong class="text-amber-400">Pépite 2€ Adoucie (Prop. x0.55)</strong></p>
+                    <p class="text-[10px] text-zinc-400"><strong class="text-emerald-400">Base 2€ (Prop. Booster x2.35 / x2.00)</strong> • <strong class="text-amber-400">Pépite 2€ Adoucie (Prop. x0.55)</strong></p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <!-- BASE (FAVORI 3€) : MARTINGALE vs PROPORTIONNEL BOOSTER -->
+                <!-- BASE (FAVORI 2€) : MARTINGALE vs PROPORTIONNEL BOOSTER -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">FAVORI PLACÉ (3€)</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori 3€)</div>
+                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">FAVORI PLACÉ (2€)</div>
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori 2€)</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-cyan-500/30 text-center flex flex-col justify-center">
                             <span class="text-[8px] text-cyan-400 block uppercase font-bold">Placé (Mart. x2)</span>
@@ -182,15 +182,15 @@
 
             <!-- MISE MAX, DÉFICITS ET PROCHAINES MISES (MARTINGALE & PROPORTIONNEL) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 text-zinc-300">
-                <!-- GESTION BASE 3€ -->
+                <!-- GESTION BASE 2€ -->
                 <div class="flex flex-col space-y-1 sm:border-r border-zinc-700/50 sm:pr-3">
-                    <span class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement Base (Favori 3€)</span>
+                    <span class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement Base (Favori 2€)</span>
                     <span class="flex justify-between">Joué (Mart. | Prop.): <strong class="text-white"><span id="totalSpentBaseMartText" class="text-cyan-300">0.00 €</span> | <span id="totalSpentText" class="text-emerald-300">0.00 €</span></strong></span>
                     <span class="flex justify-between">Max (Mart. | Prop.): <strong class="text-zinc-300"><span id="maxStakeBaseMartText" class="text-cyan-300">0.00 €</span> | <span id="maxStakeBaseText" class="text-emerald-300">0.00 €</span></strong></span>
                     <span class="flex justify-between">Déficit Prop.: <strong id="deficitBaseText" class="text-red-400">0.00 €</strong></span>
                     <div class="grid grid-cols-2 gap-1.5 pt-1.5">
-                        <strong id="nextStakeBaseMartText" class="text-cyan-300 bg-zinc-900 px-1.5 py-1 rounded border border-cyan-500/30 font-black text-[10px] shadow-md block text-center">Mart: 3.00 €</strong>
-                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-1.5 py-1 rounded border border-emerald-500/30 font-black text-[10px] shadow-md block text-center">Prop: 3.00 €</strong>
+                        <strong id="nextStakeBaseMartText" class="text-cyan-300 bg-zinc-900 px-1.5 py-1 rounded border border-cyan-500/30 font-black text-[10px] shadow-md block text-center">Mart: 2.00 €</strong>
+                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-1.5 py-1 rounded border border-emerald-500/30 font-black text-[10px] shadow-md block text-center">Prop: 2.00 €</strong>
                     </div>
                 </div>
 
@@ -257,7 +257,7 @@
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mt-3">
                 <div class="bg-zinc-900/90 p-3 rounded-xl border border-emerald-500/40 space-y-1">
-                    <div class="text-[10px] uppercase font-bold text-emerald-400">Favori des Parieurs (Base 3€)</div>
+                    <div class="text-[10px] uppercase font-bold text-emerald-400">Favori des Parieurs (Base 2€)</div>
                     <div id="top1Name" class="font-bold text-white text-sm">En attente...</div>
                     <div id="top1Stats" class="text-[11px] text-zinc-400">--</div>
                 </div>
@@ -358,10 +358,10 @@
     </div>
 
     <script>
-        const CACHE_VERSION = "v46";
+        const CACHE_VERSION = "v47";
         
-        // MISES DE DÉPART : 3€ POUR LA BASE (FAVORI), 2€ POUR LA PÉPITE ET LE TICKET
-        const STAKE_BASE = 3.0;
+        // MISES DE DÉPART : 2€ POUR LA BASE (FAVORI), 2€ POUR LA PÉPITE ET LE TICKET
+        const STAKE_BASE = 2.0;
         const STAKE_PEPITE = 2.0;
         const BASE_STAKE = 2.0;
 
@@ -558,7 +558,7 @@
                     localStorage.removeItem(k);
                 }
             });
-            showToast("Mémoire synchronisée (PC/Mobile) ! Recalcul V46...", "success");
+            showToast("Mémoire synchronisée (PC/Mobile) ! Recalcul V47 (Base 2€)...", "success");
             resetCountersUI();
             loadLivePmu();
         }
@@ -1323,11 +1323,11 @@
             return foundGain;
         }
 
-        // PROPORTIONNELLE HAUTE RENTABILITÉ BASE (3€) SANS GEL NI BOUCLIER :
-        // Multiplicateur x2.35 jusqu'à 20€ de déficit (puis x2.00) pour effacer 100% de la perte + bénéfice dès un rapport placé de 1.30€ - 1.40€
+        // PROPORTIONNELLE HAUTE RENTABILITÉ BASE (2€) SANS GEL NI BOUCLIER :
+        // Multiplicateur x2.35 jusqu'à 15€ de déficit (puis x2.00) pour effacer 100% de la perte + bénéfice dès un rapport placé de 1.30€ - 1.40€
         function computeSmartStake(deficitSerie, baseStakeVal = STAKE_BASE) {
             if (deficitSerie <= 0) return baseStakeVal;
-            let mult = deficitSerie <= 20 ? 2.35 : 2.00;
+            let mult = deficitSerie <= 15 ? 2.35 : 2.00;
             let stake = Math.ceil((deficitSerie * mult) + baseStakeVal);
             return Math.max(baseStakeVal + 2, stake);
         }
@@ -1742,7 +1742,7 @@
                 manualProfit: Number(manualProfit) || 0,
                 updatedAt: Date.now()
             };
-            safeSaveStatItem(`pmu_stats_unified_v46_${mode}_${ddmmyyyy}`, histObj);
+            safeSaveStatItem(`pmu_stats_unified_v47_${mode}_${ddmmyyyy}`, histObj);
         }
 
         function saveCurrentDayStatsToHistory() {
@@ -1759,7 +1759,7 @@
 
         function getStatForDateObj(d) {
             let ddmmyyyy = `${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
-            let key = `pmu_stats_unified_v46_${currentDisciplineMode}_${ddmmyyyy}`;
+            let key = `pmu_stats_unified_v47_${currentDisciplineMode}_${ddmmyyyy}`;
             let saved = localStorage.getItem(key);
             if (saved) {
                 try {
@@ -2036,7 +2036,7 @@
                         currentMartStakeBase = martStakeB * 2;
                     }
 
-                    // 2. Base Placé Proportionnelle Haute Rentabilité (x2.35 / x2.00)
+                    // 2. Base Placé Proportionnelle Haute Rentabilité (2€ : x2.35 / x2.00)
                     let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
                     if (gPla > 0) {
                         let netBasePla = (gPla * actualStakeBase) - actualStakeBase;
@@ -2184,7 +2184,7 @@
                     let baseArr = baseH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // CALCUL BASE PLACÉ (3€) : MARTINGALE (x2) & PROPORTIONNELLE BOOSTER (x2.35 / x2.00)
+                    // CALCUL BASE PLACÉ (2€) : MARTINGALE (x2) & PROPORTIONNELLE BOOSTER (x2.35 / x2.00)
                     if (baseH) {
                         coursesValidees++;
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
@@ -2204,7 +2204,7 @@
                             currentMartStakeBase = martStakeB * 2;
                         }
 
-                        // 2. Base Placé Proportionnelle Haute Rentabilité (x2.35 / x2.00)
+                        // 2. Base Placé Proportionnelle Haute Rentabilité (2€ : x2.35 / x2.00)
                         let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
                         totalSpentBase += actualStakeBase;
                         if (actualStakeBase > maxStakeBase) maxStakeBase = actualStakeBase;
