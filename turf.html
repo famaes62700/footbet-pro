@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V43 Sync PC & Mobile Parfaite (Base 3€ / Pépite 2€)</title>
+    <title>Turf - V44 Proportionnelle Optimisée Petits Rapports (Base 3€)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -138,12 +138,12 @@
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (100% Placé)</h2>
-                    <p class="text-[10px] text-zinc-400"><strong class="text-emerald-400">Base 3€ (Prop. x1.35)</strong> • <strong class="text-amber-400">Pépite 2€ Adoucie (Prop. x0.55 | Mart. x1.4)</strong></p>
+                    <p class="text-[10px] text-zinc-400"><strong class="text-emerald-400">Base 3€ (Prop. Étagée Petits Rapports)</strong> • <strong class="text-amber-400">Pépite 2€ Adoucie</strong></p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <!-- BASE (FAVORI 3€) : MARTINGALE vs PROPORTIONNEL -->
+                <!-- BASE (FAVORI 3€) : MARTINGALE vs PROPORTIONNEL ÉTAGÉ -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
                     <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">FAVORI PLACÉ (3€)</div>
                     <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori 3€)</div>
@@ -154,7 +154,7 @@
                             <span id="gainBaseMart" class="font-bold text-cyan-300 mt-0.5">0.00 €</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-emerald-500/30 text-center flex flex-col justify-center shadow-inner">
-                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé (Prop. x1.35)</span>
+                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé (Prop. Étagée)</span>
                             <span id="statBasePla" class="text-[9px] text-emerald-500/70 font-bold my-0.5">0 / 0</span>
                             <span id="gainBasePla" class="font-bold text-emerald-400 mt-0.5">0.00 €</span>
                         </div>
@@ -358,12 +358,15 @@
     </div>
 
     <script>
-        const CACHE_VERSION = "v43";
+        const CACHE_VERSION = "v44";
         
         // MISES DE DÉPART : 3€ POUR LA BASE (FAVORI), 2€ POUR LA PÉPITE ET LE TICKET
         const STAKE_BASE = 3.0;
         const STAKE_PEPITE = 2.0;
         const BASE_STAKE = 2.0;
+
+        let lastComputedDeficitBase = 0;
+        let lastComputedMartStakeBase = STAKE_BASE;
 
         try { localStorage.removeItem('fabturf_time_offset_min'); } catch(e) {}
 
@@ -383,7 +386,6 @@
             return startMs > 0 && nowMs >= startMs;
         }
 
-        // NETTOYAGE DES ANCIENS CACHES OBSOLÈTES AU DÉMARRAGE
         function cleanupAndMigrateStorage() {
             try {
                 let keysToRemove = [];
@@ -462,6 +464,8 @@
         }
 
         function resetCountersUI() {
+            lastComputedDeficitBase = 0;
+            lastComputedMartStakeBase = STAKE_BASE;
             try {
                 document.getElementById('statBaseMart').textContent = "0 / 0";
                 document.getElementById('statBasePla').textContent = "0 / 0";
@@ -547,7 +551,6 @@
             if (cdEl) cdEl.textContent = '';
         }
 
-        // BOUTON ROUGE : PURGE TOTALE DES CACHES, CHEVAUX FIGÉS ET ANCIENS HISTORIQUES POUR SYNCHRONISER PC & TÉLÉPHONE
         function resetAllCache() {
             notifiedArrivals = {};
             hasAutoTransitioned = {};
@@ -670,7 +673,6 @@
             }
         }
 
-        // SYNCHRONISATION SILENCIEUSE DES RETARDS ET HORAIRES PMU TOUTES LES 30 SECONDES
         async function syncProgrammeTimesSilently() {
             let dateInput = document.getElementById('raceDate').value;
             if (!dateInput || dateInput !== getLocalDateString()) return;
@@ -865,7 +867,6 @@
             throw new Error("PMU bloqué");
         }
 
-        // RÉCUPÉRATION ROBUSTE AVEC DOUBLE TENTATIVE EN CAS DE MICRO-COUPURE 4G/5G
         async function getFullRaceData(dateStr, rNum, cNum, courseObj = null, checkReports = true) {
             let partants = [];
             let rapportsList = [];
@@ -1175,7 +1176,7 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
-        // ALGORITHME DÉTERMINISTE (TRI PAR COTE PUIS PAR NUMÉRO PMU POUR ÉVITER TOUTE DIFFÉRENCE PC / MOBILE)
+        // ALGORITHME DÉTERMINISTE (TRI PAR COTE PUIS PAR NUMÉRO PMU)
         function computeAlgorithm(partants, raceKey = null, isRaceStarted = false) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
@@ -1215,11 +1216,9 @@
                 };
             });
 
-            // Tri strictement déterministe : par cote croissante, puis par numéro PMU croissant en cas d'égalité
             let sortedByCote = [...processed].sort((a, b) => (a.cote - b.cote) || (a.num - b.num));
             let baseHorse = sortedByCote[0]; 
 
-            // Tri strictement déterministe pour la Pépite : par score décroissant, puis par cote croissante, puis par numéro PMU
             let remaining = processed.filter(p => p.num !== baseHorse?.num);
             let nuggetHorse = remaining.sort((a, b) => (b.nuggetScore - a.nuggetScore) || (a.cote - b.cote) || (a.num - b.num))[0];
 
@@ -1330,14 +1329,36 @@
             return foundGain;
         }
 
-        // MODE PROPORTIONNEL BASE (FAVORI 3€ : x1.35 adapté aux petits rapports)
-        function computeSmartStake(deficitSerie, baseStakeVal = STAKE_BASE) {
+        // PROPORTIONNELLE ÉTAGÉE OPTIMISÉE PETITS RAPPORTS (BASE 3€ INCHANGÉE)
+        function computeSmartStake(deficitSerie, baseStakeVal = STAKE_BASE, horseCote = 99) {
             if (deficitSerie <= 0) return baseStakeVal;
-            let stake = Math.ceil((deficitSerie * 1.35) + baseStakeVal);
+
+            // Sécurité "Favori Écrasé" (< 1.50 gagnant = ~1.10€ placé) :
+            // On ne risque pas une grosse mise de rattrapage pour 10% de rentabilité, on maintient 3€ et on garde le déficit pour la suite.
+            if (horseCote > 0 && horseCote < 1.50) {
+                return baseStakeVal;
+            }
+
+            let mult = 1.35;
+            if (deficitSerie <= 6) {
+                // Palier 1 (1 échec = 3€ de déficit) : x2.10 -> Mise 10€ pour rembourser 100% de la perte dès 1.30€ placé
+                mult = 2.10;
+            } else if (deficitSerie <= 18) {
+                // Palier 2 (2 échecs = 13€ de déficit) : x1.65 -> Mise 25€
+                mult = 1.65;
+            } else if (deficitSerie <= 45) {
+                // Palier 3 (3 échecs) : x1.25 -> Amortissement lissé sur 2 favoris placés
+                mult = 1.25;
+            } else {
+                // Palier 4+ : Frein de sécurité anti-explosion du capital
+                mult = 0.90;
+            }
+
+            let stake = Math.ceil((deficitSerie * mult) + baseStakeVal);
             return Math.max(baseStakeVal + 1, stake);
         }
 
-        // MODE PROPORTIONNEL ADOUCI POUR LA PÉPITE (2€ : x0.55 car les rapports placés d'une Pépite sont élevés)
+        // MODE PROPORTIONNEL ADOUCI POUR LA PÉPITE (2€ : x0.55)
         function computePepiteSmartStake(deficitSerie, baseStakeVal = STAKE_PEPITE) {
             if (deficitSerie <= 0) return baseStakeVal;
             let stake = Math.ceil((deficitSerie * 0.55) + baseStakeVal);
@@ -1670,7 +1691,18 @@
 
                 if (baseHorse) {
                     document.getElementById('top1Name').textContent = `${baseHorse.num}. ${baseHorse.nom}`;
-                    document.getElementById('top1Stats').textContent = `Cote : ${baseHorse.coteDisplay} | Confiance : ${baseHorse.baseScore}%`;
+                    let freezeNotice = (baseHorse.cote < 1.50 && lastComputedDeficitBase > 0) ? ` | ⚠️ Cote <1.50 (Mise gelée à 3€)` : '';
+                    document.getElementById('top1Stats').textContent = `Cote : ${baseHorse.coteDisplay} | Confiance : ${baseHorse.baseScore}%${freezeNotice}`;
+
+                    // Si on consulte une course à venir, ajuste l'affichage de la mise Prop en fonction de la cote du favori
+                    if (!hasReports && arrivees.length === 0) {
+                        let livePropStake = computeSmartStake(lastComputedDeficitBase, STAKE_BASE, baseHorse.cote);
+                        let propLabel = (baseHorse.cote < 1.50 && lastComputedDeficitBase > 0)
+                            ? `Prop: ${livePropStake.toFixed(2)} € (Gel <1.5)`
+                            : `Prop: ${livePropStake.toFixed(2)} €`;
+                        document.getElementById('nextStakeBaseText').textContent = propLabel;
+                        document.getElementById('headerNextStake').textContent = `${lastComputedMartStakeBase.toFixed(0)}€ | ${livePropStake.toFixed(0)}€`;
+                    }
                 } else {
                     document.getElementById('top1Name').textContent = `Attente cotes...`;
                 }
@@ -1738,7 +1770,6 @@
             }
         }
 
-        // STOCKAGE ISOLÉ V43 POUR ÉVITER TOUT MÉLANGE AVEC LES ANCIENNES MISES (10€, 5€, 2€)
         function saveDayStatsToStorage(ddmmyyyy, mode, baseProfit, pepiteProfit, manualProfit, baseMartProfit = 0, pepiteMartProfit = 0) {
             let histObj = {
                 baseProfit: Number(baseProfit) || 0,
@@ -1748,7 +1779,7 @@
                 manualProfit: Number(manualProfit) || 0,
                 updatedAt: Date.now()
             };
-            safeSaveStatItem(`pmu_stats_unified_v43_${mode}_${ddmmyyyy}`, histObj);
+            safeSaveStatItem(`pmu_stats_unified_v44_${mode}_${ddmmyyyy}`, histObj);
         }
 
         function saveCurrentDayStatsToHistory() {
@@ -1765,7 +1796,7 @@
 
         function getStatForDateObj(d) {
             let ddmmyyyy = `${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
-            let key = `pmu_stats_unified_v43_${currentDisciplineMode}_${ddmmyyyy}`;
+            let key = `pmu_stats_unified_v44_${currentDisciplineMode}_${ddmmyyyy}`;
             let saved = localStorage.getItem(key);
             if (saved) {
                 try {
@@ -1927,7 +1958,6 @@
                     let ddmmyyyy = `${String(d.getDate()).padStart(2,'0')}${String(d.getMonth()+1).padStart(2,'0')}${d.getFullYear()}`;
                     let isToday = (yyyymmdd === getLocalDateString());
 
-                    // Supprime les verrous pré-course de cette journée pour garantir le même calcul sur PC et Mobile
                     try { localStorage.removeItem(`fabturf_locked_picks_${ddmmyyyy}`); } catch(e) {}
 
                     if (bannerText) {
@@ -1982,7 +2012,6 @@
                 });
             });
 
-            // Tri chronologique strict avec départage par réunion et numéro de course
             pastRaces.sort((a, b) => (a.time - b.time) || (a.rNum - b.rNum) || (a.cNum - b.cNum));
             let totalProfitBasePla = 0, totalProfitPepitePla = 0;
             let totalProfitBaseMart = 0, totalProfitPepiteMart = 0;
@@ -2044,8 +2073,8 @@
                         currentMartStakeBase = martStakeB * 2;
                     }
 
-                    // 2. Base Placé Proportionnel (x1.35 avec base 3€)
-                    let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
+                    // 2. Base Placé Proportionnelle Étagée avec protection cote < 1.50
+                    let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE, baseH.cote);
                     if (gPla > 0) {
                         let netBasePla = (gPla * actualStakeBase) - actualStakeBase;
                         totalProfitBasePla += netBasePla;
@@ -2124,7 +2153,6 @@
                     });
                 });
 
-                // Tri chronologique strict avec départage par réunion et numéro de course
                 pastRacesToday.sort((a, b) => (a.time - b.time) || (a.rNum - b.rNum) || (a.cNum - b.cNum));
 
                 if (pastRacesToday.length === 0) {
@@ -2193,7 +2221,7 @@
                     let baseArr = baseH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === baseH.num)?.ordreArrivee || 99) : 99;
                     let nuggetArr = nuggetH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
-                    // CALCUL BASE PLACÉ (3€) : MARTINGALE (x2) & PROPORTIONNEL (x1.35)
+                    // CALCUL BASE PLACÉ (3€) : MARTINGALE (x2) & PROPORTIONNELLE ÉTAGÉE PETITS RAPPORTS
                     if (baseH) {
                         coursesValidees++;
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
@@ -2213,8 +2241,8 @@
                             currentMartStakeBase = martStakeB * 2;
                         }
 
-                        // 2. Base Placé Proportionnel
-                        let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
+                        // 2. Base Placé Proportionnelle Étagée (avec protection cote < 1.50)
+                        let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE, baseH.cote);
                         totalSpentBase += actualStakeBase;
                         if (actualStakeBase > maxStakeBase) maxStakeBase = actualStakeBase;
                         
@@ -2264,6 +2292,9 @@
                             deficitSeriePepite += simStakePepite;
                         }
                     }
+
+                    lastComputedDeficitBase = deficitSerieBase;
+                    lastComputedMartStakeBase = currentMartStakeBase;
 
                     document.getElementById('statBaseMart').textContent = `${baseWinsPla} / ${coursesValidees}`;
                     document.getElementById('statBasePla').textContent = `${baseWinsPla} / ${coursesValidees}`;
