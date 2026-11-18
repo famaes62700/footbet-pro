@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V48 Sécurité Réunions Annulées (Base 2€ & Pépite 2€)</title>
+    <title>Turf - V49 Calculs PMU Réels & Anti-Annulation (Base 2€)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -114,7 +114,7 @@
             <div class="space-y-4 max-h-[28rem] overflow-y-auto pr-1">
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
                     <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-[11px] uppercase font-bold text-zinc-300">Cette Semaine (Cumul Placé)</h3>
+                        <h3 class="text-[11px] uppercase font-bold text-zinc-300">Cette Semaine (Rapports PMU Réels)</h3>
                         <span id="weekDatesLabel" class="text-[10px] text-zinc-400 font-mono"></span>
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-zinc-950/70 p-2.5 rounded-lg border border-zinc-800 mb-2.5 text-[11px]">
@@ -137,13 +137,13 @@
         <div class="bg-zinc-900 border border-amber-500/30 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
-                    <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (100% Placé • Hors Annulées)</h2>
-                    <p class="text-[10px] text-zinc-400"><strong class="text-emerald-400">Base 2€ (Prop. Booster x2.35 / x2.00)</strong> • <strong class="text-amber-400">Pépite 2€ Adoucie (Prop. x0.55)</strong></p>
+                    <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (Rapports PMU Réels • Hors Annulées)</h2>
+                    <p class="text-[10px] text-zinc-400"><strong class="text-emerald-400">Base 2€ (Prop. x1.65 / x1.35)</strong> • <strong class="text-amber-400">Pépite 2€ Adoucie (Prop. x0.55)</strong></p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <!-- BASE (FAVORI 2€) : MARTINGALE vs PROPORTIONNEL BOOSTER -->
+                <!-- BASE (FAVORI 2€) : MARTINGALE vs PROPORTIONNEL -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
                     <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">FAVORI PLACÉ (2€)</div>
                     <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori 2€)</div>
@@ -154,7 +154,7 @@
                             <span id="gainBaseMart" class="font-bold text-cyan-300 mt-0.5">0.00 €</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-emerald-500/30 text-center flex flex-col justify-center shadow-inner">
-                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé (Prop. x2.35)</span>
+                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé (Prop. x1.65)</span>
                             <span id="statBasePla" class="text-[9px] text-emerald-500/70 font-bold my-0.5">0 / 0</span>
                             <span id="gainBasePla" class="font-bold text-emerald-400 mt-0.5">0.00 €</span>
                         </div>
@@ -229,7 +229,7 @@
 
         <div id="reportsBlock" style="display: none;" class="bg-zinc-900 border border-emerald-500/30 rounded-xl p-3.5 space-y-2">
             <h2 class="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center">
-                <i class="fa-solid fa-euro-sign mr-1.5"></i> Rapports Définitifs (pour 1 €)
+                <i class="fa-solid fa-euro-sign mr-1.5"></i> Rapports Définitifs Officiels (pour 1 €)
             </h2>
             <div id="reportsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs"></div>
         </div>
@@ -358,7 +358,7 @@
     </div>
 
     <script>
-        const CACHE_VERSION = "v48";
+        const CACHE_VERSION = "v49";
         
         // MISES DE DÉPART : 2€ POUR LA BASE (FAVORI), 2€ POUR LA PÉPITE ET LE TICKET
         const STAKE_BASE = 2.0;
@@ -425,15 +425,12 @@
                 statut: p.statut,
                 musique: p.musique || p.form,
                 dernierRapportDirect: p.dernierRapportDirect ? { rapport: p.dernierRapportDirect.rapport } : undefined,
+                dernierRapportReference: p.dernierRapportReference ? { rapport: p.dernierRapportReference.rapport } : undefined,
                 probabiliteEvolution: p.probabiliteEvolution,
                 ordreArrivee: p.ordreArrivee
             }));
-            let slimR = (rapportsList || []).filter(g => {
-                let pType = String(g.typePari || g.libellePari || g.codePari || "").toUpperCase();
-                let fam = String(g.famillePari || "").toUpperCase();
-                return pType.includes('SIMPLE') || pType.includes('SG') || pType.includes('SP') || fam.includes('SIMPLE');
-            });
-            return { partants: slimP, rapportsList: slimR.length > 0 ? slimR : (rapportsList || []).slice(0, 3), isComplete: Boolean(isComplete) };
+            let slimR = (rapportsList || []).filter(g => isSimpleBetGroup(g));
+            return { partants: slimP, rapportsList: slimR.length > 0 ? slimR : (rapportsList || []).slice(0, 4), isComplete: Boolean(isComplete) };
         }
         
         function safeGetLocal(key) {
@@ -567,7 +564,7 @@
                     localStorage.removeItem(k);
                 }
             });
-            showToast("Mémoire synchronisée (PC/Mobile) ! Recalcul V48 (Hors Annulées)...", "success");
+            showToast("Mémoire purgée ! Recalcul V49 avec vrais rapports PMU...", "success");
             resetCountersUI();
             loadLivePmu();
         }
@@ -873,6 +870,84 @@
             throw new Error("PMU bloqué");
         }
 
+        // EXTRACTEUR UNIVERSEL DU NUMÉRO DE CHEVAL DANS UN RAPPORT PMU (LIT AUSSI item.libelle !)
+        function getHorseNumFromReportItem(item) {
+            if (!item || typeof item !== 'object') return -1;
+            let candidates = [
+                item.combinaison,
+                item.cheval,
+                item.numeroCheval,
+                item.partant,
+                item.numPmu,
+                item.libelle,
+                item.libelleRapport
+            ];
+            for (let raw of candidates) {
+                if (raw === undefined || raw === null) continue;
+                if (Array.isArray(raw)) {
+                    if (raw.length === 1) {
+                        let n = parseInt(raw[0], 10);
+                        if (!isNaN(n) && n > 0 && n < 40) return n;
+                    }
+                    continue;
+                }
+                let str = String(raw).trim();
+                // Ignore les combinaisons multiples (ex: "7-12", "7/12", "7 - 12")
+                if (str.includes('-') || str.includes('/') || str.includes('+')) continue;
+                // Accepte "7", "07", "N°7", "N° 7"
+                let m = str.match(/^(?:N°\s*|CHEVAL\s*)?(\d{1,2})$/i);
+                if (m) {
+                    let n = parseInt(m[1], 10);
+                    if (!isNaN(n) && n > 0 && n < 40) return n;
+                }
+            }
+            return -1;
+        }
+
+        // EXTRACTEUR UNIVERSEL DU DIVIDENDE POUR 1 € DANS UN RAPPORT PMU
+        function getDividendForOneEuro(item, group) {
+            if (!item || typeof item !== 'object') return 0;
+            if (item.rembourse === true || (group && group.rembourse === true)) return 0;
+
+            let val = 0;
+            if (item.dividendePourUnEuro !== undefined && item.dividendePourUnEuro !== null) {
+                let d = parseFloat(String(item.dividendePourUnEuro).replace(',', '.'));
+                val = d >= 100 ? d / 100 : d;
+            } else if (item.dividendeEuro !== undefined && item.dividendeEuro !== null) {
+                val = parseFloat(String(item.dividendeEuro).replace(',', '.'));
+            } else if (item.gainEuro !== undefined && item.gainEuro !== null) {
+                val = parseFloat(String(item.gainEuro).replace(',', '.'));
+            } else {
+                let rawM = item.dividende !== undefined ? item.dividende : (item.rapport !== undefined ? item.rapport : item.montant);
+                if (rawM !== undefined && rawM !== null) {
+                    let d = parseFloat(String(rawM).replace(',', '.'));
+                    let miseBase = (group && group.miseBase && group.miseBase >= 100) ? (group.miseBase / 100) : 1;
+                    if (d >= 100) {
+                        val = (d / 100) / miseBase;
+                    } else {
+                        val = d;
+                    }
+                }
+            }
+            return isNaN(val) ? 0 : val;
+        }
+
+        // VÉRIFIE SI UN GROUPE DE RAPPORTS EST UN PARI SIMPLE (GAGNANT OU PLACÉ UNIQUEMENT)
+        function isSimpleBetGroup(group) {
+            if (!group || typeof group !== 'object') return false;
+            let pType = String(group.typePari || group.libellePari || group.codePari || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            let famille = String(group.famillePari || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if (
+                pType.includes('COUPLE') || pType.includes('JUMELE') || pType.includes('TRIO') ||
+                pType.includes('TIERCE') || pType.includes('QUARTE') || pType.includes('QUINTE') ||
+                pType.includes('MULTI') || pType.includes('2SUR4') || pType.includes('DEUX_SUR_QUATRE') ||
+                pType.includes('PICK') || pType.includes('SUPER') || pType.includes('REPORT')
+            ) {
+                return false;
+            }
+            return pType.includes('SIMPLE') || famille.includes('SIMPLE') || pType === 'SG' || pType === 'E_SG' || pType === 'SP' || pType === 'E_SP';
+        }
+
         async function getFullRaceData(dateStr, rNum, cNum, courseObj = null, checkReports = true) {
             let partants = [];
             let rapportsList = [];
@@ -922,10 +997,40 @@
                         if (rData) {
                             rapportsList = Array.isArray(rData) ? rData : (rData.rapports || rData.lesRapports || []);
                         }
+                        if (rapportsList.length === 0) {
+                            let rDataFallback = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs`, true);
+                            if (rDataFallback) {
+                                rapportsList = Array.isArray(rDataFallback) ? rDataFallback : (rDataFallback.rapports || rDataFallback.lesRapports || []);
+                            }
+                        }
                         if (rapportsList.length > 0 || !hasArrival) break;
                     } catch(e) {}
                     await sleep(200);
                 }
+            }
+
+            // Enrichit automatiquement l'ordre d'arrivée des partants à partir des rapports officiels s'il manquait
+            if (rapportsList.length > 0 && partants.length > 0) {
+                let placeRankCounter = 2;
+                rapportsList.forEach(group => {
+                    if (!isSimpleBetGroup(group)) return;
+                    let pType = String(group.typePari || group.libellePari || "").toUpperCase();
+                    let isGagGroup = pType.includes('GAGN') || pType === 'SG' || pType === 'E_SG';
+                    let isPlaGroup = pType.includes('PLAC') || pType === 'SP' || pType === 'E_SP';
+                    let details = group.rapports || group.dividendes || group.lesRapports || [];
+                    if (!Array.isArray(details)) return;
+                    details.forEach(item => {
+                        let hNum = getHorseNumFromReportItem(item);
+                        let val = getDividendForOneEuro(item, group);
+                        if (hNum > 0 && val > 1.00) {
+                            let targetP = partants.find(p => parseInt(p.numPmu || p.numOrdre, 10) === hNum);
+                            if (targetP && !targetP.ordreArrivee) {
+                                if (isGagGroup) targetP.ordreArrivee = 1;
+                                else if (isPlaGroup) targetP.ordreArrivee = placeRankCounter++;
+                            }
+                        }
+                    });
+                });
             }
 
             return { partants, rapportsList };
@@ -1190,7 +1295,7 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
-        // ALGORITHME PUR (FAVORI N°1 PAR COTE + PÉPITE + VERROUILLAGE AU DÉPART SI CHEVAL PARTANT)
+        // ALGORITHME PUR AVEC LECTURE DE LA COTE DE RÉFÉRENCE EN SECOURS (ÉVITE LE BUG DU CHEVAL N°1 À 99.9)
         function computeAlgorithm(partants, raceKey = null, isRaceStarted = false) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
@@ -1205,7 +1310,9 @@
                 let musique = p.musique || p.form || "0a";
                 let rawCote = (p.dernierRapportDirect && p.dernierRapportDirect.rapport) 
                             ? p.dernierRapportDirect.rapport 
-                            : (p.probabiliteEvolution ? p.probabiliteEvolution : "99.9");
+                            : ((p.dernierRapportReference && p.dernierRapportReference.rapport)
+                                ? p.dernierRapportReference.rapport
+                                : (p.probabiliteEvolution ? p.probabiliteEvolution : "99.9"));
                 let cote = parseFloat(String(rawCote).replace(',', '.')) || 99.9;
                 
                 let musiqueScore = evaluateMusique(musique);
@@ -1292,88 +1399,48 @@
             return { processed, baseHorse, nuggetHorse };
         }
 
-        function extractHorseNumFromCombo(rawCombo) {
-            if (rawCombo === undefined || rawCombo === null) return -1;
-            if (Array.isArray(rawCombo)) return rawCombo.length === 1 ? parseInt(rawCombo[0], 10) : -1;
-            let str = String(rawCombo).trim();
-            if (str.includes('-') || str.includes('/')) return -1;
-            let m = str.match(/\d+/);
-            return m ? parseInt(m[0], 10) : -1;
-        }
-
-        // VÉRIFIE QU'UNE COURSE A VRAIMENT ÉTÉ COURUE ET PAYÉE (ÉCARTE LES RÉUNIONS ANNULÉES COMME AMIENS)
+        // VÉRIFIE QU'UNE COURSE A VRAIMENT ÉTÉ COURUE ET PAYÉE (UTILISE getHorseNumFromReportItem QUI LIT item.libelle !)
         function isRaceTrulyRunAndPayable(courseObj, partants, listeRapports) {
             if (isCourseCanceled(courseObj)) return false;
             if (!partants || !Array.isArray(partants) || partants.length === 0) return false;
             if (!listeRapports || !Array.isArray(listeRapports) || listeRapports.length === 0) return false;
 
-            // Vérifie qu'au moins 2 chevaux sont officiellement classés à l'arrivée
-            let officialArrivalsCount = partants.filter(p => p.ordreArrivee && parseInt(p.ordreArrivee, 10) > 0).length;
-            let courseArrivalsCount = (courseObj && Array.isArray(courseObj.ordreArrivee)) ? courseObj.ordreArrivee.length : 0;
-
-            // Vérifie qu'il existe au moins un vrai rapport Simple (Placé ou Gagnant) > 1.00€ sur un numéro de cheval précis (hors remboursement)
             let hasRealPaidHorseReport = false;
             listeRapports.forEach(group => {
-                let pType = (group.typePari || group.libellePari || group.codePari || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                let famille = (group.famillePari || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                if (pType.includes('COUPLE') || pType.includes('TRIO') || pType.includes('TIERCE') || pType.includes('QUARTE') || pType.includes('QUINTE') || pType.includes('MULTI') || pType.includes('2SUR4')) return;
-
+                if (!isSimpleBetGroup(group)) return;
                 let details = group.rapports || group.dividendes || group.lesRapports || [];
                 if (!Array.isArray(details)) return;
 
                 details.forEach(item => {
-                    if (item.rembourse === true) return;
-                    let lib = String(item.libelleRapport || item.libelle || item.typeRapport || item.nomRapport || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                    if (lib.includes('REMBOURS') || pType.includes('REMBOURS')) return;
-
-                    let rawCombo = item.combinaison !== undefined ? item.combinaison : (item.cheval || item.numeroCheval || item.partant || item.numPmu);
-                    let extractedNum = extractHorseNumFromCombo(rawCombo);
-                    if (extractedNum <= 0) return;
-
-                    let val = 0;
-                    if (item.dividendePourUnEuro !== undefined) val = item.dividendePourUnEuro / 100;
-                    else if (item.dividendeEuro !== undefined) val = item.dividendeEuro;
-                    else if (item.gainEuro !== undefined) val = item.gainEuro;
-                    else {
-                        let rawM = item.rapport || item.dividende || item.montant;
-                        if (rawM !== undefined && rawM !== null) {
-                            val = parseFloat(String(rawM).replace(',', '.'));
-                            if (val > 100) val = val / 100;
-                        }
-                    }
-
-                    // Un rapport > 1.00 € sur un cheval précis prouve que la course n'a pas été remboursée/annulée
-                    if (val > 1.00) {
+                    let lib = String(item.libelleRapport || item.libelle || "").toUpperCase();
+                    if (lib.includes('REMBOURS')) return;
+                    let hNum = getHorseNumFromReportItem(item);
+                    let val = getDividendForOneEuro(item, group);
+                    if (hNum > 0 && val > 1.00) {
                         hasRealPaidHorseReport = true;
                     }
                 });
             });
 
-            if (!hasRealPaidHorseReport && officialArrivalsCount < 2 && courseArrivalsCount < 2) {
-                return false;
-            }
             return hasRealPaidHorseReport;
         }
 
+        // EXTRACTION DU VRAI RAPPORT PMU OFFICIEL (GAGNANT OU PLACÉ) POUR UN CHEVAL DONNÉ
         function extractGainFromRapports(listeRapports, horseNum, targetType) {
             let foundGain = 0;
             let targetNum = parseInt(horseNum, 10);
             if (!listeRapports || !Array.isArray(listeRapports) || isNaN(targetNum)) return 0;
 
             listeRapports.forEach(group => {
-                let pType = (group.typePari || group.libellePari || group.codePari || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                let famille = (group.famillePari || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                
-                if (pType.includes('COUPLE') || pType.includes('TRIO') || pType.includes('TIERCE') || pType.includes('QUARTE') || pType.includes('QUINTE') || pType.includes('MULTI') || pType.includes('2SUR4')) return;
+                if (!isSimpleBetGroup(group)) return;
+                let pType = String(group.typePari || group.libellePari || group.codePari || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                let famille = String(group.famillePari || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
                 let details = group.rapports || group.dividendes || group.lesRapports || [];
                 if (!Array.isArray(details)) return;
 
                 details.forEach(item => {
-                    if (item.rembourse === true) return;
-                    let rawCombo = item.combinaison !== undefined ? item.combinaison : (item.cheval || item.numeroCheval || item.partant || item.numPmu);
-                    let extractedNum = extractHorseNumFromCombo(rawCombo);
-
+                    let extractedNum = getHorseNumFromReportItem(item);
                     if (extractedNum === targetNum) {
                         let lib = String(item.libelleRapport || item.libelle || item.typeRapport || item.nomRapport || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                         if (lib.includes('REMBOURS')) return;
@@ -1383,18 +1450,10 @@
                         let isGagnant = (combinedContext.includes('GAGN') || pType === 'SG' || pType === 'E_SG' || lib === 'G') && !isPlace;
 
                         if ((targetType === 'GAGNANT' && isGagnant) || (targetType === 'PLACE' && isPlace)) {
-                            let val = 0;
-                            if (item.dividendePourUnEuro !== undefined) val = item.dividendePourUnEuro / 100;
-                            else if (item.dividendeEuro !== undefined) val = item.dividendeEuro;
-                            else if (item.gainEuro !== undefined) val = item.gainEuro;
-                            else {
-                                let rawM = item.rapport || item.dividende || item.montant;
-                                if (rawM !== undefined && rawM !== null) {
-                                    val = parseFloat(String(rawM).replace(',', '.'));
-                                    if (val > 100) val = val / 100; 
-                                }
+                            let val = getDividendForOneEuro(item, group);
+                            if (val > 1.00 && val > foundGain) {
+                                foundGain = val;
                             }
-                            if (val > foundGain) foundGain = val;
                         }
                     }
                 });
@@ -1402,11 +1461,11 @@
             return foundGain;
         }
 
-        // PROPORTIONNELLE HAUTE RENTABILITÉ BASE (2€) SANS GEL NI BOUCLIER :
-        // Multiplicateur x2.35 jusqu'à 15€ de déficit (puis x2.00) pour effacer 100% de la perte + bénéfice dès un rapport placé de 1.30€ - 1.40€
+        // PROPORTIONNELLE ÉQUILIBRÉE BASE (2€) :
+        // Multiplicateur x1.65 sur les premiers écarts (pour couvrir les petits rapports placés sans faire exploser la mise) puis x1.35
         function computeSmartStake(deficitSerie, baseStakeVal = STAKE_BASE) {
             if (deficitSerie <= 0) return baseStakeVal;
-            let mult = deficitSerie <= 15 ? 2.35 : 2.00;
+            let mult = deficitSerie <= 12 ? 1.65 : 1.35;
             let stake = Math.ceil((deficitSerie * mult) + baseStakeVal);
             return Math.max(baseStakeVal + 2, stake);
         }
@@ -1489,11 +1548,6 @@
                     let raceData = JSON.parse(savedData);
                     if (raceData.isComplete && raceData.partants && isRaceTrulyRunAndPayable(null, raceData.partants, raceData.rapportsList)) {
                         let gGag = extractGainFromRapports(raceData.rapportsList, bet.num, 'GAGNANT');
-                        
-                        let p = raceData.partants.find(x => parseInt(x.numPmu||x.numOrdre, 10) === bet.num);
-                        let arr = p ? parseInt(p.ordreArrivee, 10) : 99;
-                        
-                        if (gGag === 0 && arr === 1) gGag = bet.odds; 
 
                         if (gGag > 0) {
                             simGross += (gGag * BASE_STAKE);
@@ -1705,39 +1759,23 @@
 
                 if (isPayableComplete) {
                     rapportsList.forEach(repGroup => {
-                        let typePari = (repGroup.typePari || repGroup.libellePari || repGroup.codePari || "").toUpperCase();
-                        let famille = (repGroup.famillePari || "").toUpperCase();
-                        
-                        if (typePari.includes('SIMPLE') || typePari.includes('SG') || typePari.includes('SP') || famille.includes('SIMPLE')) {
-                            let details = repGroup.rapports || repGroup.dividendes || repGroup.lesRapports || [];
-                            details.forEach(r => {
-                                if (r.rembourse === true) return;
-                                let val = 0;
-                                if (r.dividendePourUnEuro !== undefined) val = r.dividendePourUnEuro / 100;
-                                else if (r.dividendeEuro !== undefined) val = r.dividendeEuro;
-                                else if (r.gainEuro !== undefined) val = r.gainEuro;
-                                else {
-                                    let m = r.rapport || r.dividende || r.montant;
-                                    if (m !== undefined && m !== null) {
-                                        val = parseFloat(String(m).replace(',', '.'));
-                                        if (val > 100) val = val / 100;
-                                    }
-                                }
+                        if (!isSimpleBetGroup(repGroup)) return;
+                        let typePari = String(repGroup.typePari || repGroup.libellePari || repGroup.codePari || "").toUpperCase();
+                        let details = repGroup.rapports || repGroup.dividendes || repGroup.lesRapports || [];
+                        details.forEach(r => {
+                            let val = getDividendForOneEuro(r, repGroup);
+                            let numC = getHorseNumFromReportItem(r);
 
-                                let rawC = r.combinaison !== undefined ? r.combinaison : (r.cheval || r.numeroCheval);
-                                let numC = extractHorseNumFromCombo(rawC);
-
-                                if (val > 1.00 && numC > 0) {
-                                    foundAnyReport = true;
-                                    let combo = ` (N°${numC})`;
-                                    let lib = r.libelleRapport || r.libelle || typePari;
-                                    let div = document.createElement('div');
-                                    div.className = "bg-zinc-800/80 p-2.5 rounded-xl border border-zinc-700 flex justify-between items-center";
-                                    div.innerHTML = `<span class="text-zinc-400 font-medium">${lib}${combo} :</span> <span class="text-emerald-400 font-bold">${val.toFixed(2)} €</span>`;
-                                    reportsGrid.appendChild(div);
-                                }
-                            });
-                        }
+                            if (val > 1.00 && numC > 0) {
+                                foundAnyReport = true;
+                                let isGag = typePari.includes('GAGN') || typePari === 'SG' || typePari === 'E_SG';
+                                let labelPari = isGag ? 'Simple Gagnant' : 'Simple Placé';
+                                let div = document.createElement('div');
+                                div.className = "bg-zinc-800/80 p-2.5 rounded-xl border border-zinc-700 flex justify-between items-center";
+                                div.innerHTML = `<span class="text-zinc-400 font-medium">${labelPari} (N°${numC}) :</span> <span class="text-emerald-400 font-bold">${val.toFixed(2)} €</span>`;
+                                reportsGrid.appendChild(div);
+                            }
+                        });
                     });
                 }
 
@@ -1752,15 +1790,23 @@
                     let { processed, baseHorse, nuggetHorse } = algoResult;
 
                     if (baseHorse) {
+                        let realPlaBase = isPayableComplete ? extractGainFromRapports(rapportsList, baseHorse.num, 'PLACE') : 0;
+                        let plaTag = isPayableComplete
+                            ? (realPlaBase > 0 ? ` | ✅ Placé: ${realPlaBase.toFixed(2)}€/1€` : ` | ❌ Non placé`)
+                            : '';
                         document.getElementById('top1Name').textContent = `${baseHorse.num}. ${baseHorse.nom}`;
-                        document.getElementById('top1Stats').textContent = `Cote : ${baseHorse.coteDisplay} | Confiance : ${baseHorse.baseScore}%`;
+                        document.getElementById('top1Stats').textContent = `Cote : ${baseHorse.coteDisplay} | Confiance : ${baseHorse.baseScore}%${plaTag}`;
                     } else {
                         document.getElementById('top1Name').textContent = `Attente cotes...`;
                     }
                     
                     if (nuggetHorse) {
+                        let realPlaPep = isPayableComplete ? extractGainFromRapports(rapportsList, nuggetHorse.num, 'PLACE') : 0;
+                        let plaTagPep = isPayableComplete
+                            ? (realPlaPep > 0 ? ` | ✅ Placé: ${realPlaPep.toFixed(2)}€/1€` : ` | ❌ Non placé`)
+                            : '';
                         document.getElementById('top2Name').textContent = `${nuggetHorse.num}. ${nuggetHorse.nom}`;
-                        document.getElementById('top2Stats').textContent = `Cote : ${nuggetHorse.coteDisplay} | Potentiel : ${nuggetHorse.nuggetScore}%`;
+                        document.getElementById('top2Stats').textContent = `Cote : ${nuggetHorse.coteDisplay} | Potentiel : ${nuggetHorse.nuggetScore}%${plaTagPep}`;
                     } else {
                         document.getElementById('top2Name').textContent = `Attente cotes...`;
                     }
@@ -1773,7 +1819,7 @@
                     } else {
                         processed.forEach(p => {
                             let tr = document.createElement('tr');
-                            let tag = p.ordreArrivee ? `<span class="ml-2 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee}e</span>` : '';
+                            let tag = p.ordreArrivee ? `<span class="ml-2 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee === 1 ? '1er' : 'Placé'}</span>` : '';
                             if (p.num === baseHorse?.num) tag += '<span class="ml-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold ml-1">Favori</span>';
                             if (p.num === nuggetHorse?.num) tag += '<span class="ml-2 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold ml-1">Pépite</span>';
                             
@@ -1833,7 +1879,7 @@
                 manualProfit: Number(manualProfit) || 0,
                 updatedAt: Date.now()
             };
-            safeSaveStatItem(`pmu_stats_unified_v48_${mode}_${ddmmyyyy}`, histObj);
+            safeSaveStatItem(`pmu_stats_unified_v49_${mode}_${ddmmyyyy}`, histObj);
         }
 
         function saveCurrentDayStatsToHistory() {
@@ -1850,7 +1896,7 @@
 
         function getStatForDateObj(d) {
             let ddmmyyyy = `${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
-            let key = `pmu_stats_unified_v48_${currentDisciplineMode}_${ddmmyyyy}`;
+            let key = `pmu_stats_unified_v49_${currentDisciplineMode}_${ddmmyyyy}`;
             let saved = localStorage.getItem(key);
             if (saved) {
                 try {
@@ -2107,17 +2153,11 @@
                 let algoResult = computeAlgorithm(raceData.partants, rKey, true);
                 let baseH = algoResult.baseHorse;
                 let nuggetH = algoResult.nuggetHorse;
-                let maxPaidPlaces = algoResult.processed.length >= 8 ? 3 : 2;
-
-                let baseArr = baseH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === baseH.num)?.ordreArrivee || 99) : 99;
-                let nuggetArr = nuggetH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === nuggetH.num)?.ordreArrivee || 99) : 99;
 
                 if (baseH) {
                     coursesValidees++;
+                    // Utilise 100% le vrai rapport Simple Placé PMU officiel
                     let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
-                    if (gPla === 0 && baseArr >= 1 && baseArr <= maxPaidPlaces && baseH.cote < 999) {
-                        gPla = Math.max(1.10, parseFloat((1 + ((baseH.cote - 1) / 3.5)).toFixed(2)));
-                    }
 
                     // 1. Base Placé Martingale
                     let martStakeB = currentMartStakeBase;
@@ -2129,7 +2169,7 @@
                         currentMartStakeBase = martStakeB * 2;
                     }
 
-                    // 2. Base Placé Proportionnelle Haute Rentabilité (2€ : x2.35 / x2.00)
+                    // 2. Base Placé Proportionnelle (2€ : x1.65 / x1.35)
                     let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
                     if (gPla > 0) {
                         let netBasePla = (gPla * actualStakeBase) - actualStakeBase;
@@ -2142,10 +2182,8 @@
                 }
 
                 if (nuggetH) {
+                    // Utilise 100% le vrai rapport Simple Placé PMU officiel
                     let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
-                    if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= maxPaidPlaces && nuggetH.cote < 999) {
-                        gPla = Math.max(1.10, parseFloat((1 + ((nuggetH.cote - 1) / 3.5)).toFixed(2)));
-                    }
 
                     // 1. Pépite Placé Martingale Adoucie
                     let martStakeP = currentMartStakePepite;
@@ -2273,18 +2311,11 @@
                     let algoResult = computeAlgorithm(raceData.partants, rKey, true);
                     let baseH = algoResult.baseHorse;
                     let nuggetH = algoResult.nuggetHorse;
-                    let maxPaidPlaces = algoResult.processed.length >= 8 ? 3 : 2;
 
-                    let baseArr = baseH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === baseH.num)?.ordreArrivee || 99) : 99;
-                    let nuggetArr = nuggetH ? (raceData.partants.find(p => parseInt(p.numPmu || p.numOrdre,10) === nuggetH.num)?.ordreArrivee || 99) : 99;
-
-                    // CALCUL BASE PLACÉ (2€) : MARTINGALE (x2) & PROPORTIONNELLE BOOSTER (x2.35 / x2.00)
+                    // CALCUL BASE PLACÉ (2€) AVEC VRAI RAPPORT PMU OFFICIEL
                     if (baseH) {
                         coursesValidees++;
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
-                        if (gPla === 0 && baseArr >= 1 && baseArr <= maxPaidPlaces && baseH.cote < 999) {
-                            gPla = Math.max(1.10, parseFloat((1 + ((baseH.cote - 1) / 3.5)).toFixed(2)));
-                        } 
 
                         // 1. Base Placé Martingale
                         let martStakeB = currentMartStakeBase;
@@ -2298,7 +2329,7 @@
                             currentMartStakeBase = martStakeB * 2;
                         }
 
-                        // 2. Base Placé Proportionnelle Haute Rentabilité (2€ : x2.35 / x2.00)
+                        // 2. Base Placé Proportionnelle (2€ : x1.65 / x1.35)
                         let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
                         totalSpentBase += actualStakeBase;
                         if (actualStakeBase > maxStakeBase) maxStakeBase = actualStakeBase;
@@ -2314,13 +2345,10 @@
                         }
                     }
 
-                    // CALCUL PÉPITE PLACÉ ADOUCI (2€) : MARTINGALE DOUCE (x1.4) & PROPORTIONNEL DOUX (x0.55)
+                    // CALCUL PÉPITE PLACÉ ADOUCI (2€) AVEC VRAI RAPPORT PMU OFFICIEL
                     if (nuggetH) {
                         coursesPepiteValidees++;
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
-                        if (gPla === 0 && nuggetArr >= 1 && nuggetArr <= maxPaidPlaces && nuggetH.cote < 999) {
-                            gPla = Math.max(1.10, parseFloat((1 + ((nuggetH.cote - 1) / 3.5)).toFixed(2)));
-                        } 
 
                         // 1. Pépite Placé Martingale Adoucie (x1.4)
                         let martStakeP = currentMartStakePepite;
