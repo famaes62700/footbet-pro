@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V55 Audit PMU Strict & Stop-Win +50€ Trot</title>
+    <title>Turf - V56 Audit PMU Strict & Stop-Win +50€ Trot (Base 8€)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -27,7 +27,7 @@
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-700">
-                    <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">V55</span>
+                    <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">V56</span>
                 </h1>
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2.5 py-1.5 rounded-xl border border-zinc-700 cursor-pointer focus:outline-none focus:border-amber-500 shadow" onchange="onDateChange()">
             </div>
@@ -35,7 +35,7 @@
             <div class="flex items-center space-x-1.5 sm:space-x-2">
                 <div class="text-xs bg-zinc-800 px-2 py-1 rounded-lg border border-emerald-500/30 text-emerald-400 font-bold flex flex-col items-end shadow mr-1">
                     <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">Base (Mart | Prop)</span>
-                    <span id="headerNextStake">2€ | 2€</span>
+                    <span id="headerNextStake">8€ | 8€</span>
                 </div>
                 
                 <button id="btnArrivalAlarm" onclick="toggleArrivalAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Alerte Arrivée Officielle">
@@ -142,7 +142,7 @@
             <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[11px]">
                 <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
                     <span class="text-[9px] text-zinc-400 uppercase font-bold">Mise Base (€)</span>
-                    <input type="number" id="inputBaseStake" min="1" max="100" step="1" value="2" class="bg-transparent text-emerald-400 font-black text-sm focus:outline-none mt-0.5">
+                    <input type="number" id="inputBaseStake" min="1" max="100" step="1" value="8" class="bg-transparent text-emerald-400 font-black text-sm focus:outline-none mt-0.5">
                 </label>
                 <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
                     <span class="text-[9px] text-zinc-400 uppercase font-bold">Mise Pépite (€)</span>
@@ -215,7 +215,7 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
-                    <div id="badgeBaseStake" class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">FAVORI PLACÉ (2€)</div>
+                    <div id="badgeBaseStake" class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">FAVORI PLACÉ (8€)</div>
                     <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori)</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-cyan-500/30 text-center flex flex-col justify-center">
@@ -251,13 +251,13 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 text-zinc-300">
                 <div class="flex flex-col space-y-1 sm:border-r border-zinc-700/50 sm:pr-3">
-                    <span id="investBaseTitle" class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement Base (2€)</span>
+                    <span id="investBaseTitle" class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement Base (8€)</span>
                     <span class="flex justify-between">Volume Joué (Mart. | Prop.): <strong class="text-white"><span id="totalSpentBaseMartText" class="text-cyan-300">0.00 €</span> | <span id="totalSpentText" class="text-emerald-300">0.00 €</span></strong></span>
                     <span class="flex justify-between">Mise Max (Mart. | Prop.): <strong class="text-zinc-300"><span id="maxStakeBaseMartText" class="text-cyan-300">0.00 €</span> | <span id="maxStakeBaseText" class="text-emerald-300">0.00 €</span></strong></span>
                     <span class="flex justify-between">Déficit Prop.: <strong id="deficitBaseText" class="text-red-400">0.00 €</strong></span>
                     <div class="grid grid-cols-2 gap-1.5 pt-1.5">
-                        <strong id="nextStakeBaseMartText" class="text-cyan-300 bg-zinc-900 px-1.5 py-1 rounded border border-cyan-500/30 font-black text-[10px] shadow-md block text-center">Mart: 2.00 €</strong>
-                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-1.5 py-1 rounded border border-emerald-500/30 font-black text-[10px] shadow-md block text-center">Prop: 2.00 €</strong>
+                        <strong id="nextStakeBaseMartText" class="text-cyan-300 bg-zinc-900 px-1.5 py-1 rounded border border-cyan-500/30 font-black text-[10px] shadow-md block text-center">Mart: 8.00 €</strong>
+                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-1.5 py-1 rounded border border-emerald-500/30 font-black text-[10px] shadow-md block text-center">Prop: 8.00 €</strong>
                     </div>
                 </div>
 
@@ -323,7 +323,7 @@
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mt-3">
                 <div class="bg-zinc-900/90 p-3 rounded-xl border border-emerald-500/40 space-y-1">
-                    <div id="top1TitleLabel" class="text-[10px] uppercase font-bold text-emerald-400">Favori Base (2€)</div>
+                    <div id="top1TitleLabel" class="text-[10px] uppercase font-bold text-emerald-400">Favori Base (8€)</div>
                     <div id="top1Name" class="font-bold text-white text-sm">En attente...</div>
                     <div id="top1Stats" class="text-[11px] text-zinc-400">--</div>
                 </div>
@@ -421,9 +421,10 @@
     </div>
 
     <script>
-        const CACHE_VERSION = "v55";
+        const CACHE_VERSION = "v55"; // Conserve le cache courses strict de la V55 pour un recalcul instantané
+        const STATS_VERSION = "v56"; // Isole les stats et réglages avec Base à 8€
         
-        let STAKE_BASE = 2.0;
+        let STAKE_BASE = 8.0;
         let STAKE_PEPITE = 2.0;
         let DAILY_STOP_WIN_TROT = 50.0;
         let STOP_WIN_SCOPE = 'COMBINED';
@@ -438,7 +439,7 @@
 
         function loadStrategySettings() {
             try {
-                let saved = JSON.parse(localStorage.getItem('fabturf_v55_settings') || '{}');
+                let saved = JSON.parse(localStorage.getItem(`fabturf_${STATS_VERSION}_settings`) || '{}');
                 if (saved.baseStake >= 1 && saved.baseStake <= 500) STAKE_BASE = Number(saved.baseStake);
                 if (saved.pepiteStake >= 1 && saved.pepiteStake <= 500) STAKE_PEPITE = Number(saved.pepiteStake);
                 if (saved.stopWin >= 0 && saved.stopWin <= 5000) DAILY_STOP_WIN_TROT = Number(saved.stopWin);
@@ -477,13 +478,13 @@
             let scVal = document.getElementById('selectStopWinScope').value;
             let muVal = parseFloat(document.getElementById('inputMaxUnitStake').value);
 
-            STAKE_BASE = (!isNaN(bVal) && bVal >= 1) ? Math.round(bVal) : 2;
+            STAKE_BASE = (!isNaN(bVal) && bVal >= 1) ? Math.round(bVal) : 8;
             STAKE_PEPITE = (!isNaN(pVal) && pVal >= 1) ? Math.round(pVal) : 2;
             DAILY_STOP_WIN_TROT = (!isNaN(sVal) && sVal >= 0) ? Math.round(sVal) : 50;
             STOP_WIN_SCOPE = (scVal === 'PER_STRATEGY') ? 'PER_STRATEGY' : 'COMBINED';
             MAX_UNIT_STAKE = (!isNaN(muVal) && muVal >= 0) ? Math.round(muVal) : 0;
 
-            safeSetLocal('fabturf_v55_settings', {
+            safeSetLocal(`fabturf_${STATS_VERSION}_settings`, {
                 baseStake: STAKE_BASE,
                 pepiteStake: STAKE_PEPITE,
                 stopWin: DAILY_STOP_WIN_TROT,
@@ -492,13 +493,13 @@
             });
 
             Object.keys(localStorage).forEach(k => {
-                if (k.startsWith('pmu_stats_unified_v55_')) localStorage.removeItem(k);
+                if (k.startsWith(`pmu_stats_unified_${STATS_VERSION}_`)) localStorage.removeItem(k);
             });
 
             stopWinToastShownForDate = {};
             updateStrategyLabelsUI();
             resetCountersUI();
-            showToast(`Réglages V55 appliqués : Stop-Win +${DAILY_STOP_WIN_TROT}€`, "success");
+            showToast(`Réglages V56 appliqués : Base ${STAKE_BASE}€ • Stop-Win +${DAILY_STOP_WIN_TROT}€`, "success");
             fetchRaceData(false);
             calculateDailyStats(false);
         }
@@ -573,7 +574,6 @@
             }
         }
 
-        // NORMALISATION STRICTE DU NOM DE PARI SIMPLE (EXCLUT JACKPOT, BONUS, BOOST, COMBINÉS)
         function classifySimpleGroup(group) {
             if (!group || typeof group !== 'object') return null;
             let pType = String(group.typePari || group.libellePari || group.codePari || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -767,7 +767,7 @@
                     localStorage.removeItem(k);
                 }
             });
-            showToast("Mémoire purgée ! Recalcul V55 (Rapports PMU stricts)...", "success");
+            showToast("Mémoire purgée ! Recalcul V56 (Base 8€)...", "success");
             resetCountersUI();
             loadLivePmu();
         }
@@ -1112,7 +1112,6 @@
             throw new Error("PMU bloqué");
         }
 
-        // EXTRACTEUR STRICT : N'ACCEPTE QU'UN SEUL NUMÉRO DE CHEVAL (REJETTE TOUT COUPLE/COMBINAISON)
         function getHorseNumFromReportItem(item) {
             if (!item || typeof item !== 'object') return -1;
             let primary = [item.combinaison, item.cheval, item.numeroCheval, item.partant, item.numPmu];
@@ -1148,7 +1147,6 @@
             return -1;
         }
 
-        // CONVERSION STRICTE CENTIMES -> EUROS (CORRIGE LE BUG DES RAPPORTS < 100 CENTIMES MULTIPLIÉS PAR 100)
         function getDividendForOneEuro(item, group) {
             if (!item || typeof item !== 'object') return 0;
             if (item.rembourse === true || (group && group.rembourse === true)) return 0;
@@ -1158,7 +1156,6 @@
                 let rawStr = String(item.dividendePourUnEuro).trim();
                 let hasDecimal = rawStr.includes('.') || rawStr.includes(',');
                 let d = parseFloat(rawStr.replace(',', '.'));
-                // Dans l'API PMU, dividendePourUnEuro est TOUJOURS en centimes entiers (ex: 140 = 1.40€, 80 = 0.80€)
                 val = hasDecimal ? d : (d / 100);
             } else if (item.dividendeEuro !== undefined && item.dividendeEuro !== null) {
                 val = parseFloat(String(item.dividendeEuro).replace(',', '.'));
@@ -1177,7 +1174,6 @@
             return (!isNaN(val) && val > 0) ? val : 0;
         }
 
-        // EXTRACTION PRIORISÉE : E_SIMPLE_PLACE (PMU.fr) EN PRIORITÉ, SINON SIMPLE_PLACE (NE MÉLANGE PLUS LES MASSES NI JACKPOT)
         function extractGainFromRapports(listeRapports, horseNum, targetType) {
             let targetNum = parseInt(horseNum, 10);
             if (!listeRapports || !Array.isArray(listeRapports) || isNaN(targetNum)) return 0;
@@ -1558,7 +1554,6 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
-        // ALGORITHME SÉCURISÉ : NE CHOISIT JAMAIS LE N°1 PAR DÉFAUT SI AUCUNE COTE PMU N'EXISTE OU SI < 4 PARTANTS
         function computeAlgorithm(partants, raceKey = null, isRaceStarted = false) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
@@ -2123,7 +2118,7 @@
                 manualProfit: Number(manualProfit) || 0,
                 updatedAt: Date.now()
             };
-            safeSaveStatItem(`pmu_stats_unified_v55_${mode}_${ddmmyyyy}`, histObj);
+            safeSaveStatItem(`pmu_stats_unified_${STATS_VERSION}_${mode}_${ddmmyyyy}`, histObj);
         }
 
         function saveCurrentDayStatsToHistory() {
@@ -2140,7 +2135,7 @@
 
         function getStatForDateObj(d) {
             let ddmmyyyy = `${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
-            let key = `pmu_stats_unified_v55_${currentDisciplineMode}_${ddmmyyyy}`;
+            let key = `pmu_stats_unified_${STATS_VERSION}_${currentDisciplineMode}_${ddmmyyyy}`;
             let saved = localStorage.getItem(key);
             if (saved) {
                 try {
