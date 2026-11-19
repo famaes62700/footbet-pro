@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V54 Stop-Win +50€ Trot (Sans Limite de Mise)</title>
+    <title>Turf - V52 Diagnostic Complet & Anti-Blocage Trot</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -27,7 +27,7 @@
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-700">
-                    <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">V54</span>
+                    <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">V52</span>
                 </h1>
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2.5 py-1.5 rounded-xl border border-zinc-700 cursor-pointer focus:outline-none focus:border-amber-500 shadow" onchange="onDateChange()">
             </div>
@@ -35,7 +35,7 @@
             <div class="flex items-center space-x-1.5 sm:space-x-2">
                 <div class="text-xs bg-zinc-800 px-2 py-1 rounded-lg border border-emerald-500/30 text-emerald-400 font-bold flex flex-col items-end shadow mr-1">
                     <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">Base (Mart | Prop)</span>
-                    <span id="headerNextStake">2€ | 2€</span>
+                    <span id="headerNextStake">8€ | 8€</span>
                 </div>
                 
                 <button id="btnArrivalAlarm" onclick="toggleArrivalAlarm()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-500 w-8 h-8 rounded-lg border border-zinc-700 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Alerte Arrivée Officielle">
@@ -129,41 +129,39 @@
             </div>
         </div>
 
-        <!-- RÉGLAGES STOP-WIN TROT & MISES DE DÉPART -->
+        <!-- RÉGLAGES STRATÉGIE BASE -->
         <div class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-3.5 shadow-xl space-y-2.5">
             <div class="flex flex-wrap justify-between items-center gap-2">
                 <h2 class="text-[11px] font-bold uppercase text-emerald-400 tracking-wider flex items-center">
-                    <i class="fa-solid fa-trophy mr-1.5"></i> Objectif Stop-Win Trot (Mises Illimitées)
+                    <i class="fa-solid fa-sliders mr-1.5"></i> Pilotage Stratégie Base (Test & Optimisation)
                 </h2>
-                <button onclick="applyStrategySettings()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-lg shadow transition cursor-pointer">
-                    Appliquer & Recalculer
-                </button>
+                <div class="flex items-center space-x-1.5">
+                    <button onclick="disableLimitsAndRecalc()" class="bg-zinc-800 hover:bg-zinc-700 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-1 rounded-lg transition cursor-pointer" title="Désactive Stop-Win et Filtre pour voir toutes les courses">
+                        Tout analyser (Sans limite)
+                    </button>
+                    <button onclick="applyStrategySettings()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-lg shadow transition cursor-pointer">
+                        Appliquer & Recalculer
+                    </button>
+                </div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[11px]">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
                 <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
                     <span class="text-[9px] text-zinc-400 uppercase font-bold">Mise Base (€)</span>
-                    <input type="number" id="inputBaseStake" min="1" max="100" step="1" value="2" class="bg-transparent text-emerald-400 font-black text-sm focus:outline-none mt-0.5">
+                    <input type="number" id="inputBaseStake" min="1" max="50" step="1" value="8" class="bg-transparent text-emerald-400 font-black text-sm focus:outline-none mt-0.5">
                 </label>
                 <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
-                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Mise Pépite (€)</span>
-                    <input type="number" id="inputPepiteStake" min="1" max="100" step="1" value="2" class="bg-transparent text-amber-400 font-black text-sm focus:outline-none mt-0.5">
-                </label>
-                <label class="bg-zinc-950 p-2 rounded-xl border border-cyan-500/40 flex flex-col">
-                    <span class="text-[9px] text-cyan-400 uppercase font-bold">Stop-Win Trot (€)</span>
-                    <input type="number" id="inputStopWin" min="0" max="1000" step="5" value="50" class="bg-transparent text-cyan-300 font-black text-sm focus:outline-none mt-0.5">
+                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Plafond Mises/j (€)</span>
+                    <input type="number" id="inputMaxDailySpent" min="50" max="10000" step="50" value="1000" class="bg-transparent text-amber-400 font-black text-sm focus:outline-none mt-0.5">
                 </label>
                 <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
-                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Règle Stop-Win</span>
-                    <select id="selectStopWinScope" class="bg-zinc-950 text-white font-bold text-[10px] focus:outline-none mt-1 cursor-pointer">
-                        <option value="COMBINED">Cumul Base+Pépite</option>
-                        <option value="PER_STRATEGY">Chacun (+50€)</option>
-                    </select>
+                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Stop-Win/j (€, 0=off)</span>
+                    <input type="number" id="inputStopWin" min="0" max="500" step="5" value="50" class="bg-transparent text-cyan-400 font-black text-sm focus:outline-none mt-0.5">
                 </label>
-                <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col justify-between cursor-pointer col-span-2 sm:col-span-1">
-                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Filtre Trot</span>
-                    <div class="flex items-center space-x-1.5 mt-1">
-                        <input type="checkbox" id="chkTrotFilter" class="accent-emerald-500 w-3.5 h-3.5 cursor-pointer">
-                        <span id="lblTrotFilterState" class="text-[10px] font-bold text-zinc-400">Désactivé</span>
+                <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col justify-between cursor-pointer">
+                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Filtre Qualité Trot</span>
+                    <div class="flex items-center space-x-2 mt-1">
+                        <input type="checkbox" id="chkTrotFilter" checked class="accent-emerald-500 w-4 h-4 cursor-pointer">
+                        <span id="lblTrotFilterState" class="text-[10px] font-bold text-emerald-400">Actif (≥8p, Anti-DAI)</span>
                     </div>
                 </label>
             </div>
@@ -173,8 +171,8 @@
             <div class="flex flex-wrap justify-between items-center gap-2 border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (Rapports PMU Réels • Hors Annulées)</h2>
-                    <p id="bilanSubtitle" class="text-[10px] text-zinc-400">Stop automatique dès +50 € net au Trot (Cumul Base + Pépite)</p>
-                    <p id="scanDetailLine" class="text-[10px] text-zinc-400 font-mono mt-0.5">Chargées: 0 | Jouées Base: 0 | Jouées Pépite: 0</p>
+                    <p id="bilanSubtitle" class="text-[10px] text-zinc-400">Base 8€ (Plafond 1000€/j • Stop-Win +50€) • Pépite 2€ Adoucie</p>
+                    <p id="scanDetailLine" class="text-[10px] text-zinc-400 font-mono mt-0.5">Chargées: 0 | Filtrées: 0 | Jouées Base: 0</p>
                 </div>
                 <div class="flex items-center space-x-1.5">
                     <button id="btnToggleAuditLog" onclick="toggleAuditLog()" class="text-[9px] font-bold px-2 py-1 rounded border border-amber-500/40 bg-zinc-800 hover:bg-zinc-700 text-amber-300 cursor-pointer">
@@ -184,31 +182,21 @@
                 </div>
             </div>
 
-            <!-- CUMUL TOTAL NET BASE + PÉPITE -->
-            <div class="grid grid-cols-2 gap-2.5 bg-zinc-950/90 border border-emerald-500/30 rounded-xl p-2.5 text-xs">
-                <div class="flex justify-between items-center px-2 border-r border-zinc-800">
-                    <span class="text-[10px] uppercase font-bold text-cyan-400">Cumul Net Mart.</span>
-                    <strong id="comboGainMart" class="text-sm font-black text-zinc-500">0.00 €</strong>
-                </div>
-                <div class="flex justify-between items-center px-2">
-                    <span class="text-[10px] uppercase font-bold text-emerald-400">Cumul Net Prop.</span>
-                    <strong id="comboGainProp" class="text-sm font-black text-zinc-500">0.00 €</strong>
-                </div>
-            </div>
-
-            <!-- BANDEAU STOP-WIN ATTEINT -->
-            <div id="stopReasonBanner" style="display: none;" class="bg-emerald-950/70 border border-emerald-500/50 text-emerald-200 text-[11px] px-3 py-2 rounded-xl flex justify-between items-center font-semibold">
+            <!-- BANDEAU EXPLICATIF SI STOP-WIN OU PLAFOND COUPE LA JOURNÉE -->
+            <div id="stopReasonBanner" style="display: none;" class="bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 text-[11px] px-3 py-2 rounded-xl flex justify-between items-center">
                 <span id="stopReasonText"></span>
+                <button onclick="disableLimitsAndRecalc()" class="text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-0.5 rounded ml-2 flex-shrink-0 cursor-pointer">Voir sans limite</button>
             </div>
 
+            <!-- JOURNAL DÉTAILLÉ DES COURSES ANALYSÉES -->
             <div id="auditLogContainer" style="display: none;" class="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 max-h-64 overflow-y-auto text-[10px] font-mono">
                 <table class="w-full text-left">
                     <thead>
                         <tr class="text-zinc-500 border-b border-zinc-800">
                             <th class="pb-1.5 pr-2">Course</th>
-                            <th class="pb-1.5 pr-2">Base / Pépite</th>
-                            <th class="pb-1.5 pr-2">Statut Prop.</th>
-                            <th class="pb-1.5 text-right">Cumul Net</th>
+                            <th class="pb-1.5 pr-2">Base (Cote)</th>
+                            <th class="pb-1.5 pr-2">Statut / Raison</th>
+                            <th class="pb-1.5 text-right">Mise → Net</th>
                         </tr>
                     </thead>
                     <tbody id="auditLogBody" class="divide-y divide-zinc-800/50"></tbody>
@@ -217,7 +205,7 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
-                    <div id="badgeBaseStake" class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">FAVORI PLACÉ (2€)</div>
+                    <div id="badgeBaseStake" class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">FAVORI PLACÉ (8€)</div>
                     <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori)</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-cyan-500/30 text-center flex flex-col justify-center">
@@ -234,7 +222,7 @@
                 </div>
 
                 <div class="bg-zinc-950 p-3 rounded-xl border border-amber-500/40 relative flex flex-col justify-between">
-                    <div id="badgePepiteStake" class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">PÉPITE ADOUCIE (2€)</div>
+                    <div class="absolute -top-2 -right-2 bg-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">PÉPITE ADOUCIE (2€)</div>
                     <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Pépite (Multi. Doux)</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-yellow-500/30 text-center flex flex-col justify-center">
@@ -253,20 +241,20 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 text-zinc-300">
                 <div class="flex flex-col space-y-1 sm:border-r border-zinc-700/50 sm:pr-3">
-                    <span id="investBaseTitle" class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement Base (Sans Limite)</span>
-                    <span class="flex justify-between">Volume Joué (Mart. | Prop.): <strong class="text-white"><span id="totalSpentBaseMartText" class="text-cyan-300">0.00 €</span> | <span id="totalSpentText" class="text-emerald-300">0.00 €</span></strong></span>
-                    <span class="flex justify-between">Mise Max (Mart. | Prop.): <strong class="text-zinc-300"><span id="maxStakeBaseMartText" class="text-cyan-300">0.00 €</span> | <span id="maxStakeBaseText" class="text-emerald-300">0.00 €</span></strong></span>
-                    <span class="flex justify-between">Déficit Prop.: <strong id="deficitBaseText" class="text-red-400">0.00 €</strong></span>
+                    <span id="investBaseTitle" class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement Base (Max 1000€/j)</span>
+                    <span class="flex justify-between">Joué (Mart. | Prop.): <strong class="text-white"><span id="totalSpentBaseMartText" class="text-cyan-300">0.00 €</span> | <span id="totalSpentText" class="text-emerald-300">0.00 €</span></strong></span>
+                    <span class="flex justify-between">Max (Mart. | Prop.): <strong class="text-zinc-300"><span id="maxStakeBaseMartText" class="text-cyan-300">0.00 €</span> | <span id="maxStakeBaseText" class="text-emerald-300">0.00 €</span></strong></span>
+                    <span class="flex justify-between">Déficit Prop. | Reste Budget: <strong class="text-zinc-300"><span id="deficitBaseText" class="text-red-400">0.00 €</span> | <span id="remainingBudgetText" class="text-amber-300">1000€</span></strong></span>
                     <div class="grid grid-cols-2 gap-1.5 pt-1.5">
-                        <strong id="nextStakeBaseMartText" class="text-cyan-300 bg-zinc-900 px-1.5 py-1 rounded border border-cyan-500/30 font-black text-[10px] shadow-md block text-center">Mart: 2.00 €</strong>
-                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-1.5 py-1 rounded border border-emerald-500/30 font-black text-[10px] shadow-md block text-center">Prop: 2.00 €</strong>
+                        <strong id="nextStakeBaseMartText" class="text-cyan-300 bg-zinc-900 px-1.5 py-1 rounded border border-cyan-500/30 font-black text-[10px] shadow-md block text-center">Mart: 8.00 €</strong>
+                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-1.5 py-1 rounded border border-emerald-500/30 font-black text-[10px] shadow-md block text-center">Prop: 8.00 €</strong>
                     </div>
                 </div>
 
                 <div class="flex flex-col space-y-1 sm:pl-1">
-                    <span id="investPepiteTitle" class="text-[9px] uppercase text-amber-400 font-bold mb-0.5">Investissement Pépite Douce (2€)</span>
-                    <span class="flex justify-between">Volume Joué (Mart. | Prop.): <strong class="text-white"><span id="totalSpentPepiteMartText" class="text-yellow-300">0.00 €</span> | <span id="totalSpentPepiteText" class="text-amber-300">0.00 €</span></strong></span>
-                    <span class="flex justify-between">Mise Max (Mart. | Prop.): <strong class="text-zinc-300"><span id="maxStakePepiteMartText" class="text-yellow-300">0.00 €</span> | <span id="maxStakePepiteText" class="text-amber-300">0.00 €</span></strong></span>
+                    <span class="text-[9px] uppercase text-amber-400 font-bold mb-0.5">Investissement Pépite Douce (2€)</span>
+                    <span class="flex justify-between">Joué (Mart. | Prop.): <strong class="text-white"><span id="totalSpentPepiteMartText" class="text-yellow-300">0.00 €</span> | <span id="totalSpentPepiteText" class="text-amber-300">0.00 €</span></strong></span>
+                    <span class="flex justify-between">Max (Mart. | Prop.): <strong class="text-zinc-300"><span id="maxStakePepiteMartText" class="text-yellow-300">0.00 €</span> | <span id="maxStakePepiteText" class="text-amber-300">0.00 €</span></strong></span>
                     <span class="flex justify-between">Déficit Prop.: <strong id="deficitPepiteText" class="text-red-400">0.00 €</strong></span>
                     <div class="grid grid-cols-2 gap-1.5 pt-1.5">
                         <strong id="nextStakePepiteMartText" class="text-yellow-300 bg-zinc-900 px-1.5 py-1 rounded border border-yellow-500/30 font-black text-[10px] shadow-md block text-center">Mart: 2.00 €</strong>
@@ -325,12 +313,12 @@
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mt-3">
                 <div class="bg-zinc-900/90 p-3 rounded-xl border border-emerald-500/40 space-y-1">
-                    <div id="top1TitleLabel" class="text-[10px] uppercase font-bold text-emerald-400">Favori Base (2€)</div>
+                    <div id="top1TitleLabel" class="text-[10px] uppercase font-bold text-emerald-400">Favori Base (8€)</div>
                     <div id="top1Name" class="font-bold text-white text-sm">En attente...</div>
                     <div id="top1Stats" class="text-[11px] text-zinc-400">--</div>
                 </div>
                 <div class="bg-zinc-900/90 p-3 rounded-xl border border-amber-500/40 space-y-1">
-                    <div id="top2TitleLabel" class="text-[10px] uppercase font-bold text-amber-400">Pépite / Coup de Cœur (2€)</div>
+                    <div class="text-[10px] uppercase font-bold text-amber-400">Pépite / Coup de Cœur (2€ Adoucie)</div>
                     <div id="top2Name" class="font-bold text-white text-sm">En attente...</div>
                     <div id="top2Stats" class="text-[11px] text-zinc-400">--</div>
                 </div>
@@ -423,86 +411,78 @@
     </div>
 
     <script>
-        const CACHE_VERSION = "v54";
+        const CACHE_VERSION = "v52";
         
-        // PARAMÈTRES V54 : STOP-WIN +50€ AU TROT QUELLE QUE SOIT LA MISE (AUCUN PLAFOND DE MISE)
-        let STAKE_BASE = 2.0;
-        let STAKE_PEPITE = 2.0;
-        let DAILY_STOP_WIN_TROT = 50.0;
-        let STOP_WIN_SCOPE = 'COMBINED'; // 'COMBINED' (Base + Pépite >= 50€) ou 'PER_STRATEGY' (Chacun >= 50€)
-        let TROT_QUALITY_FILTER = false;
+        let STAKE_BASE = 8.0;
+        let MAX_DAILY_SPENT_BASE = 1000.0;
+        let DAILY_STOP_WIN_BASE = 50.0;
+        let TROT_QUALITY_FILTER = true;
 
+        const STAKE_PEPITE = 2.0;
         const BASE_STAKE = 2.0;
 
         let localProxyAvailable = null;
         let proxyCursor = 0;
         const proxyCooldownUntil = [0, 0, 0, 0];
-        let stopWinToastShownForDate = {};
 
         function loadStrategySettings() {
             try {
-                let saved = JSON.parse(localStorage.getItem('fabturf_v54_settings') || '{}');
-                if (saved.baseStake >= 1 && saved.baseStake <= 500) STAKE_BASE = Number(saved.baseStake);
-                if (saved.pepiteStake >= 1 && saved.pepiteStake <= 500) STAKE_PEPITE = Number(saved.pepiteStake);
-                if (saved.stopWin >= 0 && saved.stopWin <= 5000) DAILY_STOP_WIN_TROT = Number(saved.stopWin);
-                if (saved.stopWinScope === 'COMBINED' || saved.stopWinScope === 'PER_STRATEGY') STOP_WIN_SCOPE = saved.stopWinScope;
+                let saved = JSON.parse(localStorage.getItem('fabturf_v50_settings') || '{}');
+                if (saved.baseStake >= 1 && saved.baseStake <= 100) STAKE_BASE = Number(saved.baseStake);
+                if (saved.maxDailySpent >= 50 && saved.maxDailySpent <= 10000) MAX_DAILY_SPENT_BASE = Number(saved.maxDailySpent);
+                if (saved.stopWin >= 0 && saved.stopWin <= 2000) DAILY_STOP_WIN_BASE = Number(saved.stopWin);
                 if (typeof saved.trotFilter === 'boolean') TROT_QUALITY_FILTER = saved.trotFilter;
             } catch(e) {}
 
             document.getElementById('inputBaseStake').value = STAKE_BASE;
-            document.getElementById('inputPepiteStake').value = STAKE_PEPITE;
-            document.getElementById('inputStopWin').value = DAILY_STOP_WIN_TROT;
-            document.getElementById('selectStopWinScope').value = STOP_WIN_SCOPE;
+            document.getElementById('inputMaxDailySpent').value = MAX_DAILY_SPENT_BASE;
+            document.getElementById('inputStopWin').value = DAILY_STOP_WIN_BASE;
             document.getElementById('chkTrotFilter').checked = TROT_QUALITY_FILTER;
             updateStrategyLabelsUI();
         }
 
         function updateStrategyLabelsUI() {
-            let scopeTxt = STOP_WIN_SCOPE === 'COMBINED' ? 'Cumul Base + Pépite' : 'Par stratégie';
-            let swTxt = DAILY_STOP_WIN_TROT > 0
-                ? `Stop auto dès +${DAILY_STOP_WIN_TROT}€ net au Trot (${scopeTxt}) • Mises sans plafond`
-                : 'Sans Stop-Win • Mises sans plafond';
-
-            document.getElementById('lblTrotFilterState').textContent = TROT_QUALITY_FILTER ? 'Actif' : 'Désactivé';
-            document.getElementById('lblTrotFilterState').className = TROT_QUALITY_FILTER ? 'text-[10px] font-bold text-emerald-400' : 'text-[10px] font-bold text-zinc-400';
+            let swTxt = DAILY_STOP_WIN_BASE > 0 ? `Stop-Win +${DAILY_STOP_WIN_BASE}€` : 'Sans Stop-Win';
+            let fltTxt = TROT_QUALITY_FILTER ? 'Actif (≥8p, Anti-DAI)' : 'Désactivé (Toutes)';
+            document.getElementById('lblTrotFilterState').textContent = fltTxt;
+            document.getElementById('lblTrotFilterState').className = TROT_QUALITY_FILTER ? 'text-[10px] font-bold text-emerald-400' : 'text-[10px] font-bold text-zinc-500';
             document.getElementById('badgeBaseStake').textContent = `FAVORI PLACÉ (${STAKE_BASE}€)`;
-            document.getElementById('badgePepiteStake').textContent = `PÉPITE ADOUCIE (${STAKE_PEPITE}€)`;
             document.getElementById('top1TitleLabel').textContent = `Favori Base (${STAKE_BASE}€)`;
-            document.getElementById('top2TitleLabel').textContent = `Pépite / Coup de Cœur (${STAKE_PEPITE}€)`;
-            document.getElementById('investBaseTitle').textContent = `Investissement Base (${STAKE_BASE}€ • Sans limite)`;
-            document.getElementById('investPepiteTitle').textContent = `Investissement Pépite (${STAKE_PEPITE}€ • Sans limite)`;
-            document.getElementById('bilanSubtitle').textContent = swTxt;
+            document.getElementById('investBaseTitle').textContent = `Investissement Base (Max ${MAX_DAILY_SPENT_BASE}€/j)`;
+            document.getElementById('bilanSubtitle').textContent = `Base ${STAKE_BASE}€ (Plafond ${MAX_DAILY_SPENT_BASE}€/j • ${swTxt}) • Pépite 2€`;
+        }
+
+        function disableLimitsAndRecalc() {
+            document.getElementById('inputStopWin').value = 0;
+            document.getElementById('chkTrotFilter').checked = false;
+            applyStrategySettings();
         }
 
         function applyStrategySettings() {
             let bVal = parseFloat(document.getElementById('inputBaseStake').value);
-            let pVal = parseFloat(document.getElementById('inputPepiteStake').value);
+            let mVal = parseFloat(document.getElementById('inputMaxDailySpent').value);
             let sVal = parseFloat(document.getElementById('inputStopWin').value);
-            let scVal = document.getElementById('selectStopWinScope').value;
             let fVal = document.getElementById('chkTrotFilter').checked;
 
-            STAKE_BASE = (!isNaN(bVal) && bVal >= 1) ? Math.round(bVal) : 2;
-            STAKE_PEPITE = (!isNaN(pVal) && pVal >= 1) ? Math.round(pVal) : 2;
-            DAILY_STOP_WIN_TROT = (!isNaN(sVal) && sVal >= 0) ? Math.round(sVal) : 50;
-            STOP_WIN_SCOPE = (scVal === 'PER_STRATEGY') ? 'PER_STRATEGY' : 'COMBINED';
+            STAKE_BASE = (!isNaN(bVal) && bVal >= 1) ? Math.round(bVal) : 8;
+            MAX_DAILY_SPENT_BASE = (!isNaN(mVal) && mVal >= 50) ? Math.round(mVal) : 1000;
+            DAILY_STOP_WIN_BASE = (!isNaN(sVal) && sVal >= 0) ? Math.round(sVal) : 0;
             TROT_QUALITY_FILTER = Boolean(fVal);
 
-            safeSetLocal('fabturf_v54_settings', {
+            safeSetLocal('fabturf_v50_settings', {
                 baseStake: STAKE_BASE,
-                pepiteStake: STAKE_PEPITE,
-                stopWin: DAILY_STOP_WIN_TROT,
-                stopWinScope: STOP_WIN_SCOPE,
+                maxDailySpent: MAX_DAILY_SPENT_BASE,
+                stopWin: DAILY_STOP_WIN_BASE,
                 trotFilter: TROT_QUALITY_FILTER
             });
 
             Object.keys(localStorage).forEach(k => {
-                if (k.startsWith('pmu_stats_unified_v54_')) localStorage.removeItem(k);
+                if (k.startsWith('pmu_stats_unified_v52_')) localStorage.removeItem(k);
             });
 
-            stopWinToastShownForDate = {};
             updateStrategyLabelsUI();
             resetCountersUI();
-            showToast(`Réglages appliqués : Stop-Win Trot +${DAILY_STOP_WIN_TROT}€ (Base ${STAKE_BASE}€ / Pépite ${STAKE_PEPITE}€)`, "success");
+            showToast(`Recalcul : Base ${STAKE_BASE}€, Stop-Win ${DAILY_STOP_WIN_BASE}€, Filtre ${TROT_QUALITY_FILTER ? 'ON' : 'OFF'}`, "success");
             fetchRaceData(false);
             calculateDailyStats(false);
         }
@@ -630,8 +610,6 @@
                 document.getElementById('gainBasePla').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
                 document.getElementById('gainPepiteMart').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
                 document.getElementById('gainPepitePla').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
-                document.getElementById('comboGainMart').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
-                document.getElementById('comboGainProp').innerHTML = '<span class="text-zinc-500">0.00 €</span>';
                 
                 document.getElementById('totalSpentBaseMartText').textContent = "0.00 €";
                 document.getElementById('totalSpentText').textContent = "0.00 €";
@@ -645,6 +623,7 @@
                 
                 document.getElementById('deficitBaseText').textContent = "0.00 €";
                 document.getElementById('deficitPepiteText').textContent = "0.00 €";
+                document.getElementById('remainingBudgetText').textContent = `${MAX_DAILY_SPENT_BASE.toFixed(0)}€`;
                 
                 document.getElementById('headerNextStake').textContent = `${STAKE_BASE.toFixed(0)}€ | ${STAKE_BASE.toFixed(0)}€`;
                 document.getElementById('nextStakeBaseMartText').textContent = `Mart: ${STAKE_BASE.toFixed(2)} €`;
@@ -653,7 +632,7 @@
                 document.getElementById('nextStakePepiteText').textContent = `Prop: ${STAKE_PEPITE.toFixed(2)} €`;
 
                 let dl = document.getElementById('scanDetailLine');
-                if (dl) dl.textContent = "Chargées: 0 | Jouées Base: 0 | Jouées Pépite: 0";
+                if (dl) dl.textContent = "Chargées: 0 | Filtrées: 0 | Jouées Base: 0";
                 let btnRes = document.getElementById('btnResumeMissing');
                 if (btnRes) btnRes.style.display = 'none';
                 let stopBanner = document.getElementById('stopReasonBanner');
@@ -722,14 +701,13 @@
         function resetAllCache() {
             notifiedArrivals = {};
             hasAutoTransitioned = {};
-            stopWinToastShownForDate = {};
             clearAutoTransition();
             Object.keys(localStorage).forEach(k => {
                 if (k.startsWith('race_cache_') || k.startsWith('fabturf_locked_picks_') || k.startsWith('pmu_stats_')) {
                     localStorage.removeItem(k);
                 }
             });
-            showToast("Mémoire purgée ! Recalcul V54 (Stop-Win +50€ Trot)...", "success");
+            showToast("Mémoire purgée ! Recalcul V52 complet...", "success");
             resetCountersUI();
             loadLivePmu();
         }
@@ -744,7 +722,7 @@
                 btnTrot.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow cursor-pointer";
                 btnAll.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer";
                 if (histLabel) histLabel.textContent = "100% Trot";
-                showToast("Mode 100% Trot activé (Stop-Win +50€ actif)");
+                showToast("Mode 100% Trot activé");
             } else {
                 btnAll.className = "bg-amber-500 text-zinc-950 px-3 py-1.5 rounded-lg font-black transition shadow cursor-pointer";
                 btnTrot.className = "bg-zinc-800 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg font-bold transition cursor-pointer";
@@ -911,6 +889,7 @@
             }
         }
 
+        // RAFRAÎCHISSEMENT AUTOMATIQUE UNIQUEMENT SUR LA DATE DU JOUR
         setInterval(() => {
             let dateInput = document.getElementById('raceDate').value;
             if (dateInput !== getLocalDateString()) return;
@@ -922,6 +901,7 @@
             checkStartAlarm();
         }, 10000);
 
+        // NORMALISATION DES ACCENTS POUR NE RATER AUCUNE COURSE DE TROT (MONTÉ / ATTELÉ)
         function isTargetDisciplineRace(course) {
             let d = String(course.discipline || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             let s = String(course.specialite || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -986,6 +966,7 @@
             }
         }
 
+        // MOTEUR PMU CORRIGÉ : STOP IMMÉDIAT SUR 204/404 LORSQUE allowEmpty = true (NE BRÛLE PLUS LES 4 PROXIES)
         async function smartFetchPMU(path, allowEmpty = false, useCacheBuster = true) {
             const sep = path.includes('?') ? '&' : '?';
             const finalPath = useCacheBuster ? `${path}${sep}_t=${Date.now()}` : path;
@@ -1198,6 +1179,7 @@
             let hasStarted = isPastDate || (raceStartTime === 0) || isCourseStartedOrFinished(courseObj, Date.now());
             let reportsFailed = false;
 
+            // allowEmpty = true : un 204/404 sur une course sans rapport s'arrête proprement sans saturer les proxies
             if (checkReports && partants.length > 0 && (hasArrival || hasStarted)) {
                 try {
                     let rData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs?specialisation=INTERNET`, true, useBuster);
@@ -1695,11 +1677,11 @@
         function computeSmartStake(deficitSerie, baseStakeVal = STAKE_BASE) {
             if (deficitSerie <= 0) return baseStakeVal;
             let mult = 1.00;
-            if (deficitSerie <= baseStakeVal * 1.5) mult = 1.65;
-            else if (deficitSerie <= baseStakeVal * 5) mult = 1.50;
-            else if (deficitSerie <= baseStakeVal * 15) mult = 1.35;
-            else if (deficitSerie <= baseStakeVal * 35) mult = 1.20;
-            else mult = 1.05;
+            if (deficitSerie <= baseStakeVal * 1.5) mult = 1.55;
+            else if (deficitSerie <= baseStakeVal * 5) mult = 1.45;
+            else if (deficitSerie <= baseStakeVal * 15) mult = 1.30;
+            else if (deficitSerie <= baseStakeVal * 35) mult = 1.15;
+            else mult = 1.00;
 
             let stake = Math.ceil((deficitSerie * mult) + baseStakeVal);
             return Math.max(baseStakeVal + 2, stake);
@@ -1714,31 +1696,6 @@
         function computePepiteNextMartStake(currentStake) {
             let next = Math.ceil(currentStake * 1.4);
             return next <= currentStake ? currentStake + 1 : next;
-        }
-
-        // VÉRIFIE L'ÉTAT STOP-WIN AU TROT AVANT CHAQUE COURSE
-        function getStopWinFlags(profitBaseMart, profitPepMart, profitBaseProp, profitPepProp) {
-            let active = (currentDisciplineMode === 'TROT' && DAILY_STOP_WIN_TROT > 0);
-            if (!active) {
-                return { stopBaseMart: false, stopPepMart: false, stopBaseProp: false, stopPepProp: false };
-            }
-            if (STOP_WIN_SCOPE === 'COMBINED') {
-                let stopMartAll = (profitBaseMart + profitPepMart) >= DAILY_STOP_WIN_TROT;
-                let stopPropAll = (profitBaseProp + profitPepProp) >= DAILY_STOP_WIN_TROT;
-                return {
-                    stopBaseMart: stopMartAll,
-                    stopPepMart: stopMartAll,
-                    stopBaseProp: stopPropAll,
-                    stopPepProp: stopPropAll
-                };
-            } else {
-                return {
-                    stopBaseMart: profitBaseMart >= DAILY_STOP_WIN_TROT,
-                    stopPepMart: profitPepMart >= DAILY_STOP_WIN_TROT,
-                    stopBaseProp: profitBaseProp >= DAILY_STOP_WIN_TROT,
-                    stopPepProp: profitPepProp >= DAILY_STOP_WIN_TROT
-                };
-            }
         }
 
         function placeBet(raceKey, horseNum, horseName, odds, raceName, isLocked) {
@@ -2040,14 +1997,14 @@
 
                     if (baseHorse) {
                         let realPlaBase = isPayableComplete ? extractGainFromRapports(rapportsList, baseHorse.num, 'PLACE') : 0;
-                        let qualTag = TROT_QUALITY_FILTER
-                            ? (qualif.qualified ? (baseHorse.isAntiDaiSwitch ? ' | 🛡️ Anti-DAI' : ' | ✅ Qualifiée') : ` | ⏭️ Filtrée (${qualif.reason})`)
-                            : '';
+                        let qualTag = qualif.qualified
+                            ? (baseHorse.isAntiDaiSwitch ? ' | 🛡️ Anti-DAI' : ' | ✅ Qualifiée')
+                            : ` | ⏭️ Filtrée (${qualif.reason})`;
                         let plaTag = isPayableComplete
                             ? (realPlaBase > 0 ? ` | 💰 Placé: ${realPlaBase.toFixed(2)}€` : ` | ❌ Non placé`)
                             : '';
                         document.getElementById('top1Name').textContent = `${baseHorse.num}. ${baseHorse.nom}`;
-                        document.getElementById('top1Stats').textContent = `Cote : ${baseHorse.coteDisplay} | Confiance : ${baseHorse.baseScore}%${qualTag}${plaTag}`;
+                        document.getElementById('top1Stats').textContent = `Cote : ${baseHorse.coteDisplay}${qualTag}${plaTag}`;
                     } else {
                         document.getElementById('top1Name').textContent = `Attente cotes...`;
                     }
@@ -2121,7 +2078,7 @@
                 manualProfit: Number(manualProfit) || 0,
                 updatedAt: Date.now()
             };
-            safeSaveStatItem(`pmu_stats_unified_v54_${mode}_${ddmmyyyy}`, histObj);
+            safeSaveStatItem(`pmu_stats_unified_v52_${mode}_${ddmmyyyy}`, histObj);
         }
 
         function saveCurrentDayStatsToHistory() {
@@ -2138,7 +2095,7 @@
 
         function getStatForDateObj(d) {
             let ddmmyyyy = `${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
-            let key = `pmu_stats_unified_v54_${currentDisciplineMode}_${ddmmyyyy}`;
+            let key = `pmu_stats_unified_v52_${currentDisciplineMode}_${ddmmyyyy}`;
             let saved = localStorage.getItem(key);
             if (saved) {
                 try {
@@ -2352,6 +2309,7 @@
             pastRaces.sort((a, b) => (a.time - b.time) || (a.rNum - b.rNum) || (a.cNum - b.cNum));
             let totalProfitBasePla = 0, totalProfitPepitePla = 0;
             let totalProfitBaseMart = 0, totalProfitPepiteMart = 0;
+            let totalSpentBase = 0, totalSpentBaseMart = 0;
             let deficitSerieBase = 0, deficitSeriePepite = 0;
             let currentMartStakeBase = STAKE_BASE, currentMartStakePepite = STAKE_PEPITE;
             let coursesValidees = 0;
@@ -2360,12 +2318,6 @@
                 if (cancelSyncFlag) return;
                 let r = pastRaces[i];
                 if (onRaceStep) onRaceStep(i + 1, pastRaces.length);
-
-                // Vérifie si le Stop-Win est déjà atteint pour toutes les stratégies avant même de charger la suite
-                let preFlags = getStopWinFlags(totalProfitBaseMart, totalProfitPepiteMart, totalProfitBasePla, totalProfitPepitePla);
-                if (preFlags.stopBaseMart && preFlags.stopPepMart && preFlags.stopBaseProp && preFlags.stopPepProp) {
-                    break;
-                }
 
                 let rKey = `${ddmmyyyy}_${r.rNum}_${r.cNum}`;
                 let cacheKey = `race_cache_${CACHE_VERSION}_${rKey}`;
@@ -2395,14 +2347,14 @@
                 let nuggetH = algoResult.nuggetHorse;
                 let qualif = evaluateBaseQualification(baseH, algoResult.processed.length);
 
-                // Évalue les drapeaux Stop-Win AVANT le départ de cette course
-                let flags = getStopWinFlags(totalProfitBaseMart, totalProfitPepiteMart, totalProfitBasePla, totalProfitPepitePla);
-
                 if (baseH && qualif.qualified) {
                     let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
 
-                    if (!flags.stopBaseMart) {
-                        let martStakeB = currentMartStakeBase;
+                    let stopWinMartReached = (DAILY_STOP_WIN_BASE > 0 && totalProfitBaseMart >= DAILY_STOP_WIN_BASE);
+                    let remBudgetMart = MAX_DAILY_SPENT_BASE - totalSpentBaseMart;
+                    if (!stopWinMartReached && remBudgetMart >= STAKE_BASE) {
+                        let martStakeB = Math.min(currentMartStakeBase, Math.floor(remBudgetMart));
+                        totalSpentBaseMart += martStakeB;
                         if (gPla > 0) {
                             totalProfitBaseMart += (gPla * martStakeB) - martStakeB;
                             currentMartStakeBase = STAKE_BASE;
@@ -2412,8 +2364,12 @@
                         }
                     }
 
-                    if (!flags.stopBaseProp) {
-                        let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
+                    let stopWinPropReached = (DAILY_STOP_WIN_BASE > 0 && totalProfitBasePla >= DAILY_STOP_WIN_BASE);
+                    let remBudgetProp = MAX_DAILY_SPENT_BASE - totalSpentBase;
+                    if (!stopWinPropReached && remBudgetProp >= STAKE_BASE) {
+                        let desiredStake = computeSmartStake(deficitSerieBase, STAKE_BASE);
+                        let actualStakeBase = Math.min(desiredStake, Math.floor(remBudgetProp));
+                        totalSpentBase += actualStakeBase;
                         if (gPla > 0) {
                             let netBasePla = (gPla * actualStakeBase) - actualStakeBase;
                             totalProfitBasePla += netBasePla;
@@ -2427,28 +2383,23 @@
 
                 if (nuggetH) {
                     let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
-
-                    if (!flags.stopPepMart) {
-                        let martStakeP = currentMartStakePepite;
-                        if (gPla > 0) {
-                            totalProfitPepiteMart += (gPla * martStakeP) - martStakeP;
-                            currentMartStakePepite = STAKE_PEPITE;
-                        } else {
-                            totalProfitPepiteMart -= martStakeP;
-                            currentMartStakePepite = computePepiteNextMartStake(martStakeP);
-                        }
+                    let martStakeP = currentMartStakePepite;
+                    if (gPla > 0) {
+                        totalProfitPepiteMart += (gPla * martStakeP) - martStakeP;
+                        currentMartStakePepite = STAKE_PEPITE;
+                    } else {
+                        totalProfitPepiteMart -= martStakeP;
+                        currentMartStakePepite = computePepiteNextMartStake(martStakeP);
                     }
 
-                    if (!flags.stopPepProp) {
-                        let simStakePepite = computePepiteSmartStake(deficitSeriePepite, STAKE_PEPITE);
-                        if (gPla > 0) {
-                            let netPepitePla = (gPla * simStakePepite) - simStakePepite;
-                            totalProfitPepitePla += netPepitePla;
-                            deficitSeriePepite = Math.max(0, deficitSeriePepite - netPepitePla);
-                        } else {
-                            totalProfitPepitePla -= simStakePepite;
-                            deficitSeriePepite += simStakePepite;
-                        }
+                    let simStakePepite = computePepiteSmartStake(deficitSeriePepite, STAKE_PEPITE);
+                    if (gPla > 0) {
+                        let netPepitePla = (gPla * simStakePepite) - simStakePepite;
+                        totalProfitPepitePla += netPepitePla;
+                        deficitSeriePepite = Math.max(0, deficitSeriePepite - netPepitePla);
+                    } else {
+                        totalProfitPepitePla -= simStakePepite;
+                        deficitSeriePepite += simStakePepite;
                     }
                 }
             }
@@ -2504,17 +2455,15 @@
                     return;
                 }
 
-                let baseWinsPla = 0, baseWinsMart = 0;
-                let pepiteWinsPla = 0, pepiteWinsMart = 0;
-                let basePlayedProp = 0, basePlayedMart = 0;
-                let pepPlayedProp = 0, pepPlayedMart = 0;
+                let baseWinsPla = 0, baseWinsMart = 0, pepiteWinsPla = 0;
+                let basePlayedProp = 0, basePlayedMart = 0, baseFilteredCount = 0;
                 let totalSpentBase = 0, totalSpentPepite = 0;
                 let totalSpentBaseMart = 0, totalSpentPepiteMart = 0;
                 let maxStakeBase = 0, maxStakePepite = 0;
                 let maxStakeBaseMart = 0, maxStakePepiteMart = 0;
                 let totalProfitBasePla = 0, totalProfitBaseMart = 0;
                 let totalProfitPepitePla = 0, totalProfitPepiteMart = 0;
-                let coursesValidees = 0, networkFailedCount = 0;
+                let coursesValidees = 0, coursesPepiteValidees = 0, networkFailedCount = 0;
                 let deficitSerieBase = 0, deficitSeriePepite = 0;
                 let currentMartStakeBase = STAKE_BASE, currentMartStakePepite = STAKE_PEPITE;
                 let auditRows = [];
@@ -2525,18 +2474,6 @@
                     let r = pastRacesToday[i];
                     let rKey = `${ddmmyyyy}_${r.rNum}_${r.cNum}`;
                     let cacheKey = `race_cache_${CACHE_VERSION}_${rKey}`; 
-
-                    // Si tout est déjà stoppé au Stop-Win, on note directement la pause sans requêter inutilement le réseau
-                    let preFlags = getStopWinFlags(totalProfitBaseMart, totalProfitPepiteMart, totalProfitBasePla, totalProfitPepitePla);
-                    if (preFlags.stopBaseMart && preFlags.stopPepMart && preFlags.stopBaseProp && preFlags.stopPepProp) {
-                        auditRows.push({
-                            name: r.name,
-                            horse: '-',
-                            status: `<span class="text-emerald-400">🏆 STOP-WIN (+${DAILY_STOP_WIN_TROT}€)</span>`,
-                            result: formatMoneyHTML(totalProfitBasePla + totalProfitPepitePla)
-                        });
-                        continue;
-                    }
 
                     let raceData = null;
                     let savedData = localStorage.getItem(cacheKey);
@@ -2591,18 +2528,16 @@
                     let baseH = algoResult.baseHorse;
                     let nuggetH = algoResult.nuggetHorse;
                     let qualif = evaluateBaseQualification(baseH, algoResult.processed.length);
+                    let horseLabel = baseH ? `N°${baseH.num} (${baseH.coteDisplay})` : '-';
 
-                    // Évalue les drapeaux Stop-Win AVANT le départ de cette course
-                    let flags = getStopWinFlags(totalProfitBaseMart, totalProfitPepiteMart, totalProfitBasePla, totalProfitPepitePla);
-                    let rowParts = [];
-
-                    // 1. CALCUL BASE PLACÉ (SANS LIMITE DE MISE, STOP DÈS +50€)
                     if (baseH && qualif.qualified) {
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
 
-                        if (!flags.stopBaseMart) {
+                        let stopWinMartReached = (DAILY_STOP_WIN_BASE > 0 && totalProfitBaseMart >= DAILY_STOP_WIN_BASE);
+                        let remBudgetMart = MAX_DAILY_SPENT_BASE - totalSpentBaseMart;
+                        if (!stopWinMartReached && remBudgetMart >= STAKE_BASE) {
                             basePlayedMart++;
-                            let martStakeB = currentMartStakeBase;
+                            let martStakeB = Math.min(currentMartStakeBase, Math.floor(remBudgetMart));
                             totalSpentBaseMart += martStakeB;
                             if (martStakeB > maxStakeBaseMart) maxStakeBaseMart = martStakeB;
                             if (gPla > 0) {
@@ -2615,99 +2550,110 @@
                             }
                         }
 
-                        if (!flags.stopBaseProp) {
+                        let stopWinPropReached = (DAILY_STOP_WIN_BASE > 0 && totalProfitBasePla >= DAILY_STOP_WIN_BASE);
+                        let remBudgetProp = MAX_DAILY_SPENT_BASE - totalSpentBase;
+                        if (stopWinPropReached) {
+                            auditRows.push({
+                                name: r.name,
+                                horse: horseLabel,
+                                status: '<span class="text-cyan-400">🏆 Stop-Win atteint</span>',
+                                result: '0€'
+                            });
+                        } else if (remBudgetProp < STAKE_BASE) {
+                            auditRows.push({
+                                name: r.name,
+                                horse: horseLabel,
+                                status: '<span class="text-red-400">🛑 Plafond 1000€</span>',
+                                result: '0€'
+                            });
+                        } else {
                             basePlayedProp++;
-                            let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
+                            let desiredStake = computeSmartStake(deficitSerieBase, STAKE_BASE);
+                            let actualStakeBase = Math.min(desiredStake, Math.floor(remBudgetProp));
                             totalSpentBase += actualStakeBase;
                             if (actualStakeBase > maxStakeBase) maxStakeBase = actualStakeBase;
+                            
                             if (gPla > 0) {
                                 baseWinsPla++; 
                                 let netBasePla = (gPla * actualStakeBase) - actualStakeBase;
                                 totalProfitBasePla += netBasePla;
                                 deficitSerieBase = Math.max(0, deficitSerieBase - netBasePla);
-                                rowParts.push(`<span class="text-emerald-400">B:${actualStakeBase}€ ✅</span>`);
+                                auditRows.push({
+                                    name: r.name,
+                                    horse: horseLabel,
+                                    status: `<span class="text-emerald-400">✅ Placé (${gPla.toFixed(2)}€)</span>`,
+                                    result: `${actualStakeBase}€ → ${formatMoneyHTML(netBasePla)}`
+                                });
                             } else {
                                 totalProfitBasePla -= actualStakeBase;
                                 deficitSerieBase += actualStakeBase;
-                                rowParts.push(`<span class="text-red-400">B:${actualStakeBase}€ ❌</span>`);
+                                auditRows.push({
+                                    name: r.name,
+                                    horse: horseLabel,
+                                    status: '<span class="text-red-400">❌ Non placé</span>',
+                                    result: `${actualStakeBase}€ → ${formatMoneyHTML(-actualStakeBase)}`
+                                });
                             }
-                        } else {
-                            rowParts.push(`<span class="text-cyan-400">B:STOP</span>`);
                         }
                     } else if (baseH) {
-                        rowParts.push(`<span class="text-amber-400">B:Filtrée</span>`);
+                        baseFilteredCount++;
+                        auditRows.push({
+                            name: r.name,
+                            horse: horseLabel,
+                            status: `<span class="text-amber-400">⏭️ Filtrée (${qualif.reason})</span>`,
+                            result: '0€'
+                        });
                     }
 
-                    // 2. CALCUL PÉPITE PLACÉ (SANS LIMITE DE MISE, STOP DÈS +50€)
                     if (nuggetH) {
+                        coursesPepiteValidees++;
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
 
-                        if (!flags.stopPepMart) {
-                            pepPlayedMart++;
-                            let martStakeP = currentMartStakePepite;
-                            totalSpentPepiteMart += martStakeP;
-                            if (martStakeP > maxStakePepiteMart) maxStakePepiteMart = martStakeP;
-                            if (gPla > 0) {
-                                pepiteWinsMart++;
-                                totalProfitPepiteMart += (gPla * martStakeP) - martStakeP;
-                                currentMartStakePepite = STAKE_PEPITE;
-                            } else {
-                                totalProfitPepiteMart -= martStakeP;
-                                currentMartStakePepite = computePepiteNextMartStake(martStakeP);
-                            }
+                        let martStakeP = currentMartStakePepite;
+                        totalSpentPepiteMart += martStakeP;
+                        if (martStakeP > maxStakePepiteMart) maxStakePepiteMart = martStakeP;
+                        if (gPla > 0) {
+                            totalProfitPepiteMart += (gPla * martStakeP) - martStakeP;
+                            currentMartStakePepite = STAKE_PEPITE;
+                        } else {
+                            totalProfitPepiteMart -= martStakeP;
+                            currentMartStakePepite = computePepiteNextMartStake(martStakeP);
                         }
 
-                        if (!flags.stopPepProp) {
-                            pepPlayedProp++;
-                            let simStakePepite = computePepiteSmartStake(deficitSeriePepite, STAKE_PEPITE);
-                            totalSpentPepite += simStakePepite;
-                            if (simStakePepite > maxStakePepite) maxStakePepite = simStakePepite;
-                            if (gPla > 0) { 
-                                pepiteWinsPla++; 
-                                let netPepitePla = (gPla * simStakePepite) - simStakePepite;
-                                totalProfitPepitePla += netPepitePla; 
-                                deficitSeriePepite = Math.max(0, deficitSeriePepite - netPepitePla);
-                                rowParts.push(`<span class="text-amber-400">P:${simStakePepite}€ ✅</span>`);
-                            } else { 
-                                totalProfitPepitePla -= simStakePepite; 
-                                deficitSeriePepite += simStakePepite;
-                                rowParts.push(`<span class="text-red-400">P:${simStakePepite}€ ❌</span>`);
-                            }
-                        } else {
-                            rowParts.push(`<span class="text-cyan-400">P:STOP</span>`);
+                        let simStakePepite = computePepiteSmartStake(deficitSeriePepite, STAKE_PEPITE);
+                        totalSpentPepite += simStakePepite;
+                        if (simStakePepite > maxStakePepite) maxStakePepite = simStakePepite;
+                        
+                        if (gPla > 0) { 
+                            pepiteWinsPla++; 
+                            let netPepitePla = (gPla * simStakePepite) - simStakePepite;
+                            totalProfitPepitePla += netPepitePla; 
+                            deficitSeriePepite = Math.max(0, deficitSeriePepite - netPepitePla);
+                        } else { 
+                            totalProfitPepitePla -= simStakePepite; 
+                            deficitSeriePepite += simStakePepite;
                         }
                     }
 
-                    let horsePairLabel = `${baseH ? 'N°'+baseH.num : '-'} / ${nuggetH ? 'N°'+nuggetH.num : '-'}`;
-                    let cumulPropNow = totalProfitBasePla + totalProfitPepitePla;
-                    let cumulMartNow = totalProfitBaseMart + totalProfitPepiteMart;
-
-                    auditRows.push({
-                        name: r.name,
-                        horse: horsePairLabel,
-                        status: rowParts.join(' · '),
-                        result: formatMoneyHTML(cumulPropNow)
-                    });
-
-                    // Drapeaux APRÈS cette course pour l'affichage en temps réel des prochaines mises
-                    let postFlags = getStopWinFlags(totalProfitBaseMart, totalProfitPepiteMart, totalProfitBasePla, totalProfitPepitePla);
+                    let remBudgetNow = Math.max(0, MAX_DAILY_SPENT_BASE - totalSpentBase);
+                    let stopWinNow = (DAILY_STOP_WIN_BASE > 0 && totalProfitBasePla >= DAILY_STOP_WIN_BASE);
+                    let capHitNow = (remBudgetNow < STAKE_BASE);
 
                     document.getElementById('statBaseMart').textContent = `${baseWinsMart} / ${basePlayedMart}`;
                     document.getElementById('statBasePla').textContent = `${baseWinsPla} / ${basePlayedProp}`;
-                    document.getElementById('statPepiteMart').textContent = `${pepiteWinsMart} / ${pepPlayedMart}`;
-                    document.getElementById('statPepitePla').textContent = `${pepiteWinsPla} / ${pepPlayedProp}`;
+                    document.getElementById('statPepiteMart').textContent = `${pepiteWinsPla} / ${coursesPepiteValidees}`;
+                    document.getElementById('statPepitePla').textContent = `${pepiteWinsPla} / ${coursesPepiteValidees}`;
                     document.getElementById('gainBaseMart').innerHTML = formatMoneyHTML(totalProfitBaseMart);
                     document.getElementById('gainBasePla').innerHTML = formatMoneyHTML(totalProfitBasePla);
                     document.getElementById('gainPepiteMart').innerHTML = formatMoneyHTML(totalProfitPepiteMart);
                     document.getElementById('gainPepitePla').innerHTML = formatMoneyHTML(totalProfitPepitePla);
-                    document.getElementById('comboGainMart').innerHTML = formatMoneyHTML(cumulMartNow);
-                    document.getElementById('comboGainProp').innerHTML = formatMoneyHTML(cumulPropNow);
 
                     document.getElementById('totalSpentBaseMartText').textContent = `${totalSpentBaseMart.toFixed(2)} €`;
                     document.getElementById('totalSpentText').textContent = `${totalSpentBase.toFixed(2)} €`;
                     document.getElementById('maxStakeBaseMartText').textContent = `${maxStakeBaseMart.toFixed(2)} €`;
                     document.getElementById('maxStakeBaseText').textContent = `${maxStakeBase.toFixed(2)} €`;
                     document.getElementById('deficitBaseText').textContent = `${deficitSerieBase.toFixed(2)} €`;
+                    document.getElementById('remainingBudgetText').textContent = `${remBudgetNow.toFixed(0)}€`;
                     
                     document.getElementById('totalSpentPepiteMartText').textContent = `${totalSpentPepiteMart.toFixed(2)} €`;
                     document.getElementById('totalSpentPepiteText').textContent = `${totalSpentPepite.toFixed(2)} €`;
@@ -2715,43 +2661,35 @@
                     document.getElementById('maxStakePepiteText').textContent = `${maxStakePepite.toFixed(2)} €`;
                     document.getElementById('deficitPepiteText').textContent = `${deficitSeriePepite.toFixed(2)} €`;
 
-                    let nextStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
+                    let rawNextProp = computeSmartStake(deficitSerieBase, STAKE_BASE);
+                    let nextStakeBase = stopWinNow || capHitNow ? 0 : Math.min(rawNextProp, Math.floor(remBudgetNow));
                     let nextStakePepite = computePepiteSmartStake(deficitSeriePepite, STAKE_PEPITE);
+                    let remMartNow = Math.max(0, MAX_DAILY_SPENT_BASE - totalSpentBaseMart);
+                    let nextMartDisp = (DAILY_STOP_WIN_BASE > 0 && totalProfitBaseMart >= DAILY_STOP_WIN_BASE) || remMartNow < STAKE_BASE
+                        ? 0 : Math.min(currentMartStakeBase, Math.floor(remMartNow));
                     
-                    document.getElementById('nextStakeBaseMartText').textContent = postFlags.stopBaseMart ? `🏆 STOP (+${DAILY_STOP_WIN_TROT}€)` : `Mart: ${currentMartStakeBase.toFixed(2)} €`;
-                    document.getElementById('nextStakeBaseText').textContent = postFlags.stopBaseProp ? `🏆 STOP (+${DAILY_STOP_WIN_TROT}€)` : `Prop: ${nextStakeBase.toFixed(2)} €`;
-                    document.getElementById('nextStakePepiteMartText').textContent = postFlags.stopPepMart ? `🏆 STOP (+${DAILY_STOP_WIN_TROT}€)` : `Mart: ${currentMartStakePepite.toFixed(2)} €`;
-                    document.getElementById('nextStakePepiteText').textContent = postFlags.stopPepProp ? `🏆 STOP (+${DAILY_STOP_WIN_TROT}€)` : `Prop: ${nextStakePepite.toFixed(2)} €`;
-                    document.getElementById('headerNextStake').textContent = (postFlags.stopBaseMart && postFlags.stopBaseProp)
-                        ? `🏆 STOP`
-                        : `${postFlags.stopBaseMart ? 'STOP' : currentMartStakeBase.toFixed(0)+'€'} | ${postFlags.stopBaseProp ? 'STOP' : nextStakeBase.toFixed(0)+'€'}`;
+                    document.getElementById('nextStakeBaseMartText').textContent = nextMartDisp === 0 ? `Mart: STOP` : `Mart: ${nextMartDisp.toFixed(2)} €`;
+                    document.getElementById('nextStakeBaseText').textContent = stopWinNow ? `🏆 STOP-WIN` : (capHitNow ? `🛑 PLAFOND` : `Prop: ${nextStakeBase.toFixed(2)} €`);
+                    document.getElementById('nextStakePepiteMartText').textContent = `Mart: ${currentMartStakePepite.toFixed(2)} €`;
+                    document.getElementById('nextStakePepiteText').textContent = `Prop: ${nextStakePepite.toFixed(2)} €`;
+                    document.getElementById('headerNextStake').textContent = stopWinNow ? `🏆 STOP` : (capHitNow ? `🛑 MAX` : `${nextMartDisp.toFixed(0)}€ | ${nextStakeBase.toFixed(0)}€`);
 
                     let dl = document.getElementById('scanDetailLine');
                     if (dl) {
-                        dl.textContent = `Chargées: ${coursesValidees}/${pastRacesToday.length} | Jouées Base: ${basePlayedProp} | Jouées Pépite: ${pepPlayedProp}`;
+                        dl.textContent = `Chargées: ${coursesValidees}/${pastRacesToday.length} | Filtrées: ${baseFilteredCount} | Jouées Base: ${basePlayedProp}`;
                     }
 
                     let stopBanner = document.getElementById('stopReasonBanner');
                     let stopText = document.getElementById('stopReasonText');
-                    let anyPropStop = postFlags.stopBaseProp || postFlags.stopPepProp;
-                    let anyMartStop = postFlags.stopBaseMart || postFlags.stopPepMart;
-
                     if (stopBanner && stopText) {
-                        if (anyPropStop || anyMartStop) {
+                        if (stopWinNow) {
                             stopBanner.style.display = 'flex';
-                            if (STOP_WIN_SCOPE === 'COMBINED') {
-                                let partsMsg = [];
-                                if (postFlags.stopBaseProp) partsMsg.push(`Prop. (${cumulPropNow >= 0 ? '+' : ''}${cumulPropNow.toFixed(2)}€)`);
-                                if (postFlags.stopBaseMart) partsMsg.push(`Mart. (${cumulMartNow >= 0 ? '+' : ''}${cumulMartNow.toFixed(2)}€)`);
-                                stopText.textContent = `🏆 OBJECTIF +${DAILY_STOP_WIN_TROT}€ ATTEINT AU TROT [${partsMsg.join(' • ')}] — Arrêt automatique des mises !`;
-                            } else {
-                                let partsMsg = [];
-                                if (postFlags.stopBaseProp) partsMsg.push(`Base Prop (+${totalProfitBasePla.toFixed(2)}€)`);
-                                if (postFlags.stopPepProp) partsMsg.push(`Pépite Prop (+${totalProfitPepitePla.toFixed(2)}€)`);
-                                if (postFlags.stopBaseMart) partsMsg.push(`Base Mart (+${totalProfitBaseMart.toFixed(2)}€)`);
-                                if (postFlags.stopPepMart) partsMsg.push(`Pépite Mart (+${totalProfitPepiteMart.toFixed(2)}€)`);
-                                stopText.textContent = `🏆 STOP-WIN +${DAILY_STOP_WIN_TROT}€ ATTEINT : ${partsMsg.join(' • ')}`;
-                            }
+                            stopBanner.className = "bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 text-[11px] px-3 py-2 rounded-xl flex justify-between items-center";
+                            stopText.textContent = `🏆 Stop-Win (+${DAILY_STOP_WIN_BASE}€) atteint après ${basePlayedProp} course(s) jouée(s) : les courses suivantes sont volontairement mises en pause.`;
+                        } else if (capHitNow) {
+                            stopBanner.style.display = 'flex';
+                            stopBanner.className = "bg-red-950/60 border border-red-500/40 text-red-200 text-[11px] px-3 py-2 rounded-xl flex justify-between items-center";
+                            stopText.textContent = `🛑 Plafond journalier (${MAX_DAILY_SPENT_BASE}€ de mises) atteint après ${basePlayedProp} course(s) jouée(s).`;
                         } else {
                             stopBanner.style.display = 'none';
                         }
@@ -2759,18 +2697,16 @@
 
                     let sb = document.getElementById('dailyStatusBadge');
                     if (sb) {
-                        if (anyPropStop) {
-                            sb.textContent = `🏆 STOP +${DAILY_STOP_WIN_TROT}€`;
-                            sb.className = "text-[9px] font-bold px-2 py-1 rounded border border-emerald-500/60 bg-emerald-900/60 text-emerald-300";
+                        if (stopWinNow) {
+                            sb.textContent = `🏆 Stop-Win +${DAILY_STOP_WIN_BASE}€ (${basePlayedProp} jouées)`;
+                            sb.className = "text-[9px] font-bold px-2 py-1 rounded border border-emerald-500/50 bg-emerald-900/50 text-emerald-300";
+                        } else if (capHitNow) {
+                            sb.textContent = `🛑 Plafond ${MAX_DAILY_SPENT_BASE}€ (${basePlayedProp} jouées)`;
+                            sb.className = "text-[9px] font-bold px-2 py-1 rounded border border-red-500/50 bg-red-900/50 text-red-300";
                         } else {
-                            sb.textContent = `Actif (${basePlayedProp}c)`;
+                            sb.textContent = `Actif (${basePlayedProp} jouées)`;
                             sb.className = "text-[9px] font-bold px-2 py-1 rounded border border-zinc-700 bg-zinc-800 text-zinc-300";
                         }
-                    }
-
-                    if (!isPastDate && anyPropStop && !stopWinToastShownForDate[dateInput]) {
-                        stopWinToastShownForDate[dateInput] = true;
-                        showToast(`🏆 Objectif +${DAILY_STOP_WIN_TROT}€ atteint au Trot ! On stoppe les mises.`, "success");
                     }
 
                     if (coursesValidees > 0) {
