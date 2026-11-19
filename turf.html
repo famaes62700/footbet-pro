@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V49 Calculs PMU Réels & Anti-Annulation (Base 2€)</title>
+    <title>Turf - V50 Optimiseur Trot (Plafond 1000€/j & Stop-Win)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -28,7 +28,7 @@
             <!-- LOGO TURF PRO + CALENDRIER DATE À SA DROITE -->
             <div class="flex items-center space-x-2">
                 <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-700">
-                    <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">Pro</span>
+                    <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">V50</span>
                 </h1>
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2.5 py-1.5 rounded-xl border border-zinc-700 cursor-pointer focus:outline-none focus:border-amber-500 shadow" onchange="onDateChange()">
             </div>
@@ -38,7 +38,7 @@
                 
                 <div class="text-xs bg-zinc-800 px-2 py-1 rounded-lg border border-emerald-500/30 text-emerald-400 font-bold flex flex-col items-end shadow mr-1">
                     <span class="text-[8px] text-zinc-400 font-normal uppercase tracking-wide">Base (Mart | Prop)</span>
-                    <span id="headerNextStake">2€ | 2€</span>
+                    <span id="headerNextStake">8€ | 8€</span>
                 </div>
                 
                 <!-- DRAPEAU DES ARRIVÉES -->
@@ -118,10 +118,10 @@
                         <span id="weekDatesLabel" class="text-[10px] text-zinc-400 font-mono"></span>
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-zinc-950/70 p-2.5 rounded-lg border border-zinc-800 mb-2.5 text-[11px]">
-                        <div class="text-zinc-300">Base Mart. (2€) : <span id="weekBaseMart" class="text-cyan-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
-                        <div class="text-zinc-300">Base Prop. (2€) : <span id="weekBase" class="text-emerald-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
-                        <div class="text-zinc-300">Pép. Mart. (2€) : <span id="weekPepiteMart" class="text-yellow-300 font-bold block text-xs mt-0.5">0.00 €</span></div>
-                        <div class="text-zinc-300">Pép. Prop. (2€) : <span id="weekPepite" class="text-amber-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
+                        <div class="text-zinc-300">Base Mart. : <span id="weekBaseMart" class="text-cyan-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
+                        <div class="text-zinc-300">Base Prop. : <span id="weekBase" class="text-emerald-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
+                        <div class="text-zinc-300">Pép. Mart. : <span id="weekPepiteMart" class="text-yellow-300 font-bold block text-xs mt-0.5">0.00 €</span></div>
+                        <div class="text-zinc-300">Pép. Prop. : <span id="weekPepite" class="text-amber-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
                         <div class="text-zinc-300">Perso : <span id="weekManual" class="text-orange-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
                     </div>
                     <div id="weekDaysBreakdown" class="space-y-1 text-[11px]"></div>
@@ -134,19 +134,53 @@
             </div>
         </div>
 
+        <!-- RÉGLAGES STRATÉGIE BASE (PLAFOND 1000€/J, STOP-WIN, FILTRE TROT) -->
+        <div class="bg-zinc-900 border border-emerald-500/30 rounded-2xl p-3.5 shadow-xl space-y-2.5">
+            <div class="flex justify-between items-center">
+                <h2 class="text-[11px] font-bold uppercase text-emerald-400 tracking-wider flex items-center">
+                    <i class="fa-solid fa-sliders mr-1.5"></i> Pilotage Stratégie Base (Test & Optimisation)
+                </h2>
+                <button onclick="applyStrategySettings()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-lg shadow transition cursor-pointer">
+                    Appliquer & Recalculer
+                </button>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
+                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Mise Base (€)</span>
+                    <input type="number" id="inputBaseStake" min="1" max="50" step="1" value="8" class="bg-transparent text-emerald-400 font-black text-sm focus:outline-none mt-0.5">
+                </label>
+                <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
+                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Plafond Mises/j (€)</span>
+                    <input type="number" id="inputMaxDailySpent" min="50" max="5000" step="50" value="1000" class="bg-transparent text-amber-400 font-black text-sm focus:outline-none mt-0.5">
+                </label>
+                <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
+                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Stop-Win/j (€, 0=off)</span>
+                    <input type="number" id="inputStopWin" min="0" max="500" step="5" value="50" class="bg-transparent text-cyan-400 font-black text-sm focus:outline-none mt-0.5">
+                </label>
+                <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col justify-between cursor-pointer">
+                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Filtre Qualité Trot</span>
+                    <div class="flex items-center space-x-2 mt-1">
+                        <input type="checkbox" id="chkTrotFilter" checked class="accent-emerald-500 w-4 h-4 cursor-pointer">
+                        <span id="lblTrotFilterState" class="text-[10px] font-bold text-emerald-400">Actif (≥8p, Anti-DAI)</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
         <div class="bg-zinc-900 border border-amber-500/30 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
             <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (Rapports PMU Réels • Hors Annulées)</h2>
-                    <p class="text-[10px] text-zinc-400"><strong class="text-emerald-400">Base 2€ (Prop. x1.65 / x1.35)</strong> • <strong class="text-amber-400">Pépite 2€ Adoucie (Prop. x0.55)</strong></p>
+                    <p id="bilanSubtitle" class="text-[10px] text-zinc-400">Base 8€ (Plafond 1000€/j • Stop-Win +50€) • Pépite 2€ Adoucie</p>
                 </div>
+                <span id="dailyStatusBadge" class="text-[9px] font-bold px-2 py-0.5 rounded border border-zinc-700 bg-zinc-800 text-zinc-300">En cours</span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <!-- BASE (FAVORI 2€) : MARTINGALE vs PROPORTIONNEL -->
+                <!-- BASE (FAVORI) : MARTINGALE vs PROPORTIONNEL -->
                 <div class="bg-zinc-950 p-3 rounded-xl border border-emerald-500/40 relative flex flex-col justify-between">
-                    <div class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">FAVORI PLACÉ (2€)</div>
-                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori 2€)</div>
+                    <div id="badgeBaseStake" class="absolute -top-2 -right-2 bg-emerald-500 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded shadow">FAVORI PLACÉ (8€)</div>
+                    <div class="text-[10px] text-zinc-400 uppercase font-bold mb-2">Chevaux Base (Favori)</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-zinc-900/60 p-2 rounded border border-cyan-500/30 text-center flex flex-col justify-center">
                             <span class="text-[8px] text-cyan-400 block uppercase font-bold">Placé (Mart. x2)</span>
@@ -154,7 +188,7 @@
                             <span id="gainBaseMart" class="font-bold text-cyan-300 mt-0.5">0.00 €</span>
                         </div>
                         <div class="bg-zinc-900/60 p-2 rounded border border-emerald-500/30 text-center flex flex-col justify-center shadow-inner">
-                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé (Prop. x1.65)</span>
+                            <span class="text-[8px] text-emerald-400 block uppercase font-bold">Placé (Prop. Optim.)</span>
                             <span id="statBasePla" class="text-[9px] text-emerald-500/70 font-bold my-0.5">0 / 0</span>
                             <span id="gainBasePla" class="font-bold text-emerald-400 mt-0.5">0.00 €</span>
                         </div>
@@ -182,15 +216,15 @@
 
             <!-- MISE MAX, DÉFICITS ET PROCHAINES MISES (MARTINGALE & PROPORTIONNEL) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 text-zinc-300">
-                <!-- GESTION BASE 2€ -->
+                <!-- GESTION BASE -->
                 <div class="flex flex-col space-y-1 sm:border-r border-zinc-700/50 sm:pr-3">
-                    <span class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement Base (Favori 2€)</span>
+                    <span id="investBaseTitle" class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement Base (Max 1000€/j)</span>
                     <span class="flex justify-between">Joué (Mart. | Prop.): <strong class="text-white"><span id="totalSpentBaseMartText" class="text-cyan-300">0.00 €</span> | <span id="totalSpentText" class="text-emerald-300">0.00 €</span></strong></span>
                     <span class="flex justify-between">Max (Mart. | Prop.): <strong class="text-zinc-300"><span id="maxStakeBaseMartText" class="text-cyan-300">0.00 €</span> | <span id="maxStakeBaseText" class="text-emerald-300">0.00 €</span></strong></span>
-                    <span class="flex justify-between">Déficit Prop.: <strong id="deficitBaseText" class="text-red-400">0.00 €</strong></span>
+                    <span class="flex justify-between">Déficit Prop. | Reste Budget: <strong class="text-zinc-300"><span id="deficitBaseText" class="text-red-400">0.00 €</span> | <span id="remainingBudgetText" class="text-amber-300">1000€</span></strong></span>
                     <div class="grid grid-cols-2 gap-1.5 pt-1.5">
-                        <strong id="nextStakeBaseMartText" class="text-cyan-300 bg-zinc-900 px-1.5 py-1 rounded border border-cyan-500/30 font-black text-[10px] shadow-md block text-center">Mart: 2.00 €</strong>
-                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-1.5 py-1 rounded border border-emerald-500/30 font-black text-[10px] shadow-md block text-center">Prop: 2.00 €</strong>
+                        <strong id="nextStakeBaseMartText" class="text-cyan-300 bg-zinc-900 px-1.5 py-1 rounded border border-cyan-500/30 font-black text-[10px] shadow-md block text-center">Mart: 8.00 €</strong>
+                        <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-1.5 py-1 rounded border border-emerald-500/30 font-black text-[10px] shadow-md block text-center">Prop: 8.00 €</strong>
                     </div>
                 </div>
 
@@ -257,7 +291,7 @@
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mt-3">
                 <div class="bg-zinc-900/90 p-3 rounded-xl border border-emerald-500/40 space-y-1">
-                    <div class="text-[10px] uppercase font-bold text-emerald-400">Favori des Parieurs (Base 2€)</div>
+                    <div id="top1TitleLabel" class="text-[10px] uppercase font-bold text-emerald-400">Favori Base (8€)</div>
                     <div id="top1Name" class="font-bold text-white text-sm">En attente...</div>
                     <div id="top1Stats" class="text-[11px] text-zinc-400">--</div>
                 </div>
@@ -358,12 +392,73 @@
     </div>
 
     <script>
-        const CACHE_VERSION = "v49";
+        const CACHE_VERSION = "v50";
         
-        // MISES DE DÉPART : 2€ POUR LA BASE (FAVORI), 2€ POUR LA PÉPITE ET LE TICKET
-        const STAKE_BASE = 2.0;
+        // PARAMÈTRES DYNAMIQUES DE LA STRATÉGIE (CHARGÉS DEPUIS LOCALSTORAGE)
+        let STAKE_BASE = 8.0;
+        let MAX_DAILY_SPENT_BASE = 1000.0;
+        let DAILY_STOP_WIN_BASE = 50.0;
+        let TROT_QUALITY_FILTER = true;
+
         const STAKE_PEPITE = 2.0;
         const BASE_STAKE = 2.0;
+
+        function loadStrategySettings() {
+            try {
+                let saved = JSON.parse(localStorage.getItem('fabturf_v50_settings') || '{}');
+                if (saved.baseStake >= 1 && saved.baseStake <= 100) STAKE_BASE = Number(saved.baseStake);
+                if (saved.maxDailySpent >= 50 && saved.maxDailySpent <= 10000) MAX_DAILY_SPENT_BASE = Number(saved.maxDailySpent);
+                if (saved.stopWin >= 0 && saved.stopWin <= 2000) DAILY_STOP_WIN_BASE = Number(saved.stopWin);
+                if (typeof saved.trotFilter === 'boolean') TROT_QUALITY_FILTER = saved.trotFilter;
+            } catch(e) {}
+
+            document.getElementById('inputBaseStake').value = STAKE_BASE;
+            document.getElementById('inputMaxDailySpent').value = MAX_DAILY_SPENT_BASE;
+            document.getElementById('inputStopWin').value = DAILY_STOP_WIN_BASE;
+            document.getElementById('chkTrotFilter').checked = TROT_QUALITY_FILTER;
+            updateStrategyLabelsUI();
+        }
+
+        function updateStrategyLabelsUI() {
+            let swTxt = DAILY_STOP_WIN_BASE > 0 ? `Stop-Win +${DAILY_STOP_WIN_BASE}€` : 'Sans Stop-Win';
+            let fltTxt = TROT_QUALITY_FILTER ? 'Actif (≥8p, Anti-DAI)' : 'Désactivé (Toutes)';
+            document.getElementById('lblTrotFilterState').textContent = fltTxt;
+            document.getElementById('lblTrotFilterState').className = TROT_QUALITY_FILTER ? 'text-[10px] font-bold text-emerald-400' : 'text-[10px] font-bold text-zinc-500';
+            document.getElementById('badgeBaseStake').textContent = `FAVORI PLACÉ (${STAKE_BASE}€)`;
+            document.getElementById('top1TitleLabel').textContent = `Favori Base (${STAKE_BASE}€)`;
+            document.getElementById('investBaseTitle').textContent = `Investissement Base (Max ${MAX_DAILY_SPENT_BASE}€/j)`;
+            document.getElementById('bilanSubtitle').textContent = `Base ${STAKE_BASE}€ (Plafond ${MAX_DAILY_SPENT_BASE}€/j • ${swTxt}) • Pépite 2€`;
+        }
+
+        function applyStrategySettings() {
+            let bVal = parseFloat(document.getElementById('inputBaseStake').value);
+            let mVal = parseFloat(document.getElementById('inputMaxDailySpent').value);
+            let sVal = parseFloat(document.getElementById('inputStopWin').value);
+            let fVal = document.getElementById('chkTrotFilter').checked;
+
+            STAKE_BASE = (!isNaN(bVal) && bVal >= 1) ? Math.round(bVal) : 8;
+            MAX_DAILY_SPENT_BASE = (!isNaN(mVal) && mVal >= 50) ? Math.round(mVal) : 1000;
+            DAILY_STOP_WIN_BASE = (!isNaN(sVal) && sVal >= 0) ? Math.round(sVal) : 50;
+            TROT_QUALITY_FILTER = Boolean(fVal);
+
+            safeSetLocal('fabturf_v50_settings', {
+                baseStake: STAKE_BASE,
+                maxDailySpent: MAX_DAILY_SPENT_BASE,
+                stopWin: DAILY_STOP_WIN_BASE,
+                trotFilter: TROT_QUALITY_FILTER
+            });
+
+            // Efface les cumuls journaliers précédents pour recalculer proprement avec les nouveaux réglages
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('pmu_stats_unified_v50_')) localStorage.removeItem(k);
+            });
+
+            updateStrategyLabelsUI();
+            resetCountersUI();
+            showToast(`Réglages appliqués : Base ${STAKE_BASE}€, Plafond ${MAX_DAILY_SPENT_BASE}€/j`, "success");
+            fetchRaceData(false);
+            calculateDailyStats(false);
+        }
 
         try { localStorage.removeItem('fabturf_time_offset_min'); } catch(e) {}
 
@@ -372,7 +467,6 @@
             return typeof course.heureDepart === 'number' ? course.heureDepart : new Date(course.heureDepart).getTime();
         }
 
-        // DÉTECTION D'UNE COURSE OU RÉUNION ANNULÉE / INTERROMPUE
         function isCourseCanceled(course) {
             if (!course) return false;
             let st = String(course.statut || "").toUpperCase();
@@ -489,16 +583,24 @@
                 
                 document.getElementById('deficitBaseText').textContent = "0.00 €";
                 document.getElementById('deficitPepiteText').textContent = "0.00 €";
+                document.getElementById('remainingBudgetText').textContent = `${MAX_DAILY_SPENT_BASE.toFixed(0)}€`;
                 
                 document.getElementById('headerNextStake').textContent = `${STAKE_BASE.toFixed(0)}€ | ${STAKE_BASE.toFixed(0)}€`;
                 document.getElementById('nextStakeBaseMartText').textContent = `Mart: ${STAKE_BASE.toFixed(2)} €`;
                 document.getElementById('nextStakeBaseText').textContent = `Prop: ${STAKE_BASE.toFixed(2)} €`;
                 document.getElementById('nextStakePepiteMartText').textContent = `Mart: ${STAKE_PEPITE.toFixed(2)} €`;
                 document.getElementById('nextStakePepiteText').textContent = `Prop: ${STAKE_PEPITE.toFixed(2)} €`;
+
+                let sb = document.getElementById('dailyStatusBadge');
+                if (sb) {
+                    sb.textContent = "En cours";
+                    sb.className = "text-[9px] font-bold px-2 py-0.5 rounded border border-zinc-700 bg-zinc-800 text-zinc-300";
+                }
             } catch(e) {}
         }
 
         cleanupAndMigrateStorage();
+        loadStrategySettings();
         document.getElementById('raceDate').value = getLocalDateString();
         let liveMeetingsData = [];
         let loadedProgrammeDate = "";
@@ -564,7 +666,7 @@
                     localStorage.removeItem(k);
                 }
             });
-            showToast("Mémoire purgée ! Recalcul V49 avec vrais rapports PMU...", "success");
+            showToast("Mémoire purgée ! Recalcul V50 avec vrais rapports PMU...", "success");
             resetCountersUI();
             loadLivePmu();
         }
@@ -627,7 +729,6 @@
         function toggleArrivalAlarm() {
             arrivalAlarmEnabled = !arrivalAlarmEnabled;
             let btn = document.getElementById('btnArrivalAlarm');
-            let icon = document.getElementById('iconArrivalAlarm');
             if (arrivalAlarmEnabled) {
                 btn.classList.replace('text-zinc-500', 'text-blue-400');
                 btn.classList.replace('bg-zinc-800', 'bg-blue-900/40');
@@ -870,7 +971,6 @@
             throw new Error("PMU bloqué");
         }
 
-        // EXTRACTEUR UNIVERSEL DU NUMÉRO DE CHEVAL DANS UN RAPPORT PMU (LIT AUSSI item.libelle !)
         function getHorseNumFromReportItem(item) {
             if (!item || typeof item !== 'object') return -1;
             let candidates = [
@@ -892,9 +992,7 @@
                     continue;
                 }
                 let str = String(raw).trim();
-                // Ignore les combinaisons multiples (ex: "7-12", "7/12", "7 - 12")
                 if (str.includes('-') || str.includes('/') || str.includes('+')) continue;
-                // Accepte "7", "07", "N°7", "N° 7"
                 let m = str.match(/^(?:N°\s*|CHEVAL\s*)?(\d{1,2})$/i);
                 if (m) {
                     let n = parseInt(m[1], 10);
@@ -904,7 +1002,6 @@
             return -1;
         }
 
-        // EXTRACTEUR UNIVERSEL DU DIVIDENDE POUR 1 € DANS UN RAPPORT PMU
         function getDividendForOneEuro(item, group) {
             if (!item || typeof item !== 'object') return 0;
             if (item.rembourse === true || (group && group.rembourse === true)) return 0;
@@ -932,7 +1029,6 @@
             return isNaN(val) ? 0 : val;
         }
 
-        // VÉRIFIE SI UN GROUPE DE RAPPORTS EST UN PARI SIMPLE (GAGNANT OU PLACÉ UNIQUEMENT)
         function isSimpleBetGroup(group) {
             if (!group || typeof group !== 'object') return false;
             let pType = String(group.typePari || group.libellePari || group.codePari || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -1009,7 +1105,6 @@
                 }
             }
 
-            // Enrichit automatiquement l'ordre d'arrivée des partants à partir des rapports officiels s'il manquait
             if (rapportsList.length > 0 && partants.length > 0) {
                 let placeRankCounter = 2;
                 rapportsList.forEach(group => {
@@ -1295,7 +1390,31 @@
             return Math.min(100, Math.max(5, Math.round(totalPts / totalWeight)));
         }
 
-        // ALGORITHME PUR AVEC LECTURE DE LA COTE DE RÉFÉRENCE EN SECOURS (ÉVITE LE BUG DU CHEVAL N°1 À 99.9)
+        function countRecentDAI(musique) {
+            if (!musique) return 0;
+            let clean = String(musique).replace(/\(\d+\)/g, '');
+            let tokens = clean.match(/([0-9DATR]+)([a-zA-Z]+)/g);
+            if (!tokens || tokens.length === 0) return 0;
+            let count = Math.min(tokens.length, 4);
+            let dai = 0;
+            for (let i = 0; i < count; i++) {
+                let res = tokens[i].match(/^([0-9DATR]+)/i)[1].toUpperCase();
+                if (res.includes('D') || res.includes('A')) dai++;
+            }
+            return dai;
+        }
+
+        // QUALIFICATION DE LA COURSE POUR LA BASE (SI FILTRE QUALITÉ TROT ACTIVÉ)
+        function evaluateBaseQualification(baseHorse, numRunners) {
+            if (!baseHorse) return { qualified: false, reason: 'Pas de favori' };
+            if (!TROT_QUALITY_FILTER) return { qualified: true, reason: '' };
+            if (numRunners < 8) return { qualified: false, reason: '<8 partants (2 places)' };
+            if (baseHorse.cote < 1.65) return { qualified: false, reason: 'Cote < 1.65 (rapport trop faible)' };
+            if (baseHorse.cote > 5.0) return { qualified: false, reason: 'Cote > 5.0 (trop ouverte)' };
+            if (baseHorse.recentDAI >= 2) return { qualified: false, reason: 'Favori trop fautif (DAI)' };
+            return { qualified: true, reason: '' };
+        }
+
         function computeAlgorithm(partants, raceKey = null, isRaceStarted = false) {
             let validPartants = partants.filter(p => {
                 let st = String(p.statut || "PARTANT").toUpperCase();
@@ -1316,6 +1435,7 @@
                 let cote = parseFloat(String(rawCote).replace(',', '.')) || 99.9;
                 
                 let musiqueScore = evaluateMusique(musique);
+                let recentDAI = countRecentDAI(musique);
                 
                 let coteScore = 15;
                 if (cote >= 1.6 && cote <= 4.5) coteScore = 96;
@@ -1334,6 +1454,8 @@
                     musique: musique,
                     coteDisplay: rawCote,
                     cote: cote,
+                    musiqueScore: musiqueScore,
+                    recentDAI: recentDAI,
                     baseScore: Math.min(99, Math.max(5, Math.round(100 - (cote * 2)))),
                     nuggetScore: Math.min(99, Math.max(5, nuggetRaw)),
                     ordreArrivee: p.ordreArrivee ? parseInt(p.ordreArrivee, 10) : 0
@@ -1342,6 +1464,16 @@
 
             let sortedByCote = [...processed].sort((a, b) => (a.cote - b.cote) || (a.num - b.num));
             let baseHorse = sortedByCote[0]; 
+
+            // BASCULE ANTI-DAI SI FILTRE QUALITÉ TROT ACTIVÉ
+            if (TROT_QUALITY_FILTER && sortedByCote.length >= 2) {
+                let fav1 = sortedByCote[0];
+                let fav2 = sortedByCote[1];
+                if (fav1.recentDAI >= 2 && fav2.cote <= 5.0 && fav2.recentDAI === 0 && fav2.musiqueScore >= 60) {
+                    baseHorse = fav2;
+                    baseHorse.isAntiDaiSwitch = true;
+                }
+            }
 
             let remaining = processed.filter(p => p.num !== baseHorse?.num);
             let nuggetHorse = remaining.sort((a, b) => (b.nuggetScore - a.nuggetScore) || (a.cote - b.cote) || (a.num - b.num))[0];
@@ -1399,7 +1531,6 @@
             return { processed, baseHorse, nuggetHorse };
         }
 
-        // VÉRIFIE QU'UNE COURSE A VRAIMENT ÉTÉ COURUE ET PAYÉE (UTILISE getHorseNumFromReportItem QUI LIT item.libelle !)
         function isRaceTrulyRunAndPayable(courseObj, partants, listeRapports) {
             if (isCourseCanceled(courseObj)) return false;
             if (!partants || !Array.isArray(partants) || partants.length === 0) return false;
@@ -1425,7 +1556,6 @@
             return hasRealPaidHorseReport;
         }
 
-        // EXTRACTION DU VRAI RAPPORT PMU OFFICIEL (GAGNANT OU PLACÉ) POUR UN CHEVAL DONNÉ
         function extractGainFromRapports(listeRapports, horseNum, targetType) {
             let foundGain = 0;
             let targetNum = parseInt(horseNum, 10);
@@ -1461,23 +1591,26 @@
             return foundGain;
         }
 
-        // PROPORTIONNELLE ÉQUILIBRÉE BASE (2€) :
-        // Multiplicateur x1.65 sur les premiers écarts (pour couvrir les petits rapports placés sans faire exploser la mise) puis x1.35
+        // PROPORTIONNELLE ÉTAGÉE V50 : CALIBRÉE POUR ENCAISSER 6 ÉCARTS SOUS 1000€ DE MISES TOTALES
         function computeSmartStake(deficitSerie, baseStakeVal = STAKE_BASE) {
             if (deficitSerie <= 0) return baseStakeVal;
-            let mult = deficitSerie <= 12 ? 1.65 : 1.35;
+            let mult = 1.00;
+            if (deficitSerie <= baseStakeVal * 1.5) mult = 1.55;
+            else if (deficitSerie <= baseStakeVal * 5) mult = 1.45;
+            else if (deficitSerie <= baseStakeVal * 15) mult = 1.30;
+            else if (deficitSerie <= baseStakeVal * 35) mult = 1.15;
+            else mult = 1.00;
+
             let stake = Math.ceil((deficitSerie * mult) + baseStakeVal);
             return Math.max(baseStakeVal + 2, stake);
         }
 
-        // MODE PROPORTIONNEL ADOUCI POUR LA PÉPITE (2€ : x0.55)
         function computePepiteSmartStake(deficitSerie, baseStakeVal = STAKE_PEPITE) {
             if (deficitSerie <= 0) return baseStakeVal;
             let stake = Math.ceil((deficitSerie * 0.55) + baseStakeVal);
             return Math.max(baseStakeVal + 1, stake);
         }
 
-        // MARTINGALE ADOUCIE POUR LA PÉPITE (x1.4 au lieu de x2 après une défaite)
         function computePepiteNextMartStake(currentStake) {
             let next = Math.ceil(currentStake * 1.4);
             return next <= currentStake ? currentStake + 1 : next;
@@ -1788,14 +1921,18 @@
                 if (!canceledRace) {
                     let algoResult = computeAlgorithm(partants, currentRaceKey, isLocked);
                     let { processed, baseHorse, nuggetHorse } = algoResult;
+                    let qualif = evaluateBaseQualification(baseHorse, processed.length);
 
                     if (baseHorse) {
                         let realPlaBase = isPayableComplete ? extractGainFromRapports(rapportsList, baseHorse.num, 'PLACE') : 0;
+                        let qualTag = qualif.qualified
+                            ? (baseHorse.isAntiDaiSwitch ? ' | 🛡️ Anti-DAI' : ' | ✅ Qualifiée')
+                            : ` | ⏭️ Filtrée (${qualif.reason})`;
                         let plaTag = isPayableComplete
-                            ? (realPlaBase > 0 ? ` | ✅ Placé: ${realPlaBase.toFixed(2)}€/1€` : ` | ❌ Non placé`)
+                            ? (realPlaBase > 0 ? ` | 💰 Placé: ${realPlaBase.toFixed(2)}€` : ` | ❌ Non placé`)
                             : '';
                         document.getElementById('top1Name').textContent = `${baseHorse.num}. ${baseHorse.nom}`;
-                        document.getElementById('top1Stats').textContent = `Cote : ${baseHorse.coteDisplay} | Confiance : ${baseHorse.baseScore}%${plaTag}`;
+                        document.getElementById('top1Stats').textContent = `Cote : ${baseHorse.coteDisplay}${qualTag}${plaTag}`;
                     } else {
                         document.getElementById('top1Name').textContent = `Attente cotes...`;
                     }
@@ -1803,7 +1940,7 @@
                     if (nuggetHorse) {
                         let realPlaPep = isPayableComplete ? extractGainFromRapports(rapportsList, nuggetHorse.num, 'PLACE') : 0;
                         let plaTagPep = isPayableComplete
-                            ? (realPlaPep > 0 ? ` | ✅ Placé: ${realPlaPep.toFixed(2)}€/1€` : ` | ❌ Non placé`)
+                            ? (realPlaPep > 0 ? ` | 💰 Placé: ${realPlaPep.toFixed(2)}€` : ` | ❌ Non placé`)
                             : '';
                         document.getElementById('top2Name').textContent = `${nuggetHorse.num}. ${nuggetHorse.nom}`;
                         document.getElementById('top2Stats').textContent = `Cote : ${nuggetHorse.coteDisplay} | Potentiel : ${nuggetHorse.nuggetScore}%${plaTagPep}`;
@@ -1820,7 +1957,7 @@
                         processed.forEach(p => {
                             let tr = document.createElement('tr');
                             let tag = p.ordreArrivee ? `<span class="ml-2 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">🏁 ${p.ordreArrivee === 1 ? '1er' : 'Placé'}</span>` : '';
-                            if (p.num === baseHorse?.num) tag += '<span class="ml-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold ml-1">Favori</span>';
+                            if (p.num === baseHorse?.num) tag += '<span class="ml-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold ml-1">Base</span>';
                             if (p.num === nuggetHorse?.num) tag += '<span class="ml-2 text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold ml-1">Pépite</span>';
                             
                             let isSelected = globalBets[currentRaceKey] && globalBets[currentRaceKey].num === p.num;
@@ -1858,7 +1995,6 @@
                     <div class="flex items-center flex-wrap gap-y-1">
                         <span class="mr-2 text-amber-400 font-bold">R${rNum}C${cNum}</span>
                         <span class="mr-2 text-zinc-300 font-mono">${timeInfo}</span>
-                        <span>Sélection par cotes</span>
                         ${discBadge} ${statusBadge}
                     </div>
                 `;
@@ -1879,7 +2015,7 @@
                 manualProfit: Number(manualProfit) || 0,
                 updatedAt: Date.now()
             };
-            safeSaveStatItem(`pmu_stats_unified_v49_${mode}_${ddmmyyyy}`, histObj);
+            safeSaveStatItem(`pmu_stats_unified_v50_${mode}_${ddmmyyyy}`, histObj);
         }
 
         function saveCurrentDayStatsToHistory() {
@@ -1896,7 +2032,7 @@
 
         function getStatForDateObj(d) {
             let ddmmyyyy = `${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
-            let key = `pmu_stats_unified_v49_${currentDisciplineMode}_${ddmmyyyy}`;
+            let key = `pmu_stats_unified_v50_${currentDisciplineMode}_${ddmmyyyy}`;
             let saved = localStorage.getItem(key);
             if (saved) {
                 try {
@@ -2011,7 +2147,7 @@
                 }
             }
             if(monthsGrid.innerHTML === '') {
-                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Cliquez sur "Calculer la Semaine" ou "Calculer le Mois" ci-dessus pour synchroniser vos journées passées.</div>';
+                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Cliquez sur "Calculer la Semaine" ou "Calculer le Mois" ci-dessus pour analyser les résultats PMU réels.</div>';
             }
         }
 
@@ -2116,6 +2252,7 @@
             pastRaces.sort((a, b) => (a.time - b.time) || (a.rNum - b.rNum) || (a.cNum - b.cNum));
             let totalProfitBasePla = 0, totalProfitPepitePla = 0;
             let totalProfitBaseMart = 0, totalProfitPepiteMart = 0;
+            let totalSpentBase = 0, totalSpentBaseMart = 0;
             let deficitSerieBase = 0, deficitSeriePepite = 0;
             let currentMartStakeBase = STAKE_BASE, currentMartStakePepite = STAKE_PEPITE;
             let coursesValidees = 0;
@@ -2146,46 +2283,54 @@
                     }
                 }
 
-                // IGNORE TOTALEMENT LA COURSE SI ELLE EST ANNULÉE OU N'A AUCUN RAPPORT VALIDE PAYÉ
                 if (!raceData || !raceData.partants || raceData.partants.length === 0) continue;
                 if (!isRaceTrulyRunAndPayable(r.courseObj, raceData.partants, raceData.rapportsList)) continue;
 
                 let algoResult = computeAlgorithm(raceData.partants, rKey, true);
                 let baseH = algoResult.baseHorse;
                 let nuggetH = algoResult.nuggetHorse;
+                let qualif = evaluateBaseQualification(baseH, algoResult.processed.length);
 
-                if (baseH) {
+                if (baseH && qualif.qualified) {
                     coursesValidees++;
-                    // Utilise 100% le vrai rapport Simple Placé PMU officiel
                     let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
 
-                    // 1. Base Placé Martingale
-                    let martStakeB = currentMartStakeBase;
-                    if (gPla > 0) {
-                        totalProfitBaseMart += (gPla * martStakeB) - martStakeB;
-                        currentMartStakeBase = STAKE_BASE;
-                    } else {
-                        totalProfitBaseMart -= martStakeB;
-                        currentMartStakeBase = martStakeB * 2;
+                    // 1. Base Placé Martingale (avec respect du plafond de mises journalier et du Stop-Win)
+                    let stopWinMartReached = (DAILY_STOP_WIN_BASE > 0 && totalProfitBaseMart >= DAILY_STOP_WIN_BASE);
+                    let remBudgetMart = MAX_DAILY_SPENT_BASE - totalSpentBaseMart;
+                    if (!stopWinMartReached && remBudgetMart >= STAKE_BASE) {
+                        let martStakeB = Math.min(currentMartStakeBase, Math.floor(remBudgetMart));
+                        totalSpentBaseMart += martStakeB;
+                        if (gPla > 0) {
+                            totalProfitBaseMart += (gPla * martStakeB) - martStakeB;
+                            currentMartStakeBase = STAKE_BASE;
+                        } else {
+                            totalProfitBaseMart -= martStakeB;
+                            currentMartStakeBase = martStakeB * 2;
+                        }
                     }
 
-                    // 2. Base Placé Proportionnelle (2€ : x1.65 / x1.35)
-                    let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
-                    if (gPla > 0) {
-                        let netBasePla = (gPla * actualStakeBase) - actualStakeBase;
-                        totalProfitBasePla += netBasePla;
-                        deficitSerieBase = Math.max(0, deficitSerieBase - netBasePla);
-                    } else {
-                        totalProfitBasePla -= actualStakeBase;
-                        deficitSerieBase += actualStakeBase;
+                    // 2. Base Placé Proportionnelle (avec respect strict du plafond 1000€/j et du Stop-Win)
+                    let stopWinPropReached = (DAILY_STOP_WIN_BASE > 0 && totalProfitBasePla >= DAILY_STOP_WIN_BASE);
+                    let remBudgetProp = MAX_DAILY_SPENT_BASE - totalSpentBase;
+                    if (!stopWinPropReached && remBudgetProp >= STAKE_BASE) {
+                        let desiredStake = computeSmartStake(deficitSerieBase, STAKE_BASE);
+                        let actualStakeBase = Math.min(desiredStake, Math.floor(remBudgetProp));
+                        totalSpentBase += actualStakeBase;
+                        if (gPla > 0) {
+                            let netBasePla = (gPla * actualStakeBase) - actualStakeBase;
+                            totalProfitBasePla += netBasePla;
+                            deficitSerieBase = Math.max(0, deficitSerieBase - netBasePla);
+                        } else {
+                            totalProfitBasePla -= actualStakeBase;
+                            deficitSerieBase += actualStakeBase;
+                        }
                     }
                 }
 
                 if (nuggetH) {
-                    // Utilise 100% le vrai rapport Simple Placé PMU officiel
                     let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
 
-                    // 1. Pépite Placé Martingale Adoucie
                     let martStakeP = currentMartStakePepite;
                     if (gPla > 0) {
                         totalProfitPepiteMart += (gPla * martStakeP) - martStakeP;
@@ -2195,7 +2340,6 @@
                         currentMartStakePepite = computePepiteNextMartStake(martStakeP);
                     }
 
-                    // 2. Pépite Placé Proportionnel Adouci
                     let simStakePepite = computePepiteSmartStake(deficitSeriePepite, STAKE_PEPITE);
                     if (gPla > 0) {
                         let netPepitePla = (gPla * simStakePepite) - simStakePepite;
@@ -2208,7 +2352,7 @@
                 }
             }
 
-            if (coursesValidees > 0) {
+            if (coursesValidees > 0 || totalProfitPepitePla !== 0) {
                 let dayBets = safeGetLocal(`fabturf_v21_bets_` + yyyymmdd);
                 let existing = getStatForDateObj(parseLocalYYYYMMDD(yyyymmdd));
                 let manualNet = Object.keys(dayBets).length > 0 ? existing.manualProfit : 0;
@@ -2256,7 +2400,8 @@
                     return;
                 }
 
-                let baseWinsPla = 0, pepiteWinsPla = 0;
+                let baseWinsPla = 0, baseWinsMart = 0, pepiteWinsPla = 0;
+                let basePlayedProp = 0, basePlayedMart = 0;
                 let totalSpentBase = 0, totalSpentPepite = 0;
                 let totalSpentBaseMart = 0, totalSpentPepiteMart = 0;
                 let maxStakeBase = 0, maxStakePepite = 0;
@@ -2304,53 +2449,64 @@
                         }
                     }
 
-                    // IGNORE TOTALEMENT LES COURSES ANNULÉES OU REMBOURSÉES (EX: AMIENS)
                     if (!raceData || !raceData.partants || raceData.partants.length === 0) continue;
                     if (!isRaceTrulyRunAndPayable(r.courseObj, raceData.partants, raceData.rapportsList)) continue;
 
+                    coursesValidees++;
                     let algoResult = computeAlgorithm(raceData.partants, rKey, true);
                     let baseH = algoResult.baseHorse;
                     let nuggetH = algoResult.nuggetHorse;
+                    let qualif = evaluateBaseQualification(baseH, algoResult.processed.length);
 
-                    // CALCUL BASE PLACÉ (2€) AVEC VRAI RAPPORT PMU OFFICIEL
-                    if (baseH) {
-                        coursesValidees++;
+                    // CALCUL BASE PLACÉ (AVEC FILTRE QUALITÉ + PLAFOND 1000€/J + STOP-WIN)
+                    if (baseH && qualif.qualified) {
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
 
                         // 1. Base Placé Martingale
-                        let martStakeB = currentMartStakeBase;
-                        totalSpentBaseMart += martStakeB;
-                        if (martStakeB > maxStakeBaseMart) maxStakeBaseMart = martStakeB;
-                        if (gPla > 0) {
-                            totalProfitBaseMart += (gPla * martStakeB) - martStakeB;
-                            currentMartStakeBase = STAKE_BASE;
-                        } else {
-                            totalProfitBaseMart -= martStakeB;
-                            currentMartStakeBase = martStakeB * 2;
+                        let stopWinMartReached = (DAILY_STOP_WIN_BASE > 0 && totalProfitBaseMart >= DAILY_STOP_WIN_BASE);
+                        let remBudgetMart = MAX_DAILY_SPENT_BASE - totalSpentBaseMart;
+                        if (!stopWinMartReached && remBudgetMart >= STAKE_BASE) {
+                            basePlayedMart++;
+                            let martStakeB = Math.min(currentMartStakeBase, Math.floor(remBudgetMart));
+                            totalSpentBaseMart += martStakeB;
+                            if (martStakeB > maxStakeBaseMart) maxStakeBaseMart = martStakeB;
+                            if (gPla > 0) {
+                                baseWinsMart++;
+                                totalProfitBaseMart += (gPla * martStakeB) - martStakeB;
+                                currentMartStakeBase = STAKE_BASE;
+                            } else {
+                                totalProfitBaseMart -= martStakeB;
+                                currentMartStakeBase = martStakeB * 2;
+                            }
                         }
 
-                        // 2. Base Placé Proportionnelle (2€ : x1.65 / x1.35)
-                        let actualStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
-                        totalSpentBase += actualStakeBase;
-                        if (actualStakeBase > maxStakeBase) maxStakeBase = actualStakeBase;
-                        
-                        if (gPla > 0) {
-                            baseWinsPla++; 
-                            let netBasePla = (gPla * actualStakeBase) - actualStakeBase;
-                            totalProfitBasePla += netBasePla;
-                            deficitSerieBase = Math.max(0, deficitSerieBase - netBasePla);
-                        } else {
-                            totalProfitBasePla -= actualStakeBase;
-                            deficitSerieBase += actualStakeBase;
+                        // 2. Base Placé Proportionnelle Optimisée
+                        let stopWinPropReached = (DAILY_STOP_WIN_BASE > 0 && totalProfitBasePla >= DAILY_STOP_WIN_BASE);
+                        let remBudgetProp = MAX_DAILY_SPENT_BASE - totalSpentBase;
+                        if (!stopWinPropReached && remBudgetProp >= STAKE_BASE) {
+                            basePlayedProp++;
+                            let desiredStake = computeSmartStake(deficitSerieBase, STAKE_BASE);
+                            let actualStakeBase = Math.min(desiredStake, Math.floor(remBudgetProp));
+                            totalSpentBase += actualStakeBase;
+                            if (actualStakeBase > maxStakeBase) maxStakeBase = actualStakeBase;
+                            
+                            if (gPla > 0) {
+                                baseWinsPla++; 
+                                let netBasePla = (gPla * actualStakeBase) - actualStakeBase;
+                                totalProfitBasePla += netBasePla;
+                                deficitSerieBase = Math.max(0, deficitSerieBase - netBasePla);
+                            } else {
+                                totalProfitBasePla -= actualStakeBase;
+                                deficitSerieBase += actualStakeBase;
+                            }
                         }
                     }
 
-                    // CALCUL PÉPITE PLACÉ ADOUCI (2€) AVEC VRAI RAPPORT PMU OFFICIEL
+                    // CALCUL PÉPITE PLACÉ ADOUCI (2€)
                     if (nuggetH) {
                         coursesPepiteValidees++;
                         let gPla = extractGainFromRapports(raceData.rapportsList, nuggetH.num, 'PLACE');
 
-                        // 1. Pépite Placé Martingale Adoucie (x1.4)
                         let martStakeP = currentMartStakePepite;
                         totalSpentPepiteMart += martStakeP;
                         if (martStakeP > maxStakePepiteMart) maxStakePepiteMart = martStakeP;
@@ -2362,7 +2518,6 @@
                             currentMartStakePepite = computePepiteNextMartStake(martStakeP);
                         }
 
-                        // 2. Pépite Placé Proportionnel Adouci (x0.55)
                         let simStakePepite = computePepiteSmartStake(deficitSeriePepite, STAKE_PEPITE);
                         totalSpentPepite += simStakePepite;
                         if (simStakePepite > maxStakePepite) maxStakePepite = simStakePepite;
@@ -2378,8 +2533,12 @@
                         }
                     }
 
-                    document.getElementById('statBaseMart').textContent = `${baseWinsPla} / ${coursesValidees}`;
-                    document.getElementById('statBasePla').textContent = `${baseWinsPla} / ${coursesValidees}`;
+                    let remBudgetNow = Math.max(0, MAX_DAILY_SPENT_BASE - totalSpentBase);
+                    let stopWinNow = (DAILY_STOP_WIN_BASE > 0 && totalProfitBasePla >= DAILY_STOP_WIN_BASE);
+                    let capHitNow = (remBudgetNow < STAKE_BASE);
+
+                    document.getElementById('statBaseMart').textContent = `${baseWinsMart} / ${basePlayedMart}`;
+                    document.getElementById('statBasePla').textContent = `${baseWinsPla} / ${basePlayedProp}`;
                     document.getElementById('statPepiteMart').textContent = `${pepiteWinsPla} / ${coursesPepiteValidees}`;
                     document.getElementById('statPepitePla').textContent = `${pepiteWinsPla} / ${coursesPepiteValidees}`;
                     document.getElementById('gainBaseMart').innerHTML = formatMoneyHTML(totalProfitBaseMart);
@@ -2392,6 +2551,7 @@
                     document.getElementById('maxStakeBaseMartText').textContent = `${maxStakeBaseMart.toFixed(2)} €`;
                     document.getElementById('maxStakeBaseText').textContent = `${maxStakeBase.toFixed(2)} €`;
                     document.getElementById('deficitBaseText').textContent = `${deficitSerieBase.toFixed(2)} €`;
+                    document.getElementById('remainingBudgetText').textContent = `${remBudgetNow.toFixed(0)}€`;
                     
                     document.getElementById('totalSpentPepiteMartText').textContent = `${totalSpentPepiteMart.toFixed(2)} €`;
                     document.getElementById('totalSpentPepiteText').textContent = `${totalSpentPepite.toFixed(2)} €`;
@@ -2399,14 +2559,32 @@
                     document.getElementById('maxStakePepiteText').textContent = `${maxStakePepite.toFixed(2)} €`;
                     document.getElementById('deficitPepiteText').textContent = `${deficitSeriePepite.toFixed(2)} €`;
 
-                    let nextStakeBase = computeSmartStake(deficitSerieBase, STAKE_BASE);
+                    let rawNextProp = computeSmartStake(deficitSerieBase, STAKE_BASE);
+                    let nextStakeBase = stopWinNow || capHitNow ? 0 : Math.min(rawNextProp, Math.floor(remBudgetNow));
                     let nextStakePepite = computePepiteSmartStake(deficitSeriePepite, STAKE_PEPITE);
+                    let remMartNow = Math.max(0, MAX_DAILY_SPENT_BASE - totalSpentBaseMart);
+                    let nextMartDisp = (DAILY_STOP_WIN_BASE > 0 && totalProfitBaseMart >= DAILY_STOP_WIN_BASE) || remMartNow < STAKE_BASE
+                        ? 0 : Math.min(currentMartStakeBase, Math.floor(remMartNow));
                     
-                    document.getElementById('nextStakeBaseMartText').textContent = `Mart: ${currentMartStakeBase.toFixed(2)} €`;
-                    document.getElementById('nextStakeBaseText').textContent = `Prop: ${nextStakeBase.toFixed(2)} €`;
+                    document.getElementById('nextStakeBaseMartText').textContent = nextMartDisp === 0 ? `Mart: STOP` : `Mart: ${nextMartDisp.toFixed(2)} €`;
+                    document.getElementById('nextStakeBaseText').textContent = stopWinNow ? `🏆 STOP-WIN` : (capHitNow ? `🛑 PLAFOND` : `Prop: ${nextStakeBase.toFixed(2)} €`);
                     document.getElementById('nextStakePepiteMartText').textContent = `Mart: ${currentMartStakePepite.toFixed(2)} €`;
                     document.getElementById('nextStakePepiteText').textContent = `Prop: ${nextStakePepite.toFixed(2)} €`;
-                    document.getElementById('headerNextStake').textContent = `${currentMartStakeBase.toFixed(0)}€ | ${nextStakeBase.toFixed(0)}€`;
+                    document.getElementById('headerNextStake').textContent = stopWinNow ? `🏆 STOP` : (capHitNow ? `🛑 MAX` : `${nextMartDisp.toFixed(0)}€ | ${nextStakeBase.toFixed(0)}€`);
+
+                    let sb = document.getElementById('dailyStatusBadge');
+                    if (sb) {
+                        if (stopWinNow) {
+                            sb.textContent = `🏆 Stop-Win +${DAILY_STOP_WIN_BASE}€ atteint`;
+                            sb.className = "text-[9px] font-bold px-2 py-0.5 rounded border border-emerald-500/50 bg-emerald-900/50 text-emerald-300";
+                        } else if (capHitNow) {
+                            sb.textContent = `🛑 Plafond ${MAX_DAILY_SPENT_BASE}€ atteint`;
+                            sb.className = "text-[9px] font-bold px-2 py-0.5 rounded border border-red-500/50 bg-red-900/50 text-red-300";
+                        } else {
+                            sb.textContent = `Actif (${basePlayedProp} jouées)`;
+                            sb.className = "text-[9px] font-bold px-2 py-0.5 rounded border border-zinc-700 bg-zinc-800 text-zinc-300";
+                        }
+                    }
 
                     if (coursesValidees > 0) {
                         saveDayStatsToStorage(ddmmyyyy, currentDisciplineMode, totalProfitBasePla, totalProfitPepitePla, 0, totalProfitBaseMart, totalProfitPepiteMart);
