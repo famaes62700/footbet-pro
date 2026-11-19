@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V52 Diagnostic Complet & Anti-Blocage Trot</title>
+    <title>Turf - V53 Capital Net 1000€ (Volume de Jeu Illimité)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -27,7 +27,7 @@
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-700">
-                    <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">V52</span>
+                    <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">V53</span>
                 </h1>
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2.5 py-1.5 rounded-xl border border-zinc-700 cursor-pointer focus:outline-none focus:border-amber-500 shadow" onchange="onDateChange()">
             </div>
@@ -149,8 +149,8 @@
                     <span class="text-[9px] text-zinc-400 uppercase font-bold">Mise Base (€)</span>
                     <input type="number" id="inputBaseStake" min="1" max="50" step="1" value="8" class="bg-transparent text-emerald-400 font-black text-sm focus:outline-none mt-0.5">
                 </label>
-                <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
-                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Plafond Mises/j (€)</span>
+                <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col" title="Capital net maximum engagé (perte nette max & mise max), sans bloquer le volume cumulé">
+                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Capital / Max Net (€)</span>
                     <input type="number" id="inputMaxDailySpent" min="50" max="10000" step="50" value="1000" class="bg-transparent text-amber-400 font-black text-sm focus:outline-none mt-0.5">
                 </label>
                 <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
@@ -171,7 +171,7 @@
             <div class="flex flex-wrap justify-between items-center gap-2 border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (Rapports PMU Réels • Hors Annulées)</h2>
-                    <p id="bilanSubtitle" class="text-[10px] text-zinc-400">Base 8€ (Plafond 1000€/j • Stop-Win +50€) • Pépite 2€ Adoucie</p>
+                    <p id="bilanSubtitle" class="text-[10px] text-zinc-400">Base 8€ (Capital Net 1000€ • Stop-Win +50€) • Pépite 2€ Adoucie</p>
                     <p id="scanDetailLine" class="text-[10px] text-zinc-400 font-mono mt-0.5">Chargées: 0 | Filtrées: 0 | Jouées Base: 0</p>
                 </div>
                 <div class="flex items-center space-x-1.5">
@@ -182,13 +182,11 @@
                 </div>
             </div>
 
-            <!-- BANDEAU EXPLICATIF SI STOP-WIN OU PLAFOND COUPE LA JOURNÉE -->
             <div id="stopReasonBanner" style="display: none;" class="bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 text-[11px] px-3 py-2 rounded-xl flex justify-between items-center">
                 <span id="stopReasonText"></span>
                 <button onclick="disableLimitsAndRecalc()" class="text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-0.5 rounded ml-2 flex-shrink-0 cursor-pointer">Voir sans limite</button>
             </div>
 
-            <!-- JOURNAL DÉTAILLÉ DES COURSES ANALYSÉES -->
             <div id="auditLogContainer" style="display: none;" class="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 max-h-64 overflow-y-auto text-[10px] font-mono">
                 <table class="w-full text-left">
                     <thead>
@@ -241,10 +239,10 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/50 text-zinc-300">
                 <div class="flex flex-col space-y-1 sm:border-r border-zinc-700/50 sm:pr-3">
-                    <span id="investBaseTitle" class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement Base (Max 1000€/j)</span>
-                    <span class="flex justify-between">Joué (Mart. | Prop.): <strong class="text-white"><span id="totalSpentBaseMartText" class="text-cyan-300">0.00 €</span> | <span id="totalSpentText" class="text-emerald-300">0.00 €</span></strong></span>
-                    <span class="flex justify-between">Max (Mart. | Prop.): <strong class="text-zinc-300"><span id="maxStakeBaseMartText" class="text-cyan-300">0.00 €</span> | <span id="maxStakeBaseText" class="text-emerald-300">0.00 €</span></strong></span>
-                    <span class="flex justify-between">Déficit Prop. | Reste Budget: <strong class="text-zinc-300"><span id="deficitBaseText" class="text-red-400">0.00 €</span> | <span id="remainingBudgetText" class="text-amber-300">1000€</span></strong></span>
+                    <span id="investBaseTitle" class="text-[9px] uppercase text-emerald-400 font-bold mb-0.5">Investissement Base (Capital Net 1000€)</span>
+                    <span class="flex justify-between">Volume Joué (Mart. | Prop.): <strong class="text-white"><span id="totalSpentBaseMartText" class="text-cyan-300">0.00 €</span> | <span id="totalSpentText" class="text-emerald-300">0.00 €</span></strong></span>
+                    <span class="flex justify-between">Mise Max (Mart. | Prop.): <strong class="text-zinc-300"><span id="maxStakeBaseMartText" class="text-cyan-300">0.00 €</span> | <span id="maxStakeBaseText" class="text-emerald-300">0.00 €</span></strong></span>
+                    <span class="flex justify-between">Déficit Prop. | Caisse Dispo: <strong class="text-zinc-300"><span id="deficitBaseText" class="text-red-400">0.00 €</span> | <span id="remainingBudgetText" class="text-amber-300">1000€</span></strong></span>
                     <div class="grid grid-cols-2 gap-1.5 pt-1.5">
                         <strong id="nextStakeBaseMartText" class="text-cyan-300 bg-zinc-900 px-1.5 py-1 rounded border border-cyan-500/30 font-black text-[10px] shadow-md block text-center">Mart: 8.00 €</strong>
                         <strong id="nextStakeBaseText" class="text-emerald-400 bg-zinc-900 px-1.5 py-1 rounded border border-emerald-500/30 font-black text-[10px] shadow-md block text-center">Prop: 8.00 €</strong>
@@ -411,10 +409,10 @@
     </div>
 
     <script>
-        const CACHE_VERSION = "v52";
+        const CACHE_VERSION = "v53";
         
         let STAKE_BASE = 8.0;
-        let MAX_DAILY_SPENT_BASE = 1000.0;
+        let MAX_NET_RISK_BASE = 1000.0; // Capital net max / mise unitaire max (ne bloque pas le volume total de jeu)
         let DAILY_STOP_WIN_BASE = 50.0;
         let TROT_QUALITY_FILTER = true;
 
@@ -429,13 +427,13 @@
             try {
                 let saved = JSON.parse(localStorage.getItem('fabturf_v50_settings') || '{}');
                 if (saved.baseStake >= 1 && saved.baseStake <= 100) STAKE_BASE = Number(saved.baseStake);
-                if (saved.maxDailySpent >= 50 && saved.maxDailySpent <= 10000) MAX_DAILY_SPENT_BASE = Number(saved.maxDailySpent);
+                if (saved.maxDailySpent >= 50 && saved.maxDailySpent <= 10000) MAX_NET_RISK_BASE = Number(saved.maxDailySpent);
                 if (saved.stopWin >= 0 && saved.stopWin <= 2000) DAILY_STOP_WIN_BASE = Number(saved.stopWin);
                 if (typeof saved.trotFilter === 'boolean') TROT_QUALITY_FILTER = saved.trotFilter;
             } catch(e) {}
 
             document.getElementById('inputBaseStake').value = STAKE_BASE;
-            document.getElementById('inputMaxDailySpent').value = MAX_DAILY_SPENT_BASE;
+            document.getElementById('inputMaxDailySpent').value = MAX_NET_RISK_BASE;
             document.getElementById('inputStopWin').value = DAILY_STOP_WIN_BASE;
             document.getElementById('chkTrotFilter').checked = TROT_QUALITY_FILTER;
             updateStrategyLabelsUI();
@@ -448,8 +446,8 @@
             document.getElementById('lblTrotFilterState').className = TROT_QUALITY_FILTER ? 'text-[10px] font-bold text-emerald-400' : 'text-[10px] font-bold text-zinc-500';
             document.getElementById('badgeBaseStake').textContent = `FAVORI PLACÉ (${STAKE_BASE}€)`;
             document.getElementById('top1TitleLabel').textContent = `Favori Base (${STAKE_BASE}€)`;
-            document.getElementById('investBaseTitle').textContent = `Investissement Base (Max ${MAX_DAILY_SPENT_BASE}€/j)`;
-            document.getElementById('bilanSubtitle').textContent = `Base ${STAKE_BASE}€ (Plafond ${MAX_DAILY_SPENT_BASE}€/j • ${swTxt}) • Pépite 2€`;
+            document.getElementById('investBaseTitle').textContent = `Investissement Base (Capital Net ${MAX_NET_RISK_BASE}€)`;
+            document.getElementById('bilanSubtitle').textContent = `Base ${STAKE_BASE}€ (Capital Net ${MAX_NET_RISK_BASE}€ • ${swTxt}) • Pépite 2€`;
         }
 
         function disableLimitsAndRecalc() {
@@ -465,24 +463,24 @@
             let fVal = document.getElementById('chkTrotFilter').checked;
 
             STAKE_BASE = (!isNaN(bVal) && bVal >= 1) ? Math.round(bVal) : 8;
-            MAX_DAILY_SPENT_BASE = (!isNaN(mVal) && mVal >= 50) ? Math.round(mVal) : 1000;
+            MAX_NET_RISK_BASE = (!isNaN(mVal) && mVal >= 50) ? Math.round(mVal) : 1000;
             DAILY_STOP_WIN_BASE = (!isNaN(sVal) && sVal >= 0) ? Math.round(sVal) : 0;
             TROT_QUALITY_FILTER = Boolean(fVal);
 
             safeSetLocal('fabturf_v50_settings', {
                 baseStake: STAKE_BASE,
-                maxDailySpent: MAX_DAILY_SPENT_BASE,
+                maxDailySpent: MAX_NET_RISK_BASE,
                 stopWin: DAILY_STOP_WIN_BASE,
                 trotFilter: TROT_QUALITY_FILTER
             });
 
             Object.keys(localStorage).forEach(k => {
-                if (k.startsWith('pmu_stats_unified_v52_')) localStorage.removeItem(k);
+                if (k.startsWith('pmu_stats_unified_v53_')) localStorage.removeItem(k);
             });
 
             updateStrategyLabelsUI();
             resetCountersUI();
-            showToast(`Recalcul : Base ${STAKE_BASE}€, Stop-Win ${DAILY_STOP_WIN_BASE}€, Filtre ${TROT_QUALITY_FILTER ? 'ON' : 'OFF'}`, "success");
+            showToast(`Recalcul : Base ${STAKE_BASE}€, Capital Net ${MAX_NET_RISK_BASE}€, Stop-Win ${DAILY_STOP_WIN_BASE}€`, "success");
             fetchRaceData(false);
             calculateDailyStats(false);
         }
@@ -623,7 +621,7 @@
                 
                 document.getElementById('deficitBaseText').textContent = "0.00 €";
                 document.getElementById('deficitPepiteText').textContent = "0.00 €";
-                document.getElementById('remainingBudgetText').textContent = `${MAX_DAILY_SPENT_BASE.toFixed(0)}€`;
+                document.getElementById('remainingBudgetText').textContent = `${MAX_NET_RISK_BASE.toFixed(0)}€`;
                 
                 document.getElementById('headerNextStake').textContent = `${STAKE_BASE.toFixed(0)}€ | ${STAKE_BASE.toFixed(0)}€`;
                 document.getElementById('nextStakeBaseMartText').textContent = `Mart: ${STAKE_BASE.toFixed(2)} €`;
@@ -707,7 +705,7 @@
                     localStorage.removeItem(k);
                 }
             });
-            showToast("Mémoire purgée ! Recalcul V52 complet...", "success");
+            showToast("Mémoire purgée ! Recalcul V53 complet...", "success");
             resetCountersUI();
             loadLivePmu();
         }
@@ -889,7 +887,6 @@
             }
         }
 
-        // RAFRAÎCHISSEMENT AUTOMATIQUE UNIQUEMENT SUR LA DATE DU JOUR
         setInterval(() => {
             let dateInput = document.getElementById('raceDate').value;
             if (dateInput !== getLocalDateString()) return;
@@ -901,7 +898,6 @@
             checkStartAlarm();
         }, 10000);
 
-        // NORMALISATION DES ACCENTS POUR NE RATER AUCUNE COURSE DE TROT (MONTÉ / ATTELÉ)
         function isTargetDisciplineRace(course) {
             let d = String(course.discipline || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             let s = String(course.specialite || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -966,7 +962,6 @@
             }
         }
 
-        // MOTEUR PMU CORRIGÉ : STOP IMMÉDIAT SUR 204/404 LORSQUE allowEmpty = true (NE BRÛLE PLUS LES 4 PROXIES)
         async function smartFetchPMU(path, allowEmpty = false, useCacheBuster = true) {
             const sep = path.includes('?') ? '&' : '?';
             const finalPath = useCacheBuster ? `${path}${sep}_t=${Date.now()}` : path;
@@ -1179,7 +1174,6 @@
             let hasStarted = isPastDate || (raceStartTime === 0) || isCourseStartedOrFinished(courseObj, Date.now());
             let reportsFailed = false;
 
-            // allowEmpty = true : un 204/404 sur une course sans rapport s'arrête proprement sans saturer les proxies
             if (checkReports && partants.length > 0 && (hasArrival || hasStarted)) {
                 try {
                     let rData = await smartFetchPMU(`${dateStr}/R${rNum}/C${cNum}/rapports-definitifs?specialisation=INTERNET`, true, useBuster);
@@ -2078,7 +2072,7 @@
                 manualProfit: Number(manualProfit) || 0,
                 updatedAt: Date.now()
             };
-            safeSaveStatItem(`pmu_stats_unified_v52_${mode}_${ddmmyyyy}`, histObj);
+            safeSaveStatItem(`pmu_stats_unified_v53_${mode}_${ddmmyyyy}`, histObj);
         }
 
         function saveCurrentDayStatsToHistory() {
@@ -2095,7 +2089,7 @@
 
         function getStatForDateObj(d) {
             let ddmmyyyy = `${String(d.getDate()).padStart(2, '0')}${String(d.getMonth()+1).padStart(2, '0')}${d.getFullYear()}`;
-            let key = `pmu_stats_unified_v52_${currentDisciplineMode}_${ddmmyyyy}`;
+            let key = `pmu_stats_unified_v53_${currentDisciplineMode}_${ddmmyyyy}`;
             let saved = localStorage.getItem(key);
             if (saved) {
                 try {
@@ -2309,7 +2303,6 @@
             pastRaces.sort((a, b) => (a.time - b.time) || (a.rNum - b.rNum) || (a.cNum - b.cNum));
             let totalProfitBasePla = 0, totalProfitPepitePla = 0;
             let totalProfitBaseMart = 0, totalProfitPepiteMart = 0;
-            let totalSpentBase = 0, totalSpentBaseMart = 0;
             let deficitSerieBase = 0, deficitSeriePepite = 0;
             let currentMartStakeBase = STAKE_BASE, currentMartStakePepite = STAKE_PEPITE;
             let coursesValidees = 0;
@@ -2350,11 +2343,11 @@
                 if (baseH && qualif.qualified) {
                     let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
 
+                    // 1. Base Martingale : contrôle sur le capital net disponible (1000€ + gains nets)
                     let stopWinMartReached = (DAILY_STOP_WIN_BASE > 0 && totalProfitBaseMart >= DAILY_STOP_WIN_BASE);
-                    let remBudgetMart = MAX_DAILY_SPENT_BASE - totalSpentBaseMart;
-                    if (!stopWinMartReached && remBudgetMart >= STAKE_BASE) {
-                        let martStakeB = Math.min(currentMartStakeBase, Math.floor(remBudgetMart));
-                        totalSpentBaseMart += martStakeB;
+                    let availableMart = MAX_NET_RISK_BASE + totalProfitBaseMart;
+                    if (!stopWinMartReached && availableMart >= STAKE_BASE) {
+                        let martStakeB = Math.min(currentMartStakeBase, MAX_NET_RISK_BASE, Math.floor(availableMart));
                         if (gPla > 0) {
                             totalProfitBaseMart += (gPla * martStakeB) - martStakeB;
                             currentMartStakeBase = STAKE_BASE;
@@ -2364,12 +2357,12 @@
                         }
                     }
 
+                    // 2. Base Proportionnelle : contrôle sur le capital net disponible (1000€ + gains nets)
                     let stopWinPropReached = (DAILY_STOP_WIN_BASE > 0 && totalProfitBasePla >= DAILY_STOP_WIN_BASE);
-                    let remBudgetProp = MAX_DAILY_SPENT_BASE - totalSpentBase;
-                    if (!stopWinPropReached && remBudgetProp >= STAKE_BASE) {
+                    let availableProp = MAX_NET_RISK_BASE + totalProfitBasePla;
+                    if (!stopWinPropReached && availableProp >= STAKE_BASE) {
                         let desiredStake = computeSmartStake(deficitSerieBase, STAKE_BASE);
-                        let actualStakeBase = Math.min(desiredStake, Math.floor(remBudgetProp));
-                        totalSpentBase += actualStakeBase;
+                        let actualStakeBase = Math.min(desiredStake, MAX_NET_RISK_BASE, Math.floor(availableProp));
                         if (gPla > 0) {
                             let netBasePla = (gPla * actualStakeBase) - actualStakeBase;
                             totalProfitBasePla += netBasePla;
@@ -2533,11 +2526,12 @@
                     if (baseH && qualif.qualified) {
                         let gPla = extractGainFromRapports(raceData.rapportsList, baseH.num, 'PLACE');
 
+                        // 1. Base Martingale : contrôle uniquement sur le capital net disponible (1000€ + gains nets)
                         let stopWinMartReached = (DAILY_STOP_WIN_BASE > 0 && totalProfitBaseMart >= DAILY_STOP_WIN_BASE);
-                        let remBudgetMart = MAX_DAILY_SPENT_BASE - totalSpentBaseMart;
-                        if (!stopWinMartReached && remBudgetMart >= STAKE_BASE) {
+                        let availableMart = MAX_NET_RISK_BASE + totalProfitBaseMart;
+                        if (!stopWinMartReached && availableMart >= STAKE_BASE) {
                             basePlayedMart++;
-                            let martStakeB = Math.min(currentMartStakeBase, Math.floor(remBudgetMart));
+                            let martStakeB = Math.min(currentMartStakeBase, MAX_NET_RISK_BASE, Math.floor(availableMart));
                             totalSpentBaseMart += martStakeB;
                             if (martStakeB > maxStakeBaseMart) maxStakeBaseMart = martStakeB;
                             if (gPla > 0) {
@@ -2550,8 +2544,9 @@
                             }
                         }
 
+                        // 2. Base Proportionnelle : contrôle uniquement sur le capital net disponible (1000€ + gains nets)
                         let stopWinPropReached = (DAILY_STOP_WIN_BASE > 0 && totalProfitBasePla >= DAILY_STOP_WIN_BASE);
-                        let remBudgetProp = MAX_DAILY_SPENT_BASE - totalSpentBase;
+                        let availableProp = MAX_NET_RISK_BASE + totalProfitBasePla;
                         if (stopWinPropReached) {
                             auditRows.push({
                                 name: r.name,
@@ -2559,17 +2554,17 @@
                                 status: '<span class="text-cyan-400">🏆 Stop-Win atteint</span>',
                                 result: '0€'
                             });
-                        } else if (remBudgetProp < STAKE_BASE) {
+                        } else if (availableProp < STAKE_BASE) {
                             auditRows.push({
                                 name: r.name,
                                 horse: horseLabel,
-                                status: '<span class="text-red-400">🛑 Plafond 1000€</span>',
+                                status: `<span class="text-red-400">🛑 Capital net (${MAX_NET_RISK_BASE}€) épuisé</span>`,
                                 result: '0€'
                             });
                         } else {
                             basePlayedProp++;
                             let desiredStake = computeSmartStake(deficitSerieBase, STAKE_BASE);
-                            let actualStakeBase = Math.min(desiredStake, Math.floor(remBudgetProp));
+                            let actualStakeBase = Math.min(desiredStake, MAX_NET_RISK_BASE, Math.floor(availableProp));
                             totalSpentBase += actualStakeBase;
                             if (actualStakeBase > maxStakeBase) maxStakeBase = actualStakeBase;
                             
@@ -2635,9 +2630,9 @@
                         }
                     }
 
-                    let remBudgetNow = Math.max(0, MAX_DAILY_SPENT_BASE - totalSpentBase);
+                    let availablePropNow = Math.max(0, MAX_NET_RISK_BASE + totalProfitBasePla);
                     let stopWinNow = (DAILY_STOP_WIN_BASE > 0 && totalProfitBasePla >= DAILY_STOP_WIN_BASE);
-                    let capHitNow = (remBudgetNow < STAKE_BASE);
+                    let capHitNow = (availablePropNow < STAKE_BASE);
 
                     document.getElementById('statBaseMart').textContent = `${baseWinsMart} / ${basePlayedMart}`;
                     document.getElementById('statBasePla').textContent = `${baseWinsPla} / ${basePlayedProp}`;
@@ -2653,7 +2648,7 @@
                     document.getElementById('maxStakeBaseMartText').textContent = `${maxStakeBaseMart.toFixed(2)} €`;
                     document.getElementById('maxStakeBaseText').textContent = `${maxStakeBase.toFixed(2)} €`;
                     document.getElementById('deficitBaseText').textContent = `${deficitSerieBase.toFixed(2)} €`;
-                    document.getElementById('remainingBudgetText').textContent = `${remBudgetNow.toFixed(0)}€`;
+                    document.getElementById('remainingBudgetText').textContent = `${availablePropNow.toFixed(0)}€`;
                     
                     document.getElementById('totalSpentPepiteMartText').textContent = `${totalSpentPepiteMart.toFixed(2)} €`;
                     document.getElementById('totalSpentPepiteText').textContent = `${totalSpentPepite.toFixed(2)} €`;
@@ -2662,17 +2657,17 @@
                     document.getElementById('deficitPepiteText').textContent = `${deficitSeriePepite.toFixed(2)} €`;
 
                     let rawNextProp = computeSmartStake(deficitSerieBase, STAKE_BASE);
-                    let nextStakeBase = stopWinNow || capHitNow ? 0 : Math.min(rawNextProp, Math.floor(remBudgetNow));
+                    let nextStakeBase = stopWinNow || capHitNow ? 0 : Math.min(rawNextProp, MAX_NET_RISK_BASE, Math.floor(availablePropNow));
                     let nextStakePepite = computePepiteSmartStake(deficitSeriePepite, STAKE_PEPITE);
-                    let remMartNow = Math.max(0, MAX_DAILY_SPENT_BASE - totalSpentBaseMart);
-                    let nextMartDisp = (DAILY_STOP_WIN_BASE > 0 && totalProfitBaseMart >= DAILY_STOP_WIN_BASE) || remMartNow < STAKE_BASE
-                        ? 0 : Math.min(currentMartStakeBase, Math.floor(remMartNow));
+                    let availableMartNow = Math.max(0, MAX_NET_RISK_BASE + totalProfitBaseMart);
+                    let nextMartDisp = (DAILY_STOP_WIN_BASE > 0 && totalProfitBaseMart >= DAILY_STOP_WIN_BASE) || availableMartNow < STAKE_BASE
+                        ? 0 : Math.min(currentMartStakeBase, MAX_NET_RISK_BASE, Math.floor(availableMartNow));
                     
                     document.getElementById('nextStakeBaseMartText').textContent = nextMartDisp === 0 ? `Mart: STOP` : `Mart: ${nextMartDisp.toFixed(2)} €`;
-                    document.getElementById('nextStakeBaseText').textContent = stopWinNow ? `🏆 STOP-WIN` : (capHitNow ? `🛑 PLAFOND` : `Prop: ${nextStakeBase.toFixed(2)} €`);
+                    document.getElementById('nextStakeBaseText').textContent = stopWinNow ? `🏆 STOP-WIN` : (capHitNow ? `🛑 CAPITAL 0€` : `Prop: ${nextStakeBase.toFixed(2)} €`);
                     document.getElementById('nextStakePepiteMartText').textContent = `Mart: ${currentMartStakePepite.toFixed(2)} €`;
                     document.getElementById('nextStakePepiteText').textContent = `Prop: ${nextStakePepite.toFixed(2)} €`;
-                    document.getElementById('headerNextStake').textContent = stopWinNow ? `🏆 STOP` : (capHitNow ? `🛑 MAX` : `${nextMartDisp.toFixed(0)}€ | ${nextStakeBase.toFixed(0)}€`);
+                    document.getElementById('headerNextStake').textContent = stopWinNow ? `🏆 STOP` : (capHitNow ? `🛑 0€` : `${nextMartDisp.toFixed(0)}€ | ${nextStakeBase.toFixed(0)}€`);
 
                     let dl = document.getElementById('scanDetailLine');
                     if (dl) {
@@ -2685,11 +2680,11 @@
                         if (stopWinNow) {
                             stopBanner.style.display = 'flex';
                             stopBanner.className = "bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 text-[11px] px-3 py-2 rounded-xl flex justify-between items-center";
-                            stopText.textContent = `🏆 Stop-Win (+${DAILY_STOP_WIN_BASE}€) atteint après ${basePlayedProp} course(s) jouée(s) : les courses suivantes sont volontairement mises en pause.`;
+                            stopText.textContent = `🏆 Stop-Win (+${DAILY_STOP_WIN_BASE}€) atteint après ${basePlayedProp} course(s) jouée(s) : les courses suivantes sont mises en pause.`;
                         } else if (capHitNow) {
                             stopBanner.style.display = 'flex';
                             stopBanner.className = "bg-red-950/60 border border-red-500/40 text-red-200 text-[11px] px-3 py-2 rounded-xl flex justify-between items-center";
-                            stopText.textContent = `🛑 Plafond journalier (${MAX_DAILY_SPENT_BASE}€ de mises) atteint après ${basePlayedProp} course(s) jouée(s).`;
+                            stopText.textContent = `🛑 Capital net de ${MAX_NET_RISK_BASE}€ épuisé après ${basePlayedProp} course(s) jouée(s).`;
                         } else {
                             stopBanner.style.display = 'none';
                         }
@@ -2701,7 +2696,7 @@
                             sb.textContent = `🏆 Stop-Win +${DAILY_STOP_WIN_BASE}€ (${basePlayedProp} jouées)`;
                             sb.className = "text-[9px] font-bold px-2 py-1 rounded border border-emerald-500/50 bg-emerald-900/50 text-emerald-300";
                         } else if (capHitNow) {
-                            sb.textContent = `🛑 Plafond ${MAX_DAILY_SPENT_BASE}€ (${basePlayedProp} jouées)`;
+                            sb.textContent = `🛑 Capital ${MAX_NET_RISK_BASE}€ épuisé`;
                             sb.className = "text-[9px] font-bold px-2 py-1 rounded border border-red-500/50 bg-red-900/50 text-red-300";
                         } else {
                             sb.textContent = `Actif (${basePlayedProp} jouées)`;
