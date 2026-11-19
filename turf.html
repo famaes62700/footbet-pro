@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turf - V61 Mises, Volume & Plafonds (Trot + Toutes Courses)</title>
+    <title>Turf - V62 Calcul Année & Bouton Vider Historique</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -27,7 +27,7 @@
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-amber-400 flex items-center bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-700">
-                    <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">V61</span>
+                    <i class="fa-solid fa-horse-head mr-2 text-amber-500"></i><span class="hidden sm:inline">Turf</span> <span class="text-[10px] ml-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">V62</span>
                 </h1>
                 <input type="date" id="raceDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2.5 py-1.5 rounded-xl border border-zinc-700 cursor-pointer focus:outline-none focus:border-amber-500 shadow" onchange="onDateChange()">
             </div>
@@ -84,20 +84,26 @@
             </div>
         </div>
 
-        <!-- HISTORIQUE CUMULÉ -->
+        <!-- HISTORIQUE CUMULÉ : SEMAINE, MOIS, ANNÉE & BOUTON VIDER À LA DEMANDE -->
         <div id="historyBlock" style="display: none;" class="bg-zinc-900 border border-emerald-500/40 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
             <div class="flex flex-wrap justify-between items-center gap-2 border-b border-zinc-800 pb-2.5">
                 <h2 class="text-xs font-bold uppercase text-zinc-200 tracking-wider flex items-center">
                     <i class="fa-solid fa-vault mr-1.5 text-emerald-400"></i> Vos Gains Cumulés (<span id="histModeLabel" class="text-amber-400 ml-1">100% Trot</span>)
                 </h2>
-                <div class="flex items-center space-x-1.5">
-                    <button id="btnSyncWeek" onclick="syncPeriodHistory('WEEK')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer flex items-center">
-                        <i class="fa-solid fa-bolt mr-1"></i> Calculer la Semaine
+                <div class="flex flex-wrap items-center gap-1.5">
+                    <button id="btnSyncWeek" onclick="syncPeriodHistory('WEEK')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 px-2 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer flex items-center">
+                        <i class="fa-solid fa-bolt mr-1"></i> Semaine
                     </button>
-                    <button id="btnSyncMonth" onclick="syncPeriodHistory('MONTH')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer flex items-center">
-                        <i class="fa-solid fa-calendar-check mr-1"></i> Calculer le Mois
+                    <button id="btnSyncMonth" onclick="syncPeriodHistory('MONTH')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 px-2 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer flex items-center">
+                        <i class="fa-solid fa-calendar-check mr-1"></i> Mois
                     </button>
-                    <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-2 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+                    <button id="btnSyncYear" onclick="syncPeriodHistory('YEAR')" class="bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 border border-indigo-500/40 px-2 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer flex items-center">
+                        <i class="fa-solid fa-calendar mr-1"></i> Année
+                    </button>
+                    <button id="btnClearHistory" onclick="clearHistoryStats()" class="bg-red-900/40 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/40 px-2 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer flex items-center" title="Vider les cumuls Semaine / Mois / Année de ce mode">
+                        <i class="fa-solid fa-trash mr-1"></i> Vider
+                    </button>
+                    <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-1.5 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
 
@@ -106,7 +112,7 @@
                 <button onclick="cancelSyncPeriod()" class="text-[10px] bg-red-900/50 text-red-300 px-2 py-0.5 rounded border border-red-500/40 cursor-pointer">Stop</button>
             </div>
 
-            <div class="space-y-4 max-h-[28rem] overflow-y-auto pr-1">
+            <div class="space-y-4 max-h-[30rem] overflow-y-auto pr-1">
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
                     <div class="flex justify-between items-center mb-2">
                         <h3 class="text-[11px] uppercase font-bold text-zinc-300">Cette Semaine (Rapports PMU Réels)</h3>
@@ -123,7 +129,17 @@
                 </div>
 
                 <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700">
-                    <h3 class="text-[11px] uppercase font-bold text-zinc-300 mb-2">Mois par Mois (<span id="currentYearText"></span>)</h3>
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-[11px] uppercase font-bold text-zinc-300">Cumul Année <span id="currentYearText"></span> &amp; Mois par Mois</h3>
+                        <span id="yearDaysCountLabel" class="text-[10px] text-indigo-300 font-mono">0 jour calculé</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-zinc-950/70 p-2.5 rounded-lg border border-indigo-500/30 mb-3 text-[11px]">
+                        <div class="text-zinc-300">Base Mart. : <span id="yearBaseMart" class="text-cyan-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
+                        <div class="text-zinc-300">Base Prop. : <span id="yearBase" class="text-emerald-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
+                        <div class="text-zinc-300">Pép. Mart. : <span id="yearPepiteMart" class="text-yellow-300 font-bold block text-xs mt-0.5">0.00 €</span></div>
+                        <div class="text-zinc-300">Pép. Prop. : <span id="yearPepite" class="text-amber-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
+                        <div class="text-zinc-300">Perso : <span id="yearManual" class="text-orange-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
+                    </div>
                     <div id="monthsGrid" class="space-y-2"></div>
                 </div>
             </div>
@@ -133,7 +149,7 @@
         <div class="bg-zinc-900 border border-emerald-500/40 rounded-2xl p-3.5 shadow-xl space-y-2.5">
             <div class="flex flex-wrap justify-between items-center gap-2">
                 <h2 class="text-[11px] font-bold uppercase text-emerald-400 tracking-wider flex items-center">
-                    <i class="fa-solid fa-sliders mr-1.5"></i> Mes Mises, Volume & Plafonds
+                    <i class="fa-solid fa-sliders mr-1.5"></i> Mes Mises, Volume &amp; Plafonds
                     <span id="settingsModeBadge" class="ml-2 text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded font-bold normal-case">100% Trot</span>
                 </h2>
                 <button onclick="applyStrategySettings()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-lg shadow transition cursor-pointer">
@@ -168,7 +184,7 @@
             <div class="flex flex-wrap justify-between items-center gap-2 border-b border-zinc-800 pb-2">
                 <div>
                     <h2 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Bilan du Jour (Vrais Rapports PMU • Hors Annulées)</h2>
-                    <p id="bilanSubtitle" class="text-[10px] text-zinc-400">Stop-Win Base +50€ • Mises & Volume sans plafond</p>
+                    <p id="bilanSubtitle" class="text-[10px] text-zinc-400">Stop-Win Base +50€ • Mises &amp; Volume sans plafond</p>
                     <p id="scanDetailLine" class="text-[10px] text-zinc-400 font-mono mt-0.5">Chargées: 0 | Jouées Base: 0 | Jouées Pépite: 0</p>
                 </div>
                 <div class="flex items-center space-x-1.5">
@@ -420,7 +436,7 @@
 
     <script>
         const CACHE_VERSION = "v55"; // Réutilise le cache courses PMU déjà téléchargé
-        const STATS_VERSION = "v61"; // Réglages indépendants par mode (100% Trot & Toutes Courses)
+        const STATS_VERSION = "v61"; // Conserve vos réglages et historiques existants
         
         let currentDisciplineMode = 'TROT';
 
@@ -514,12 +530,6 @@
                 stopWin: DAILY_STOP_WIN
             });
 
-            // Ne réinitialise que les stats du mode actif (préserve l'autre mode)
-            let statsPrefix = `pmu_stats_unified_${STATS_VERSION}_${currentDisciplineMode}_`;
-            Object.keys(localStorage).forEach(k => {
-                if (k.startsWith(statsPrefix)) localStorage.removeItem(k);
-            });
-
             Object.keys(stopWinToastShownForDate).forEach(k => {
                 if (k.startsWith(`${currentDisciplineMode}_`)) delete stopWinToastShownForDate[k];
             });
@@ -528,6 +538,21 @@
             resetCountersUI();
             showToast(`Réglages ${getModeLabel()} : Base ${STAKE_BASE}€ • Pépite ${STAKE_PEPITE}€ • Vol. ${MAX_DAILY_VOLUME || 'off'} • Gains Base ${DAILY_STOP_WIN || 'off'}`, "success");
             calculateDailyStats(false);
+        }
+
+        // BOUTON VIDER À LA DEMANDE POUR L'HISTORIQUE SEMAINE / MOIS / ANNÉE
+        function clearHistoryStats() {
+            if (isSyncingPeriod) cancelSyncFlag = true;
+            let statsPrefix = `pmu_stats_unified_${STATS_VERSION}_${currentDisciplineMode}_`;
+            let removedCount = 0;
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith(statsPrefix)) {
+                    localStorage.removeItem(k);
+                    removedCount++;
+                }
+            });
+            showHistoryStats();
+            showToast(`Historique vidé (${getModeLabel()} : ${removedCount} jour(s) effacé(s)).`, "info");
         }
 
         function applyUnitCap(stake) {
@@ -816,7 +841,6 @@
                 showToast("Mode Toutes Courses activé");
             }
 
-            // Charge automatiquement les réglages propres au mode sélectionné
             loadStrategySettings();
 
             clearAutoTransition();
@@ -2235,19 +2259,31 @@
             let monthsGrid = document.getElementById('monthsGrid');
             monthsGrid.innerHTML = '';
 
+            let yBase = 0, yPep = 0, yBaseMart = 0, yPepMart = 0, yMan = 0, yDaysCount = 0;
+
             for (let m = 0; m < 12; m++) {
-                let mBase = 0, mPep = 0, mBaseMart = 0, mPepMart = 0, mMan = 0, hasMonthData = false;
+                let mBase = 0, mPep = 0, mBaseMart = 0, mPepMart = 0, mMan = 0, hasMonthData = false, mDays = 0;
                 let daysInMonth = new Date(year, m + 1, 0).getDate(); 
                 
                 for (let d = 1; d <= daysInMonth; d++) {
                     let s = getStatForDateObj(new Date(year, m, d, 12, 0, 0));
-                    if (s.hasData) hasMonthData = true;
+                    if (s.hasData) {
+                        hasMonthData = true;
+                        mDays++;
+                        yDaysCount++;
+                    }
                     mBase += s.baseProfit || 0;
                     mPep += s.pepiteProfit || 0;
                     mBaseMart += s.baseMartProfit || 0;
                     mPepMart += s.pepiteMartProfit || 0;
                     mMan += s.manualProfit || 0;
                 }
+
+                yBase += mBase;
+                yPep += mPep;
+                yBaseMart += mBaseMart;
+                yPepMart += mPepMart;
+                yMan += mMan;
 
                 if (hasMonthData || mBase !== 0 || mPep !== 0 || mBaseMart !== 0 || mPepMart !== 0 || mMan !== 0) {
                     let div = document.createElement('div');
@@ -2257,7 +2293,7 @@
                         : "bg-zinc-800/50 p-2.5 rounded-xl border border-zinc-700/50 mb-2 flex flex-wrap justify-between items-center text-xs gap-1";
 
                     div.innerHTML = `
-                        <span class="font-bold ${isCurrentViewMonth ? 'text-white' : 'text-zinc-300'}">${monthNames[m]}</span>
+                        <span class="font-bold ${isCurrentViewMonth ? 'text-white' : 'text-zinc-300'}">${monthNames[m]} <span class="text-[10px] font-normal text-zinc-500">(${mDays}j)</span></span>
                         <div class="space-x-2 text-[10px] font-mono">
                             <span>B.Mart: ${formatMoneyHTML(mBaseMart)}</span>
                             <span>B.Prop: ${formatMoneyHTML(mBase)}</span>
@@ -2268,8 +2304,22 @@
                     monthsGrid.appendChild(div);
                 }
             }
+
+            let yBM = document.getElementById('yearBaseMart');
+            if (yBM) yBM.innerHTML = formatMoneyHTML(yBaseMart);
+            let yB = document.getElementById('yearBase');
+            if (yB) yB.innerHTML = formatMoneyHTML(yBase);
+            let yPM = document.getElementById('yearPepiteMart');
+            if (yPM) yPM.innerHTML = formatMoneyHTML(yPepMart);
+            let yP = document.getElementById('yearPepite');
+            if (yP) yP.innerHTML = formatMoneyHTML(yPep);
+            let yM = document.getElementById('yearManual');
+            if (yM) yM.innerHTML = formatMoneyHTML(yMan);
+            let yLbl = document.getElementById('yearDaysCountLabel');
+            if (yLbl) yLbl.textContent = `${yDaysCount} jour${yDaysCount > 1 ? 's' : ''} calculé${yDaysCount > 1 ? 's' : ''}`;
+
             if(monthsGrid.innerHTML === '') {
-                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Cliquez sur "Calculer la Semaine" ou "Calculer le Mois" ci-dessus pour analyser vos réglages sur la période.</div>';
+                monthsGrid.innerHTML = '<div class="text-zinc-500 text-center text-xs py-2">Cliquez sur "Semaine", "Mois" ou "Année" ci-dessus pour calculer vos gains, puis sur "Vider" quand vous voulez repartir à zéro.</div>';
             }
         }
 
@@ -2296,13 +2346,22 @@
                     let d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i, 12, 0, 0);
                     if (d <= todayDate) datesToSync.push(d);
                 }
-            } else {
+            } else if (periodType === 'MONTH') {
                 let yr = viewDate.getFullYear();
                 let mo = viewDate.getMonth();
                 let daysInMo = new Date(yr, mo + 1, 0).getDate();
                 for (let dIdx = 1; dIdx <= daysInMo; dIdx++) {
                     let d = new Date(yr, mo, dIdx, 12, 0, 0);
                     if (d <= todayDate) datesToSync.push(d);
+                }
+            } else if (periodType === 'YEAR') {
+                let yr = viewDate.getFullYear();
+                let dCursor = new Date(yr, 0, 1, 12, 0, 0);
+                let endOfYear = new Date(yr, 11, 31, 12, 0, 0);
+                let maxDate = endOfYear < todayDate ? endOfYear : todayDate;
+                while (dCursor <= maxDate) {
+                    datesToSync.push(new Date(dCursor.getTime()));
+                    dCursor.setDate(dCursor.getDate() + 1);
                 }
             }
 
@@ -2314,22 +2373,34 @@
                     let ddmmyyyy = `${String(d.getDate()).padStart(2,'0')}${String(d.getMonth()+1).padStart(2,'0')}${d.getFullYear()}`;
                     let isToday = (yyyymmdd === getLocalDateString());
 
+                    // En mode Année, saute les jours passés déjà calculés pour permettre de reprendre facilement (cliquez sur Vider pour tout recalculer)
+                    if (periodType === 'YEAR' && !isToday && getStatForDateObj(d).hasData) {
+                        if (bannerText) {
+                            bannerText.innerHTML = `<i class="fa-solid fa-forward mr-2"></i>Déjà calculé : ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} (${idx+1}/${datesToSync.length})`;
+                        }
+                        continue;
+                    }
+
                     try { localStorage.removeItem(`fabturf_locked_picks_${ddmmyyyy}`); } catch(e) {}
 
                     if (bannerText) {
-                        bannerText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Calcul du ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} (${idx+1}/${datesToSync.length})...`;
+                        bannerText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Calcul du ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} (${idx+1}/${datesToSync.length})...`;
                     }
 
                     await computeSingleDayStatsForSync(ddmmyyyy, yyyymmdd, !isToday, (doneR, totR) => {
                         if (bannerText) {
-                            bannerText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Jour ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} : course ${doneR}/${totR}...`;
+                            bannerText.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Jour ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} (${idx+1}/${datesToSync.length}) : course ${doneR}/${totR}...`;
                         }
                     });
 
                     showHistoryStats();
                 }
-                if (!cancelSyncFlag) showToast("Cumul Semaine & Mois synchronisé !", "success");
-                else showToast("Synchronisation interrompue", "info");
+                if (!cancelSyncFlag) {
+                    let lblPeriod = periodType === 'WEEK' ? 'Semaine' : (periodType === 'MONTH' ? 'Mois' : 'Année');
+                    showToast(`Cumul ${lblPeriod} synchronisé (${getModeLabel()}) !`, "success");
+                } else {
+                    showToast("Calcul interrompu (les jours déjà calculés sont conservés)", "info");
+                }
             } catch (e) {}
 
             if (banner) banner.style.display = 'none';
