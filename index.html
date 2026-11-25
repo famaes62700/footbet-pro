@@ -3,253 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FootBet Pro - Value Betting</title>
+    <title>ValueBet Pro - Dashboard</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="FootBet Pro">
-    
-    <!-- Icône de l'onglet -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏈</text></svg>">
+    <meta name="apple-mobile-web-app-title" content="ValueBet Hub">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
 </head>
-<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-40">
+<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none">
 
-    <div id="toastContainer" class="fixed bottom-24 right-4 z-[9999] flex flex-col space-y-2 pointer-events-none"></div>
-
-    <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-3 sm:p-4 sticky top-0 z-40 shadow-lg">
-        <div class="max-w-3xl mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-blue-500 flex items-center bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-700">
-                    <span class="mr-1.5 text-lg">🏈</span><span class="hidden sm:inline">FootBet</span> 
-                    <span class="text-[9px] ml-2 bg-blue-500/20 text-blue-400 border border-blue-500/40 px-1.5 py-0.5 rounded font-bold">PRO</span>
-                </h1>
-                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2.5 py-1.5 rounded-xl border border-zinc-700 cursor-pointer focus:outline-none focus:border-blue-500 shadow" onchange="onDateChange()">
-            </div>
-            
-            <div class="flex items-center space-x-1.5 sm:space-x-2">
-                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 w-8 h-8 rounded-lg border border-blue-500/30 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Historique & R.O.I">
-                    <i class="fa-solid fa-chart-line"></i>
-                </button>
-                <button onclick="resetAllCache()" class="bg-red-900/40 hover:bg-red-600 text-red-300 hover:text-white w-8 h-8 rounded-lg border border-red-500/40 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Vider le cache">
-                    <i class="fa-solid fa-arrows-rotate"></i>
-                </button>
+    <!-- HEADER -->
+    <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-40 shadow-lg">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-lg sm:text-xl font-black uppercase tracking-wider text-white flex items-center">
+                <i class="fa-solid fa-layer-group mr-2 text-zinc-500"></i> ValueBet <span class="text-zinc-500 ml-1">PORTAL</span>
+            </h1>
+            <div class="text-[10px] sm:text-xs font-mono bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700 text-zinc-400">
+                <i class="fa-solid fa-circle text-emerald-500 text-[8px] mr-1 animate-pulse"></i> Système Actif
             </div>
         </div>
     </header>
 
-    <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4">
-
-        <!-- STATUT CONNEXION -->
-        <div class="flex flex-wrap justify-between items-center gap-2 bg-zinc-950 border border-zinc-800 p-2 rounded-xl">
-            <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion API Sports...
-            </div>
-            <div class="flex items-center space-x-2">
-                <button id="btnResumeMissing" onclick="calculateDailyStats(false)" style="display: none;" class="text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-black px-2 py-1 rounded cursor-pointer shadow">
-                    <i class="fa-solid fa-play mr-1"></i>Scanner le jour
-                </button>
-                <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded border border-zinc-800">Prêt</div>
-            </div>
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 sm:p-6 mt-4 sm:mt-8 space-y-8">
+        
+        <div class="text-center space-y-2 mb-8">
+            <h2 class="text-2xl sm:text-3xl font-black text-white">Sélectionnez votre algorithme</h2>
+            <p class="text-zinc-400 text-sm">Accédez à vos scanners de cotes et outils de gestion de bankroll.</p>
         </div>
 
-        <!-- HISTORIQUE CUMULÉ & R.O.I -->
-        <div id="historyBlock" style="display: none;" class="bg-zinc-900 border border-blue-500/40 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
-            <div class="flex flex-wrap justify-between items-center gap-2 border-b border-zinc-800 pb-2.5">
-                <h2 class="text-xs font-bold uppercase text-zinc-200 tracking-wider flex items-center">
-                    <i class="fa-solid fa-chart-line mr-1.5 text-blue-400"></i> Suivi R.O.I (Foot)
-                </h2>
-                <div class="flex flex-wrap items-center gap-1.5">
-                    <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-1.5 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+        <!-- GRILLE DES APPLICATIONS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            
+            <!-- 1. TURF -->
+            <a href="fabturf.html" class="group bg-zinc-900 border border-zinc-800 hover:border-emerald-500/50 rounded-2xl p-5 sm:p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden flex flex-col">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-bl-full -mr-4 -mt-4 transition-colors group-hover:bg-emerald-500/20"></div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-emerald-950/50 text-emerald-400 rounded-xl flex items-center justify-center text-2xl border border-emerald-500/30 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-horse-head"></i>
+                    </div>
+                    <span class="text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded border border-emerald-500/40">V132 Pro</span>
                 </div>
-            </div>
-            <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-zinc-950/70 p-2.5 rounded-lg border border-zinc-800 mb-2.5 text-[11px]">
-                    <div class="text-zinc-400">Total Joué : <span id="histStakes" class="text-white font-bold block text-xs mt-0.5">0.00 €</span></div>
-                    <div class="text-zinc-400">Réussite : <span id="histHitRate" class="text-white font-bold block text-xs mt-0.5">0 %</span></div>
-                    <div class="text-zinc-400">Bénéfice : <span id="histNet" class="text-blue-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
-                    <div class="text-zinc-400">R.O.I : <span id="histROI" class="text-blue-400 font-bold block text-sm mt-0.5">0.00 %</span></div>
+                <h3 class="text-lg font-black text-white mb-1">Value Turf</h3>
+                <p class="text-xs text-zinc-400 mb-4 flex-grow">Scanner PMU, Smart Money et filtre 100% Trot optimisé pour un R.O.I de 45%.</p>
+                <div class="text-emerald-500 text-xs font-bold flex items-center mt-auto">
+                    Ouvrir l'application <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
                 </div>
-            </div>
-        </div>
+            </a>
 
-        <!-- RÉGLAGES STRATÉGIE -->
-        <div class="bg-zinc-900 border border-blue-500/40 rounded-2xl p-3.5 shadow-xl space-y-2.5">
-            <div class="flex justify-between items-center">
-                <h2 class="text-[11px] font-bold uppercase text-blue-400 tracking-wider flex items-center">
-                    <i class="fa-solid fa-sliders mr-1.5"></i> Gestion de Bankroll & Radar
-                </h2>
-                <button onclick="applyStrategySettings()" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-lg shadow transition cursor-pointer">
-                    Valider
-                </button>
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                <label class="bg-zinc-950 p-2 rounded-xl border border-blue-500/30 flex flex-col">
-                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Capital Total (€)</span>
-                    <input type="number" id="inputBankroll" min="10" step="10" value="200" class="bg-transparent text-blue-300 font-black text-sm focus:outline-none mt-0.5">
-                </label>
-                <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
-                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Mise (Type)</span>
-                    <select id="selectStakeType" class="bg-zinc-950 text-white font-bold text-[11px] focus:outline-none mt-1 cursor-pointer">
-                        <option value="PROP">Proportionnelle (2%)</option>
-                        <option value="FIXE">Mise Fixe (10€)</option>
-                    </select>
-                </label>
-                <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
-                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Cote Min</span>
-                    <input type="number" id="inputMinOdd" min="1.1" step="0.1" value="1.5" class="bg-transparent text-white font-black text-sm focus:outline-none mt-0.5">
-                </label>
-                <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
-                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Cote Max</span>
-                    <input type="number" id="inputMaxOdd" min="1.5" step="0.1" value="3.5" class="bg-transparent text-white font-black text-sm focus:outline-none mt-0.5">
-                </label>
-            </div>
-        </div>
+            <!-- 2. FOOTBALL (SOCCER) -->
+            <a href="footbet.html" class="group bg-zinc-900 border border-zinc-800 hover:border-blue-500/50 rounded-2xl p-5 sm:p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden flex flex-col">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-bl-full -mr-4 -mt-4 transition-colors group-hover:bg-blue-500/20"></div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-blue-950/50 text-blue-400 rounded-xl flex items-center justify-center text-2xl border border-blue-500/30 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-futbol"></i>
+                    </div>
+                    <span class="text-[10px] font-black uppercase bg-blue-500/20 text-blue-400 px-2 py-1 rounded border border-blue-500/40">Actif</span>
+                </div>
+                <h3 class="text-lg font-black text-white mb-1">FootBet Pro</h3>
+                <p class="text-xs text-zinc-400 mb-4 flex-grow">Analyse des cotes 1N2, gestion de bankroll proportionnelle et suivi des matchs.</p>
+                <div class="text-blue-500 text-xs font-bold flex items-center mt-auto">
+                    Ouvrir l'application <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </a>
 
-        <!-- DASHBOARD BILAN -->
-        <div class="bg-zinc-900 border border-blue-500/30 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
-            <div class="flex flex-wrap justify-between items-center gap-2 border-b border-zinc-800 pb-2">
-                <div>
-                    <h2 class="text-xs font-bold uppercase text-blue-400 tracking-wider">Bilan du Jour</h2>
-                    <p id="bilanSubtitle" class="text-[10px] text-zinc-400">Recherche d'opportunités sportives</p>
+            <!-- 3. NFL (FOOTBALL AMERICAIN) -->
+            <a href="nfl.html" class="group bg-zinc-900 border border-zinc-800 hover:border-red-500/50 rounded-2xl p-5 sm:p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden flex flex-col">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-bl-full -mr-4 -mt-4 transition-colors group-hover:bg-red-500/20"></div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-red-950/50 text-red-400 rounded-xl flex items-center justify-center text-2xl border border-red-500/30 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-football"></i>
+                    </div>
+                    <span class="text-[10px] font-black uppercase bg-red-500/20 text-red-400 px-2 py-1 rounded border border-red-500/40">Actif</span>
                 </div>
-                <div class="flex items-center space-x-1.5">
-                    <span id="dailyStatusBadge" class="text-[9px] font-bold px-2 py-1 rounded border border-zinc-700 bg-zinc-800 text-zinc-300">En attente</span>
+                <h3 class="text-lg font-black text-white mb-1">NFL Gridiron</h3>
+                <p class="text-xs text-zinc-400 mb-4 flex-grow">Prédictions football américain, handicaps (spread) et gestion des mises US.</p>
+                <div class="text-red-500 text-xs font-bold flex items-center mt-auto">
+                    Ouvrir l'application <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
                 </div>
-            </div>
+            </a>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-zinc-950/90 border border-zinc-800 rounded-xl p-3 text-xs">
-                <div class="flex flex-col border-r border-zinc-800 px-1">
-                    <span class="text-[9px] uppercase font-bold text-zinc-500">Mises Totales</span>
-                    <strong id="dashInvested" class="text-sm font-black text-white">0.00 €</strong>
-                    <span id="dashBetsCount" class="text-[9px] text-zinc-500">0 pari(s)</span>
+            <!-- 4. NBA (BASKETBALL) -->
+            <a href="nba.html" class="group bg-zinc-900 border border-zinc-800 hover:border-orange-500/50 rounded-2xl p-5 sm:p-6 shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden flex flex-col">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 rounded-bl-full -mr-4 -mt-4 transition-colors group-hover:bg-orange-500/20"></div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-orange-950/50 text-orange-400 rounded-xl flex items-center justify-center text-2xl border border-orange-500/30 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-basketball"></i>
+                    </div>
+                    <span class="text-[10px] font-black uppercase bg-orange-500/20 text-orange-400 px-2 py-1 rounded border border-orange-500/40">Actif</span>
                 </div>
-                <div class="flex flex-col sm:border-r border-zinc-800 px-1">
-                    <span class="text-[9px] uppercase font-bold text-zinc-500">Réussite</span>
-                    <strong id="dashHitRate" class="text-sm font-black text-white">0 %</strong>
-                    <span id="dashWinsCount" class="text-[9px] text-zinc-500">0 gagné(s)</span>
+                <h3 class="text-lg font-black text-white mb-1">NBA Hoops</h3>
+                <p class="text-xs text-zinc-400 mb-4 flex-grow">Scanner de valeurs basket, points totaux (Over/Under) et suivi de la saison régulière.</p>
+                <div class="text-orange-500 text-xs font-bold flex items-center mt-auto">
+                    Ouvrir l'application <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
                 </div>
-                <div class="flex flex-col border-r border-zinc-800 px-1 mt-2 sm:mt-0">
-                    <span class="text-[9px] uppercase font-bold text-zinc-500">Bénéfice Net</span>
-                    <strong id="dashNet" class="text-lg font-black text-zinc-500">0.00 €</strong>
-                </div>
-                <div class="flex flex-col px-1 mt-2 sm:mt-0">
-                    <span class="text-[9px] uppercase font-bold text-blue-500">R.O.I (Retour)</span>
-                    <strong id="dashROI" class="text-lg font-black text-zinc-500">0.00 %</strong>
-                </div>
-            </div>
-        </div>
+            </a>
 
-        <!-- TABLEAU DES MATCHS -->
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden text-xs shadow-xl mt-4">
-            <div class="p-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-800/50">
-                <span class="text-zinc-300 font-bold">Matchs Analysés</span>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="bg-zinc-800/60 text-zinc-400 border-b border-zinc-800">
-                            <th class="p-3">Match</th>
-                            <th class="p-3 text-center">Pari 1</th>
-                            <th class="p-3 text-center">Pari N</th>
-                            <th class="p-3 text-center">Pari 2</th>
-                            <th class="p-3 text-right">Marge Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="matchTableBody" class="divide-y divide-zinc-800/50">
-                        <tr><td colspan="5" class="p-6 text-center text-zinc-500">Veuillez connecter votre API ou lancer une analyse.</td></tr>
-                    </tbody>
-                </table>
-            </div>
         </div>
+        
     </main>
 
-    <script>
-        // === CONFIGURATION DE BASE ===
-        let BANKROLL = 200.0;
-        let STAKE_TYPE = 'PROP'; // 'PROP' ou 'FIXE'
-        let MIN_ODD = 1.5;
-        let MAX_ODD = 3.5;
-
-        // Utilitaires UI
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            if (!container) return;
-            const toast = document.createElement('div');
-            let bgClass = type === 'success' ? 'bg-blue-900/90 border-blue-500/50 text-blue-200' : (type === 'error' ? 'bg-red-900/90 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
-            toast.className = `px-5 py-3 rounded-xl border shadow-2xl text-sm font-bold transition duration-300 mb-2 ${bgClass}`;
-            toast.textContent = message;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 3500);
-        }
-
-        function loadStrategySettings() {
-            try {
-                let saved = JSON.parse(localStorage.getItem('footbet_settings') || '{}');
-                if (saved.bankroll) BANKROLL = Number(saved.bankroll);
-                if (saved.stakeType) STAKE_TYPE = saved.stakeType;
-                if (saved.minOdd) MIN_ODD = Number(saved.minOdd);
-                if (saved.maxOdd) MAX_ODD = Number(saved.maxOdd);
-            } catch(e) {}
-
-            document.getElementById('inputBankroll').value = BANKROLL;
-            document.getElementById('selectStakeType').value = STAKE_TYPE;
-            document.getElementById('inputMinOdd').value = MIN_ODD;
-            document.getElementById('inputMaxOdd').value = MAX_ODD;
-            
-            updateSubtitle();
-        }
-
-        function updateSubtitle() {
-            let stakeText = STAKE_TYPE === 'PROP' ? `Mise 2% (${(BANKROLL*0.02).toFixed(2)}€)` : `Mise Fixe 10€`;
-            document.getElementById('bilanSubtitle').textContent = `Gestion: ${stakeText} • Cotes [${MIN_ODD} - ${MAX_ODD}]`;
-        }
-
-        function applyStrategySettings() {
-            BANKROLL = parseFloat(document.getElementById('inputBankroll').value) || 200;
-            STAKE_TYPE = document.getElementById('selectStakeType').value;
-            MIN_ODD = parseFloat(document.getElementById('inputMinOdd').value) || 1.5;
-            MAX_ODD = parseFloat(document.getElementById('inputMaxOdd').value) || 3.5;
-
-            localStorage.setItem('footbet_settings', JSON.stringify({
-                bankroll: BANKROLL, stakeType: STAKE_TYPE, minOdd: MIN_ODD, maxOdd: MAX_ODD
-            }));
-
-            updateSubtitle();
-            showToast("Paramètres FootBet sauvegardés !", "success");
-        }
-
-        function toggleHistoryStats() {
-            let el = document.getElementById('historyBlock');
-            if (el) {
-                el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'block' : 'none';
-            }
-        }
-
-        function resetAllCache() {
-            showToast('Cache mémoire vidé.', 'success');
-        }
-
-        function onDateChange() {
-            document.getElementById('statusText').innerHTML = `<span class="text-zinc-400">Recherche des matchs...</span>`;
-            // Ici, vous pourrez reconnecter votre API locale de Football 
-            // ex: fetch(`/api/matches?date=${document.getElementById('matchDate').value}`)
-        }
-
-        window.onload = () => { 
-            let dateEl = document.getElementById('matchDate');
-            if (!dateEl.value) {
-                let today = new Date();
-                dateEl.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            }
-            loadStrategySettings(); 
-        };
-    </script>
 </body>
 </html>
