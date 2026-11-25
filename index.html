@@ -1,251 +1,255 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Foot-turf-nba-nfl</title>
+    <title>FootBet Pro - Value Betting</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Foot-Turf">
+    <meta name="apple-mobile-web-app-title" content="FootBet Pro">
+    
+    <!-- Icône de l'onglet -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏈</text></svg>">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
-<body class="bg-zinc-950 flex flex-col h-screen overflow-hidden font-sans select-none">
-    
-    <!-- BARRE DE NAVIGATION COMMUNE (MENU) -->
-    <nav class="bg-zinc-900 border-b border-zinc-800 p-2.5 z-50 shadow-lg flex justify-center space-x-2 sm:space-x-3 overflow-x-auto whitespace-nowrap">
-        <button onclick="switchApp('foot.html', this)" class="nav-btn bg-zinc-950 text-white border-emerald-500 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center border shadow-inner">
-            <i class="fa-solid fa-futbol mr-2 text-emerald-500"></i> FOOT Direct
-        </button>
-        <button onclick="switchApp('turf.html', this)" class="nav-btn bg-zinc-800 text-zinc-400 hover:text-white px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center border border-zinc-700 shadow">
-            <i class="fa-solid fa-horse-head mr-2 text-emerald-500"></i> TURF Direct
-        </button>
-        <button onclick="switchApp('nba.html', this)" class="nav-btn bg-zinc-800 text-zinc-400 hover:text-white px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center border border-zinc-700 shadow">
-            <i class="fa-solid fa-basketball mr-2 text-orange-500"></i> NBA Direct
-        </button>
-        <button onclick="switchApp('tennis.html', this)" class="nav-btn bg-zinc-800 text-zinc-400 hover:text-white px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center border border-zinc-700 shadow">
-            <i class="fa-solid fa-football mr-1.5 text-[#8b4513]"></i> NFL Direct
-        </button>
-    </nav>
+<body class="bg-zinc-950 text-slate-100 min-h-screen flex flex-col font-sans select-none pb-40">
 
-    <!-- ECRAN D'AFFICHAGE INTERNE -->
-    <iframe id="appFrame" src="foot.html" class="flex-grow w-full border-none bg-zinc-950"></iframe>
+    <div id="toastContainer" class="fixed bottom-24 right-4 z-[9999] flex flex-col space-y-2 pointer-events-none"></div>
+
+    <header class="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 p-3 sm:p-4 sticky top-0 z-40 shadow-lg">
+        <div class="max-w-3xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <h1 class="text-base sm:text-lg font-black uppercase tracking-wider text-blue-500 flex items-center bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-zinc-700">
+                    <span class="mr-1.5 text-lg">🏈</span><span class="hidden sm:inline">FootBet</span> 
+                    <span class="text-[9px] ml-2 bg-blue-500/20 text-blue-400 border border-blue-500/40 px-1.5 py-0.5 rounded font-bold">PRO</span>
+                </h1>
+                <input type="date" id="matchDate" class="bg-zinc-800 text-white text-[11px] sm:text-xs px-2.5 py-1.5 rounded-xl border border-zinc-700 cursor-pointer focus:outline-none focus:border-blue-500 shadow" onchange="onDateChange()">
+            </div>
+            
+            <div class="flex items-center space-x-1.5 sm:space-x-2">
+                <button onclick="toggleHistoryStats()" class="bg-zinc-800 hover:bg-zinc-700 text-blue-400 w-8 h-8 rounded-lg border border-blue-500/30 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Historique & R.O.I">
+                    <i class="fa-solid fa-chart-line"></i>
+                </button>
+                <button onclick="resetAllCache()" class="bg-red-900/40 hover:bg-red-600 text-red-300 hover:text-white w-8 h-8 rounded-lg border border-red-500/40 font-bold transition flex items-center justify-center shadow flex-shrink-0 cursor-pointer" title="Vider le cache">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-3xl w-full mx-auto p-4 space-y-4">
+
+        <!-- STATUT CONNEXION -->
+        <div class="flex flex-wrap justify-between items-center gap-2 bg-zinc-950 border border-zinc-800 p-2 rounded-xl">
+            <div id="statusText" class="text-xs text-blue-400 font-mono flex items-center">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Connexion API Sports...
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="btnResumeMissing" onclick="calculateDailyStats(false)" style="display: none;" class="text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-black px-2 py-1 rounded cursor-pointer shadow">
+                    <i class="fa-solid fa-play mr-1"></i>Scanner le jour
+                </button>
+                <div id="statsProgress" class="text-[10px] text-zinc-300 font-mono text-right bg-zinc-900 px-2 py-1 rounded border border-zinc-800">Prêt</div>
+            </div>
+        </div>
+
+        <!-- HISTORIQUE CUMULÉ & R.O.I -->
+        <div id="historyBlock" style="display: none;" class="bg-zinc-900 border border-blue-500/40 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
+            <div class="flex flex-wrap justify-between items-center gap-2 border-b border-zinc-800 pb-2.5">
+                <h2 class="text-xs font-bold uppercase text-zinc-200 tracking-wider flex items-center">
+                    <i class="fa-solid fa-chart-line mr-1.5 text-blue-400"></i> Suivi R.O.I (Foot)
+                </h2>
+                <div class="flex flex-wrap items-center gap-1.5">
+                    <button onclick="toggleHistoryStats()" class="text-zinc-500 hover:text-white text-lg px-1.5 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div class="bg-zinc-800/80 p-3 rounded-xl border border-zinc-700 text-xs">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-zinc-950/70 p-2.5 rounded-lg border border-zinc-800 mb-2.5 text-[11px]">
+                    <div class="text-zinc-400">Total Joué : <span id="histStakes" class="text-white font-bold block text-xs mt-0.5">0.00 €</span></div>
+                    <div class="text-zinc-400">Réussite : <span id="histHitRate" class="text-white font-bold block text-xs mt-0.5">0 %</span></div>
+                    <div class="text-zinc-400">Bénéfice : <span id="histNet" class="text-blue-400 font-bold block text-xs mt-0.5">0.00 €</span></div>
+                    <div class="text-zinc-400">R.O.I : <span id="histROI" class="text-blue-400 font-bold block text-sm mt-0.5">0.00 %</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RÉGLAGES STRATÉGIE -->
+        <div class="bg-zinc-900 border border-blue-500/40 rounded-2xl p-3.5 shadow-xl space-y-2.5">
+            <div class="flex justify-between items-center">
+                <h2 class="text-[11px] font-bold uppercase text-blue-400 tracking-wider flex items-center">
+                    <i class="fa-solid fa-sliders mr-1.5"></i> Gestion de Bankroll & Radar
+                </h2>
+                <button onclick="applyStrategySettings()" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-lg shadow transition cursor-pointer">
+                    Valider
+                </button>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                <label class="bg-zinc-950 p-2 rounded-xl border border-blue-500/30 flex flex-col">
+                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Capital Total (€)</span>
+                    <input type="number" id="inputBankroll" min="10" step="10" value="200" class="bg-transparent text-blue-300 font-black text-sm focus:outline-none mt-0.5">
+                </label>
+                <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
+                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Mise (Type)</span>
+                    <select id="selectStakeType" class="bg-zinc-950 text-white font-bold text-[11px] focus:outline-none mt-1 cursor-pointer">
+                        <option value="PROP">Proportionnelle (2%)</option>
+                        <option value="FIXE">Mise Fixe (10€)</option>
+                    </select>
+                </label>
+                <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
+                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Cote Min</span>
+                    <input type="number" id="inputMinOdd" min="1.1" step="0.1" value="1.5" class="bg-transparent text-white font-black text-sm focus:outline-none mt-0.5">
+                </label>
+                <label class="bg-zinc-950 p-2 rounded-xl border border-zinc-800 flex flex-col">
+                    <span class="text-[9px] text-zinc-400 uppercase font-bold">Cote Max</span>
+                    <input type="number" id="inputMaxOdd" min="1.5" step="0.1" value="3.5" class="bg-transparent text-white font-black text-sm focus:outline-none mt-0.5">
+                </label>
+            </div>
+        </div>
+
+        <!-- DASHBOARD BILAN -->
+        <div class="bg-zinc-900 border border-blue-500/30 rounded-2xl p-4 shadow-xl mb-2 space-y-3">
+            <div class="flex flex-wrap justify-between items-center gap-2 border-b border-zinc-800 pb-2">
+                <div>
+                    <h2 class="text-xs font-bold uppercase text-blue-400 tracking-wider">Bilan du Jour</h2>
+                    <p id="bilanSubtitle" class="text-[10px] text-zinc-400">Recherche d'opportunités sportives</p>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                    <span id="dailyStatusBadge" class="text-[9px] font-bold px-2 py-1 rounded border border-zinc-700 bg-zinc-800 text-zinc-300">En attente</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-zinc-950/90 border border-zinc-800 rounded-xl p-3 text-xs">
+                <div class="flex flex-col border-r border-zinc-800 px-1">
+                    <span class="text-[9px] uppercase font-bold text-zinc-500">Mises Totales</span>
+                    <strong id="dashInvested" class="text-sm font-black text-white">0.00 €</strong>
+                    <span id="dashBetsCount" class="text-[9px] text-zinc-500">0 pari(s)</span>
+                </div>
+                <div class="flex flex-col sm:border-r border-zinc-800 px-1">
+                    <span class="text-[9px] uppercase font-bold text-zinc-500">Réussite</span>
+                    <strong id="dashHitRate" class="text-sm font-black text-white">0 %</strong>
+                    <span id="dashWinsCount" class="text-[9px] text-zinc-500">0 gagné(s)</span>
+                </div>
+                <div class="flex flex-col border-r border-zinc-800 px-1 mt-2 sm:mt-0">
+                    <span class="text-[9px] uppercase font-bold text-zinc-500">Bénéfice Net</span>
+                    <strong id="dashNet" class="text-lg font-black text-zinc-500">0.00 €</strong>
+                </div>
+                <div class="flex flex-col px-1 mt-2 sm:mt-0">
+                    <span class="text-[9px] uppercase font-bold text-blue-500">R.O.I (Retour)</span>
+                    <strong id="dashROI" class="text-lg font-black text-zinc-500">0.00 %</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLEAU DES MATCHS -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden text-xs shadow-xl mt-4">
+            <div class="p-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-800/50">
+                <span class="text-zinc-300 font-bold">Matchs Analysés</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-zinc-800/60 text-zinc-400 border-b border-zinc-800">
+                            <th class="p-3">Match</th>
+                            <th class="p-3 text-center">Pari 1</th>
+                            <th class="p-3 text-center">Pari N</th>
+                            <th class="p-3 text-center">Pari 2</th>
+                            <th class="p-3 text-right">Marge Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="matchTableBody" class="divide-y divide-zinc-800/50">
+                        <tr><td colspan="5" class="p-6 text-center text-zinc-500">Veuillez connecter votre API ou lancer une analyse.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
 
     <script>
-    const SUPABASE_URL = 'https://hvgrngfmbslpphrjldgl.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_UKMHFE5XUdoenpv5Ds0bLA_Pcm-muaD';
+        // === CONFIGURATION DE BASE ===
+        let BANKROLL = 200.0;
+        let STAKE_TYPE = 'PROP'; // 'PROP' ou 'FIXE'
+        let MIN_ODD = 1.5;
+        let MAX_ODD = 3.5;
 
-    let prizes = [
-        { id: 'iphone17', name: 'iPhone 17 Pro Max (256 Go)', value: 'Valeur : 1 479 €', tag: '🔥 N°1 Tech', icon: '📱', cost: 5.00, current: 398, max: 400, speed: 1.75, scores: [] },
-        { id: 'ps5pro', name: 'PlayStation 5 Pro', value: 'Valeur : 799 €', tag: '🎮 N°1 Gaming', icon: '🕹️', cost: 3.00, current: 347, max: 350, speed: 1.65, scores: [] },
-        { id: 'switch2', name: 'Nintendo Switch 2', value: 'Valeur : 449 €', tag: '⭐ Populaire', icon: '🎮', cost: 2.00, current: 214, max: 280, speed: 1.45, scores: [] },
-        { id: 'dyson', name: 'Dyson Airwrap i.d.™', value: 'Valeur : 549 €', tag: '✨ Viral', icon: '💇‍♀️', cost: 2.50, current: 189, max: 270, speed: 1.50, scores: [] },
-        { id: 'amazon500', name: 'Carte Cadeau Amazon 500 €', value: 'Pouvoir d’achat immédiat', tag: '⚡ Presque plein !', icon: '🎁', cost: 2.00, current: 299, max: 300, speed: 1.55, scores: [] }
-    ];
+        // Utilitaires UI
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            let bgClass = type === 'success' ? 'bg-blue-900/90 border-blue-500/50 text-blue-200' : (type === 'error' ? 'bg-red-900/90 border-red-500/50 text-red-200' : 'bg-zinc-800 border-zinc-700 text-white');
+            toast.className = `px-5 py-3 rounded-xl border shadow-2xl text-sm font-bold transition duration-300 mb-2 ${bgClass}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
 
-    let activePrizeId = 'iphone17', userBalance = 50.00, isPlaying = false, position = 0, direction = 1, animationId = null, startTime = 0;
-    let selectedAmount = 20, selectedBonus = 2, selectedMethod = 'paypal', freeCodeUsed = false;
-    let sbClient = null;
+        function loadStrategySettings() {
+            try {
+                let saved = JSON.parse(localStorage.getItem('footbet_settings') || '{}');
+                if (saved.bankroll) BANKROLL = Number(saved.bankroll);
+                if (saved.stakeType) STAKE_TYPE = saved.stakeType;
+                if (saved.minOdd) MIN_ODD = Number(saved.minOdd);
+                if (saved.maxOdd) MAX_ODD = Number(saved.maxOdd);
+            } catch(e) {}
 
-    const prizesGrid = document.getElementById('prizes-grid');
-    const balanceEl = document.getElementById('user-balance');
-    const cursorEl = document.getElementById('cursor');
-    const actionBtn = document.getElementById('action-btn');
-    const resultBox = document.getElementById('result-box');
-    const leaderboardList = document.getElementById('leaderboard-list');
-    const winnerBanner = document.getElementById('winner-banner');
-    const liveChronoEl = document.getElementById('live-chrono');
-    const recordDisplayEl = document.getElementById('record-display');
-    const dbStatusEl = document.getElementById('db-status');
-    const playerNameInput = document.getElementById('player-name-input');
+            document.getElementById('inputBankroll').value = BANKROLL;
+            document.getElementById('selectStakeType').value = STAKE_TYPE;
+            document.getElementById('inputMinOdd').value = MIN_ODD;
+            document.getElementById('inputMaxOdd').value = MAX_ODD;
+            
+            updateSubtitle();
+        }
 
-    function getPlayerName() { return playerNameInput.value.trim() || 'Joueur_1'; }
-    function sortScores(arr) { return arr.sort((a, b) => Math.abs(a.diff - b.diff) > 0.00001 ? a.diff - b.diff : a.time - b.time); }
-    function getActivePrize() { return prizes.find(p => p.id === activePrizeId) || prizes[0]; }
+        function updateSubtitle() {
+            let stakeText = STAKE_TYPE === 'PROP' ? `Mise 2% (${(BANKROLL*0.02).toFixed(2)}€)` : `Mise Fixe 10€`;
+            document.getElementById('bilanSubtitle').textContent = `Gestion: ${stakeText} • Cotes [${MIN_ODD} - ${MAX_ODD}]`;
+        }
 
-    async function loadDataFromSupabase() {
-        try {
-            if (!window.supabase) {
-                dbStatusEl.textContent = '❌ Librairie Supabase bloquée (désactivez bloqueur de pub)';
-                renderPrizes(); updateArena(); return;
+        function applyStrategySettings() {
+            BANKROLL = parseFloat(document.getElementById('inputBankroll').value) || 200;
+            STAKE_TYPE = document.getElementById('selectStakeType').value;
+            MIN_ODD = parseFloat(document.getElementById('inputMinOdd').value) || 1.5;
+            MAX_ODD = parseFloat(document.getElementById('inputMaxOdd').value) || 3.5;
+
+            localStorage.setItem('footbet_settings', JSON.stringify({
+                bankroll: BANKROLL, stakeType: STAKE_TYPE, minOdd: MIN_ODD, maxOdd: MAX_ODD
+            }));
+
+            updateSubtitle();
+            showToast("Paramètres FootBet sauvegardés !", "success");
+        }
+
+        function toggleHistoryStats() {
+            let el = document.getElementById('historyBlock');
+            if (el) {
+                el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'block' : 'none';
             }
+        }
 
-            sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        function resetAllCache() {
+            showToast('Cache mémoire vidé.', 'success');
+        }
 
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Délai dépassé (5s) — vérifiez URL/clé')), 5000)
-            );
+        function onDateChange() {
+            document.getElementById('statusText').innerHTML = `<span class="text-zinc-400">Recherche des matchs...</span>`;
+            // Ici, vous pourrez reconnecter votre API locale de Football 
+            // ex: fetch(`/api/matches?date=${document.getElementById('matchDate').value}`)
+        }
 
-            const fetchPromise = Promise.all([
-                sbClient.from('competitions').select('*'),
-                sbClient.from('scores').select('*')
-            ]);
-
-            const [compRes, scoreRes] = await Promise.race([fetchPromise, timeoutPromise]);
-
-            if (compRes.error || scoreRes.error) {
-                const err = compRes.error || scoreRes.error;
-                dbStatusEl.textContent = '❌ Supabase : ' + err.message;
-                renderPrizes(); updateArena(); return;
+        window.onload = () => { 
+            let dateEl = document.getElementById('matchDate');
+            if (!dateEl.value) {
+                let today = new Date();
+                dateEl.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
             }
-
-            if (compRes.data && compRes.data.length > 0) {
-                const orderMap = { iphone17: 1, ps5pro: 2, switch2: 3, dyson: 4, amazon500: 5 };
-                compRes.data.sort((a, b) => (orderMap[a.id] || 99) - (orderMap[b.id] || 99));
-                prizes = compRes.data.map(c => {
-                    const compScores = (scoreRes.data || [])
-                        .filter(s => s.competition_id === c.id)
-                        .map(s => ({ player: s.player_name, diff: Number(s.diff), time: Number(s.reaction_time) }));
-                    sortScores(compScores);
-                    return {
-                        id: c.id,
-                        name: c.name,
-                        value: c.prize_value,
-                        tag: c.tag,
-                        icon: c.icon,
-                        cost: Number(c.cost),
-                        current: Number(c.current_entries),
-                        max: Number(c.max_entries),
-                        speed: Number(c.speed),
-                        scores: compScores
-                    };
-                });
-            }
-
-            dbStatusEl.textContent = '🟢 Connecté à Supabase (Temps réel)';
-            renderPrizes();
-            updateArena();
-        } catch (e) {
-            dbStatusEl.textContent = '❌ Erreur : ' + e.message;
-            renderPrizes();
-            updateArena();
-        }
-    }
-
-    function renderPrizes() {
-        prizesGrid.innerHTML = '';
-        prizes.forEach(prize => {
-            const pct = Math.min(100, (prize.current / prize.max) * 100);
-            const isFull = prize.current >= prize.max;
-            const card = document.createElement('div');
-            card.className = `prize-card ${prize.id === activePrizeId ? 'active' : ''}`;
-            card.onclick = () => selectPrize(prize.id);
-            card.innerHTML = `<div class="hot-tag">${isFull ? '✅ TERMINÉ' : prize.tag}</div><div class="entry-badge">${prize.cost.toFixed(2)} €</div><div><div class="prize-icon">${prize.icon}</div><div class="prize-title">${prize.name}</div><div class="prize-value">${prize.value}</div></div><div><div class="progress-container"><div class="progress-bar" style="width:${pct}%;${isFull ? 'background:#ff3366;' : ''}"></div></div><div class="progress-stats"><span>${isFull ? 'Clôturé' : 'En cours'}</span><strong>${prize.current} / ${prize.max}</strong></div></div>`;
-            prizesGrid.appendChild(card);
-        });
-    }
-
-    function selectPrize(id) {
-        if (isPlaying) return;
-        activePrizeId = id; position = 0; cursorEl.style.left = '0%'; liveChronoEl.textContent = '0.000 s';
-        updateArena(); renderPrizes();
-    }
-
-    async function relaunchCurrentPrize() {
-        if (isPlaying) return;
-        const prize = getActivePrize();
-        prize.current = 0; prize.scores = []; prize.tag = '🆕 Nouvelle session';
-        if (sbClient) {
-            await sbClient.from('scores').delete().eq('competition_id', prize.id);
-            await sbClient.from('competitions').update({ current_entries: 0, tag: '🆕 Nouvelle session' }).eq('id', prize.id);
-        }
-        position = 0; cursorEl.style.left = '0%'; liveChronoEl.textContent = '0.000 s';
-        renderPrizes(); updateArena();
-    }
-
-    function updateArena() {
-        const prize = getActivePrize();
-        sortScores(prize.scores);
-        const isFull = prize.current >= prize.max;
-        const currentPlayer = getPlayerName();
-        document.getElementById('active-prize-name').textContent = `${prize.icon} ${prize.name}`;
-        document.getElementById('active-prize-sub').textContent = `Mise : ${prize.cost.toFixed(2)} € • Palier : ${prize.max} participations`;
-        const statusPill = document.getElementById('session-status');
-        statusPill.textContent = isFull ? `CLÔTURÉ (${prize.current}/${prize.max})` : `EN COURS (${prize.current}/${prize.max})`;
-        statusPill.className = `status-pill ${isFull ? 'closed' : ''}`;
-        recordDisplayEl.textContent = prize.scores.length ? `${prize.scores[0].diff.toFixed(3)}% (${prize.scores[0].time.toFixed(3)}s)` : 'Aucun score';
-        if (isFull) {
-            actionBtn.disabled = true; actionBtn.textContent = 'Session terminée'; actionBtn.className = 'btn-play';
-            const winner = prize.scores[0] || { player: 'Aucun joueur', diff: 0, time: 0 };
-            winnerBanner.classList.add('show');
-            document.getElementById('winner-announcement').innerHTML = `<strong>${winner.player}</strong> remporte <strong>${prize.name}</strong> (${winner.diff.toFixed(3)}% en ${winner.time.toFixed(3)}s) !`;
-            document.getElementById('relaunch-btn').textContent = `🔄 Relancer une nouvelle session (0/${prize.max})`;
-        } else {
-            actionBtn.disabled = false; actionBtn.textContent = `Miser ${prize.cost.toFixed(2)} € et Jouer`; actionBtn.className = 'btn-play';
-            winnerBanner.classList.remove('show');
-        }
-        leaderboardList.innerHTML = prize.scores.length ? '' : '<li style="text-align:center;color:var(--text-muted);padding:20px;">Aucune participation enregistrée.</li>';
-        prize.scores.forEach((entry, index) => {
-            const li = document.createElement('li');
-            li.className = `leaderboard-item ${index === 0 ? 'top-1' : ''}`;
-            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
-            li.innerHTML = `<div class="player-info"><span class="rank">${medal}</span><span><strong>${entry.player}</strong> ${entry.player === currentPlayer ? '(Moi)' : ''}</span></div><div class="score-details"><span class="score-val">Écart : ${entry.diff.toFixed(3)}%</span><span class="time-val">⏱️ ${entry.time.toFixed(3)} s</span></div>`;
-            leaderboardList.appendChild(li);
-        });
-    }
-
-    function animateCursor(now) {
-        if (!isPlaying) return;
-        const prize = getActivePrize();
-        liveChronoEl.textContent = `${((now - startTime) / 1000).toFixed(3)} s`;
-        position += prize.speed * direction;
-        if (position >= 100) { position = 100; direction = -1; } else if (position <= 0) { position = 0; direction = 1; }
-        cursorEl.style.left = position + '%';
-        animationId = requestAnimationFrame(animateCursor);
-    }
-
-    async function handleGameAction() {
-        const prize = getActivePrize();
-        const currentPlayer = getPlayerName();
-        if (!isPlaying) {
-            if (prize.current >= prize.max || userBalance < prize.cost) return;
-            userBalance -= prize.cost; balanceEl.textContent = userBalance.toFixed(2) + ' €';
-            isPlaying = true; position = 0; direction = 1; startTime = performance.now();
-            actionBtn.textContent = 'STOP ! (Cliquez pour figer)'; actionBtn.classList.add('stop-mode');
-            animationId = requestAnimationFrame(animateCursor);
-        } else {
-            isPlaying = false; cancelAnimationFrame(animationId);
-            const reactionTime = parseFloat(((performance.now() - startTime) / 1000).toFixed(3));
-            liveChronoEl.textContent = `${reactionTime.toFixed(3)} s`;
-            const diff = parseFloat(Math.abs(50 - position).toFixed(3));
-            const nextCount = prize.current + 1;
-            prize.current = nextCount; prize.scores.push({ player: currentPlayer, diff, time: reactionTime });
-            sortScores(prize.scores);
-            if (sbClient) {
-                await sbClient.from('scores').insert({ competition_id: prize.id, player_name: currentPlayer, diff, reaction_time: reactionTime });
-                await sbClient.from('competitions').update({ current_entries: nextCount }).eq('id', prize.id);
-            }
-            resultBox.innerHTML = `Écart : <strong>${diff.toFixed(3)}%</strong> • Temps : <strong>${reactionTime.toFixed(3)} s</strong>`;
-            renderPrizes(); updateArena();
-        }
-    }
-
-    function openModal(id) { document.getElementById(id).classList.add('open'); }
-    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-    function selectAmount(amount, bonus, el) { selectedAmount = amount; selectedBonus = bonus; document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected')); el.classList.add('selected'); updatePayButtonText(); }
-    function selectMethod(method, el) { selectedMethod = method; document.querySelectorAll('.method-card').forEach(c => c.classList.remove('selected')); el.classList.add('selected'); updatePayButtonText(); }
-    function updatePayButtonText() {
-        const btn = document.getElementById('confirm-pay-btn');
-        const bonusTxt = selectedBonus > 0 ? ` (+${selectedBonus.toFixed(2)} € offerts)` : '';
-        btn.className = selectedMethod === 'paypal' ? 'btn-confirm-pay paypal-style' : 'btn-confirm-pay';
-        btn.textContent = `Payer ${selectedAmount.toFixed(2)} €${bonusTxt}`;
-    }
-    function claimFreeCredit() {
-        if (freeCodeUsed) return;
-        const val = document.getElementById('promo-code-input').value.trim().toUpperCase();
-        if (val === 'SKILL5' || val === 'GRATUIT') {
-            freeCodeUsed = true; userBalance += 5.00; balanceEl.textContent = userBalance.toFixed(2) + ' €';
-            document.getElementById('promo-feedback').innerHTML = '<span style="color:var(--accent);">✅ +5.00 € gratuits ajoutés !</span>';
-        }
-    }
-    function processPayment() {
-        userBalance += selectedAmount + selectedBonus; balanceEl.textContent = userBalance.toFixed(2) + ' €';
-        closeModal('payment-modal');
-    }
-
-    loadDataFromSupabase();
-</script>
+            loadStrategySettings(); 
+        };
+    </script>
 </body>
 </html>
